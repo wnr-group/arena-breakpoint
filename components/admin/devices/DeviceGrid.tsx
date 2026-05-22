@@ -1,0 +1,169 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { MonitorPlay, Pencil, Trash2, Loader2, Cpu } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+interface DeviceGridProps {
+  devices: any[];
+  onEdit: (device: any) => void;
+  onDelete: (id: string) => void;
+  isPending: boolean;
+}
+
+export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridProps) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {devices.map((device) => {
+        const totalQty = Number(device.quantity) || 1;
+        const statusClean = String(device.status || "").toLowerCase().trim();
+
+        return (
+          <Card
+            key={device.id}
+            className="bg-[#121212] border-[#27272a] hover:border-[#FFC107]/50 hover:shadow-[0_0_20px_rgba(255,193,7,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden group animate-in zoom-in-95"
+          >
+            <div className="h-48 w-full bg-zinc-950 border-b border-[#27272a] flex items-center justify-center overflow-hidden relative">
+              {device.image_url ? (
+                <img
+                  src={device.image_url}
+                  alt="Hardware Cover"
+                  className="w-full h-full object-contain p-2 transition-transform duration-500 group-hover:scale-105"
+                />
+              ) : (
+                <div className="flex flex-col items-center text-zinc-800 gap-1.5">
+                  <MonitorPlay className="h-6 w-6" />
+                  <span className="text-[10px]">No Asset Staged</span>
+                </div>
+              )}
+              <div className="absolute top-3 right-3 z-10">
+                <GridStatusBadge status={statusClean} quantity={totalQty} />
+              </div>
+            </div>
+
+            {/* 2. CARD CONTENT FRAME DESCRIPTION CONTAINER */}
+            <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+              <div>
+                <div className="flex items-baseline justify-between gap-2 mb-2">
+                  <div>
+                    <h3 className="font-black text-xl text-[#FFC107] uppercase tracking-wide truncate max-w-[130px]" title={device.station_number}>
+                      {device.station_number}
+                    </h3>
+                    <p className="text-xs text-[#a1a1aa] font-medium truncate max-w-[130px]">{device.type}</p>
+                  </div>
+                  
+                  {/* HOURLY PRICING NODE */}
+                  <div className="text-white font-black text-xl text-right flex-shrink-0">
+                    ₹{device.hourly_rate ? Number(device.hourly_rate).toLocaleString('en-IN') : "0"}
+                    <span className="text-[#a1a1aa] text-[10px] font-normal tracking-tight">/hr</span>
+                  </div>
+                </div>
+
+                {/* HARDWARE SPECIFICATIONS BLOCKS */}
+                <div
+                  className="flex items-start gap-1.5 text-[11px] text-[#a1a1aa]/80 bg-[#161616] border border-[#27272a]/40 p-2 rounded-lg truncate mt-1"
+                  title={device.specs || "No specifications listed"}
+                >
+                  <Cpu className="h-3.5 w-3.5 text-zinc-600 flex-shrink-0" />
+                  <span className="truncate">
+                    {device.specs || <span className="text-zinc-600 italic">No specs listed</span>}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. PERMANENT BELOW CARD ACTIONS LAYOUT FRAME */}
+            <div className="px-4 py-3 bg-[#0e0e0e] border-t border-[#27272a]/50 flex justify-end gap-2.5 flex-shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onEdit(device)}
+                className="h-8 w-8 text-white bg-[#27272a] hover:bg-[#3f3f46] border border-zinc-700/60 transition-colors"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={isPending}
+                    className="h-8 w-8 text-white bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 transition-colors"
+                  >
+                    {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  </Button>
+                </AlertDialogTrigger>
+
+                <AlertDialogContent className="bg-[#121212] border border-[#27272a] text-white">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-xl font-bold">Remove Terminal Record?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-[#a1a1aa] text-sm">
+                      Are you sure you want to delete **Station {device.station_number}**? This action will remove the hardware machine data completely from your system inventory.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="mt-4">
+                    <AlertDialogCancel className="bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800 hover:text-white">
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => onDelete(device.id)}
+                      className="bg-[#FFC107] text-black hover:bg-[#FFC107]/90 font-semibold"
+                    >
+                      Confirm Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+
+function GridStatusBadge({ status, quantity }: { status: string; quantity: number }) {
+  if (status === 'available') {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-white bg-black/60 border border-green-500/40 rounded-full backdrop-blur-md whitespace-nowrap">
+        <span className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
+        {quantity} AVAILABLE
+      </span>
+    );
+  }
+  if (status === 'maintenance') {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-white bg-black/60 border border-red-500/40 rounded-full backdrop-blur-md whitespace-nowrap">
+        <span className="w-1 h-1 rounded-full bg-red-500" />
+        MAINTENANCE
+      </span>
+    );
+  }
+  if (status === 'inactive') {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-zinc-400 bg-black/60 border border-zinc-700 rounded-full backdrop-blur-md whitespace-nowrap">
+        <span className="w-1 h-1 rounded-full bg-zinc-500" />
+        OFFLINE
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-white bg-black/60 border border-amber-500/40 rounded-full backdrop-blur-md whitespace-nowrap">
+      <span className="w-1 h-1 rounded-full bg-amber-500" />
+      FULLY BOOKED
+    </span>
+  );
+}
