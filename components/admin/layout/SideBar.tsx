@@ -29,6 +29,13 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
   const pathname = usePathname();
 
+  // 💡 Smart Handler: Only dismiss the panel drawer on mobile devices (< 768px tailwind breakpoint)
+  const handleNavigationClick = () => {
+    if (window.innerWidth < 768) {
+      onClose();
+    }
+  };
+
   return (
     <>
       {/* MOBILE OVERLAY DIMMER */}
@@ -78,7 +85,12 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
           {navItems.map((item, index) => {
             const isActive = pathname === item.href;
             return (
-              <Link key={item.name} href={item.href} onClick={onClose} title={!isOpen ? item.name : undefined}>
+              <Link 
+                key={item.name} 
+                href={item.href} 
+                onClick={handleNavigationClick} // 💡 Replaced raw onClose with conditional window filter
+                title={!isOpen ? item.name : undefined}
+              >
                 <div
                   className={`flex items-center gap-3 py-3 rounded-xl transition-all duration-300 group animate-in slide-in-from-left-4 fade-in fill-mode-both ${
                     isOpen ? "px-4" : "justify-center px-0 h-11 w-11 mx-auto"

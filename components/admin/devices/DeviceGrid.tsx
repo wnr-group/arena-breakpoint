@@ -32,8 +32,9 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
         return (
           <Card
             key={device.id}
-            className="bg-[#121212] border-[#27272a] hover:border-[#FFC107]/50 hover:shadow-[0_0_20px_rgba(255,193,7,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden group animate-in zoom-in-95"
+            className="bg-[#121212] border-[#27272a] hover:border-[#FFC107]/50 hover:shadow-[0_0_20px_rgba(255,193,7,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden group relative animate-in zoom-in-95"
           >
+            {/* 1. MEDIA CONTAINER FRAME */}
             <div className="h-48 w-full bg-zinc-950 border-b border-[#27272a] flex items-center justify-center overflow-hidden relative">
               {device.image_url ? (
                 <img
@@ -52,7 +53,7 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
               </div>
             </div>
 
-            {/* 2. CARD CONTENT FRAME DESCRIPTION CONTAINER */}
+            {/* 2. CARD CONTENT DESCRIPTION PANEL */}
             <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
               <div>
                 <div className="flex items-baseline justify-between gap-2 mb-2">
@@ -64,7 +65,7 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
                   </div>
                   
                   {/* HOURLY PRICING NODE */}
-                  <div className="text-white font-black text-xl text-right flex-shrink-0">
+                  <div className="text-[#FFC107] font-black text-xl text-right flex-shrink-0">
                     ₹{device.hourly_rate ? Number(device.hourly_rate).toLocaleString('en-IN') : "0"}
                     <span className="text-[#a1a1aa] text-[10px] font-normal tracking-tight">/hr</span>
                   </div>
@@ -83,17 +84,17 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
               </div>
             </div>
 
-            {/* 3. PERMANENT BELOW CARD ACTIONS LAYOUT FRAME */}
-            <div className="px-4 py-3 bg-[#0e0e0e] border-t border-[#27272a]/50 flex justify-end gap-2.5 flex-shrink-0">
+            {/* 3. 💡 HOVER ACTION OVERLAY PANEL — Seamlessly slides out from bottom exclusively on card hover */}
+            <div className="mt-auto h-0 opacity-0 group-hover:h-14 group-hover:opacity-100 transition-all duration-300 ease-out bg-[#0e0e0e]/60 border-t border-[#27272a]/30 flex items-center justify-end gap-2 px-4 overflow-hidden w-full">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => onEdit(device)}
                 className="h-8 w-8 text-white bg-[#27272a] hover:bg-[#3f3f46] border border-zinc-700/60 transition-colors"
               >
-                <Pencil className="h-4 w-4" />
+                <Pencil className="h-3.5 w-3.5" />
               </Button>
-
+              
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
@@ -133,7 +134,6 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
     </div>
   );
 }
-
 
 function GridStatusBadge({ status, quantity }: { status: string; quantity: number }) {
   if (status === 'available') {
