@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   --background: #ffffff;
@@ -25,7 +25,6 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-
 /* Custom Global Dark Scrollbar Styles */
 @layer base {
   /* For Chrome, Safari, Edge, and Opera */
@@ -36,20 +35,20 @@ body {
 
   /* The background track area of the scrollbar slot */
   ::-webkit-scrollbar-track {
-    background: #0a0a0a; 
-    border-left: 1px solid #27272a; 
+    background: #0a0a0a;
+    border-left: 1px solid #27272a;
   }
 
   /* The actual draggable scrollbar handle/thumb */
   ::-webkit-scrollbar-thumb {
     background: #27272a;
-    border-radius: 9999px; 
+    border-radius: 9999px;
     border: 2px solid #0a0a0a;
   }
 
   /* Changes color subtly when an operator hovers over the track */
   ::-webkit-scrollbar-thumb:hover {
-    background: #3f3f46; 
+    background: #3f3f46;
   }
 
   /* Standard support properties for Firefox */

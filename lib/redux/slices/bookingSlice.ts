@@ -64,35 +64,44 @@ export const bookingSlice = createSlice({
   name: 'booking',
   initialState,
   reducers: {
-    setDevice: (state, action: PayloadAction<{
-      id: string
-      name: string
-      type: string
-      hourlyRate: number
-    }>) => {
+    setDevice: (
+      state,
+      action: PayloadAction<{
+        id: string
+        name: string
+        type: string
+        hourlyRate: number
+      }>
+    ) => {
       state.deviceId = action.payload.id
       state.deviceName = action.payload.name
       state.deviceType = action.payload.type
       state.hourlyRate = action.payload.hourlyRate
     },
 
-    setSlot: (state, action: PayloadAction<{
-      date: string
-      slot: string
-      startTime: string
-      endTime: string
-    }>) => {
+    setSlot: (
+      state,
+      action: PayloadAction<{
+        date: string
+        slot: string
+        startTime: string
+        endTime: string
+      }>
+    ) => {
       state.selectedDate = action.payload.date
       state.selectedSlot = action.payload.slot
       state.slotStartTime = action.payload.startTime
       state.slotEndTime = action.payload.endTime
     },
 
-    addAddon: (state, action: PayloadAction<{
-      id: string
-      name: string
-      price: number
-    }>) => {
+    addAddon: (
+      state,
+      action: PayloadAction<{
+        id: string
+        name: string
+        price: number
+      }>
+    ) => {
       const existing = state.addons.find(a => a.id === action.payload.id)
       if (existing) {
         existing.quantity += 1
@@ -112,12 +121,15 @@ export const bookingSlice = createSlice({
       }
     },
 
-    setPricing: (state, action: PayloadAction<{
-      subtotal: number
-      subscriptionDiscount: number
-      promoDiscount: number
-      total: number
-    }>) => {
+    setPricing: (
+      state,
+      action: PayloadAction<{
+        subtotal: number
+        subscriptionDiscount: number
+        promoDiscount: number
+        total: number
+      }>
+    ) => {
       state.subtotal = action.payload.subtotal
       state.subscriptionDiscount = action.payload.subscriptionDiscount
       state.promoDiscount = action.payload.promoDiscount
@@ -128,11 +140,14 @@ export const bookingSlice = createSlice({
       state.promoCode = action.payload
     },
 
-    setCustomerDetails: (state, action: PayloadAction<{
-      phone: string
-      name: string
-      email?: string
-    }>) => {
+    setCustomerDetails: (
+      state,
+      action: PayloadAction<{
+        phone: string
+        name: string
+        email?: string
+      }>
+    ) => {
       state.phone = action.payload.phone
       state.name = action.payload.name
       state.email = action.payload.email || null

@@ -1,8 +1,8 @@
-"use client";
+'use client'
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { MonitorPlay, Pencil, Trash2, Loader2, Cpu } from "lucide-react";
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { MonitorPlay, Pencil, Trash2, Loader2, Cpu } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,21 +13,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog'
 
 interface DeviceGridProps {
-  devices: any[];
-  onEdit: (device: any) => void;
-  onDelete: (id: string) => void;
-  isPending: boolean;
+  devices: any[]
+  onEdit: (device: any) => void
+  onDelete: (id: string) => void
+  isPending: boolean
 }
 
 export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {devices.map((device) => {
-        const totalQty = Number(device.quantity) || 1;
-        const statusClean = String(device.status || "").toLowerCase().trim();
+      {devices.map(device => {
+        const totalQty = Number(device.quantity) || 1
+        const statusClean = String(device.status || '')
+          .toLowerCase()
+          .trim()
 
         return (
           <Card
@@ -58,23 +60,30 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
               <div>
                 <div className="flex items-baseline justify-between gap-2 mb-2">
                   <div>
-                    <h3 className="font-black text-xl text-[#FFC107] uppercase tracking-wide truncate max-w-[130px]" title={device.station_number}>
+                    <h3
+                      className="font-black text-xl text-[#FFC107] uppercase tracking-wide truncate max-w-[130px]"
+                      title={device.station_number}
+                    >
                       {device.station_number}
                     </h3>
-                    <p className="text-xs text-[#a1a1aa] font-medium truncate max-w-[130px]">{device.type}</p>
+                    <p className="text-xs text-[#a1a1aa] font-medium truncate max-w-[130px]">
+                      {device.type}
+                    </p>
                   </div>
-                  
+
                   {/* HOURLY PRICING NODE */}
                   <div className="text-[#FFC107] font-black text-xl text-right flex-shrink-0">
-                    ₹{device.hourly_rate ? Number(device.hourly_rate).toLocaleString('en-IN') : "0"}
-                    <span className="text-[#a1a1aa] text-[10px] font-normal tracking-tight">/hr</span>
+                    ₹{device.hourly_rate ? Number(device.hourly_rate).toLocaleString('en-IN') : '0'}
+                    <span className="text-[#a1a1aa] text-[10px] font-normal tracking-tight">
+                      /hr
+                    </span>
                   </div>
                 </div>
 
                 {/* HARDWARE SPECIFICATIONS BLOCKS */}
                 <div
                   className="flex items-start gap-1.5 text-[11px] text-[#a1a1aa]/80 bg-[#161616] border border-[#27272a]/40 p-2 rounded-lg truncate mt-1"
-                  title={device.specs || "No specifications listed"}
+                  title={device.specs || 'No specifications listed'}
                 >
                   <Cpu className="h-3.5 w-3.5 text-zinc-600 flex-shrink-0" />
                   <span className="truncate">
@@ -94,7 +103,7 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
               >
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
-              
+
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
@@ -103,15 +112,23 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
                     disabled={isPending}
                     className="h-8 w-8 text-white bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 transition-colors"
                   >
-                    {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    {isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
                   </Button>
                 </AlertDialogTrigger>
 
                 <AlertDialogContent className="bg-[#121212] border border-[#27272a] text-white">
                   <AlertDialogHeader>
-                    <AlertDialogTitle className="text-xl font-bold">Remove Terminal Record?</AlertDialogTitle>
+                    <AlertDialogTitle className="text-xl font-bold">
+                      Remove Terminal Record?
+                    </AlertDialogTitle>
                     <AlertDialogDescription className="text-[#a1a1aa] text-sm">
-                      Are you sure you want to delete **Station {device.station_number}**? This action will remove the hardware machine data completely from your system inventory.
+                      Are you sure you want to delete **Station {device.station_number}**? This
+                      action will remove the hardware machine data completely from your system
+                      inventory.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter className="mt-4">
@@ -129,10 +146,10 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
               </AlertDialog>
             </div>
           </Card>
-        );
+        )
       })}
     </div>
-  );
+  )
 }
 
 function GridStatusBadge({ status, quantity }: { status: string; quantity: number }) {
@@ -142,7 +159,7 @@ function GridStatusBadge({ status, quantity }: { status: string; quantity: numbe
         <span className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
         {quantity} AVAILABLE
       </span>
-    );
+    )
   }
   if (status === 'maintenance') {
     return (
@@ -150,7 +167,7 @@ function GridStatusBadge({ status, quantity }: { status: string; quantity: numbe
         <span className="w-1 h-1 rounded-full bg-red-500" />
         MAINTENANCE
       </span>
-    );
+    )
   }
   if (status === 'inactive') {
     return (
@@ -158,12 +175,12 @@ function GridStatusBadge({ status, quantity }: { status: string; quantity: numbe
         <span className="w-1 h-1 rounded-full bg-zinc-500" />
         OFFLINE
       </span>
-    );
+    )
   }
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-white bg-black/60 border border-amber-500/40 rounded-full backdrop-blur-md whitespace-nowrap">
       <span className="w-1 h-1 rounded-full bg-amber-500" />
       FULLY BOOKED
     </span>
-  );
+  )
 }

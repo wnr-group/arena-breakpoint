@@ -10,7 +10,8 @@ export default function BookingPage() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Steps: Device Selection → Slot Selection → Add-ons → Pricing → OTP → Payment → Confirmation
+            Steps: Device Selection → Slot Selection → Add-ons → Pricing → OTP → Payment →
+            Confirmation
           </p>
         </CardContent>
       </Card>

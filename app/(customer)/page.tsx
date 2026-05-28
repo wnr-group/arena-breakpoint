@@ -24,9 +24,7 @@ export default function HomePage() {
         <Card>
           <CardHeader>
             <CardTitle>Quick Booking</CardTitle>
-            <CardDescription>
-              Book your slot in under 2 minutes
-            </CardDescription>
+            <CardDescription>Book your slot in under 2 minutes</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
@@ -38,9 +36,7 @@ export default function HomePage() {
         <Card>
           <CardHeader>
             <CardTitle>QR Code Entry</CardTitle>
-            <CardDescription>
-              Scan and play at the café
-            </CardDescription>
+            <CardDescription>Scan and play at the café</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
@@ -52,9 +48,7 @@ export default function HomePage() {
         <Card>
           <CardHeader>
             <CardTitle>Subscription Plans</CardTitle>
-            <CardDescription>
-              Save on every booking
-            </CardDescription>
+            <CardDescription>Save on every booking</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
@@ -66,9 +60,7 @@ export default function HomePage() {
         <Card>
           <CardHeader>
             <CardTitle>Retrieve Booking</CardTitle>
-            <CardDescription>
-              Lost your QR? No problem
-            </CardDescription>
+            <CardDescription>Lost your QR? No problem</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">

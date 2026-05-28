@@ -1,18 +1,18 @@
-"use client";
+'use client'
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, List, LayoutGrid } from "lucide-react";
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Search, List, LayoutGrid } from 'lucide-react'
 
 interface FilterProps {
-  searchQuery: string;
-  setSearchQuery: (val: string) => void;
-  typeTab: string;
-  setTypeTab: (val: string) => void;
-  statusFilter: string;
-  setStatusFilter: (val: string) => void;
-  viewMode: 'table' | 'grid';
-  setViewMode: (mode: 'table' | 'grid') => void;
+  searchQuery: string
+  setSearchQuery: (val: string) => void
+  typeTab: string
+  setTypeTab: (val: string) => void
+  statusFilter: string
+  setStatusFilter: (val: string) => void
+  viewMode: 'table' | 'grid'
+  setViewMode: (mode: 'table' | 'grid') => void
 }
 
 export function DeviceFilters({
@@ -29,17 +29,21 @@ export function DeviceFilters({
     <div className="flex flex-col gap-4 mt-2 animate-in slide-in-from-bottom-6 duration-700 delay-200 fill-mode-both">
       {/* Category Tabs */}
       <div className="flex items-center gap-6 border-b border-[#27272a] px-2">
-        {["All Devices", "PS5", "Standard Snooker" , "Medium Snooker" , "American Snooker"].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setTypeTab(tab)}
-            className={`pb-3 text-sm font-medium transition-all duration-300 ${
-              typeTab === tab ? "text-[#FFC107] border-b-2 border-[#FFC107]" : "text-[#a1a1aa] hover:text-white"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+        {['All Devices', 'PS5', 'Standard Snooker', 'Medium Snooker', 'American Snooker'].map(
+          tab => (
+            <button
+              key={tab}
+              onClick={() => setTypeTab(tab)}
+              className={`pb-3 text-sm font-medium transition-all duration-300 ${
+                typeTab === tab
+                  ? 'text-[#FFC107] border-b-2 border-[#FFC107]'
+                  : 'text-[#a1a1aa] hover:text-white'
+              }`}
+            >
+              {tab}
+            </button>
+          )
+        )}
       </div>
 
       {/* Toolbar Controls */}
@@ -48,7 +52,7 @@ export function DeviceFilters({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#a1a1aa]" />
           <Input
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search by station ID or platform..."
             className="bg-transparent border-none pl-9 text-sm text-white focus-visible:ring-0"
           />
@@ -59,14 +63,24 @@ export function DeviceFilters({
         {/* Dropdown Select Status */}
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={e => setStatusFilter(e.target.value)}
           className="bg-transparent text-[#a1a1aa] hover:text-white text-sm border-none focus:ring-0 cursor-pointer outline-none px-2"
         >
-          <option value="All" className="bg-[#121212]">All Statuses</option>
-          <option value="available" className="bg-[#121212]">Available</option>
-          <option value="occupied" className="bg-[#121212]">Occupied</option>
-          <option value="maintenance" className="bg-[#121212]">Maintenance</option>
-          <option value="inactive" className="bg-[#121212]">Inactive</option>
+          <option value="All" className="bg-[#121212]">
+            All Statuses
+          </option>
+          <option value="available" className="bg-[#121212]">
+            Available
+          </option>
+          <option value="occupied" className="bg-[#121212]">
+            Occupied
+          </option>
+          <option value="maintenance" className="bg-[#121212]">
+            Maintenance
+          </option>
+          <option value="inactive" className="bg-[#121212]">
+            Inactive
+          </option>
         </select>
 
         <div className="h-6 w-px bg-[#27272a]"></div>
@@ -74,9 +88,9 @@ export function DeviceFilters({
         <Button
           variant="ghost"
           onClick={() => {
-            setSearchQuery("");
-            setTypeTab("All Devices");
-            setStatusFilter("All");
+            setSearchQuery('')
+            setTypeTab('All Devices')
+            setStatusFilter('All')
           }}
           className="text-[#a1a1aa] text-sm hover:bg-[#1a1a1a]"
         >
@@ -102,5 +116,5 @@ export function DeviceFilters({
         </div>
       </div>
     </div>
-  );
+  )
 }

@@ -16,12 +16,12 @@ export async function getDevices() {
   if (data) {
     console.log(data)
   }
-    
+
   if (error) {
     console.error('Error fetching devices:', error.message)
     return []
   }
-  
+
   return data || []
 }
 
@@ -29,86 +29,83 @@ export async function getDevices() {
  * CREATE: Add a new device
  */
 export async function createDevice(formData: FormData) {
-  const type = formData.get('type') as string;
-  const station_number = formData.get('station_number') as string;
-  const status = formData.get('status') as string;
-  const specs = formData.get('specs') as string;
-  const image_url = formData.get('image_url') as string; 
-  const rawHourlyRate = formData.get('hourly_rate');
-  const rawQuantity = formData.get('quantity');
+  const type = formData.get('type') as string
+  const station_number = formData.get('station_number') as string
+  const status = formData.get('status') as string
+  const specs = formData.get('specs') as string
+  const image_url = formData.get('image_url') as string
+  const rawHourlyRate = formData.get('hourly_rate')
+  const rawQuantity = formData.get('quantity')
 
-  const { error } = await supabaseAdmin
-    .from('devices')
-    .insert([{ 
-      type, 
-      station_number, 
-      status, 
-      specs, 
+  const { error } = await supabaseAdmin.from('devices').insert([
+    {
+      type,
+      station_number,
+      status,
+      specs,
       image_url,
       hourly_rate: rawHourlyRate ? Number(rawHourlyRate) : 0,
-      quantity: rawQuantity ? Math.max(1, parseInt(String(rawQuantity), 10)) : 1 
-    }]);
+      quantity: rawQuantity ? Math.max(1, parseInt(String(rawQuantity), 10)) : 1,
+    },
+  ])
 
   if (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: error.message }
   }
 
   // Instantly refreshes the route cache to display new records seamlessly
-  revalidatePath('/admin/devices');
-  return { success: true };
+  revalidatePath('/admin/devices')
+  return { success: true }
 }
 
 /**
  * UPDATE: Modify an existing device's full parameters
  */
 export async function updateDevice(formData: FormData) {
-  const id = formData.get('id') as string;
-  const type = formData.get('type') as string;
-  const station_number = formData.get('station_number') as string;
-  const status = formData.get('status') as string;
-  const specs = formData.get('specs') as string;
-  const image_url = formData.get('image_url') as string;
-  const rawHourlyRate = formData.get('hourly_rate');
-  const rawQuantity = formData.get('quantity');
+  const id = formData.get('id') as string
+  const type = formData.get('type') as string
+  const station_number = formData.get('station_number') as string
+  const status = formData.get('status') as string
+  const specs = formData.get('specs') as string
+  const image_url = formData.get('image_url') as string
+  const rawHourlyRate = formData.get('hourly_rate')
+  const rawQuantity = formData.get('quantity')
 
   if (!id) {
-    return { success: false, error: "Missing required device identifier target." };
+    return { success: false, error: 'Missing required device identifier target.' }
   }
 
   const { error } = await supabaseAdmin
     .from('devices')
-    .update({ 
-      type, 
-      station_number, 
-      status, 
-      specs, 
+    .update({
+      type,
+      station_number,
+      status,
+      specs,
       image_url,
-      hourly_rate: rawHourlyRate ? Number(rawHourlyRate) : 0, 
-      quantity: rawQuantity ? Math.max(1, parseInt(String(rawQuantity), 10)) : 1
+      hourly_rate: rawHourlyRate ? Number(rawHourlyRate) : 0,
+      quantity: rawQuantity ? Math.max(1, parseInt(String(rawQuantity), 10)) : 1,
     })
-    .eq('id', id);
+    .eq('id', id)
 
   if (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: error.message }
   }
 
-  revalidatePath('/admin/devices');
-  return { success: true };
+  revalidatePath('/admin/devices')
+  return { success: true }
 }
 
 /**
  * DELETE: Remove a device completely
  */
 export async function deleteDevice(id: string) {
-  const { error } = await supabaseAdmin
-    .from('devices')
-    .delete()
-    .eq('id', id);
+  const { error } = await supabaseAdmin.from('devices').delete().eq('id', id)
 
   if (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: error.message }
   }
 
-  revalidatePath('/admin/devices');
-  return { success: true };
+  revalidatePath('/admin/devices')
+  return { success: true }
 }

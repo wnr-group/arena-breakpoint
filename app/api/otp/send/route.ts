@@ -9,10 +9,7 @@ export async function POST(request: NextRequest) {
     const { phone } = await request.json()
 
     if (!phone || !/^\d{10}$/.test(phone)) {
-      return NextResponse.json(
-        { error: 'Invalid phone number' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid phone number' }, { status: 400 })
     }
 
     // Rate limiting: max 3 OTP requests per phone per 5 minutes
@@ -32,21 +29,16 @@ export async function POST(request: NextRequest) {
     const expiryTime = new Date(Date.now() + expiryMinutes * 60 * 1000)
 
     // Store OTP in database
-    const { error: dbError } = await supabaseAdmin
-      .from('otps')
-      .insert({
-        phone,
-        otp,
-        expires_at: expiryTime.toISOString(),
-        attempts: 0,
-      })
+    const { error: dbError } = await supabaseAdmin.from('otps').insert({
+      phone,
+      otp,
+      expires_at: expiryTime.toISOString(),
+      attempts: 0,
+    })
 
     if (dbError) {
       console.error('Database error:', dbError)
-      return NextResponse.json(
-        { error: 'Failed to generate OTP' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Failed to generate OTP' }, { status: 500 })
     }
 
     // Send OTP via MSG91
@@ -60,9 +52,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('OTP send error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -1,15 +1,15 @@
-"use client";
+'use client'
 
-import { Input } from "@/components/ui/input";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Input } from '@/components/ui/input'
+import { Search, SlidersHorizontal } from 'lucide-react'
 
 interface FoodFiltersProps {
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  categoryTab: string;
-  setCategoryTab: (tab: string) => void;
-  statusFilter: string;
-  setStatusFilter: (status: string) => void;
+  searchQuery: string
+  setSearchQuery: (query: string) => void
+  categoryTab: string
+  setCategoryTab: (tab: string) => void
+  statusFilter: string
+  setStatusFilter: (status: string) => void
 }
 
 export function FoodFilters({
@@ -20,7 +20,7 @@ export function FoodFilters({
   statusFilter,
   setStatusFilter,
 }: FoodFiltersProps) {
-  const categories = ["All Menu", "Snacks", "Drinks", "Meals"];
+  const categories = ['All Menu', 'Snacks', 'Drinks', 'Meals']
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between bg-[#121212] border border-[#27272a]/60 p-4 rounded-xl">
@@ -30,23 +30,23 @@ export function FoodFilters({
           type="text"
           placeholder="Search orders or menu items..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={e => setSearchQuery(e.target.value)}
           className="pl-9 h-10 bg-[#0a0a0a] border-[#27272a] text-white placeholder:text-zinc-600 focus-visible:ring-[#FFC107]"
         />
       </div>
 
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-1 bg-[#0a0a0a] border border-[#27272a] p-1 rounded-lg">
-          {categories.map((cat) => (
+          {categories.map(cat => (
             <button
               key={cat}
               type="button"
               onClick={() => setCategoryTab(cat)}
               className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
-                categoryTab === cat ? "bg-[#FFC107] text-black" : "text-[#a1a1aa] hover:text-white"
+                categoryTab === cat ? 'bg-[#FFC107] text-black' : 'text-[#a1a1aa] hover:text-white'
               }`}
             >
-              {cat === "All Menu" ? "All" : cat}
+              {cat === 'All Menu' ? 'All' : cat}
             </button>
           ))}
         </div>
@@ -55,16 +55,24 @@ export function FoodFilters({
           <SlidersHorizontal className="h-3.5 w-3.5 text-zinc-500" />
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={e => setStatusFilter(e.target.value)}
             className="bg-transparent text-xs font-bold text-[#a1a1aa] outline-none cursor-pointer pr-2 h-full uppercase tracking-wider"
           >
-            <option value="All" className="bg-[#121212]">All Status</option>
-            <option value="Available" className="bg-[#121212]">Available</option>
-            <option value="Out_of_Stock" className="bg-[#121212]">Out of Stock</option>
-            <option value="Hidden" className="bg-[#121212]">Hidden</option>
+            <option value="All" className="bg-[#121212]">
+              All Status
+            </option>
+            <option value="Available" className="bg-[#121212]">
+              Available
+            </option>
+            <option value="Out_of_Stock" className="bg-[#121212]">
+              Out of Stock
+            </option>
+            <option value="Hidden" className="bg-[#121212]">
+              Hidden
+            </option>
           </select>
         </div>
       </div>
     </div>
-  );
+  )
 }

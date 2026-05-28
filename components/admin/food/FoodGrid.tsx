@@ -1,12 +1,12 @@
-"use client";
+'use client'
 
-import { useTransition } from "react";
-import { MenuItem } from "@/lib/types/food";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Pencil, Trash2, Loader2, Utensils } from "lucide-react";
-import { updateMenuItem } from "@/app/(admin)/admin/food/actions";
-import { toast } from "sonner";
+import { useTransition } from 'react'
+import { MenuItem } from '@/lib/types/food'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Pencil, Trash2, Loader2, Utensils } from 'lucide-react'
+import { updateMenuItem } from '@/app/(admin)/admin/food/actions'
+import { toast } from 'sonner'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,48 +17,50 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog'
 
 interface FoodGridProps {
-  devices: MenuItem[];
-  onEdit: (item: MenuItem) => void;
-  onDelete: (id: string) => void;
-  isPending: boolean;
-  onRefreshData?: () => Promise<void> | void; 
+  devices: MenuItem[]
+  onEdit: (item: MenuItem) => void
+  onDelete: (id: string) => void
+  isPending: boolean
+  onRefreshData?: () => Promise<void> | void
 }
 
 export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }: FoodGridProps) {
-  const [, startToggleTransition] = useTransition();
+  const [, startToggleTransition] = useTransition()
 
   const handleToggleStatus = (item: MenuItem) => {
     startToggleTransition(async () => {
-      const targetNewStatus = item.status === "available" ? "out_of_stock" : "available";
-      
-      const updatePayload = new FormData();
-      updatePayload.set("id", item.id);
-      updatePayload.set("name", item.name);
-      updatePayload.set("category", item.category);
-      updatePayload.set("price", String(item.price));
-      updatePayload.set("quantity", String(item.quantity));
-      updatePayload.set("status", targetNewStatus);
-      updatePayload.set("description", item.description || "");
-      updatePayload.set("image_url", item.image_url || "");
+      const targetNewStatus = item.status === 'available' ? 'out_of_stock' : 'available'
 
-      const result = await updateMenuItem(updatePayload);
+      const updatePayload = new FormData()
+      updatePayload.set('id', item.id)
+      updatePayload.set('name', item.name)
+      updatePayload.set('category', item.category)
+      updatePayload.set('price', String(item.price))
+      updatePayload.set('quantity', String(item.quantity))
+      updatePayload.set('status', targetNewStatus)
+      updatePayload.set('description', item.description || '')
+      updatePayload.set('image_url', item.image_url || '')
+
+      const result = await updateMenuItem(updatePayload)
       if (result.success) {
-        toast.success(`'${item.name}' Marked ${targetNewStatus === "available" ? "Available" : "Out of Stock"}`);
-        if (onRefreshData) await onRefreshData();
+        toast.success(
+          `'${item.name}' Marked ${targetNewStatus === 'available' ? 'Available' : 'Out of Stock'}`
+        )
+        if (onRefreshData) await onRefreshData()
       } else {
-        toast.error("Failed to alter availability status state");
+        toast.error('Failed to alter availability status state')
       }
-    });
-  };
+    })
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {devices.map((item) => {
-        const totalQty = Number(item.quantity) || 0;
-        const isCurrentlyAvailable = item.status === "available";
+      {devices.map(item => {
+        const totalQty = Number(item.quantity) || 0
+        const isCurrentlyAvailable = item.status === 'available'
 
         return (
           <Card
@@ -103,40 +105,46 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
               <div className="space-y-2.5">
                 {/* 💡 FIXED: Split title and status into a flexible row wrapper without max-width caps or truncation cuts */}
                 <div className="flex items-start justify-between gap-4">
-                  <h3 className="font-black text-base text-white group-hover:text-[#FFC107] transition-colors leading-snug break-words flex-1" title={item.name}>
+                  <h3
+                    className="font-black text-base text-white group-hover:text-[#FFC107] transition-colors leading-snug break-words flex-1"
+                    title={item.name}
+                  >
                     {item.name}
                   </h3>
-                  
-                  <span className={`text-[10px] font-extrabold uppercase tracking-wide transition-colors mt-0.5 flex-shrink-0 ${
-                    isCurrentlyAvailable ? "text-[#FFC107]" : "text-zinc-600"
-                  }`}>
-                    {isCurrentlyAvailable ? "Available" : "Not Available"}
+
+                  <span
+                    className={`text-[10px] font-extrabold uppercase tracking-wide transition-colors mt-0.5 flex-shrink-0 ${
+                      isCurrentlyAvailable ? 'text-[#FFC107]' : 'text-zinc-600'
+                    }`}
+                  >
+                    {isCurrentlyAvailable ? 'Available' : 'Not Available'}
                   </span>
                 </div>
 
                 {/* Pricing + Custom Toggle Switch Row */}
                 <div className="flex items-center justify-between">
                   <div className="text-[#FFC107] font-black text-xl">
-                    ₹{item.price ? Number(item.price).toLocaleString('en-IN') : "0"}
+                    ₹{item.price ? Number(item.price).toLocaleString('en-IN') : '0'}
                   </div>
 
                   <button
                     type="button"
                     onClick={() => handleToggleStatus(item)}
                     className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out outline-none ${
-                      isCurrentlyAvailable ? "bg-[#FFC107]" : "bg-zinc-800"
+                      isCurrentlyAvailable ? 'bg-[#FFC107]' : 'bg-zinc-800'
                     }`}
                   >
                     <span
                       className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-300 ease-in-out ${
-                        isCurrentlyAvailable ? "translate-x-5" : "translate-x-0"
+                        isCurrentlyAvailable ? 'translate-x-5' : 'translate-x-0'
                       }`}
                     />
                   </button>
                 </div>
 
                 <p className="text-[11px] text-[#a1a1aa]/70 line-clamp-2 h-8 leading-relaxed pt-0.5">
-                  {item.description || "Premium operational kitchen item configuration with zero details logged."}
+                  {item.description ||
+                    'Premium operational kitchen item configuration with zero details logged.'}
                 </p>
               </div>
             </div>
@@ -160,20 +168,32 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
                     disabled={isPending}
                     className="h-8 w-8 text-white bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 transition-colors"
                   >
-                    {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                    {isPending ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
                   </Button>
                 </AlertDialogTrigger>
 
                 <AlertDialogContent className="bg-[#121212] border border-[#27272a] text-white">
                   <AlertDialogHeader>
-                    <AlertDialogTitle className="text-xl font-bold">Remove Menu Item Record?</AlertDialogTitle>
+                    <AlertDialogTitle className="text-xl font-bold">
+                      Remove Menu Item Record?
+                    </AlertDialogTitle>
                     <AlertDialogDescription className="text-[#a1a1aa] text-sm">
-                      Are you sure you want to delete **{item.name}**? This drops the asset parameters completely from your database configuration mapping.
+                      Are you sure you want to delete **{item.name}**? This drops the asset
+                      parameters completely from your database configuration mapping.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter className="mt-4">
-                    <AlertDialogCancel className="bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800">Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => onDelete(item.id)} className="bg-[#FFC107] text-black hover:bg-[#FFC107]/90 font-semibold">
+                    <AlertDialogCancel className="bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800">
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => onDelete(item.id)}
+                      className="bg-[#FFC107] text-black hover:bg-[#FFC107]/90 font-semibold"
+                    >
                       Confirm Delete
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -181,8 +201,8 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
               </AlertDialog>
             </div>
           </Card>
-        );
+        )
       })}
     </div>
-  );
+  )
 }
