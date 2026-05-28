@@ -73,3 +73,40 @@ FOR UPDATE
 TO anon, authenticated
 USING (bucket_id = 'device-images')
 WITH CHECK (bucket_id = 'device-images');
+
+
+-- 2. CREATE CLIENT BOOKINGS ENGINE 
+CREATE TABLE public.bookings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  device_id UUID REFERENCES public.devices(id) ON DELETE SET NULL,
+  device_name TEXT NOT NULL,
+  device_type TEXT NOT NULL CHECK (device_type IN ('PS5', 'Standard Snooker', 'Medium Snooker', 'American Snooker')),
+  hourly_rate NUMERIC(10, 2) NOT NULL,
+  selected_date DATE NOT NULL,
+  selected_slot TEXT NOT NULL,
+  slot_start_time TEXT NOT NULL,
+  slot_end_time TEXT NOT NULL,
+  addons JSONB DEFAULT '[]'::jsonb NOT NULL,
+  subtotal NUMERIC(10, 2) NOT NULL,
+  subscription_discount NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
+  promo_discount NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
+  promo_code TEXT,
+  total NUMERIC(10, 2) NOT NULL,
+  phone TEXT,
+  name TEXT,
+  email TEXT,
+  status TEXT DEFAULT 'soft_locked' NOT NULL CHECK (status IN ('soft_locked', 'confirmed', 'cancelled', 'completed')),
+  slot_lock_expiry BIGINT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- 4. SECURITY INTERFACES ENABLEMENT (RLS)
+ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public select for bookings" ON public.bookings FOR SELECT USING (true);
+CREATE POLICY "Allow anonymous inserts for checkout funnel" ON public.bookings FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow updates during reservation adjustments" ON public.bookings FOR UPDATE USING (true);
+
+-- 6. INDEX LOOPS FOR ATOMIC LOCK SCANS
+CREATE INDEX IF NOT EXISTS idx_active_slots_lookup ON public.bookings (selected_date, selected_slot, status) WHERE status IN ('soft_locked', 'confirmed');

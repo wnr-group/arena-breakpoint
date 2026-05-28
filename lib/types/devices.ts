@@ -12,3 +12,4 @@ export interface Device {
   created_at: string;
   updated_at: string;
 }
+
