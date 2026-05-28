@@ -1,0 +1,106 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, List, LayoutGrid } from "lucide-react";
+
+interface FilterProps {
+  searchQuery: string;
+  setSearchQuery: (val: string) => void;
+  typeTab: string;
+  setTypeTab: (val: string) => void;
+  statusFilter: string;
+  setStatusFilter: (val: string) => void;
+  viewMode: 'table' | 'grid';
+  setViewMode: (mode: 'table' | 'grid') => void;
+}
+
+export function DeviceFilters({
+  searchQuery,
+  setSearchQuery,
+  typeTab,
+  setTypeTab,
+  statusFilter,
+  setStatusFilter,
+  viewMode,
+  setViewMode,
+}: FilterProps) {
+  return (
+    <div className="flex flex-col gap-4 mt-2 animate-in slide-in-from-bottom-6 duration-700 delay-200 fill-mode-both">
+      {/* Category Tabs */}
+      <div className="flex items-center gap-6 border-b border-[#27272a] px-2">
+        {["All Devices", "PS5", "Standard Snooker" , "Medium Snooker" , "American Snooker"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setTypeTab(tab)}
+            className={`pb-3 text-sm font-medium transition-all duration-300 ${
+              typeTab === tab ? "text-[#FFC107] border-b-2 border-[#FFC107]" : "text-[#a1a1aa] hover:text-white"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* Toolbar Controls */}
+      <div className="flex flex-wrap items-center gap-3 bg-[#121212] border border-[#27272a] rounded-xl p-2 transition-all duration-500 hover:border-[#3f3f46]">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#a1a1aa]" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by station ID or platform..."
+            className="bg-transparent border-none pl-9 text-sm text-white focus-visible:ring-0"
+          />
+        </div>
+
+        <div className="hidden md:block h-6 w-px bg-[#27272a]"></div>
+
+        {/* Dropdown Select Status */}
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="bg-transparent text-[#a1a1aa] hover:text-white text-sm border-none focus:ring-0 cursor-pointer outline-none px-2"
+        >
+          <option value="All" className="bg-[#121212]">All Statuses</option>
+          <option value="available" className="bg-[#121212]">Available</option>
+          <option value="occupied" className="bg-[#121212]">Occupied</option>
+          <option value="maintenance" className="bg-[#121212]">Maintenance</option>
+          <option value="inactive" className="bg-[#121212]">Inactive</option>
+        </select>
+
+        <div className="h-6 w-px bg-[#27272a]"></div>
+
+        <Button
+          variant="ghost"
+          onClick={() => {
+            setSearchQuery("");
+            setTypeTab("All Devices");
+            setStatusFilter("All");
+          }}
+          className="text-[#a1a1aa] text-sm hover:bg-[#1a1a1a]"
+        >
+          Reset
+        </Button>
+
+        <div className="h-6 w-px bg-[#27272a]"></div>
+
+        {/* Layout Toggles */}
+        <div className="flex bg-[#0a0a0a] rounded-lg p-1 border border-[#27272a]">
+          <button
+            onClick={() => setViewMode('table')}
+            className={`p-1.5 rounded-md transition-all ${viewMode === 'table' ? 'bg-[#27272a] text-white' : 'text-[#a1a1aa]'}`}
+          >
+            <List className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-[#27272a] text-white' : 'text-[#a1a1aa]'}`}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
