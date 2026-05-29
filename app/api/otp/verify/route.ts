@@ -7,10 +7,7 @@ export async function POST(request: NextRequest) {
     const { phone, otp } = await request.json()
 
     if (!phone || !otp) {
-      return NextResponse.json(
-        { error: 'Phone and OTP are required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Phone and OTP are required' }, { status: 400 })
     }
 
     // Fetch OTP record
@@ -24,27 +21,18 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (fetchError || !otpRecord) {
-      return NextResponse.json(
-        { error: 'Invalid OTP' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid OTP' }, { status: 400 })
     }
 
     // Check expiry
     if (new Date(otpRecord.expires_at) < new Date()) {
-      return NextResponse.json(
-        { error: 'OTP expired' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'OTP expired' }, { status: 400 })
     }
 
     // Check attempts
     const maxAttempts = parseInt(process.env.OTP_MAX_ATTEMPTS || '3')
     if (otpRecord.attempts >= maxAttempts) {
-      return NextResponse.json(
-        { error: 'Too many attempts. Request new OTP.' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Too many attempts. Request new OTP.' }, { status: 400 })
     }
 
     // OTP is valid, create session
@@ -92,9 +80,6 @@ export async function POST(request: NextRequest) {
     return response
   } catch (error) {
     console.error('OTP verify error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -1,49 +1,44 @@
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+'use client'
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+import { useState } from 'react'
+import { Sidebar } from '@/components/admin/layout/SideBar'
+import { Topbar } from '@/components/admin/layout/TopBar'
+import { Toaster } from 'sonner'
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+
   return (
-    <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <aside className="w-64 border-r bg-muted/40">
-        <div className="flex h-16 items-center border-b px-6">
-          <h2 className="text-lg font-semibold">Admin Panel</h2>
-        </div>
-        <nav className="space-y-1 p-4">
-          <Button asChild variant="ghost" className="w-full justify-start">
-            <Link href="/admin/dashboard">Dashboard</Link>
-          </Button>
-          <Button asChild variant="ghost" className="w-full justify-start">
-            <Link href="/admin/devices">Devices</Link>
-          </Button>
-          <Button asChild variant="ghost" className="w-full justify-start">
-            <Link href="/admin/bookings">Bookings</Link>
-          </Button>
-          <Button asChild variant="ghost" className="w-full justify-start">
-            <Link href="/admin/subscriptions">Subscriptions</Link>
-          </Button>
-          <Button asChild variant="ghost" className="w-full justify-start">
-            <Link href="/admin/promo-codes">Promo Codes</Link>
-          </Button>
-          <Button asChild variant="ghost" className="w-full justify-start">
-            <Link href="/admin/qr-scanner">QR Scanner</Link>
-          </Button>
-        </nav>
-      </aside>
+    <div className="flex h-screen bg-[#0a0a0a] overflow-hidden font-sans">
+      <Toaster
+        theme="dark"
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: '#121212',
+            color: '#ffffff',
+            border: '1px solid #27272a',
+          },
+        }}
+      />
 
-      {/* Main content */}
-      <div className="flex-1">
-        <header className="flex h-16 items-center border-b px-6">
-          <div className="flex flex-1 items-center justify-between">
-            <h1 className="text-2xl font-bold">Break Point Arena</h1>
-            <Button variant="outline">Logout</Button>
-          </div>
-        </header>
-        <main className="p-6">{children}</main>
+      {/* 1. Left Sidebar (Dynamic Width Control) */}
+      <Sidebar
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        onClose={() => setSidebarOpen(false)}
+      />
+
+      {/* 2. Main Content Area */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        {/* Top Navigation - Receives toggle trigger hook */}
+        <Topbar
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          onOpenSidebar={() => setSidebarOpen(true)}
+        />
+
+        {/* Page Content */}
+        <main className="flex-1 overflow-y-auto bg-[#0a0a0a]">{children}</main>
       </div>
     </div>
   )
