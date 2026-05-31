@@ -41,7 +41,7 @@ export default function SubscriptionPage() {
   const loadPlans = async () => {
     setIsLoading(true)
     try {
-      const data = await getSubscriptionPlans()
+      const {data} = await getSubscriptionPlans()
       setPlans(data)
     } catch (error: any) {
       toast.error('Failed to load plans', { description: error.message })

@@ -4,13 +4,26 @@ import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase/server'
 
 export async function getSubscriptionPlans() {
-  const { data, error } = await supabaseAdmin
-    .from('subscription_plans')
-    .select('*')
-    .order('created_at', { ascending: false })
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('subscription_plans')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-  if (error) throw new Error(error.message)
-  return data || []
+    if (error) throw new Error(error.message)
+
+    return {
+      success: true,
+      data: data || [],
+      mesaage:"Subscription Plan fetch successfully"
+    }
+  } catch (error: any) {
+    return {
+      success: false,
+      data: null,
+      error: error.message || 'Failed to fetch plans'
+    }
+  }
 }
 
 export async function createSubscriptionPlan(formData: FormData) {
