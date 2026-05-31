@@ -1,8 +1,10 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { CheckCircle2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase/client';
 
 // The DB Interface
 interface SubscriptionPlanDB {
@@ -50,6 +52,30 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
         }
       })
   }, [initialPlans])
+
+  // SUPABASE REALTIME CHANGES
+  useEffect(() => {
+    
+    // Subscribe to any changes on the subscription_plans table
+    const channel = supabase
+      .channel('public:subscription_plans')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen for INSERT, UPDATE, and DELETE
+          schema: 'public',
+          table: 'subscription_plans',
+        },
+        (payload) => {
+          console.log('Database changed! Fetching fresh data...', payload)
+          router.refresh()
+        }
+      )
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [router])
 
   const defaultPlanId = plans.find(p => p.isPopular)?.id || plans[0]?.id || ''
   const [activeCard, setActiveCard] = useState<number | string>(defaultPlanId)
