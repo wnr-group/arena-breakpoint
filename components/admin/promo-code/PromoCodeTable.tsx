@@ -3,19 +3,32 @@
 import { PromoCodeRow } from "@/lib/types/promo-code";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2, Tag } from "lucide-react";
 
 interface PromoCodeTableProps {
   promos: PromoCodeRow[];
   onEdit: (row: PromoCodeRow) => void;
   onDelete: (id: number) => void;
+  onAdd?: () => void;
 }
 
-export function PromoCodeTable({ promos, onEdit, onDelete }: PromoCodeTableProps) {
+export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTableProps) {
   if (promos.length === 0) {
     return (
-      <div className="p-12 text-center text-xs font-medium text-zinc-600 border border-zinc-900 rounded-xl bg-[#111]">
-        No promo campaigns deployed to database records.
+      <div className="p-12 text-center border border-zinc-900 rounded-xl bg-[#111] space-y-4">
+        <Tag className="h-12 w-12 text-zinc-700 mx-auto" />
+        <div>
+          <h3 className="text-sm font-bold text-zinc-500 mb-1">No Promo Codes Yet</h3>
+          <p className="text-xs text-zinc-600">Create your first promotional campaign to offer discounts.</p>
+        </div>
+        {onAdd && (
+          <Button
+            onClick={onAdd}
+            className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black uppercase text-xs"
+          >
+            Create First Promo Code
+          </Button>
+        )}
       </div>
     );
   }
@@ -42,10 +55,12 @@ export function PromoCodeTable({ promos, onEdit, onDelete }: PromoCodeTableProps
               <td className="p-4 font-black text-[#FFC107] tracking-wide uppercase truncate">{row.code}</td>
               <td className="p-4 text-zinc-400 truncate">{row.description || "—"}</td>
               <td className="p-4 text-white font-bold whitespace-nowrap">
-                {row.discount_type === "percentage" ? `${parseInt(row.discount_value as any, 10)}% Off` : `₹${parseInt(row.discount_value as any, 10)}`}
+                {row.discount_type === "percentage" ? `${Math.round(row.discount_value)}% Off` : `₹${Math.round(row.discount_value)}`}
               </td>
               <td className="p-4 text-zinc-500 font-mono whitespace-nowrap">
-                {row.valid_from} <span className="text-zinc-700 mx-0.5">to</span> {row.valid_to}
+                {new Date(row.valid_from).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                <span className="text-zinc-700 mx-0.5"> to </span>
+                {new Date(row.valid_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
               </td>
               <td className="p-4 whitespace-nowrap">
                 {row.is_active ? (

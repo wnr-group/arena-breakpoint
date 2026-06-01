@@ -5,6 +5,6 @@ export interface CustomerRow {
   email: string | null;
   created_at: string;
   subscription_name: string | null;
-  subscription_status: "active" | "expired" | "cancelled" | null;
+  subscription_status: "active" | "expired" | null;
   expiry_date: string | null;
 }

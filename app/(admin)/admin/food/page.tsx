@@ -26,8 +26,10 @@ export default function FoodPage() {
   const fetchFreshItems = async () => {
     setIsLoadingData(true);
     try {
-      const data = await getMenuItems();
-      setItemsArray(data as MenuItem[] || []);
+      const result = await getMenuItems();
+      if (result.success) {
+        setItemsArray(result.menuItems as MenuItem[] || []);
+      }
     } catch (err) {
       console.error(err);
     } finally {

@@ -56,7 +56,7 @@ export async function validateMenuItems(
     const insufficientStock: string[] = [];
 
     items.forEach((orderItem) => {
-      const menuItem = data?.find((item) => item.id === orderItem.menu_item_id);
+      const menuItem = data?.find((item: any) => item.id === orderItem.menu_item_id);
 
       if (!menuItem) {
         unavailableItems.push(orderItem.menu_item_id);
@@ -281,7 +281,11 @@ export async function createStandaloneFoodOrder(
   }
 }
 
-export async function getMenuCategories() {
+export async function getMenuCategories(): Promise<{
+  success: boolean;
+  categories: string[];
+  error?: string;
+}> {
   try {
     const { data, error } = await supabaseAdmin
       .from("menu_items")
@@ -291,8 +295,8 @@ export async function getMenuCategories() {
     if (error) throw error;
 
     const categories = Array.from(
-      new Set(data?.map((item) => item.category) || [])
-    ).sort();
+      new Set(data?.map((item: any) => item.category) || [])
+    ).sort() as string[];
 
     return { success: true, categories };
   } catch (err: any) {

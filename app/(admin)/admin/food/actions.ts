@@ -4,13 +4,25 @@ import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 export async function getMenuItems() {
-  const { data, error } = await supabaseAdmin
-    .from("menu_items")
-    .select("*")
-    .order("created_at", { ascending: false });
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("menu_items")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  if (error) throw new Error(error.message);
-  return data || [];
+    if (error) throw error;
+
+    return {
+      success: true,
+      menuItems: data || []
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err.message,
+      menuItems: []
+    };
+  }
 }
 
 export async function createMenuItem(formData: FormData) {

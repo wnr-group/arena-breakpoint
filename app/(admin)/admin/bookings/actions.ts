@@ -38,7 +38,11 @@ export async function getAllBookings(filters?: BookingFilters) {
           device_station_number,
           duration_hours,
           hourly_rate,
-          slot_total
+          slot_total,
+          player_count,
+          included_players,
+          extra_player_charge,
+          extra_players_total
         ),
         booking_food_items(
           id,
@@ -98,6 +102,10 @@ export async function getBookingDetails(bookingId: string) {
           duration_hours,
           hourly_rate,
           slot_total,
+          player_count,
+          included_players,
+          extra_player_charge,
+          extra_players_total,
           devices(
             id,
             station_number,
@@ -247,12 +255,12 @@ export async function getBookingStats() {
     if (revenueError) throw revenueError;
 
     const todayRevenue = (todayBookings || []).reduce(
-      (sum, b) => sum + Number(b.total_amount || 0),
+      (sum: number, b: any) => sum + Number(b.total_amount || 0),
       0
     );
 
     // Group by status
-    const grouped = (statusCounts || []).reduce((acc: any, item) => {
+    const grouped = (statusCounts || []).reduce((acc: any, item: any) => {
       acc[item.status] = (acc[item.status] || 0) + 1;
       return acc;
     }, {});
@@ -333,6 +341,158 @@ export async function addFoodToBooking(
     return { success: true, foodItems, newTotal };
   } catch (err: any) {
     console.error("Add food to booking error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function createWalkInBooking(payload: {
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string | null;
+  deviceTypeId: string;
+  deviceTypeName: string;
+  selectedDate: string;
+  selectedSlot: string;
+  slotStartTime: string;
+  slotEndTime: string;
+  hourlyRate: number;
+  playerCount: number;
+  includedPlayers: number;
+  extraPlayerCharge: number;
+  subtotal: number;
+  total: number;
+}) {
+  try {
+    // Convert time format from "10:00 AM" to "10:00:00"
+    const formatTime = (timeStr: string) => {
+      const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (!match) return timeStr;
+
+      let [, hours, minutes, period] = match;
+      let hour = parseInt(hours);
+
+      if (period.toUpperCase() === "PM" && hour !== 12) hour += 12;
+      if (period.toUpperCase() === "AM" && hour === 12) hour = 0;
+
+      return `${hour.toString().padStart(2, '0')}:${minutes}:00`;
+    };
+
+    const startTime = formatTime(payload.slotStartTime);
+    const endTime = formatTime(payload.slotEndTime);
+
+    // Step 1: Get or create customer
+    const { data: customerId, error: customerError } = await supabaseAdmin
+      .rpc("get_or_create_customer", {
+        p_phone: payload.customerPhone,
+        p_name: payload.customerName,
+        p_email: payload.customerEmail || null
+      });
+
+    if (customerError) throw customerError;
+
+    // Step 2: Find available device of this type
+    const { data: devices, error: devicesError } = await supabaseAdmin
+      .from("devices")
+      .select("id, station_number")
+      .eq("device_type_id", payload.deviceTypeId)
+      .eq("status", "available");
+
+    if (devicesError || !devices || devices.length === 0) {
+      return { success: false, error: "No devices available" };
+    }
+
+    // Get all bookings for these devices at this time slot
+    const { data: bookedDevices, error: bookingsError } = await supabaseAdmin
+      .from("booking_device_slots")
+      .select(`
+        device_id,
+        bookings!inner(status, lock_expires_at)
+      `)
+      .in("device_id", devices.map((d: any) => d.id))
+      .eq("slot_date", payload.selectedDate)
+      .eq("slot_start_time", startTime)
+      .in("bookings.status", ["locked", "confirmed", "checked_in"]);
+
+    if (bookingsError) throw bookingsError;
+
+    const rightNow = new Date().toISOString();
+
+    // Filter out expired locks
+    const activelyBookedDeviceIds = (bookedDevices || [])
+      .filter((booking: any) => {
+        const bookingRecord = booking.bookings;
+        if (bookingRecord.status === "locked" && bookingRecord.lock_expires_at) {
+          return new Date(bookingRecord.lock_expires_at) > new Date(rightNow);
+        }
+        return true;
+      })
+      .map((booking: any) => booking.device_id);
+
+    // Find first available device
+    const availableDevice = devices.find(
+      (device: any) => !activelyBookedDeviceIds.includes(device.id)
+    );
+
+    if (!availableDevice) {
+      return { success: false, error: "No devices available for this time slot" };
+    }
+
+    // Step 3: Generate booking number
+    const { data: bookingNumber, error: bookingNumberError } = await supabaseAdmin
+      .rpc("generate_booking_number");
+
+    if (bookingNumberError) throw bookingNumberError;
+
+    // Step 4: Create booking
+    const { data: booking, error: bookingError } = await supabaseAdmin
+      .from("bookings")
+      .insert({
+        booking_number: bookingNumber,
+        customer_id: customerId,
+        customer_name: payload.customerName,
+        customer_phone: payload.customerPhone,
+        customer_email: payload.customerEmail,
+        device_subtotal: payload.total,
+        food_subtotal: 0,
+        total_amount: payload.total,
+        status: "confirmed", // Walk-in bookings are immediately confirmed
+        payment_status: "pending",
+        booking_source: "walk_in",
+        lock_expires_at: null
+      })
+      .select()
+      .single();
+
+    if (bookingError) throw bookingError;
+
+    // Step 5: Create device slot
+    const extraPlayersCount = Math.max(0, payload.playerCount - payload.includedPlayers);
+    const extraPlayersTotal = extraPlayersCount * payload.extraPlayerCharge;
+
+    const { error: slotError } = await supabaseAdmin
+      .from("booking_device_slots")
+      .insert({
+        booking_id: booking.id,
+        device_id: availableDevice.id,
+        device_type: payload.deviceTypeName,
+        device_station_number: availableDevice.station_number,
+        slot_date: payload.selectedDate,
+        slot_start_time: startTime,
+        slot_end_time: endTime,
+        duration_hours: 1,
+        hourly_rate: payload.hourlyRate,
+        slot_total: payload.total,
+        player_count: payload.playerCount,
+        included_players: payload.includedPlayers,
+        extra_player_charge: payload.extraPlayerCharge,
+        extra_players_total: extraPlayersTotal
+      });
+
+    if (slotError) throw slotError;
+
+    return { success: true, bookingId: booking.id, bookingNumber };
+  } catch (err: any) {
+    console.error("Create walk-in booking error:", err);
     return { success: false, error: err.message };
   }
 }

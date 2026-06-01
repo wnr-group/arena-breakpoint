@@ -50,7 +50,7 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
       discount_type: discountType,
       discount_value: parseFloat(discountValue),
       valid_from: format(dateFrom, "yyyy-MM-dd"),
-      valid_to: format(dateTo, "yyyy-MM-dd"),
+      valid_until: format(dateTo, "yyyy-MM-dd"),
       is_active: isActive,
     };
 

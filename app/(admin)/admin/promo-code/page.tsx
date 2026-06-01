@@ -5,6 +5,7 @@ import { getLivePromoListAction, executePromoDeletionAction } from "./actions";
 import { PromoCodeTable } from "@/components/admin/promo-code/PromoCodeTable";
 import { AddPromoCodeModal } from "@/components/admin/promo-code/AddPromoCodeModal";
 import { EditPromoCodeModal } from "@/components/admin/promo-code/EditPromoCodeModal";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PromoCodeRow } from "@/lib/types/promo-code";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plus } from "lucide-react";
@@ -13,10 +14,13 @@ import { toast } from "sonner";
 export default function AdminPromoCodeDashboard() {
   const [promos, setPromos] = useState<PromoCodeRow[]>([]);
   const [loading, setLoading] = useState(true);
-  
+  const [error, setError] = useState<string | null>(null);
+
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [selectedPromo, setSelectedPromo] = useState<PromoCodeRow | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   useEffect(() => {
     loadPromoInventoryGrid();
@@ -24,9 +28,14 @@ export default function AdminPromoCodeDashboard() {
 
   async function loadPromoInventoryGrid() {
     setLoading(true);
+    setError(null);
     const res = await getLivePromoListAction();
-    if (res.error) toast.error(res.error);
-    else setPromos(res.data as PromoCodeRow[]);
+    if (res.error) {
+      toast.error(res.error);
+      setError(res.error);
+    } else {
+      setPromos(res.data as PromoCodeRow[]);
+    }
     setLoading(false);
   }
 
@@ -35,15 +44,22 @@ export default function AdminPromoCodeDashboard() {
     setIsEditOpen(true);
   };
 
-  const handleTriggerDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to permanently delete this promo code record?")) return;
-    const res = await executePromoDeletionAction(id);
+  const handleTriggerDelete = (id: number) => {
+    setDeleteId(id);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return;
+
+    const res = await executePromoDeletionAction(deleteId);
     if (res.success) {
-      toast.success("Coupon dropped successfully.");
+      toast.success("Promo code deleted successfully.");
       loadPromoInventoryGrid();
     } else {
       toast.error(res.error);
     }
+    setDeleteId(null);
   };
 
   return (
@@ -61,12 +77,29 @@ export default function AdminPromoCodeDashboard() {
         </Button>
       </div>
 
-      {loading ? (
+      {error ? (
+        <div className="h-48 w-full flex flex-col items-center justify-center gap-4 border border-red-900/20 rounded-xl bg-red-950/10">
+          <div className="text-red-400 text-sm font-bold">Failed to load promo codes</div>
+          <div className="text-xs text-zinc-500">{error}</div>
+          <Button
+            onClick={loadPromoInventoryGrid}
+            variant="outline"
+            className="border-red-500/30 text-red-400 hover:bg-red-950/20"
+          >
+            Try Again
+          </Button>
+        </div>
+      ) : loading ? (
         <div className="h-48 w-full flex items-center justify-center border border-zinc-900 rounded-xl bg-[#111]">
           <Loader2 className="h-6 w-6 text-[#FFC107] animate-spin" />
         </div>
       ) : (
-        <PromoCodeTable promos={promos} onEdit={handleOpenEditModal} onDelete={handleTriggerDelete} />
+        <PromoCodeTable
+          promos={promos}
+          onEdit={handleOpenEditModal}
+          onDelete={handleTriggerDelete}
+          onAdd={() => setIsAddOpen(true)}
+        />
       )}
 
       {isAddOpen && (
@@ -78,16 +111,30 @@ export default function AdminPromoCodeDashboard() {
       )}
 
       {isEditOpen && selectedPromo && (
-        <EditPromoCodeModal 
-          isOpen={isEditOpen} 
+        <EditPromoCodeModal
+          isOpen={isEditOpen}
           onClose={() => {
             setIsEditOpen(false);
             setSelectedPromo(null);
-          }} 
-          editingPromo={selectedPromo} 
-          onRefresh={loadPromoInventoryGrid} 
+          }}
+          editingPromo={selectedPromo}
+          onRefresh={loadPromoInventoryGrid}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => {
+          setIsDeleteConfirmOpen(false);
+          setDeleteId(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Promo Code"
+        description="Are you sure you want to permanently delete this promo code? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   );
 }

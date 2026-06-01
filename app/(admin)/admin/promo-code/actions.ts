@@ -18,9 +18,29 @@ export async function commitNewPromoAction(payload: {
   discount_type: "percentage" | "fixed";
   discount_value: number;
   valid_from: string;
-  valid_to: string;
+  valid_until: string;
   is_active: boolean;
 }) {
+  // Backend validation
+  if (!payload.code || payload.code.trim().length === 0) {
+    return { success: false, error: "Promo code is required" };
+  }
+
+  if (payload.discount_value <= 0) {
+    return { success: false, error: "Discount value must be greater than 0" };
+  }
+
+  if (payload.discount_type === "percentage" && payload.discount_value > 100) {
+    return { success: false, error: "Percentage discount cannot exceed 100%" };
+  }
+
+  const validFrom = new Date(payload.valid_from);
+  const validUntil = new Date(payload.valid_until);
+
+  if (validUntil <= validFrom) {
+    return { success: false, error: "End date must be after start date" };
+  }
+
   const { error } = await supabaseAdmin
     .from("promo_codes")
     .insert([
@@ -30,7 +50,7 @@ export async function commitNewPromoAction(payload: {
         discount_type: payload.discount_type,
         discount_value: payload.discount_value,
         valid_from: payload.valid_from,
-        valid_to: payload.valid_to,
+        valid_until: payload.valid_until,
         is_active: payload.is_active,
       },
     ]);
@@ -47,10 +67,30 @@ export async function updateExistingPromoAction(
     discount_type: "percentage" | "fixed";
     discount_value: number;
     valid_from: string;
-    valid_to: string;
+    valid_until: string;
     is_active: boolean;
   }
 ) {
+  // Backend validation
+  if (!payload.code || payload.code.trim().length === 0) {
+    return { success: false, error: "Promo code is required" };
+  }
+
+  if (payload.discount_value <= 0) {
+    return { success: false, error: "Discount value must be greater than 0" };
+  }
+
+  if (payload.discount_type === "percentage" && payload.discount_value > 100) {
+    return { success: false, error: "Percentage discount cannot exceed 100%" };
+  }
+
+  const validFrom = new Date(payload.valid_from);
+  const validUntil = new Date(payload.valid_until);
+
+  if (validUntil <= validFrom) {
+    return { success: false, error: "End date must be after start date" };
+  }
+
   const { error } = await supabaseAdmin
     .from("promo_codes")
     .update({
@@ -59,7 +99,7 @@ export async function updateExistingPromoAction(
       discount_type: payload.discount_type,
       discount_value: payload.discount_value,
       valid_from: payload.valid_from,
-      valid_to: payload.valid_to,
+      valid_until: payload.valid_until,
       is_active: payload.is_active,
     })
     .eq("id", id);

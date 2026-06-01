@@ -73,8 +73,8 @@ body {
 }
 
 .rdp {
-  --rdp-cell-size: 32px !important; 
-  --rdp-accent-color: #FFC107 !important;
+  --rdp-cell-size: 32px !important;
+  --rdp-accent-color: var(--primary) !important;
   --rdp-background-color: #1a1a1a !important;
   margin: 0 !important;
 }
@@ -104,17 +104,17 @@ body {
   width: 32px !important;
 }
 
-.rdp-day_selected, 
+.rdp-day_selected,
 .rdp-day_selected:hover {
-  background-color: #FFC107 !important;
+  background-color: var(--primary) !important;
   color: #000000 !important;
   font-weight: 900 !important;
-  box-shadow: 0 0 10px rgba(255, 193, 7, 0.4);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 40%, transparent);
 }
 
 .rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
   background-color: #1a1a1a !important;
-  color: #FFC107 !important;
+  color: var(--primary) !important;
 }
 
 /* Compact style for month/year title row headers */
@@ -127,7 +127,7 @@ body {
 }
 
 .rdp-nav_button {
-  color: #FFC107 !important;
+  color: var(--primary) !important;
   height: 24px !important;
   width: 24px !important;
 }

@@ -6,11 +6,13 @@ import { CustomerTable } from "@/components/admin/customers/CustomerTable";
 import { CustomerRow } from "@/lib/types/customers";
 import { Input } from "@/components/ui/input";
 import { Loader2, Search, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export default function AdminCustomersDashboard() {
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -19,9 +21,14 @@ export default function AdminCustomersDashboard() {
 
   async function loadCustomerDatabase() {
     setLoading(true);
+    setError(null);
     const res = await getLiveCustomerRegistryAction();
-    if (res.error) toast.error(res.error);
-    else setCustomers(res.data as CustomerRow[]);
+    if (res.error) {
+      toast.error(res.error);
+      setError(res.error);
+    } else {
+      setCustomers(res.data as CustomerRow[]);
+    }
     setLoading(false);
   }
 
@@ -61,7 +68,19 @@ export default function AdminCustomersDashboard() {
         />
       </div>
 
-      {loading ? (
+      {error ? (
+        <div className="h-48 w-full flex flex-col items-center justify-center gap-4 border border-red-900/20 rounded-xl bg-red-950/10">
+          <div className="text-red-400 text-sm font-bold">Failed to load customers</div>
+          <div className="text-xs text-zinc-500">{error}</div>
+          <Button
+            onClick={loadCustomerDatabase}
+            variant="outline"
+            className="border-red-500/30 text-red-400 hover:bg-red-950/20"
+          >
+            Try Again
+          </Button>
+        </div>
+      ) : loading ? (
         <div className="h-48 w-full flex items-center justify-center border border-zinc-900 rounded-xl bg-[#111]">
           <Loader2 className="h-6 w-6 text-[#FFC107] animate-spin" />
         </div>

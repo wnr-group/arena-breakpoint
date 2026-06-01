@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
 import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
 import { getAllBookings, getBookingStats, type BookingFilters } from "./actions";
-import { Search, Filter, Calendar, DollarSign, Users, CheckCircle2, XCircle, Clock, Loader2, Eye, Receipt } from "lucide-react";
+import { Search, Filter, Calendar, DollarSign, Users, CheckCircle2, XCircle, Clock, Loader2, Eye, Receipt, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminBookingsPage() {
+  const router = useRouter();
   const [bookings, setBookings] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -73,6 +75,13 @@ export default function AdminBookingsPage() {
           <h1 className="text-2xl font-black uppercase text-white tracking-tight">BOOKING MANAGEMENT</h1>
           <p className="text-sm text-zinc-500 font-medium mt-1">View and manage all customer bookings</p>
         </div>
+        <Button
+          onClick={() => router.push("/admin/bookings/walk-in")}
+          className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-10 px-6"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Create Walk-In Booking
+        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -206,10 +215,10 @@ export default function AdminBookingsPage() {
                     Customer
                   </th>
                   <th className="py-4 px-4 text-left text-[10px] text-zinc-500 font-black uppercase tracking-wider">
-                    Device & Date
+                    Device
                   </th>
                   <th className="py-4 px-4 text-left text-[10px] text-zinc-500 font-black uppercase tracking-wider">
-                    Time Slot
+                    Date & Time
                   </th>
                   <th className="py-4 px-4 text-left text-[10px] text-zinc-500 font-black uppercase tracking-wider">
                     Amount
@@ -239,14 +248,17 @@ export default function AdminBookingsPage() {
                       </td>
                       <td className="py-4 px-4">
                         <p className="text-sm font-bold text-white">
-                          {deviceSlot?.device_type || "N/A"} #{deviceSlot?.device_station_number || "N/A"}
+                          {deviceSlot?.device_type || "N/A"}
                         </p>
                         <p className="text-xs text-zinc-500">
-                          {deviceSlot?.slot_date ? new Date(deviceSlot.slot_date).toLocaleDateString() : "N/A"}
+                          Station #{deviceSlot?.device_station_number || "N/A"}
                         </p>
                       </td>
                       <td className="py-4 px-4">
-                        <p className="text-xs text-zinc-400 font-medium">
+                        <p className="text-sm font-bold text-white">
+                          {deviceSlot?.slot_date ? new Date(deviceSlot.slot_date).toLocaleDateString() : "N/A"}
+                        </p>
+                        <p className="text-xs text-zinc-500">
                           {deviceSlot?.slot_start_time || "N/A"} - {deviceSlot?.slot_end_time || "N/A"}
                         </p>
                       </td>

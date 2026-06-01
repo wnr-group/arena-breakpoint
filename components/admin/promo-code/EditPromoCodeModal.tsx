@@ -41,7 +41,7 @@ export function EditPromoCodeModal({ onClose, editingPromo, onRefresh }: EditPro
       setIsActive(editingPromo.is_active);
       
       if (editingPromo.valid_from) setDateFrom(parseISO(editingPromo.valid_from));
-      if (editingPromo.valid_to) setDateTo(parseISO(editingPromo.valid_to));
+      if (editingPromo.valid_until) setDateTo(parseISO(editingPromo.valid_until));
     }
   }, [editingPromo]);
 
@@ -65,7 +65,7 @@ export function EditPromoCodeModal({ onClose, editingPromo, onRefresh }: EditPro
       discount_type: discountType,
       discount_value: parseFloat(discountValue),
       valid_from: format(dateFrom, "yyyy-MM-dd"),
-      valid_to: format(dateTo, "yyyy-MM-dd"),
+      valid_until: format(dateTo, "yyyy-MM-dd"),
       is_active: isActive,
     };
 

@@ -19,6 +19,51 @@ export interface DatabaseBookingRow {
   }>;
 }
 
+// NEW: Get device types with availability counts (customer sees types, not individual devices)
+export async function getDeviceTypesWithAvailability() {
+  try {
+    // Get all active device types
+    const { data: deviceTypes, error: typesError } = await supabaseAdmin
+      .from("device_types")
+      .select(`
+        id,
+        name,
+        display_name,
+        regular_hourly_rate,
+        included_players,
+        max_players,
+        extra_player_charge,
+        description,
+        display_order
+      `)
+      .eq("is_active", true)
+      .order("display_order", { ascending: true });
+
+    if (typesError) throw typesError;
+
+    // For each device type, count available devices
+    const typesWithCounts = await Promise.all(
+      (deviceTypes || []).map(async (type: any) => {
+        const { count, error: countError } = await supabaseAdmin
+          .from("devices")
+          .select("id", { count: "exact", head: true })
+          .eq("device_type_id", type.id)
+          .eq("status", "available");
+
+        return {
+          ...type,
+          available_devices_count: countError ? 0 : (count || 0)
+        };
+      })
+    );
+
+    return { success: true, deviceTypes: typesWithCounts };
+  } catch (err: any) {
+    return { success: false, error: err.message, deviceTypes: [] };
+  }
+}
+
+// DEPRECATED: Old function that returns individual devices (kept for backwards compatibility)
 export async function getLiveDevicesFromInventory() {
   try {
     const { data, error } = await supabaseAdmin
@@ -49,6 +94,125 @@ export async function getLiveDevicesFromInventory() {
   }
 }
 
+// NEW: Check availability by device TYPE (not specific device)
+export async function checkAvailabilityByDeviceType(
+  dateString: string,
+  deviceTypeId: string
+) {
+  try {
+    // Step 1: Get total available devices of this type
+    const { count: totalDevices, error: devicesError } = await supabaseAdmin
+      .from("devices")
+      .select("id", { count: "exact", head: true })
+      .eq("device_type_id", deviceTypeId)
+      .eq("status", "available");
+
+    if (devicesError) throw devicesError;
+
+    const totalAvailable = totalDevices || 0;
+
+    if (totalAvailable === 0) {
+      return {
+        success: true,
+        unavailableSlots: [],
+        slotAvailability: {}
+      };
+    }
+
+    // Step 2: Get all bookings for this device type on this date
+    const { data: bookings, error: bookingsError } = await supabaseAdmin
+      .from("booking_device_slots")
+      .select(`
+        slot_start_time,
+        slot_end_time,
+        device:devices!inner(device_type_id),
+        bookings!inner(status, lock_expires_at)
+      `)
+      .eq("device.device_type_id", deviceTypeId)
+      .eq("slot_date", dateString)
+      .in("bookings.status", ["locked", "confirmed", "checked_in"]);
+
+    if (bookingsError) throw bookingsError;
+
+    const rightNow = new Date().toISOString();
+
+    // Step 3: Count bookings per time slot
+    const slotCounts: Record<string, number> = {};
+
+    (bookings || []).forEach((booking: any) => {
+      const bookingRecord = booking.bookings;
+
+      // Skip expired locks
+      if (bookingRecord.status === "locked" && bookingRecord.lock_expires_at) {
+        if (new Date(bookingRecord.lock_expires_at) <= new Date(rightNow)) {
+          return;
+        }
+      }
+
+      // Convert to 12h format for slot label (with leading zeros to match frontend)
+      const formatTime = (time: string) => {
+        const [hours, minutes] = time.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        // Add leading zero for single-digit hours
+        const hour12Str = hour12.toString().padStart(2, '0');
+        return `${hour12Str}:${minutes} ${ampm}`;
+      };
+
+      const startFormatted = formatTime(booking.slot_start_time);
+      const endFormatted = formatTime(booking.slot_end_time);
+      const slotLabel = `${startFormatted} - ${endFormatted}`;
+
+      slotCounts[slotLabel] = (slotCounts[slotLabel] || 0) + 1;
+    });
+
+    // Step 4: Build availability for ALL time slots (not just booked ones)
+    const unavailableSlots: string[] = [];
+    const slotAvailability: Record<string, { available: number; total: number }> = {};
+
+    // All possible time slots in the system (matching frontend format exactly)
+    const allTimeSlots = [
+      "10:00 AM - 11:00 AM",
+      "11:00 AM - 12:00 PM",
+      "01:30 PM - 02:30 PM",
+      "02:30 PM - 03:30 PM",
+      "04:30 PM - 05:30 PM",
+      "07:00 PM - 08:00 PM",
+      "08:30 PM - 09:30 PM"
+    ];
+
+    allTimeSlots.forEach((slotLabel) => {
+      const bookedCount = slotCounts[slotLabel] || 0;
+      const available = totalAvailable - bookedCount;
+
+      slotAvailability[slotLabel] = {
+        available: Math.max(0, available),
+        total: totalAvailable
+      };
+
+      if (available <= 0) {
+        unavailableSlots.push(slotLabel);
+      }
+    });
+
+    return {
+      success: true,
+      unavailableSlots,
+      slotAvailability,
+      totalDevices: totalAvailable
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err.message,
+      unavailableSlots: [],
+      slotAvailability: {}
+    };
+  }
+}
+
+// DEPRECATED: Old function that checks specific device (kept for backwards compatibility)
 export async function fetchLiveActiveBookings(dateString: string, deviceId: string) {
   try {
     // Query booking_device_slots table directly for occupied slots
@@ -101,7 +265,7 @@ export async function fetchLiveActiveBookings(dateString: string, deviceId: stri
 }
 
 export async function initializeSoftLockReservation(payload: {
-  deviceId: string;
+  deviceId: string;  // This is actually deviceTypeId now
   deviceName: string;
   deviceType: string;
   hourlyRate: number;
@@ -114,9 +278,6 @@ export async function initializeSoftLockReservation(payload: {
   total: number;
 }) {
   try {
-    // With the new schema, we'll check slot availability directly from booking_device_slots
-    // No soft lock needed since payment is mocked - we'll create the booking directly in confirmBooking
-
     // Convert time format from "10:00 AM" to "10:00:00"
     const formatTime = (timeStr: string) => {
       const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
@@ -133,15 +294,46 @@ export async function initializeSoftLockReservation(payload: {
 
     const startTime = formatTime(payload.start);
     const endTime = formatTime(payload.end);
+    const deviceTypeId = payload.deviceId; // This is actually the device type ID
 
-    // Check if slot is available
-    const { data: existingSlots, error: checkError } = await supabaseAdmin
+    // Step 1: Get total available devices of this type
+    const { count: totalDevices, error: devicesError } = await supabaseAdmin
+      .from("devices")
+      .select("id", { count: "exact", head: true })
+      .eq("device_type_id", deviceTypeId)
+      .eq("status", "available");
+
+    if (devicesError) throw devicesError;
+
+    const totalAvailable = totalDevices || 0;
+
+    if (totalAvailable === 0) {
+      return { success: false, error: "No devices of this type are currently available." };
+    }
+
+    // Step 2: Get all devices of this type
+    const { data: devices, error: deviceListError } = await supabaseAdmin
+      .from("devices")
+      .select("id")
+      .eq("device_type_id", deviceTypeId)
+      .eq("status", "available");
+
+    if (deviceListError) throw deviceListError;
+
+    const deviceIds = (devices || []).map((d: any) => d.id);
+
+    if (deviceIds.length === 0) {
+      return { success: false, error: "No devices of this type are currently available." };
+    }
+
+    // Step 3: Check how many devices are already booked for this slot
+    const { data: existingBookings, error: checkError } = await supabaseAdmin
       .from("booking_device_slots")
       .select(`
-        id,
+        device_id,
         bookings!inner(status, lock_expires_at)
       `)
-      .eq("device_id", payload.deviceId)
+      .in("device_id", deviceIds)
       .eq("slot_date", payload.date)
       .eq("slot_start_time", startTime)
       .in("bookings.status", ["locked", "confirmed", "checked_in"]);
@@ -150,21 +342,26 @@ export async function initializeSoftLockReservation(payload: {
 
     const rightNow = new Date().toISOString();
 
-    // Check for real conflicts (not expired locks)
-    const hasConflict = (existingSlots || []).some((slot: any) => {
-      const booking = slot.bookings;
-      if (booking.status === "locked" && booking.lock_expires_at) {
-        return new Date(booking.lock_expires_at) > new Date(rightNow);
+    // Count active bookings (exclude expired locks)
+    const activeBookingsCount = (existingBookings || []).filter((booking: any) => {
+      const bookingRecord = booking.bookings;
+      if (bookingRecord.status === "locked" && bookingRecord.lock_expires_at) {
+        return new Date(bookingRecord.lock_expires_at) > new Date(rightNow);
       }
       return true; // confirmed or checked_in
-    });
+    }).length;
 
-    if (hasConflict) {
-      return { success: false, error: "Slot claimed by another user. Re-select a time frame." };
+    // Step 4: Check if any devices are available
+    const availableDevicesCount = totalAvailable - activeBookingsCount;
+
+    if (availableDevicesCount <= 0) {
+      return {
+        success: false,
+        error: "This time slot is fully booked. Please select a different time slot."
+      };
     }
 
-    // No soft lock needed - just return success and the slot will be booked in confirmBooking
-    // Return a dummy booking ID and expiry for compatibility
+    // Slot is available - return success
     return { success: true, bookingId: "temp", expiresAt: Date.now() + 10 * 60 * 1000 };
   } catch (err: any) {
     return { success: false, error: err.message };
@@ -193,12 +390,76 @@ export async function checkCustomerExists(phone: string) {
   }
 }
 
+// Helper function to find and assign an available device of the specified type
+async function findAvailableDevice(
+  deviceTypeId: string,
+  slotDate: string,
+  slotStartTime: string
+): Promise<{ deviceId: string; stationNumber: string } | null> {
+  try {
+    // Get all devices of this type that are available
+    const { data: devices, error: devicesError } = await supabaseAdmin
+      .from("devices")
+      .select("id, station_number")
+      .eq("device_type_id", deviceTypeId)
+      .eq("status", "available");
+
+    if (devicesError || !devices || devices.length === 0) {
+      return null;
+    }
+
+    // Get all bookings for these devices at this time slot
+    const { data: bookedDevices, error: bookingsError } = await supabaseAdmin
+      .from("booking_device_slots")
+      .select(`
+        device_id,
+        bookings!inner(status, lock_expires_at)
+      `)
+      .in("device_id", devices.map((d: any) => d.id))
+      .eq("slot_date", slotDate)
+      .eq("slot_start_time", slotStartTime)
+      .in("bookings.status", ["locked", "confirmed", "checked_in"]);
+
+    if (bookingsError) throw bookingsError;
+
+    const rightNow = new Date().toISOString();
+
+    // Filter out expired locks
+    const activelyBookedDeviceIds = (bookedDevices || [])
+      .filter((booking: any) => {
+        const bookingRecord = booking.bookings;
+        if (bookingRecord.status === "locked" && bookingRecord.lock_expires_at) {
+          return new Date(bookingRecord.lock_expires_at) > new Date(rightNow);
+        }
+        return true;
+      })
+      .map((booking: any) => booking.device_id);
+
+    // Find first available device that's not booked
+    const availableDevice = devices.find(
+      (device: any) => !activelyBookedDeviceIds.includes(device.id)
+    );
+
+    if (!availableDevice) {
+      return null;
+    }
+
+    return {
+      deviceId: availableDevice.id,
+      stationNumber: availableDevice.station_number
+    };
+  } catch (err) {
+    console.error("Error finding available device:", err);
+    return null;
+  }
+}
+
 export async function confirmBooking(payload: {
   phone: string;
   name: string;
   email: string;
-  deviceId: string;
-  deviceName: string;
+  deviceTypeId: string;  // Changed from deviceId
+  deviceTypeName: string;  // Changed from deviceName
   selectedDate: string;
   selectedSlot: string;
   slotStartTime: string;
@@ -207,6 +468,9 @@ export async function confirmBooking(payload: {
   addons: AddonSelection[];
   subtotal: number;
   total: number;
+  playerCount: number;
+  includedPlayers: number;
+  extraPlayerCharge: number;
 }) {
   try {
     // Step 1: Get or create customer
@@ -264,19 +528,43 @@ export async function confirmBooking(payload: {
       return `${hour.toString().padStart(2, '0')}:${minutes}:00`;
     };
 
+    // Step 4.5: Auto-assign an available device of the selected type
+    const formattedStartTime = formatTime(slotStartTime);
+    const assignedDevice = await findAvailableDevice(
+      payload.deviceTypeId,
+      payload.selectedDate,
+      formattedStartTime
+    );
+
+    if (!assignedDevice) {
+      // Rollback booking if no device available
+      await supabaseAdmin.from("bookings").delete().eq("id", booking.id);
+      return {
+        success: false,
+        error: "No devices available for this time slot. Please select another time."
+      };
+    }
+
+    const extraPlayersCount = Math.max(0, payload.playerCount - payload.includedPlayers);
+    const extraPlayersTotal = extraPlayersCount * payload.extraPlayerCharge;
+
     const { error: slotError } = await supabaseAdmin
       .from("booking_device_slots")
       .insert({
         booking_id: booking.id,
-        device_id: payload.deviceId,
+        device_id: assignedDevice.deviceId,  // Auto-assigned device
         slot_date: payload.selectedDate,
-        slot_start_time: formatTime(slotStartTime),
+        slot_start_time: formattedStartTime,
         slot_end_time: formatTime(slotEndTime),
         duration_hours: 1.0, // Assuming 1 hour slots
         hourly_rate: payload.hourlyRate,
         slot_total: payload.subtotal,
-        device_type: payload.deviceName.includes("PS5") ? "PS5" : "Standard Snooker",
-        device_station_number: payload.deviceName.split("#")[1]?.trim() || "Unknown"
+        device_type: payload.deviceTypeName,
+        device_station_number: assignedDevice.stationNumber,  // Auto-assigned station
+        player_count: payload.playerCount,
+        included_players: payload.includedPlayers,
+        extra_player_charge: payload.extraPlayerCharge,
+        extra_players_total: extraPlayersTotal
       });
 
     if (slotError) throw slotError;
