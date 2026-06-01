@@ -128,7 +128,7 @@ export default function DevicesPage() {
       {/* HEADER PANELS */}
       <div className="flex items-center justify-between mb-2">
         <div className="space-y-1 animate-in slide-in-from-left-4 duration-500">
-          <h1 className="text-2xl font-bold tracking-tight text-white">Devices Management</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">DEVICES MANAGEMENT</h1>
           <p className="text-[#a1a1aa] text-sm">
             Manage all gaming platforms, stations and availability across the arena.
           </p>

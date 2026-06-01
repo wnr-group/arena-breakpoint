@@ -30,6 +30,11 @@ interface FoodGridProps {
 export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }: FoodGridProps) {
   const [, startToggleTransition] = useTransition();
 
+  // 💡 SORTING ENGINE: Sorts menu items alphabetically (A to Z) by their name property safely
+  const sortedItems = [...devices].sort((a, b) => 
+    a.name.localeCompare(b.name, "en", { sensitivity: "base" })
+  );
+
   const handleToggleStatus = (item: MenuItem) => {
     startToggleTransition(async () => {
       const targetNewStatus = item.status === "available" ? "out_of_stock" : "available";
@@ -56,7 +61,8 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {devices.map((item) => {
+      {/* 💡 RENDER MAP: Iterates over the new alphabetical 'sortedItems' array instead of raw data */}
+      {sortedItems.map((item) => {
         const totalQty = Number(item.quantity) || 0;
         const isCurrentlyAvailable = item.status === "available";
 
@@ -80,7 +86,7 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
                 </div>
               )}
 
-              {/* Dynamic Stock Volume Metric Tag (Kept on top right as a dark container pill) */}
+              {/* Dynamic Stock Volume Metric Tag */}
               {isCurrentlyAvailable && (
                 <div className="absolute top-3 right-3 z-10 animate-in fade-in zoom-in-95 duration-200">
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[9px] font-black text-white bg-black/60 border border-green-500/30 rounded-md backdrop-blur-md">
@@ -134,7 +140,7 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
                 </p>
               </div>
 
-              {/* 💡 REPOSITIONED: Category Pill Badge fixed securely on the solid black bottom-left area */}
+              {/* Category Pill Badge fixed securely on the bottom-left area */}
               <div className="pt-1 flex justify-start items-center">
                 <span className="inline-flex items-center px-2 py-1 text-[9px] font-black text-[#FFC107] bg-[#1a1a1a] border border-[#27272a] rounded-md uppercase tracking-wider select-none">
                   {item.category}

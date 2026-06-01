@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, Calendar, Monitor, Utensils, Tag, 
-  PartyPopper, UserCheck, CreditCard, BarChart2, Settings, LogOut, ChevronLeft
+  PartyPopper, UserCheck, CreditCard, BarChart2, Settings, LogOut, ChevronLeft,
+  User2Icon
 } from "lucide-react";
 
 const navItems = [
@@ -12,7 +13,8 @@ const navItems = [
   { name: "Bookings", href: "/admin/bookings", icon: Calendar },
   { name: "Devices", href: "/admin/devices", icon: Monitor },
   { name: "Food", href: "/admin/food", icon: Utensils },
-  { name: "Promo Codes", href: "/admin/promo-codes", icon: Tag },
+  { name: "Customer", href: "/admin/customers", icon: User2Icon },
+  { name: "Promo Codes", href: "/admin/promo-code", icon: Tag },
   { name: "Happy Hours", href: "/admin/happy-hours", icon: PartyPopper },
   { name: "Check-In", href: "/admin/check-in", icon: UserCheck },
   { name: "Billing", href: "/admin/billing", icon: CreditCard },
