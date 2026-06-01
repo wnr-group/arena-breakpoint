@@ -22,7 +22,7 @@ Open [http://localhost:3000](http://localhost:3000)
 
 - **Framework:** Next.js 15.1.3 (App Router)
 - **Language:** TypeScript (relaxed mode)
-- **Styling:** Tailwind CSS 4 + shadcn/ui  
+- **Styling:** Tailwind CSS 4 + shadcn/ui
 - **State:** Redux Toolkit + TanStack Query
 - **Database:** Supabase (PostgreSQL)
 - **Payments:** Razorpay
@@ -64,11 +64,13 @@ See `.env.example` for full list of required variables.
 **Junior Dev:** Frontend (UI, pages, forms, customer flows)
 
 **Branches:**
+
 - `main` → Production
 - `staging` → UAT testing
 - `feature/*` → Feature branches (auto-preview URLs)
 
 **Development:**
+
 ```bash
 pnpm lint          # Run ESLint
 pnpm format        # Format with Prettier
@@ -78,6 +80,7 @@ pnpm type-check    # TypeScript check
 ## 📚 Documentation
 
 See `/Doc` folder for complete project documentation:
+
 - Requirements Document
 - User Flows
 - Epics & Jira Tickets
@@ -86,8 +89,9 @@ See `/Doc` folder for complete project documentation:
 ## 🚢 Deployment
 
 Deployed on Vercel with automatic deployments:
+
 - Push to `main` → Production
-- Push to `staging` → Staging environment  
+- Push to `staging` → Staging environment
 - Pull requests → Preview URLs
 
 ## 📝 TODO

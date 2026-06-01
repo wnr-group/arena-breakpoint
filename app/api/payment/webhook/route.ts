@@ -9,24 +9,14 @@ export async function POST(request: NextRequest) {
     const signature = request.headers.get('x-razorpay-signature')
 
     if (!signature) {
-      return NextResponse.json(
-        { error: 'Missing signature' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
     }
 
     // Verify signature
-    const isValid = verifyRazorpaySignature(
-      body.order_id,
-      body.payment_id,
-      signature
-    )
+    const isValid = verifyRazorpaySignature(body.order_id, body.payment_id, signature)
 
     if (!isValid) {
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
     }
 
     // Payment verified, update booking
@@ -44,10 +34,7 @@ export async function POST(request: NextRequest) {
 
     if (bookingError || !booking) {
       console.error('Failed to update booking:', bookingError)
-      return NextResponse.json(
-        { error: 'Booking not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
     }
 
     // Send confirmation SMS
@@ -63,9 +50,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Payment webhook error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import StoreProvider from '@/lib/redux/StoreProvider'
@@ -14,12 +14,13 @@ export const metadata: Metadata = {
   title: 'Break Point Arena - Gaming Café',
   description: 'Book your gaming slot at Break Point Arena',
   manifest: '/manifest.json',
+}
+
+export const viewport: Viewport = {
   themeColor: '#000000',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-  },
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 }
 
 export default function RootLayout({

@@ -1,0 +1,8 @@
+{
+  "name": "Break Point Arena",
+  "short_name": "BreakPoint",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#FFC107"
+}

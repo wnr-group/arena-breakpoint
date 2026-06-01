@@ -6,6 +6,7 @@
 ## ✅ Completed Setup
 
 ### Infrastructure (100%)
+
 - ✅ Next.js 15.1.3 project initialized
 - ✅ TypeScript configured (relaxed mode)
 - ✅ Tailwind CSS 4.0 installed
@@ -14,6 +15,7 @@
 - ✅ All dependencies installed and locked
 
 ### State Management (100%)
+
 - ✅ Redux Toolkit configured
 - ✅ Three slices: booking, session, admin
 - ✅ Redux Provider in root layout
@@ -21,6 +23,7 @@
 - ✅ React Query Provider configured
 
 ### Database & Integrations (80%)
+
 - ✅ Supabase client + admin clients created
 - ✅ Razorpay service layer (create order, verify signature, refunds)
 - ✅ MSG91 service layer (OTP, confirmations)
@@ -28,18 +31,21 @@
 - ⚠️ **TODO:** Create Supabase migrations
 
 ### API Routes (75%)
+
 - ✅ `/api/otp/send` - OTP generation with rate limiting
 - ✅ `/api/otp/verify` - OTP verification + session creation
 - ✅ `/api/payment/webhook` - Razorpay webhook handler
 - ⚠️ **TODO:** Admin API routes
 
 ### UI Components (60%)
+
 - ✅ Button component
-- ✅ Card component  
+- ✅ Card component
 - ✅ Toaster (Sonner integration)
 - ⚠️ **TODO:** Add more shadcn components as needed
 
 ### Layouts & Pages (70%)
+
 - ✅ Customer layout (header + footer)
 - ✅ Admin layout (sidebar navigation)
 - ✅ Home page with feature cards
@@ -49,17 +55,20 @@
 - ⚠️ **TODO:** Complete all pages with real functionality
 
 ### Utilities (100%)
+
 - ✅ cn() for Tailwind merging
 - ✅ OTP generation + session tokens
 - ✅ Date utilities (slot availability, grace periods)
 
 ### Code Quality (100%)
+
 - ✅ ESLint configured with Prettier
 - ✅ Husky pre-commit hooks
 - ✅ lint-staged for auto-formatting
 - ✅ Scripts: lint, format, type-check
 
 ### Documentation (100%)
+
 - ✅ README.md - Quick start guide
 - ✅ SETUP.md - Complete setup instructions
 - ✅ PROJECT_STATUS.md - This file
@@ -68,6 +77,7 @@
 ## ⚠️ Critical Next Steps
 
 ### 1. Database Setup (Team Lead)
+
 **Priority:** Blocking  
 **Status:** Not started
 
@@ -77,6 +87,7 @@ supabase migration new create_initial_schema
 ```
 
 Create tables:
+
 - devices
 - bookings
 - subscriptions
@@ -87,16 +98,19 @@ Create tables:
 - admin_users
 
 ### 2. Environment Variables (Team Lead)
+
 **Priority:** Blocking  
 **Status:** Not started
 
 Fill in `.env.local`:
+
 - Supabase credentials
 - Razorpay test keys
 - MSG91 credentials
 - Upstash Redis credentials
 
 ### 3. Deployment (Team Lead)
+
 **Priority:** Blocking  
 **Status:** Not started
 
@@ -105,10 +119,12 @@ Fill in `.env.local`:
 - Deploy staging + production
 
 ### 4. Customer Booking Flow (Junior Dev)
+
 **Priority:** High  
 **Status:** Placeholders only
 
 Epic 3 (BREAK-20 to BREAK-27):
+
 - Device selection UI
 - Slot selection with calendar
 - Add-ons page
@@ -118,6 +134,7 @@ Epic 3 (BREAK-20 to BREAK-27):
 - Confirmation with QR
 
 ### 5. Admin Panel (Both)
+
 **Priority:** High  
 **Status:** Layout only
 
@@ -128,26 +145,27 @@ Epic 3 (BREAK-20 to BREAK-27):
 
 ## 📊 Progress Overview
 
-| Component | Status | Owner |
-|-----------|--------|-------|
-| Project Setup | ✅ 100% | Complete |
-| Database Schema | ❌ 0% | Team Lead |
-| Environment Config | ❌ 0% | Team Lead |
-| Customer Booking UI | 🟡 10% | Junior Dev |
-| Booking Server Logic | ❌ 0% | Team Lead |
-| Subscription UI | ❌ 0% | Junior Dev |
-| Subscription Logic | 🟡 20% | Team Lead |
-| Admin Panel UI | 🟡 15% | Junior Dev |
-| Admin Logic | ❌ 0% | Team Lead |
-| QR Code Features | ❌ 0% | Both |
-| Payment Integration | 🟡 30% | Team Lead |
-| Testing & Polish | ❌ 0% | Both |
+| Component            | Status  | Owner      |
+| -------------------- | ------- | ---------- |
+| Project Setup        | ✅ 100% | Complete   |
+| Database Schema      | ❌ 0%   | Team Lead  |
+| Environment Config   | ❌ 0%   | Team Lead  |
+| Customer Booking UI  | 🟡 10%  | Junior Dev |
+| Booking Server Logic | ❌ 0%   | Team Lead  |
+| Subscription UI      | ❌ 0%   | Junior Dev |
+| Subscription Logic   | 🟡 20%  | Team Lead  |
+| Admin Panel UI       | 🟡 15%  | Junior Dev |
+| Admin Logic          | ❌ 0%   | Team Lead  |
+| QR Code Features     | ❌ 0%   | Both       |
+| Payment Integration  | 🟡 30%  | Team Lead  |
+| Testing & Polish     | ❌ 0%   | Both       |
 
 **Overall Progress:** 15% (Scaffold complete, core features need implementation)
 
 ## 🎯 Week 1 Goals (May 13)
 
 ### Team Lead
+
 1. ✅ Complete database schema
 2. ✅ Deploy to Vercel (staging)
 3. ✅ Get external credentials configured
@@ -155,6 +173,7 @@ Epic 3 (BREAK-20 to BREAK-27):
 5. ✅ Implement booking server actions
 
 ### Junior Developer
+
 1. ✅ Read all documentation
 2. ✅ Improve home page design
 3. ✅ Start device selection UI
@@ -164,6 +183,7 @@ Epic 3 (BREAK-20 to BREAK-27):
 ## 📝 Known Issues
 
 1. **shadcn components:** Only Button, Card, Toaster created manually. Add more as needed:
+
    ```bash
    pnpx shadcn add input form dialog calendar select textarea
    ```
@@ -177,12 +197,14 @@ Epic 3 (BREAK-20 to BREAK-27):
 ## 📞 Support
 
 **Questions?** Check these files first:
+
 - Technical setup: `SETUP.md`
 - User flows: `/Doc/2-User-Flows.md`
 - Requirements: `/Doc/1-Requirements-Document.md`
 - This status: `PROJECT_STATUS.md`
 
-**Blocked?** 
+**Blocked?**
+
 - Junior Dev → Tag Team Lead in PR
 - Team Lead → Refer to client docs in `/Doc`
 
@@ -191,6 +213,7 @@ Epic 3 (BREAK-20 to BREAK-27):
 The foundation is solid. Time to build features!
 
 **Next Command:**
+
 ```bash
 # Team Lead
 supabase init
