@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import StoreProvider from '@/lib/redux/StoreProvider'
@@ -14,12 +14,14 @@ export const metadata: Metadata = {
   title: 'Break Point Arena - Gaming Café',
   description: 'Book your gaming slot at Break Point Arena',
   manifest: '/manifest.json',
+}
+
+export const viewport: Viewport = {
   themeColor: '#000000',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-  },
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({
@@ -29,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="min-h-screen bg-background font-sans antialiased">
+      <body className="min-h-screen bg-[#060606] font-sans antialiased text-white">
         <StoreProvider>
           <QueryProvider>
             {children}

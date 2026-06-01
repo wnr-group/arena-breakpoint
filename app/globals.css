@@ -3,11 +3,19 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* 🎨 PRIMARY BRAND COLOR - Change this to update the entire app theme */
+  --primary: #FFC107;
+  --primary-hover: #ffcd38;
+  --primary-dark: #e6ad06;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-dark: var(--primary-dark);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -16,6 +24,11 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+
+    /* 🎨 PRIMARY BRAND COLOR - Change this to update the entire app theme */
+    --primary: #FFC107;
+    --primary-hover: #ffcd38;
+    --primary-dark: #e6ad06;
   }
 }
 
@@ -23,4 +36,38 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+
+/* Custom Global Dark Scrollbar Styles */
+@layer base {
+  /* For Chrome, Safari, Edge, and Opera */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  /* The background track area of the scrollbar slot */
+  ::-webkit-scrollbar-track {
+    background: #0a0a0a; 
+    border-left: 1px solid #27272a; 
+  }
+
+  /* The actual draggable scrollbar handle/thumb */
+  ::-webkit-scrollbar-thumb {
+    background: #27272a;
+    border-radius: 9999px; 
+    border: 2px solid #0a0a0a;
+  }
+
+  /* Changes color subtly when an operator hovers over the track */
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3f3f46; 
+  }
+
+  /* Standard support properties for Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #27272a #0a0a0a;
+  }
 }
