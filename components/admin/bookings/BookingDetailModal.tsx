@@ -10,12 +10,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BookingStatusBadge } from "./BookingStatusBadge";
-import { getBookingDetails, checkInBooking, checkOutBooking, cancelBooking } from "@/app/(admin)/admin/bookings/actions";
+import { getBookingDetails, checkInBooking, checkOutBooking, cancelBooking, addFoodToBooking } from "@/app/(admin)/admin/bookings/actions";
+import { getMenuItems } from "@/app/(admin)/admin/food/actions";
 import { QRCodeSVG } from "qrcode.react";
 import {
   User, Phone, Mail, Calendar, Clock, DollarSign,
   Loader2, CheckCircle2, XCircle, LogIn, LogOut,
-  UtensilsCrossed, QrCode, MapPin
+  UtensilsCrossed, QrCode, MapPin, Gamepad2, Plus, Minus
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -41,10 +42,14 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate }: Booki
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [addFoodModalOpen, setAddFoodModalOpen] = useState(false);
+  const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [selectedFoodItems, setSelectedFoodItems] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (open && bookingId) {
       loadBookingDetails();
+      loadMenuItems();
     }
   }, [open, bookingId]);
 
@@ -58,6 +63,51 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate }: Booki
       toast.error("Failed to load booking details", { description: result.error });
     }
     setLoading(false);
+  };
+
+  const loadMenuItems = async () => {
+    const result = await getMenuItems();
+    if (result.success) {
+      // Filter only available items
+      const availableItems = result.menuItems.filter((item: any) => item.status === "available");
+      setMenuItems(availableItems);
+    }
+  };
+
+  const handleAddFoodItems = async () => {
+    if (!bookingId || Object.keys(selectedFoodItems).length === 0) {
+      toast.error("Please select at least one item");
+      return;
+    }
+
+    setActionLoading(true);
+
+    const items = Object.entries(selectedFoodItems)
+      .filter(([_, qty]) => qty > 0)
+      .map(([itemId, quantity]) => {
+        const menuItem = menuItems.find((item) => item.id === itemId);
+        return {
+          menuItemId: itemId,
+          itemName: menuItem.name,
+          itemCategory: menuItem.category,
+          quantity,
+          unitPrice: Number(menuItem.price)
+        };
+      });
+
+    const result = await addFoodToBooking(bookingId, items);
+
+    if (result.success) {
+      toast.success("Food items added successfully!");
+      setSelectedFoodItems({});
+      setAddFoodModalOpen(false);
+      loadBookingDetails();
+      onUpdate?.();
+    } else {
+      toast.error("Failed to add food items", { description: result.error });
+    }
+
+    setActionLoading(false);
   };
 
   const handleCheckIn = async () => {
@@ -232,13 +282,75 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate }: Booki
                 </Card>
               </div>
 
-              {/* Food Items */}
-              {booking.booking_food_items && booking.booking_food_items.length > 0 && (
+              {/* Game Orders */}
+              {booking.booking_device_slots && booking.booking_device_slots.length > 0 && (
                 <Card className="bg-[#0a0a0a] border-[#27272a] p-5 space-y-4">
                   <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider border-b border-[#27272a] pb-2 flex items-center gap-2">
+                    <Gamepad2 className="h-4 w-4" />
+                    Game Orders
+                  </h3>
+                  <div className="space-y-3">
+                    {booking.booking_device_slots.map((slot: any) => {
+                      const extraPlayers = Math.max(0, (slot.player_count || 0) - (slot.included_players || 1));
+                      const extraPlayersCharge = extraPlayers * (slot.extra_player_charge || 0);
+
+                      return (
+                        <div key={slot.id} className="bg-[#121212] border border-[#27272a] rounded-lg p-4 space-y-3">
+                          {/* Game/Device Info */}
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="text-sm font-black text-white">{slot.device_type}</p>
+                              <p className="text-xs text-zinc-600">
+                                {slot.duration_hours}h × ₹{Number(slot.hourly_rate).toLocaleString('en-IN')}/hr
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-black text-white">₹{Number(slot.slot_total).toLocaleString('en-IN')}</p>
+                              <p className="text-[9px] text-zinc-600 uppercase">Base Rate</p>
+                            </div>
+                          </div>
+
+                          {/* Extra Players */}
+                          {extraPlayers > 0 && (
+                            <div className="flex justify-between items-center pt-2 border-t border-[#27272a]/50">
+                              <div>
+                                <p className="text-sm font-bold text-primary">Extra Players</p>
+                                <p className="text-xs text-zinc-600">
+                                  {extraPlayers} player{extraPlayers > 1 ? 's' : ''} × ₹{Number(slot.extra_player_charge || 0).toLocaleString('en-IN')}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-black text-primary">₹{extraPlayersCharge.toLocaleString('en-IN')}</p>
+                                <p className="text-[9px] text-zinc-600 uppercase">Additional</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+              )}
+
+              {/* Food Items */}
+              <Card className="bg-[#0a0a0a] border-[#27272a] p-5 space-y-4">
+                <div className="flex justify-between items-center border-b border-[#27272a] pb-2">
+                  <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider flex items-center gap-2">
                     <UtensilsCrossed className="h-4 w-4" />
                     Food & Beverage Orders
                   </h3>
+                  {booking.status !== "cancelled" && booking.status !== "completed" && (
+                    <Button
+                      onClick={() => setAddFoodModalOpen(true)}
+                      size="sm"
+                      className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-[10px] h-7 px-3"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add Food
+                    </Button>
+                  )}
+                </div>
+                {booking.booking_food_items && booking.booking_food_items.length > 0 ? (
                   <div className="space-y-2">
                     {booking.booking_food_items.map((item: any) => (
                       <div key={item.id} className="flex justify-between items-center p-3 bg-[#121212] border border-[#27272a] rounded-lg">
@@ -253,8 +365,10 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate }: Booki
                       </div>
                     ))}
                   </div>
-                </Card>
-              )}
+                ) : (
+                  <p className="text-xs text-zinc-600 text-center py-4">No food items ordered yet</p>
+                )}
+              </Card>
 
               {/* Payment Summary */}
               <Card className="bg-[#0a0a0a] border-[#27272a] p-5 space-y-4">
@@ -313,7 +427,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate }: Booki
                   <Button
                     onClick={() => setCancelDialogOpen(true)}
                     disabled={actionLoading}
-                    variant="destructive"
+                    variant="outline"
                     className="bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white border border-red-500/20 font-black uppercase text-xs h-11 px-6 flex items-center gap-2"
                   >
                     <XCircle className="h-4 w-4" />
@@ -335,6 +449,96 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate }: Booki
               <p className="text-zinc-600">No booking data available</p>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Food Modal */}
+      <Dialog open={addFoodModalOpen} onOpenChange={setAddFoodModalOpen}>
+        <DialogContent className="bg-[#121212] border-[#27272a] text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase tracking-tight">
+              Add Food & Beverages
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4">
+            {["Snacks", "Drinks", "Meals"].map((category) => {
+              const categoryItems = menuItems.filter((item) => item.category === category);
+              if (categoryItems.length === 0) return null;
+
+              return (
+                <div key={category} className="space-y-2">
+                  <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider border-b border-[#27272a] pb-1">
+                    {category}
+                  </h4>
+                  <div className="space-y-2">
+                    {categoryItems.map((item: any) => (
+                      <div key={item.id} className="flex justify-between items-center p-3 bg-[#0a0a0a] border border-[#27272a] rounded-lg">
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-white">{item.name}</p>
+                          <p className="text-xs text-zinc-500">₹{Number(item.price).toLocaleString('en-IN')}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const qty = (selectedFoodItems[item.id] || 0);
+                              if (qty > 0) {
+                                setSelectedFoodItems({ ...selectedFoodItems, [item.id]: qty - 1 });
+                              }
+                            }}
+                            disabled={(selectedFoodItems[item.id] || 0) === 0}
+                            className="h-8 w-8 p-0 border-[#27272a]"
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="text-sm font-black text-white w-8 text-center">
+                            {selectedFoodItems[item.id] || 0}
+                          </span>
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              const qty = (selectedFoodItems[item.id] || 0);
+                              setSelectedFoodItems({ ...selectedFoodItems, [item.id]: qty + 1 });
+                            }}
+                            className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-black"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+
+            {menuItems.length === 0 && (
+              <p className="text-center text-zinc-600 py-8">No menu items available</p>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4 border-t border-[#27272a] mt-4">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setAddFoodModalOpen(false);
+                setSelectedFoodItems({});
+              }}
+              className="border-[#27272a] text-zinc-400 hover:text-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddFoodItems}
+              disabled={actionLoading || Object.values(selectedFoodItems).every((qty) => qty === 0)}
+              className="bg-primary hover:bg-primary-hover text-black font-black uppercase"
+            >
+              {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Add Items
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 

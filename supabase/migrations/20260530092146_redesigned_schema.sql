@@ -110,24 +110,16 @@ CREATE TABLE public.promo_codes (
 
   discount_type TEXT NOT NULL CHECK (discount_type IN ('percentage', 'fixed')),
   discount_value NUMERIC(10, 2) NOT NULL,
-  max_discount NUMERIC(10, 2),
 
   valid_from TIMESTAMPTZ NOT NULL,
   valid_until TIMESTAMPTZ NOT NULL,
-  usage_limit INTEGER,
-  usage_count INTEGER DEFAULT 0 NOT NULL,
 
   is_active BOOLEAN DEFAULT true NOT NULL,
-
-  min_order_amount NUMERIC(10, 2),
-  applicable_to TEXT DEFAULT 'all' CHECK (applicable_to IN ('all', 'devices', 'food')),
-
   description TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
 
-  CONSTRAINT valid_dates CHECK (valid_until > valid_from),
-  CONSTRAINT valid_usage CHECK (usage_limit IS NULL OR usage_count <= usage_limit)
+  CONSTRAINT valid_dates CHECK (valid_until > valid_from)
 );
 
 CREATE UNIQUE INDEX idx_promo_code ON public.promo_codes(UPPER(code));

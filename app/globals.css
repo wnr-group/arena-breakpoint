@@ -71,3 +71,63 @@ body {
     scrollbar-color: #27272a #0a0a0a;
   }
 }
+
+.rdp {
+  --rdp-cell-size: 32px !important;
+  --rdp-accent-color: var(--primary) !important;
+  --rdp-background-color: #1a1a1a !important;
+  margin: 0 !important;
+}
+
+.rdp-months {
+  justify-content: center;
+}
+
+.rdp-month {
+  background-color: transparent;
+}
+
+.rdp-head_cell {
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  color: #a1a1aa !important;
+  text-transform: uppercase;
+  padding-bottom: 4px !important;
+}
+
+/* Style and shrink active numeric buttons */
+.rdp-day {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  height: 32px !important;
+  width: 32px !important;
+}
+
+.rdp-day_selected,
+.rdp-day_selected:hover {
+  background-color: var(--primary) !important;
+  color: #000000 !important;
+  font-weight: 900 !important;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+.rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
+  background-color: #1a1a1a !important;
+  color: var(--primary) !important;
+}
+
+/* Compact style for month/year title row headers */
+.rdp-caption_label {
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #FFFFFF !important;
+}
+
+.rdp-nav_button {
+  color: var(--primary) !important;
+  height: 24px !important;
+  width: 24px !important;
+}

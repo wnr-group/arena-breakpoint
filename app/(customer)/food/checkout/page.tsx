@@ -125,8 +125,10 @@ export default function FoodCheckoutPage() {
     }
 
     if (result.success) {
-      if (result.bookingNumber) {
+      if ('bookingNumber' in result && result.bookingNumber) {
         setOrderNumber(result.bookingNumber);
+      } else if (bookingContext.bookingNumber) {
+        setOrderNumber(bookingContext.bookingNumber);
       }
       toast.success("Order placed successfully!");
       setStep("success");

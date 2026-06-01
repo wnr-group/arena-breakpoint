@@ -77,3 +77,12 @@ BEGIN
   RAISE NOTICE '🎮 Devices: 5 sample devices added (one per type)';
   RAISE NOTICE '🍔 Menu Items: 9 sample items added';
 END $$;
+
+
+-- 3. SEED DATA FOR TABLE: promo_codes 
+INSERT INTO public.promo_codes (code, description, discount_type, discount_value, valid_from, valid_until, is_active)
+VALUES 
+  ('ARENA20', 'Welcome Bonus Voucher providing an introductory 20% discount window across booking balances.', 'percentage', 20.00, CURRENT_DATE - INTERVAL '1 day', CURRENT_DATE + INTERVAL '30 days', true),
+  ('ELITE500', 'Premium high-value absolute flat savings voucher deduction applied directly onto processing checkouts.', 'fixed', 500.00, CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE + INTERVAL '60 days', true),
+  ('HIDDENOFF', 'Undercover administration test code disabled from operational customer execution pathways by default.', 'percentage', 50.00, CURRENT_DATE, CURRENT_DATE + INTERVAL '90 days', false)
+ON CONFLICT (code) DO NOTHING;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { getCustomerBookings } from "./actions";
 import { QRCodeSVG } from "qrcode.react";
 
-export default function MyBookingsPage() {
+function MyBookingsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const phoneFromUrl = searchParams.get("phone");
@@ -275,5 +275,13 @@ export default function MyBookingsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function MyBookingsPage() {
+  return (
+    <Suspense fallback={<div className="h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>}>
+      <MyBookingsPageContent />
+    </Suspense>
   );
 }

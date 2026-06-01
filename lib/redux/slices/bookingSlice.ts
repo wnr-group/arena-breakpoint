@@ -1,17 +1,24 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 export interface BookingState {
-  // Device selection
-  deviceId: string | null
-  deviceName: string | null
-  deviceType: string | null
+  // Device Type selection (not individual device)
+  deviceTypeId: string | null
+  deviceTypeName: string | null
   hourlyRate: number | null
+  includedPlayers: number
+  maxPlayers: number
+  extraPlayerCharge: number
+
+  // Assigned device (auto-assigned after booking)
+  assignedDeviceId: string | null
+  assignedStationNumber: string | null
 
   // Slot selection
   selectedDate: string | null
   selectedSlot: string | null
   slotStartTime: string | null
   slotEndTime: string | null
+  playerCount: number
 
   // Add-ons
   addons: Array<{
@@ -39,14 +46,19 @@ export interface BookingState {
 }
 
 const initialState: BookingState = {
-  deviceId: null,
-  deviceName: null,
-  deviceType: null,
+  deviceTypeId: null,
+  deviceTypeName: null,
   hourlyRate: null,
+  includedPlayers: 1,
+  maxPlayers: 1,
+  extraPlayerCharge: 0,
+  assignedDeviceId: null,
+  assignedStationNumber: null,
   selectedDate: null,
   selectedSlot: null,
   slotStartTime: null,
   slotEndTime: null,
+  playerCount: 1,
   addons: [],
   subtotal: 0,
   subscriptionDiscount: 0,
@@ -64,16 +76,33 @@ export const bookingSlice = createSlice({
   name: 'booking',
   initialState,
   reducers: {
-    setDevice: (state, action: PayloadAction<{
+    setDeviceType: (state, action: PayloadAction<{
       id: string
       name: string
-      type: string
       hourlyRate: number
+      includedPlayers: number
+      maxPlayers: number
+      extraPlayerCharge: number
     }>) => {
-      state.deviceId = action.payload.id
-      state.deviceName = action.payload.name
-      state.deviceType = action.payload.type
+      state.deviceTypeId = action.payload.id
+      state.deviceTypeName = action.payload.name
       state.hourlyRate = action.payload.hourlyRate
+      state.includedPlayers = action.payload.includedPlayers
+      state.maxPlayers = action.payload.maxPlayers
+      state.extraPlayerCharge = action.payload.extraPlayerCharge
+      state.playerCount = action.payload.includedPlayers // Reset to included players when device type changes
+    },
+
+    setAssignedDevice: (state, action: PayloadAction<{
+      deviceId: string
+      stationNumber: string
+    }>) => {
+      state.assignedDeviceId = action.payload.deviceId
+      state.assignedStationNumber = action.payload.stationNumber
+    },
+
+    setPlayerCount: (state, action: PayloadAction<number>) => {
+      state.playerCount = action.payload
     },
 
     setSlot: (state, action: PayloadAction<{
@@ -151,8 +180,10 @@ export const bookingSlice = createSlice({
 })
 
 export const {
-  setDevice,
+  setDeviceType,
+  setAssignedDevice,
   setSlot,
+  setPlayerCount,
   addAddon,
   removeAddon,
   setPricing,

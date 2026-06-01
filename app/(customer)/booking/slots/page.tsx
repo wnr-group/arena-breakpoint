@@ -3,12 +3,12 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import { setSlot, setPricing, setSlotLockExpiry, setBookingId } from "@/lib/redux/slices/bookingSlice";
-import { fetchLiveActiveBookings, initializeSoftLockReservation as createSoftLockTransaction } from "../actions";
+import { setSlot, setPricing, setSlotLockExpiry, setBookingId, setPlayerCount } from "@/lib/redux/slices/bookingSlice";
+import { checkAvailabilityByDeviceType, initializeSoftLockReservation as createSoftLockTransaction } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
-import { Clock, Loader2, ChevronRight, X } from "lucide-react";
+import { Clock, Loader2, ChevronRight, X, Users, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
 
 const staticDaylightSchedulesMatrix = [
@@ -24,11 +24,12 @@ const staticDaylightSchedulesMatrix = [
 export default function SlotBookingPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { deviceId, deviceName, hourlyRate, addons } = useAppSelector((state) => state.booking);
+  const { deviceTypeId, deviceTypeName, hourlyRate, addons, playerCount, includedPlayers, maxPlayers, extraPlayerCharge } = useAppSelector((state) => state.booking);
 
   const [calendarDay, setCalendarDay] = useState<Date | undefined>(undefined);
   const [selectedSlotNode, setSelectedSlotNode] = useState<typeof staticDaylightSchedulesMatrix[0] | null>(null);
   const [disabledLabelsArray, setDisabledLabelsArray] = useState<string[]>([]);
+  const [slotAvailability, setSlotAvailability] = useState<Record<string, { available: number; total: number }>>({});
   const [queryingDb, setQueryingDb] = useState(false);
   const [submittingLock, setSubmittingLock] = useState(false);
   
@@ -43,31 +44,35 @@ export default function SlotBookingPage() {
   }, []);
 
   useEffect(() => {
-    if (!mounted || !calendarDay || !deviceId) return;
-    async function pullOccupiedSlots() {
+    if (!mounted || !calendarDay || !deviceTypeId) return;
+    async function checkAvailability() {
       setQueryingDb(true);
-      const res = await fetchLiveActiveBookings(calendarDay!.toISOString().split("T")[0], deviceId!);
-      if (res.success) setDisabledLabelsArray(res.occupiedSlots);
+      const res = await checkAvailabilityByDeviceType(calendarDay!.toISOString().split("T")[0], deviceTypeId!);
+      if (res.success) {
+        setDisabledLabelsArray(res.unavailableSlots);
+        setSlotAvailability(res.slotAvailability || {});
+      }
       setQueryingDb(false);
     }
-    pullOccupiedSlots();
-  }, [calendarDay, mounted, deviceId]);
+    checkAvailability();
+  }, [calendarDay, mounted, deviceTypeId]);
 
   const additivesCostAggregated = useMemo(() => {
     return addons.reduce((sum, asset) => sum + (asset.price * asset.quantity), 0);
   }, [addons]);
 
+  const extraPlayersCount = Math.max(0, playerCount - includedPlayers);
+  const extraPlayersCharge = extraPlayersCount * extraPlayerCharge;
   const baselineSubtotal = hourlyRate || 0;
-  const runtimeTaxAmount = 15;
-  const aggregatedPayableTotal = baselineSubtotal + runtimeTaxAmount + additivesCostAggregated;
+  const aggregatedPayableTotal = baselineSubtotal + extraPlayersCharge + additivesCostAggregated;
 
   const handleRegisterTransactionLock = async () => {
-    if (!calendarDay || !selectedSlotNode || !deviceId) return;
+    if (!calendarDay || !selectedSlotNode || !deviceTypeId) return;
     setSubmittingLock(true);
     const dateQueryString = calendarDay.toISOString().split("T")[0];
 
     const res = await createSoftLockTransaction({
-      deviceId, deviceName: deviceName || "Station", deviceType: "PS5", hourlyRate: baselineSubtotal,
+      deviceId: deviceTypeId!, deviceName: deviceTypeName || "Device Type", deviceType: "gaming", hourlyRate: baselineSubtotal,
       date: dateQueryString, slotLabel: selectedSlotNode.label, start: selectedSlotNode.start, end: selectedSlotNode.end,
       addons, subtotal: baselineSubtotal, total: aggregatedPayableTotal
     });
@@ -103,7 +108,7 @@ export default function SlotBookingPage() {
           <div className="bg-[#111] border border-zinc-900 rounded-xl p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center gap-3 min-w-0">
               <div className="p-2.5 bg-zinc-950 border border-zinc-800 text-[#FFC107] rounded-lg"><Clock className="h-4 w-4"/></div>
-              <div className="min-w-0"><h4 className="font-black text-xs sm:text-sm text-white uppercase truncate">{deviceName || "PLAYSTATION 5 - STATION #2"}</h4><p className="text-zinc-500 text-[10px] font-bold mt-0.5">₹ {hourlyRate || 300}/hour</p></div>
+              <div className="min-w-0"><h4 className="font-black text-xs sm:text-sm text-white uppercase truncate">{deviceTypeName || "PLAYSTATION 5 - STATION #2"}</h4><p className="text-zinc-500 text-[10px] font-bold mt-0.5">₹ {hourlyRate || 300}/hour</p></div>
             </div>
             <Button onClick={() => router.push("/booking")} variant="outline" className="border-zinc-800 text-[10px] uppercase h-8 px-3 text-zinc-400">Change</Button>
           </div>
@@ -144,10 +149,18 @@ export default function SlotBookingPage() {
                       {staticDaylightSchedulesMatrix.filter(s => s.tier === g).map((slot) => {
                         const isBooked = disabledLabelsArray.includes(slot.label);
                         const isSelected = selectedSlotNode?.id === slot.id;
+                        const availability = slotAvailability[slot.label];
                         return (
                           <button key={slot.id} disabled={isBooked} onClick={() => setSelectedSlotNode(slot)} className={`p-3.5 border text-left flex justify-between items-center rounded-xl transition-all ${isBooked ? "bg-zinc-950/20 border-zinc-950 text-zinc-800 line-through cursor-not-allowed" : isSelected ? "bg-[#FFC107] border-transparent text-black font-black" : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-zinc-800"}`}>
                             <span className="text-xs font-bold tracking-tight">{slot.label}</span>
-                            {slot.peak && !isBooked && <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-sm ${isSelected ? "bg-black/10 text-black" : "bg-amber-500/10 text-amber-400"}`}>PEAK</span>}
+                            <div className="flex items-center gap-2">
+                              {availability && !isBooked && (
+                                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-sm ${isSelected ? "bg-black/10 text-black" : "bg-green-500/10 text-green-400"}`}>
+                                  {availability.available} LEFT
+                                </span>
+                              )}
+                              {slot.peak && !isBooked && <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-sm ${isSelected ? "bg-black/10 text-black" : "bg-amber-500/10 text-amber-400"}`}>PEAK</span>}
+                            </div>
                           </button>
                         );
                       })}
@@ -166,11 +179,51 @@ export default function SlotBookingPage() {
             <div className="space-y-4 text-xs text-zinc-400 border-b border-zinc-900 pb-3">
               <div className="flex justify-between"><span>Selected Date:</span><strong className="text-white font-bold">{calendarDay ? calendarDay.toDateString() : "Pending"}</strong></div>
               <div className="flex justify-between"><span>Time Slot Frame:</span><strong className="text-[#FFC107] font-black">{selectedSlotNode ? selectedSlotNode.label : "Pending"}</strong></div>
-              <div className="flex justify-between"><span>Station Layout:</span><strong className="text-white uppercase truncate max-w-[160px]">{deviceName || "PLAYSTATION 5 - STATION #2"}</strong></div>
+              <div className="flex justify-between"><span>Station Layout:</span><strong className="text-white uppercase truncate max-w-[160px]">{deviceTypeName || "PLAYSTATION 5 - STATION #2"}</strong></div>
             </div>
+
+            {/* Player Selection */}
+            <div className="border-b border-zinc-900 pb-4">
+              <h4 className="text-xs font-black text-zinc-400 uppercase tracking-wider mb-3">Number of Players</h4>
+              <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-lg p-3">
+                <div className="flex-1">
+                  <p className="text-xs text-zinc-500">
+                    {includedPlayers} included • Max {maxPlayers}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => playerCount > 1 && dispatch(setPlayerCount(playerCount - 1))}
+                    disabled={playerCount <= 1}
+                    className="w-7 h-7 rounded-md bg-zinc-900 border border-zinc-800 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-800 transition-all flex items-center justify-center"
+                  >
+                    <Minus className="h-3 w-3" />
+                  </button>
+                  <span className="text-xl font-black text-white w-8 text-center">{playerCount}</span>
+                  <button
+                    onClick={() => {
+                      if (playerCount >= maxPlayers) {
+                        toast.error(`Maximum ${maxPlayers} players only`, {
+                          description: `This device supports up to ${maxPlayers} players maximum.`
+                        });
+                      } else {
+                        dispatch(setPlayerCount(playerCount + 1));
+                      }
+                    }}
+                    disabled={playerCount >= maxPlayers}
+                    className="w-7 h-7 rounded-md bg-[#FFC107] border border-transparent text-black disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#ffcd38] transition-all flex items-center justify-center font-bold"
+                  >
+                    <Plus className="h-3 w-3 stroke-[3]" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-2.5 text-xs text-zinc-500">
               <div className="flex justify-between"><span>Base Rate</span><span className="text-white font-bold">₹ {baselineSubtotal}.00</span></div>
-              <div className="flex justify-between"><span>Service Fee</span><span className="text-white font-bold">₹ {runtimeTaxAmount}.00</span></div>
+              {extraPlayersCount > 0 && (
+                <div className="flex justify-between"><span>Extra Players ({extraPlayersCount})</span><span className="text-[#FFC107] font-bold">₹ {extraPlayersCharge}.00</span></div>
+              )}
               <div className="flex justify-between items-baseline pt-3 border-t border-zinc-900 text-white font-black"><span className="text-xs uppercase">Total Payable</span><span className="text-2xl text-[#FFC107]">₹ {aggregatedPayableTotal}.00</span></div>
             </div>
             <Button disabled={submittingLock || !selectedSlotNode} onClick={handleRegisterTransactionLock} className="w-full bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black uppercase py-5 text-xs rounded-xl flex items-center justify-center gap-1">Continue <ChevronRight className="h-4 w-4 stroke-[3]" /></Button>
@@ -214,9 +267,49 @@ export default function SlotBookingPage() {
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end md:hidden animate-in fade-in duration-150">
           <div className="bg-[#121212] border-t border-zinc-800 rounded-t-2xl w-full p-5 space-y-4 animate-in slide-in-from-bottom duration-250">
             <div className="flex justify-between items-center border-b border-zinc-900 pb-2"><span className="text-xs font-black uppercase text-zinc-400">Summary Breakdown</span><button onClick={() => setMobileSummaryDrawerOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-500"><X className="h-4 w-4"/></button></div>
+
+            {/* Player Selection */}
+            <div className="border-b border-zinc-900 pb-3">
+              <h4 className="text-xs font-black text-zinc-400 uppercase tracking-wider mb-2">Number of Players</h4>
+              <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-lg p-3">
+                <div className="flex-1">
+                  <p className="text-xs text-zinc-500">
+                    {includedPlayers} included • Max {maxPlayers}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => playerCount > 1 && dispatch(setPlayerCount(playerCount - 1))}
+                    disabled={playerCount <= 1}
+                    className="w-8 h-8 rounded-md bg-zinc-900 border border-zinc-800 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-800 transition-all flex items-center justify-center"
+                  >
+                    <Minus className="h-3 w-3" />
+                  </button>
+                  <span className="text-xl font-black text-white w-8 text-center">{playerCount}</span>
+                  <button
+                    onClick={() => {
+                      if (playerCount >= maxPlayers) {
+                        toast.error(`Maximum ${maxPlayers} players only`, {
+                          description: `This device supports up to ${maxPlayers} players maximum.`
+                        });
+                      } else {
+                        dispatch(setPlayerCount(playerCount + 1));
+                      }
+                    }}
+                    disabled={playerCount >= maxPlayers}
+                    className="w-8 h-8 rounded-md bg-[#FFC107] border border-transparent text-black disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#ffcd38] transition-all flex items-center justify-center font-bold"
+                  >
+                    <Plus className="h-3 w-3 stroke-[3]" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-3 pt-1 text-xs text-zinc-500">
               <div className="flex justify-between"><span>Base Rate</span><span className="text-white font-bold">₹ {baselineSubtotal}.00</span></div>
-              <div className="flex justify-between"><span>Service Fee</span><span className="text-white font-bold">₹ {runtimeTaxAmount}.00</span></div>
+              {extraPlayersCount > 0 && (
+                <div className="flex justify-between"><span>Extra Players ({extraPlayersCount})</span><span className="text-[#FFC107] font-bold">₹ {extraPlayersCharge}.00</span></div>
+              )}
               <div className="flex justify-between font-black text-white border-t border-zinc-900 pt-2"><span>Total Payable</span><span className="text-[#FFC107]">₹ {aggregatedPayableTotal}</span></div>
               <Button onClick={() => { setMobileSummaryDrawerOpen(false); handleRegisterTransactionLock(); }} className="w-full bg-[#FFC107] text-black font-black uppercase py-4 rounded-xl text-xs mt-2">Confirm & Hold Slot</Button>
             </div>

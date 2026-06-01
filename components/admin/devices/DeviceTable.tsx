@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Loader2, ImageIcon } from "lucide-react";
-import { StatusBadge } from "@/app/(admin)/admin/devices/page";
+import { StatusBadge } from "@/components/admin/devices/StatusBadge";
 import {
   AlertDialog,
   AlertDialogAction,

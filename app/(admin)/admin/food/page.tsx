@@ -26,8 +26,10 @@ export default function FoodPage() {
   const fetchFreshItems = async () => {
     setIsLoadingData(true);
     try {
-      const data = await getMenuItems();
-      setItemsArray(data as MenuItem[] || []);
+      const result = await getMenuItems();
+      if (result.success) {
+        setItemsArray(result.menuItems as MenuItem[] || []);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -72,7 +74,7 @@ export default function FoodPage() {
     <div className="flex flex-col gap-6 p-8 bg-[#0a0a0a] min-h-screen text-white animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Food & Beverage</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white">FOOD & BEVERAGE</h1>
           <p className="text-[#a1a1aa] text-sm">Manage kitchen operations and snack inventory pools.</p>
         </div>
         <AddFoodModal onFormSuccess={fetchFreshItems} open={isAddOpen} setOpen={setIsAddOpen} />

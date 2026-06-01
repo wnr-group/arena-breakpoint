@@ -19,7 +19,7 @@ export default function CustomerDetailsPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const bookingState = useAppSelector((state) => state.booking);
-  const { deviceName, selectedSlot, deviceId, selectedDate, slotStartTime, slotEndTime, hourlyRate, addons, total, subtotal } = bookingState;
+  const { deviceTypeName, selectedSlot, deviceTypeId, selectedDate, slotStartTime, slotEndTime, hourlyRate, addons, total, subtotal, playerCount, includedPlayers, extraPlayerCharge } = bookingState;
 
   const [step, setStep] = useState<Step>("phone");
   const [mobileNumber, setMobileNumber] = useState("");
@@ -103,8 +103,8 @@ export default function CustomerDetailsPage() {
       phone: mobileNumber,
       name: customerName || existingCustomerData?.name,
       email: customerEmail || existingCustomerData?.email || "",
-      deviceId: deviceId!,
-      deviceName: deviceName!,
+      deviceTypeId: deviceTypeId!,
+      deviceTypeName: deviceTypeName!,
       selectedDate: selectedDate!,
       selectedSlot: selectedSlot!,
       slotStartTime: slotStartTime!,
@@ -112,13 +112,17 @@ export default function CustomerDetailsPage() {
       hourlyRate: hourlyRate!,
       addons: addons,
       subtotal: subtotal,
-      total: total
+      total: total,
+      playerCount: playerCount,
+      includedPlayers: includedPlayers,
+      extraPlayerCharge: extraPlayerCharge
     });
 
     if (result.success) {
       setBookingNumber(result.bookingNumber || "");
       setBookingId(result.bookingId || "");
       toast.success("Booking Confirmed!", { description: "Your slot has been reserved successfully." });
+      dispatch(resetBooking()); // Clear timer and booking state after successful confirmation
       setStep("success");
     } else {
       toast.error("Booking Failed", { description: result.error || "Something went wrong. Please try again." });
@@ -158,7 +162,7 @@ export default function CustomerDetailsPage() {
 
           {/* Live Active Hold Summary Strip */}
           <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900 grid grid-cols-2 gap-2 text-xs">
-            <div className="space-y-0.5"><span className="text-[8px] font-black text-zinc-500 uppercase block">Selected Setup</span><span className="text-white font-black truncate max-w-[180px] block uppercase">{deviceName || "PLAYSTATION 5"}</span></div>
+            <div className="space-y-0.5"><span className="text-[8px] font-black text-zinc-500 uppercase block">Selected Setup</span><span className="text-white font-black truncate max-w-[180px] block uppercase">{deviceTypeName || "PLAYSTATION 5"}</span></div>
             <div className="space-y-0.5 text-right"><span className="text-[8px] font-black text-zinc-500 uppercase block">Reserved Slot</span><span className="text-[#FFC107] font-black">{selectedSlot || "Pending Hold"}</span></div>
           </div>
 
@@ -303,7 +307,7 @@ export default function CustomerDetailsPage() {
           <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3">
             <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Booking Details</h4>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-zinc-500">Device:</span> <span className="text-white font-black">{deviceName}</span></div>
+              <div className="flex justify-between"><span className="text-zinc-500">Device:</span> <span className="text-white font-black">{deviceTypeName}</span></div>
               <div className="flex justify-between"><span className="text-zinc-500">Date:</span> <span className="text-white font-bold">{new Date(selectedDate!).toLocaleDateString()}</span></div>
               <div className="flex justify-between"><span className="text-zinc-500">Time Slot:</span> <span className="text-[#FFC107] font-black">{selectedSlot}</span></div>
               <div className="flex justify-between"><span className="text-zinc-500">Duration:</span> <span className="text-white font-bold">{slotStartTime} - {slotEndTime}</span></div>
@@ -372,7 +376,7 @@ export default function CustomerDetailsPage() {
           <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-2">
             <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Booking Details</h4>
             <div className="flex justify-between text-sm"><span className="text-zinc-500">Customer:</span> <span className="text-white font-bold">{customerName}</span></div>
-            <div className="flex justify-between text-sm"><span className="text-zinc-500">Device:</span> <span className="text-white font-bold">{deviceName}</span></div>
+            <div className="flex justify-between text-sm"><span className="text-zinc-500">Device:</span> <span className="text-white font-bold">{deviceTypeName}</span></div>
             <div className="flex justify-between text-sm"><span className="text-zinc-500">Date & Time:</span> <span className="text-[#FFC107] font-bold">{new Date(selectedDate!).toLocaleDateString()} • {selectedSlot}</span></div>
             <div className="flex justify-between text-sm border-t border-zinc-800 pt-2 mt-2"><span className="text-zinc-500">Amount Paid:</span> <span className="text-white font-black">₹{total}</span></div>
           </div>
