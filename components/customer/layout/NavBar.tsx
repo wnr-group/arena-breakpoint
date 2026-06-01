@@ -39,9 +39,11 @@ export function Navbar() {
         </Link>
         
         {/* Action CTAs */}
-        <button className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black text-[10px] tracking-wider rounded-md px-4 py-2.5 transition-all active:scale-95 ml-4">
-          FOOD MENU
-        </button>
+        <Link href="/food">
+          <button className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black text-[10px] tracking-wider rounded-md px-4 py-2.5 transition-all active:scale-95 ml-4">
+            FOOD MENU
+          </button>
+        </Link>
         <Link href="/booking">
           <button className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black text-[10px] tracking-wider rounded-md px-4 py-2.5 transition-all active:scale-95">
             BOOK SLOT
@@ -71,10 +73,12 @@ export function Navbar() {
             <Link href="/" onClick={() => setMobileMenuOpen(false)} className={pathname === "/" ? "text-[#FFC107]" : "hover:text-white"}>Home</Link>
             <Link href="/subscription" onClick={() => setMobileMenuOpen(false)} className={pathname === "/subscriptions" ? "text-[#FFC107]" : "hover:text-white"}>Subscriptions</Link>
             <Link href="/retrieve" onClick={() => setMobileMenuOpen(false)} className={pathname === "/retrieve" ? "text-[#FFC107]" : "hover:text-white"}>Retrieve Booking</Link>
-            
-            <button onClick={() => setMobileMenuOpen(false)} className="w-full bg-[#FFC107] text-black font-black py-4 rounded-xl text-xs tracking-widest shadow-md transition-transform active:scale-97 mt-4">
-              FOOD MENU
-            </button>
+
+            <Link href="/food" className="w-full" onClick={() => setMobileMenuOpen(false)}>
+              <button className="w-full bg-[#FFC107] text-black font-black py-4 rounded-xl text-xs tracking-widest shadow-md transition-transform active:scale-97 mt-4">
+                FOOD MENU
+              </button>
+            </Link>
             <Link href="/booking" className="w-full" onClick={() => setMobileMenuOpen(false)}>
               <button className="w-full bg-[#FFC107] text-black font-black py-4 rounded-xl text-xs tracking-widest shadow-md transition-transform active:scale-97">
                 BOOK SLOT

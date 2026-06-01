@@ -26,7 +26,6 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {devices.map((device) => {
-        const totalQty = Number(device.quantity) || 1;
         const statusClean = String(device.status || "").toLowerCase().trim();
 
         return (
@@ -49,7 +48,7 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
                 </div>
               )}
               <div className="absolute top-3 right-3 z-10">
-                <GridStatusBadge status={statusClean} quantity={totalQty} />
+                <GridStatusBadge status={statusClean} />
               </div>
             </div>
 
@@ -61,12 +60,12 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
                     <h3 className="font-black text-xl text-[#FFC107] uppercase tracking-wide truncate max-w-[130px]" title={device.station_number}>
                       {device.station_number}
                     </h3>
-                    <p className="text-xs text-[#a1a1aa] font-medium truncate max-w-[130px]">{device.type}</p>
+                    <p className="text-xs text-[#a1a1aa] font-medium truncate max-w-[130px]">{device.device_type?.display_name || 'N/A'}</p>
                   </div>
-                  
+
                   {/* HOURLY PRICING NODE */}
                   <div className="text-[#FFC107] font-black text-xl text-right flex-shrink-0">
-                    ₹{device.hourly_rate ? Number(device.hourly_rate).toLocaleString('en-IN') : "0"}
+                    ₹{device.device_type?.regular_hourly_rate ? Number(device.device_type.regular_hourly_rate).toLocaleString('en-IN') : "0"}
                     <span className="text-[#a1a1aa] text-[10px] font-normal tracking-tight">/hr</span>
                   </div>
                 </div>
@@ -135,12 +134,12 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
   );
 }
 
-function GridStatusBadge({ status, quantity }: { status: string; quantity: number }) {
+function GridStatusBadge({ status }: { status: string }) {
   if (status === 'available') {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-white bg-black/60 border border-green-500/40 rounded-full backdrop-blur-md whitespace-nowrap">
         <span className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
-        {quantity} AVAILABLE
+        AVAILABLE
       </span>
     );
   }

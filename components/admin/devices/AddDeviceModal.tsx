@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import { PlusCircle, UploadCloud, Gamepad2, ImageIcon, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
-import { createDevice } from "@/app/(admin)/admin/devices/actions";
+import { createDevice, getDeviceTypes } from "@/app/(admin)/admin/devices/actions";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
@@ -19,12 +19,25 @@ interface AddModalProps {
 export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) {
   const [isPending, startTransition] = useTransition();
 
-  const [previewType, setPreviewType] = useState("PlayStation 5");
+  const [deviceTypes, setDeviceTypes] = useState<any[]>([]);
+  const [selectedDeviceTypeId, setSelectedDeviceTypeId] = useState("");
   const [previewStation, setPreviewStation] = useState("");
   const [previewStatus, setPreviewStatus] = useState("available");
-  const [hourlyRate, setHourlyRate] = useState("");
-  const [quantity, setQuantity] = useState("1");
   const [localFile, setLocalFile] = useState<File | null>(null);
+
+  // Load device types on mount
+  useEffect(() => {
+    async function loadDeviceTypes() {
+      const types = await getDeviceTypes();
+      setDeviceTypes(types);
+      if (types.length > 0) {
+        setSelectedDeviceTypeId(types[0].id);
+      }
+    }
+    loadDeviceTypes();
+  }, []);
+
+  const selectedDeviceType = deviceTypes.find(dt => dt.id === selectedDeviceTypeId);
 
   const filePreviewUrl = useMemo(() => {
     if (!localFile) return null;
@@ -68,8 +81,7 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
         setOpen(false);
         setLocalFile(null);
         setPreviewStation("");
-        setHourlyRate("");
-        setQuantity("1");
+        setSelectedDeviceTypeId(deviceTypes[0]?.id || "");
 
         toast.success("New Machine Registered", {
           description: `Station ${previewStation || "Asset"} added successfully.`,
@@ -94,9 +106,8 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
         </Button>
       </DialogTrigger>
 
-      {/* 💡 FIX: Set h-auto and max-h-[90vh] with dynamic overflow on content container to remove forced squeezing */}
       <DialogContent className="bg-[#0a0a0a] border-[#27272a] text-white max-w-[900px] w-[95vw] p-0 overflow-hidden shadow-2xl h-auto max-h-[90vh] flex flex-col justify-between">
-        
+
         {/* Header Panel */}
         <div className="p-6 border-b border-[#27272a]/70 bg-[#121212] flex-shrink-0">
           <DialogTitle className="text-xl font-black tracking-tight text-white">Add New Device</DialogTitle>
@@ -104,70 +115,39 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col md:flex-row overflow-y-auto min-h-0">
-          
+
           {/* Left Form Panel */}
           <div className="flex-1 p-8 space-y-6 bg-[#0a0a0a] overflow-y-auto">
-            
+
             {/* Input Row 1 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2">
                 <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Device Type</label>
                 <select
-                  name="type"
-                  value={previewType}
-                  onChange={(e) => setPreviewType(e.target.value)}
+                  name="device_type_id"
+                  value={selectedDeviceTypeId}
+                  onChange={(e) => setSelectedDeviceTypeId(e.target.value)}
                   className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] px-3 text-sm focus:border-[#FFC107] focus:ring-1 focus:ring-[#FFC107] outline-none text-white cursor-pointer transition-colors"
+                  required
                 >
-                  <option value="PS5">PS 5</option>
-                  <option value="Standard Snooker">Standard Snooker</option>
-                  <option value="Medium Snooker">Medium Snooker</option>
-                  <option value="American Snooker">American Snooker</option>
+                  {deviceTypes.map(dt => (
+                    <option key={dt.id} value={dt.id}>{dt.display_name}</option>
+                  ))}
                 </select>
+                {selectedDeviceType && (
+                  <p className="text-[10px] text-zinc-500">
+                    ₹{selectedDeviceType.regular_hourly_rate}/hr • {selectedDeviceType.included_players} player{selectedDeviceType.included_players > 1 ? 's' : ''} included
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Station #</label>
                 <Input
                   name="station_number"
-                  placeholder="e.g. S-03"
+                  placeholder="e.g. SS-001"
                   className="h-10 bg-[#121212] border-[#27272a] text-sm text-white focus-visible:ring-[#FFC107] focus-visible:border-[#FFC107] transition-colors"
                   value={previewStation}
                   onChange={(e) => setPreviewStation(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Input Row 2 */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Hourly Rate</label>
-                <div className="relative rounded-md shadow-sm">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <span className="text-[#a1a1aa] text-sm">₹</span>
-                  </div>
-                  <input
-                    type="number"
-                    name="hourly_rate"
-                    placeholder="0"
-                    min="0"
-                    value={hourlyRate}
-                    onChange={(e) => setHourlyRate(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] pl-7 pr-3 text-sm focus:ring-1 focus:ring-[#FFC107] focus:border-[#FFC107] outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Available Quantity</label>
-                <input
-                  type="number"
-                  name="quantity"
-                  placeholder="1"
-                  min="1"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] px-3 text-sm focus:ring-1 focus:ring-[#FFC107] focus:border-[#FFC107] outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
                   required
                 />
               </div>
@@ -211,7 +191,7 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
           <div className="w-full md:w-[350px] bg-[#121212] border-l border-[#27272a]/70 p-8 flex flex-col justify-between items-center flex-shrink-0">
             <div className="w-full flex-1 flex flex-col justify-center">
               <p className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider mb-4 text-center">Card Display Preview</p>
-              
+
               <Card className="bg-[#0a0a0a] border-[#27272a] overflow-hidden w-full max-w-[250px] mx-auto shadow-2xl">
                 <div className="h-32 w-full bg-zinc-950 border-b border-[#27272a] flex items-center justify-center overflow-hidden relative">
                   {filePreviewUrl ? (
@@ -230,15 +210,16 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
                   </div>
                   <div>
                     <h3 className="text-base font-black text-white tracking-tight uppercase">{previewStation || "STATION-ID"}</h3>
-                    <p className="text-[#a1a1aa] text-[11px] flex items-center gap-1.5 mt-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#FFC107]"></span>{previewType}</p>
+                    <p className="text-[#a1a1aa] text-[11px] flex items-center gap-1.5 mt-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#FFC107]"></span>
+                      {selectedDeviceType?.display_name || "Device Type"}
+                    </p>
                   </div>
                   <div className="flex items-center justify-between border-t border-zinc-900/60 pt-2 text-xs">
                     <span className="text-[#a1a1aa] font-medium">Rate / Hour</span>
-                    <span className="font-bold text-[#FFC107] text-sm">₹{hourlyRate || "0"}/hr</span>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-zinc-900/40 pt-2 text-xs">
-                    <span className="text-[#a1a1aa] font-medium">Stock Units</span>
-                    <span className="font-bold text-white text-sm">{quantity || "1"} Units</span>
+                    <span className="font-bold text-[#FFC107] text-sm">
+                      ₹{selectedDeviceType?.regular_hourly_rate || "0"}/hr
+                    </span>
                   </div>
                 </div>
               </Card>

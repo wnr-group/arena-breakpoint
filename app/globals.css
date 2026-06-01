@@ -3,11 +3,19 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* 🎨 PRIMARY BRAND COLOR - Change this to update the entire app theme */
+  --primary: #FFC107;
+  --primary-hover: #ffcd38;
+  --primary-dark: #e6ad06;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-dark: var(--primary-dark);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -16,6 +24,11 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+
+    /* 🎨 PRIMARY BRAND COLOR - Change this to update the entire app theme */
+    --primary: #FFC107;
+    --primary-hover: #ffcd38;
+    --primary-dark: #e6ad06;
   }
 }
 

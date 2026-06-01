@@ -13,6 +13,7 @@ interface FilterProps {
   setStatusFilter: (val: string) => void;
   viewMode: 'table' | 'grid';
   setViewMode: (mode: 'table' | 'grid') => void;
+  deviceTypes: any[];
 }
 
 export function DeviceFilters({
@@ -24,20 +25,29 @@ export function DeviceFilters({
   setStatusFilter,
   viewMode,
   setViewMode,
+  deviceTypes
 }: FilterProps) {
   return (
     <div className="flex flex-col gap-4 mt-2 animate-in slide-in-from-bottom-6 duration-700 delay-200 fill-mode-both">
       {/* Category Tabs */}
-      <div className="flex items-center gap-6 border-b border-[#27272a] px-2">
-        {["All Devices", "PS5", "Standard Snooker" , "Medium Snooker" , "American Snooker"].map((tab) => (
+      <div className="flex items-center gap-6 border-b border-[#27272a] px-2 overflow-x-auto scrollbar-none">
+        <button
+          onClick={() => setTypeTab("All Devices")}
+          className={`pb-3 text-sm font-medium transition-all duration-300 whitespace-nowrap ${
+            typeTab === "All Devices" ? "text-[#FFC107] border-b-2 border-[#FFC107]" : "text-[#a1a1aa] hover:text-white"
+          }`}
+        >
+          All Devices
+        </button>
+        {deviceTypes.map((dt) => (
           <button
-            key={tab}
-            onClick={() => setTypeTab(tab)}
-            className={`pb-3 text-sm font-medium transition-all duration-300 ${
-              typeTab === tab ? "text-[#FFC107] border-b-2 border-[#FFC107]" : "text-[#a1a1aa] hover:text-white"
+            key={dt.id}
+            onClick={() => setTypeTab(dt.id)}
+            className={`pb-3 text-sm font-medium transition-all duration-300 whitespace-nowrap ${
+              typeTab === dt.id ? "text-[#FFC107] border-b-2 border-[#FFC107]" : "text-[#a1a1aa] hover:text-white"
             }`}
           >
-            {tab}
+            {dt.display_name}
           </button>
         ))}
       </div>
@@ -49,14 +59,13 @@ export function DeviceFilters({
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by station ID or platform..."
+            placeholder="Search by station ID or type..."
             className="bg-transparent border-none pl-9 text-sm text-white focus-visible:ring-0"
           />
         </div>
 
         <div className="hidden md:block h-6 w-px bg-[#27272a]"></div>
 
-        {/* Dropdown Select Status */}
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -85,7 +94,6 @@ export function DeviceFilters({
 
         <div className="h-6 w-px bg-[#27272a]"></div>
 
-        {/* Layout Toggles */}
         <div className="flex bg-[#0a0a0a] rounded-lg p-1 border border-[#27272a]">
           <button
             onClick={() => setViewMode('table')}

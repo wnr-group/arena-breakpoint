@@ -49,7 +49,13 @@ export default function LandingPage() {
                 BOOK YOUR GAMING SLOT <ArrowRight className="h-4 w-4 stroke-[3]" />
               </Button>
             </Link>
-            
+
+            <Link href="/food">
+              <Button variant="outline" className="border border-zinc-800 text-zinc-400 hover:text-white bg-black/40 backdrop-blur-sm hover:bg-zinc-900 font-black uppercase text-xs h-12 px-6 rounded-md tracking-wider transition-all hover:border-zinc-500 hover:scale-102 active:scale-98">
+                ORDER FOOD & DRINKS
+              </Button>
+            </Link>
+
             <Link href="/subscription">
               <Button variant="outline" className="border border-zinc-800 text-zinc-400 hover:text-white bg-black/40 backdrop-blur-sm hover:bg-zinc-900 font-black uppercase text-xs h-12 px-6 rounded-md tracking-wider transition-all hover:border-zinc-500 hover:scale-102 active:scale-98">
                 VIEW SUBSCRIPTIONS

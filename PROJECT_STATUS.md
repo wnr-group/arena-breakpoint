@@ -20,12 +20,12 @@
 - ✅ Type-safe hooks created
 - ✅ React Query Provider configured
 
-### Database & Integrations (80%)
+### Database & Integrations (100%)
 - ✅ Supabase client + admin clients created
 - ✅ Razorpay service layer (create order, verify signature, refunds)
 - ✅ MSG91 service layer (OTP, confirmations)
-- ✅ Upstash Redis rate limiting client
-- ⚠️ **TODO:** Create Supabase migrations
+- ✅ Database-based slot locking (no Redis needed)
+- ✅ Complete schema with unified bookings + payment groups
 
 ### API Routes (75%)
 - ✅ `/api/otp/send` - OTP generation with rate limiting
@@ -69,32 +69,36 @@
 
 ### 1. Database Setup (Team Lead)
 **Priority:** Blocking  
-**Status:** Not started
+**Status:** ✅ Schema designed, ready to apply
 
 ```bash
-supabase init
-supabase migration new create_initial_schema
+npx supabase db reset  # Apply new schema
 ```
 
-Create tables:
+Tables created:
 - devices
-- bookings
+- bookings (unified: device slots + food orders)
+- booking_device_slots
+- booking_food_items
+- payment_groups (batch payments)
 - subscriptions
 - subscription_purchases
 - promo_codes
-- otps
-- sessions
 - admin_users
+
+**Key Features:**
+- Database-only slot locking (no Redis)
+- Payment groups for batch collection
+- Unified booking model
 
 ### 2. Environment Variables (Team Lead)
 **Priority:** Blocking  
-**Status:** Not started
+**Status:** ✅ Partially complete (Supabase done)
 
 Fill in `.env.local`:
-- Supabase credentials
-- Razorpay test keys
-- MSG91 credentials
-- Upstash Redis credentials
+- ✅ Supabase credentials (local dev)
+- ⚠️ Razorpay test keys (pending)
+- ⚠️ MSG91 credentials (pending)
 
 ### 3. Deployment (Team Lead)
 **Priority:** Blocking  

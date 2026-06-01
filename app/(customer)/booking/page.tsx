@@ -36,15 +36,15 @@ export default function GamingStationPage() {
     return reduxAddons.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   }, [reduxAddons]);
 
-  const activeBaseCost = selectedModalDevice ? Number(selectedModalDevice.hourly_rate) : 0;
+  const activeBaseCost = selectedModalDevice?.device_type?.regular_hourly_rate ? Number(selectedModalDevice.device_type.regular_hourly_rate) : 0;
   const definitiveCombinedTotalValue = activeBaseCost + totalAddonsPrice;
 
   const handleLaunchAddonsModal = (station: any) => {
     dispatch(setDevice({
       id: station.id,
-      name: `${station.type} - Station #${station.station_number}`,
-      type: station.type,
-      hourlyRate: Number(station.hourly_rate)
+      name: `${station.device_type?.display_name || 'Device'} - Station #${station.station_number}`,
+      type: station.device_type?.name || 'other',
+      hourlyRate: station.device_type?.regular_hourly_rate ? Number(station.device_type.regular_hourly_rate) : 0
     }));
     setSelectedModalDevice(station);
   };
@@ -72,15 +72,15 @@ export default function GamingStationPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-200 pb-12">
       <div className="space-y-1">
-        <p className="text-[10px] text-zinc-500 font-black uppercase tracking-wider">HOME › BOOK SLOT › <span className="text-[#FFC107]">SELECT DEVICE</span></p>
+        <p className="text-[10px] text-zinc-500 font-black uppercase tracking-wider">HOME › BOOK SLOT › <span className="text-primary">SELECT DEVICE</span></p>
         <h2 className="text-xl font-black uppercase text-white tracking-tight">CHOOSE YOUR GAMING STATION</h2>
-        <p className="text-[#FFC107] text-[10px] font-black uppercase tracking-widest">• UPDATES LIVE: 24 ACTIVE PLAYERS MATCHING</p>
+        <p className="text-primary text-[10px] font-black uppercase tracking-widest">• UPDATES LIVE: 24 ACTIVE PLAYERS MATCHING</p>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-900 pb-4">
         <div className="flex gap-1.5 overflow-x-auto scrollbar-none">
           {["All Devices", "Console", "PC", "Snooker"].map((tag) => (
-            <button key={tag} onClick={() => setActiveFilter(tag)} className={`px-4 py-2 text-[11px] font-black uppercase border rounded-md transition-all ${activeFilter === tag ? "bg-[#FFC107] text-black border-transparent" : "bg-[#111] border-zinc-800 text-zinc-400"}`}>{tag}</button>
+            <button key={tag} onClick={() => setActiveFilter(tag)} className={`px-4 py-2 text-[11px] font-black uppercase border rounded-md transition-all ${activeFilter === tag ? "bg-primary text-black border-transparent" : "bg-[#111] border-zinc-800 text-zinc-400"}`}>{tag}</button>
           ))}
         </div>
         <Button onClick={() => router.push("/")} variant="outline" className="border-zinc-800 text-[11px] font-black uppercase h-9 px-4 text-zinc-400">← BACK TO HOME</Button>
@@ -90,9 +90,9 @@ export default function GamingStationPage() {
       <div className="max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-7">
         {inventory
           .filter(d => {
-            if (activeFilter === "Console") return d.type === "PS5";
-            if (activeFilter === "PC") return !d.type.includes("PS5") && !d.type.includes("Snooker");
-            if (activeFilter === "Snooker") return d.type.includes("Snooker");
+            if (activeFilter === "Console") return d.device_type?.name === "ps5";
+            if (activeFilter === "PC") return d.device_type?.name === "other";
+            if (activeFilter === "Snooker") return d.device_type?.name?.includes("snooker") || d.device_type?.name?.includes("pool");
             return true;
           })
           .map((device) => {
@@ -100,17 +100,17 @@ export default function GamingStationPage() {
             return (
               <Card key={device.id} className="bg-[#111] border border-zinc-900 overflow-hidden flex flex-col justify-between rounded-xl shadow-lg group">
                 <div className="h-52 w-full relative overflow-hidden border-b border-zinc-900/60">
-                  <img 
-                    src={device.image_url} 
-                    alt={device.type} 
-                    className="absolute inset-0 w-full h-full object-fill transition-transform duration-300 group-hover:scale-102" 
+                  <img
+                    src={device.image_url}
+                    alt={device.device_type?.display_name || 'Device'}
+                    className="absolute inset-0 w-full h-full object-fill transition-transform duration-300 group-hover:scale-102"
                   />
                   
                   {/* Floating Status Badges */}
                   {isAvail ? (
                     <span className="absolute top-4 right-4 bg-black/90 backdrop-blur-md border border-green-500/30 text-green-400 text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md shadow-2xl flex items-center gap-1.5 z-30">
                       <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                      {device.quantity || 1} AVAILABLE
+                      AVAILABLE
                     </span>
                   ) : (
                     <span className="absolute top-4 right-4 bg-black/95 backdrop-blur-md border border-red-500/30 text-red-500 text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md shadow-2xl flex items-center gap-1.5 z-30">
@@ -126,12 +126,12 @@ export default function GamingStationPage() {
                     <div className="flex justify-between items-start gap-2">
                       <div>
                         <h4 className="font-black text-sm text-white uppercase tracking-tight">
-                          {device.type} <span className="text-[#FFC107] text-xs font-black">#STATION {device.station_number}</span>
+                          {device.device_type?.display_name || 'Device'} <span className="text-primary text-xs font-black">#STATION {device.station_number}</span>
                         </h4>
                         <p className="text-[10px] text-zinc-500 font-bold mt-0.5">Premium Setup Architecture</p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <span className="text-base font-black text-[#FFC107]">₹{parseInt(device.hourly_rate, 10)}</span>
+                        <span className="text-base font-black text-primary">₹{device.device_type?.regular_hourly_rate ? Number(device.device_type.regular_hourly_rate) : 0}</span>
                         <span className="text-[9px] text-zinc-600 block">/hr</span>
                       </div>
                     </div>
@@ -143,7 +143,7 @@ export default function GamingStationPage() {
 
                   <div className="pt-2">
                     {isAvail ? (
-                      <Button onClick={() => handleLaunchAddonsModal(device)} className="w-full text-xs font-black uppercase py-5 bg-[#FFC107] hover:bg-[#ffcd38] text-black rounded-lg transition-all active:scale-[0.99]">
+                      <Button onClick={() => handleLaunchAddonsModal(device)} className="w-full text-xs font-black uppercase py-5 bg-primary hover:bg-primary-hover text-black rounded-lg transition-all active:scale-[0.99]">
                         SELECT STATION
                       </Button>
                     ) : (
@@ -173,10 +173,10 @@ export default function GamingStationPage() {
             {/* Dynamic Station Header Identification Banner */}
             <div className="bg-zinc-950 p-3 rounded-lg flex flex-col gap-1.5 text-xs border border-zinc-900">
               <div className="flex justify-between items-center">
-                <span className="font-black text-[#FFC107] uppercase">
-                  {selectedModalDevice.type.toUpperCase()} — STATION #{selectedModalDevice.station_number}
+                <span className="font-black text-primary uppercase">
+                  {selectedModalDevice.device_type?.display_name?.toUpperCase() || 'DEVICE'} — STATION #{selectedModalDevice.station_number}
                 </span>
-                <span className="text-white font-black">₹{parseInt(selectedModalDevice.hourly_rate, 10)}.00/hr</span>
+                <span className="text-white font-black">₹{selectedModalDevice.device_type?.regular_hourly_rate ? Number(selectedModalDevice.device_type.regular_hourly_rate) : 0}.00/hr</span>
               </div>
               <p className="text-[10px] text-zinc-500 leading-tight border-t border-zinc-900 pt-1.5 flex gap-1 items-start">
                 <Info className="h-3 w-3 text-zinc-600 flex-shrink-0 mt-0.5" />
@@ -194,12 +194,12 @@ export default function GamingStationPage() {
                     <div className="space-y-0.5 min-w-0">
                       <h5 className="text-xs font-black text-white uppercase truncate">{addon.name}</h5>
                       <p className="text-[10px] text-zinc-500 line-clamp-1 pr-2 font-medium">{addon.desc}</p>
-                      <p className="text-[10px] font-black text-[#FFC107] pt-0.5">₹{addon.price}.00</p>
+                      <p className="text-[10px] font-black text-primary pt-0.5">₹{addon.price}.00</p>
                     </div>
                     <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 p-1 rounded-lg flex-shrink-0">
                       <button onClick={() => handleModifyAddonQty(addon, "remove")} className="p-1 text-zinc-500 hover:text-white transition-all"><Minus className="h-3 w-3"/></button>
                       <span className="text-xs font-black text-white w-4 text-center">{activeUnits}</span>
-                      <button onClick={() => handleModifyAddonQty(addon, "add")} className="p-1 text-black bg-[#FFC107] hover:bg-[#ffcd38] rounded transition-all"><Plus className="h-3 w-3"/></button>
+                      <button onClick={() => handleModifyAddonQty(addon, "add")} className="p-1 text-black bg-primary hover:bg-primary-hover rounded transition-all"><Plus className="h-3 w-3"/></button>
                     </div>
                   </div>
                 );
@@ -208,11 +208,11 @@ export default function GamingStationPage() {
 
             <div className="bg-zinc-950 p-3 rounded-xl space-y-1 text-xs text-zinc-500 border border-zinc-900">
               <div className="flex justify-between"><span>Base Runtime Rate</span><span className="text-white">₹{activeBaseCost}.00</span></div>
-              <div className="flex justify-between font-black text-white pt-2 border-t border-zinc-800"><span>Total Summary Amount</span><span className="text-[#FFC107]">₹{definitiveCombinedTotalValue}.00</span></div>
+              <div className="flex justify-between font-black text-white pt-2 border-t border-zinc-800"><span>Total Summary Amount</span><span className="text-primary">₹{definitiveCombinedTotalValue}.00</span></div>
             </div>
 
             <div className="space-y-2">
-              <Button onClick={handleCommitSelectionAndForward} className="w-full bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black uppercase py-4 text-xs rounded-xl transition-all">
+              <Button onClick={handleCommitSelectionAndForward} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase py-4 text-xs rounded-xl transition-all">
                 CONTINUE TO SLOT SELECTION
               </Button>
               <Button onClick={() => setSelectedModalDevice(null)} variant="ghost" className="w-full border border-zinc-800 text-zinc-400 hover:text-white font-black text-xs py-4 rounded-xl">

@@ -24,7 +24,6 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
   const [editStation, setEditStation] = useState(device.station_number || "");
   const [editStatus, setEditStatus] = useState(device.status || "available");
   const [hourlyRate, setHourlyRate] = useState(device.hourly_rate || "");
-  const [quantity, setQuantity] = useState(device.quantity || "1");
   const [localFile, setLocalFile] = useState<File | null>(null);
 
   // Computes fallback path variables between historical bucket signatures or newly staged files
@@ -123,37 +122,20 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
             </div>
 
             {/* Form row block 2 */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Hourly Rate</label>
-                <div className="relative rounded-md shadow-sm">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <span className="text-[#a1a1aa] text-sm">₹</span>
-                  </div>
-                  <input
-                    type="number"
-                    name="hourly_rate"
-                    placeholder="0"
-                    min="0"
-                    value={hourlyRate}
-                    onChange={(e) => setHourlyRate(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] pl-7 pr-3 text-sm focus:ring-1 focus:ring-[#FFC107] focus:border-[#FFC107] outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
-                    required
-                  />
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Hourly Rate</label>
+              <div className="relative rounded-md shadow-sm">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <span className="text-[#a1a1aa] text-sm">₹</span>
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Available Quantity</label>
                 <input
                   type="number"
-                  name="quantity"
-                  placeholder="1"
-                  min="1"
-                  step="1"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] px-3 text-sm focus:ring-1 focus:ring-[#FFC107] focus:border-[#FFC107] outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
+                  name="hourly_rate"
+                  placeholder="0"
+                  min="0"
+                  value={hourlyRate}
+                  onChange={(e) => setHourlyRate(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] pl-7 pr-3 text-sm focus:ring-1 focus:ring-[#FFC107] focus:border-[#FFC107] outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
                   required
                 />
               </div>
@@ -220,10 +202,6 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
                   <div className="flex items-center justify-between border-t border-zinc-900/60 pt-2 text-xs">
                     <span className="text-[#a1a1aa] font-medium">Rate / Hour</span>
                     <span className="font-bold text-[#FFC107] text-sm">₹{hourlyRate || "0"}</span>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-zinc-900/40 pt-2 text-xs">
-                    <span className="text-[#a1a1aa] font-medium">Stock Units</span>
-                    <span className="font-bold text-white text-sm">{quantity || "1"} Units</span>
                   </div>
                 </div>
               </Card>

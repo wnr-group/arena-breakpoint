@@ -12,7 +12,7 @@ import {
   AlertCircle,
   MonitorPlay
 } from "lucide-react";
-import { deleteDevice, getDevices } from "./actions";
+import { deleteDevice, getDevices, getDeviceTypes } from "./actions";
 import { DeviceFilters } from "@/components/admin/devices/DeviceFilters";
 import { AddDeviceModal } from "@/components/admin/devices/AddDeviceModal";
 import { EditDeviceModal } from "@/components/admin/devices/EditDeviceModal";
@@ -23,6 +23,7 @@ import { toast } from "sonner";
 export default function DevicesPage() {
   const [isPending, startTransition] = useTransition();
   const [devicesArray, setDevicesArray] = useState<any[]>([]);
+  const [deviceTypes, setDeviceTypes] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   // --- CONTROLLER UI STATES ---
@@ -48,7 +49,12 @@ export default function DevicesPage() {
   };
 
   useEffect(() => {
-    fetchFreshDevices();
+    async function loadData() {
+      const types = await getDeviceTypes();
+      setDeviceTypes(types);
+      await fetchFreshDevices();
+    }
+    loadData();
   }, []);
 
   // --- DATA FILTER MATRIX ---
@@ -57,25 +63,18 @@ export default function DevicesPage() {
       if (!device) return false;
 
       const stationNumber = String(device.station_number || "").toLowerCase().trim();
-      const deviceType = String(device.type || "").toLowerCase().trim();
+      const deviceTypeName = String(device.device_type?.display_name || "").toLowerCase().trim();
       const deviceStatus = String(device.status || "").toLowerCase().trim();
       const search = searchQuery.toLowerCase().trim();
 
       const matchesSearch =
         search === "" ||
         stationNumber.includes(search) ||
-        deviceType.includes(search);
+        deviceTypeName.includes(search);
 
-      let matchesType = false;
-      const activeTab = typeTab.toLowerCase().trim();
-
-      if (activeTab === "all devices") {
-        matchesType = true;
-      } else if (activeTab === "ps5") {
-        matchesType = deviceType === "ps5" || deviceType.includes("playstation");
-      } else {
-        matchesType = deviceType === activeTab;
-      }
+      const matchesType =
+        typeTab === "All Devices" ||
+        device.device_type_id === typeTab;
 
       const matchesStatus =
         statusFilter === "All" ||
@@ -86,33 +85,24 @@ export default function DevicesPage() {
   }, [devicesArray, searchQuery, typeTab, statusFilter]);
 
   const devicesForCounting = useMemo(() => {
-    return typeTab.toLowerCase().trim() === "all devices"
+    return typeTab === "All Devices"
       ? devicesArray
-      : devicesArray.filter(d => {
-        const t = String(d?.type || "").toLowerCase();
-        return typeTab.toLowerCase().trim() === "ps5"
-          ? (t === "ps5" || t.includes("playstation"))
-          : t === typeTab.toLowerCase().trim();
-      });
+      : devicesArray.filter(d => d.device_type_id === typeTab);
   }, [devicesArray, typeTab]);
 
-  const totalDevices = devicesForCounting.reduce((acc, d) => acc + (Number(d.quantity) || 1), 0);
+  const totalDevices = devicesForCounting.length;
 
   const availableDevices = devicesForCounting
-    .filter(d => String(d?.status).toLowerCase() === 'available')
-    .reduce((acc, d) => acc + (Number(d.quantity) || 1), 0);
+    .filter(d => String(d?.status).toLowerCase() === 'available').length;
 
   const occupiedDevices = devicesForCounting
-    .filter(d => String(d?.status).toLowerCase() === 'occupied')
-    .reduce((acc, d) => acc + (Number(d.quantity) || 1), 0);
+    .filter(d => String(d?.status).toLowerCase() === 'occupied').length;
 
   const maintenanceDevices = devicesForCounting
-    .filter(d => String(d?.status).toLowerCase() === 'maintenance')
-    .reduce((acc, d) => acc + (Number(d.quantity) || 1), 0);
+    .filter(d => String(d?.status).toLowerCase() === 'maintenance').length;
 
   const inactiveDevices = devicesForCounting
-    .filter(d => String(d?.status).toLowerCase() === 'inactive')
-    .reduce((acc, d) => acc + (Number(d.quantity) || 1), 0);
+    .filter(d => String(d?.status).toLowerCase() === 'inactive').length;
 
   const handleDelete = (id: string) => {
     startTransition(async () => {
@@ -179,6 +169,7 @@ export default function DevicesPage() {
         setStatusFilter={setStatusFilter}
         viewMode={viewMode}
         setViewMode={setViewMode}
+        deviceTypes={deviceTypes}
       />
 
       {/* VIEW SELECTION ROUTER LAYER */}
