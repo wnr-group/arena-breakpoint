@@ -25,7 +25,7 @@ All 26 key decisions made during the grill-me session:
 19. **Deployment:** Git-based auto-deploy via Vercel
 20. **Versions:** Latest stable (Next.js 15, React 19) with locked versions
 21. **Images:** Hybrid (static in /public, dynamic in Supabase Storage)
-22. **API Security:** Basic rate limiting (Upstash Redis)
+22. **Slot Locking:** Database-based (PostgreSQL UNIQUE constraints + timestamps)
 23. **Scaffolding:** Full feature folders + all configs ready
 24. **Package Manager:** pnpm
 25. **Node Version:** 20 LTS
@@ -63,7 +63,7 @@ All 26 key decisions made during the grill-me session:
 
 - **Razorpay:** Order creation, signature verification, refunds
 - **MSG91:** OTP sending, booking confirmation, subscription confirmation
-- **Upstash Redis:** Rate limiting utilities
+- **Database Locking:** PostgreSQL-based slot locking (no external services needed)
 
 ### ✅ API Routes
 
@@ -317,14 +317,15 @@ Start with:
    supabase link --project-ref <project-ref>
    ```
 
-2. **Create database migrations**
-
-   - File: `/supabase/migrations/00001_initial_schema.sql`
-   - Create all tables with proper indexes
-   - Add RLS policies if needed
+2. **Apply database migrations**
+   ```bash
+   npx supabase db reset  # Apply all migrations
+   ```
+   - ✅ Schema ready in `/supabase/migrations/20260530092146_redesigned_schema.sql`
+   - Includes all tables, indexes, RLS policies, and helper functions
+   - See `SCHEMA_DESIGN.md` for complete documentation
 
 3. **Set up external accounts**
-
    - Create Upstash Redis account
    - Test Razorpay test keys (if available)
    - Test MSG91 OTP sending

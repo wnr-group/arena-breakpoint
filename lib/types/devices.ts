@@ -2,13 +2,14 @@ export type DeviceType = 'PS5' | 'Standard Snooker' | 'Medium Snooker' | 'Americ
 export type DeviceStatus = 'available' | 'occupied' | 'maintenance' | 'inactive'
 
 export interface Device {
-  id: string
-  type: DeviceType
-  station_number: string
-  specs?: string
-  status: DeviceStatus
-  hourly_rate: number
-  image_url?: string
-  created_at: string
-  updated_at: string
+  id: string;
+  type: DeviceType;
+  station_number: string;
+  specs?: string;
+  status: DeviceStatus;
+  hourly_rate: number;
+  image_url?: string,
+  created_at: string;
+  updated_at: string;
 }
+

@@ -25,11 +25,16 @@ interface DeviceGridProps {
 export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+<<<<<<< HEAD
       {devices.map(device => {
         const totalQty = Number(device.quantity) || 1
         const statusClean = String(device.status || '')
           .toLowerCase()
           .trim()
+=======
+      {devices.map((device) => {
+        const statusClean = String(device.status || "").toLowerCase().trim();
+>>>>>>> origin/feature/admin-customer-bookings
 
         return (
           <Card
@@ -51,7 +56,7 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
                 </div>
               )}
               <div className="absolute top-3 right-3 z-10">
-                <GridStatusBadge status={statusClean} quantity={totalQty} />
+                <GridStatusBadge status={statusClean} />
               </div>
             </div>
 
@@ -66,17 +71,26 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
                     >
                       {device.station_number}
                     </h3>
+<<<<<<< HEAD
                     <p className="text-xs text-[#a1a1aa] font-medium truncate max-w-[130px]">
                       {device.type}
                     </p>
+=======
+                    <p className="text-xs text-[#a1a1aa] font-medium truncate max-w-[130px]">{device.device_type?.display_name || 'N/A'}</p>
+>>>>>>> origin/feature/admin-customer-bookings
                   </div>
 
                   {/* HOURLY PRICING NODE */}
                   <div className="text-[#FFC107] font-black text-xl text-right flex-shrink-0">
+<<<<<<< HEAD
                     ₹{device.hourly_rate ? Number(device.hourly_rate).toLocaleString('en-IN') : '0'}
                     <span className="text-[#a1a1aa] text-[10px] font-normal tracking-tight">
                       /hr
                     </span>
+=======
+                    ₹{device.device_type?.regular_hourly_rate ? Number(device.device_type.regular_hourly_rate).toLocaleString('en-IN') : "0"}
+                    <span className="text-[#a1a1aa] text-[10px] font-normal tracking-tight">/hr</span>
+>>>>>>> origin/feature/admin-customer-bookings
                   </div>
                 </div>
 
@@ -152,12 +166,12 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
   )
 }
 
-function GridStatusBadge({ status, quantity }: { status: string; quantity: number }) {
+function GridStatusBadge({ status }: { status: string }) {
   if (status === 'available') {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-white bg-black/60 border border-green-500/40 rounded-full backdrop-blur-md whitespace-nowrap">
         <span className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
-        {quantity} AVAILABLE
+        AVAILABLE
       </span>
     )
   }

@@ -105,6 +105,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
         </Button>
       </DialogTrigger>
 
+<<<<<<< HEAD
       <DialogContent className="bg-[#0a0a0a] border-[#27272a] text-white max-w-[850px] w-[95vw] p-0 overflow-hidden shadow-2xl h-[720px] max-h-[90vh] flex flex-col justify-between">
         {/* Header Panel */}
         <div className="p-5 border-b border-[#27272a] bg-[#121212] flex-shrink-0">
@@ -124,16 +125,35 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                 <label className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">
                   Item Name
                 </label>
+=======
+      <DialogContent className="bg-[#0a0a0a] border-[#27272a] text-white max-w-[900px] w-[95vw] p-0 overflow-hidden shadow-2xl h-auto max-h-[90vh] flex flex-col justify-between">
+        
+        {/* Header Panel */}
+        <div className="p-6 border-b border-[#27272a]/70 bg-[#121212] flex-shrink-0">
+          <DialogTitle className="text-xl font-black tracking-tight text-white">Add New Food Item</DialogTitle>
+          <p className="text-xs text-[#a1a1aa] mt-1">Configure menu item details and check real-time layout card output syncs</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col md:flex-row overflow-y-auto min-h-0">
+          
+          {/* Left Form Input Matrix Column */}
+          <div className="flex-1 p-8 space-y-6 bg-[#0a0a0a] overflow-y-auto">
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Item Name</label>
+>>>>>>> origin/feature/admin-customer-bookings
                 <Input
                   name="name"
                   placeholder="e.g. Cyber Steak Burger"
-                  className="h-10 bg-[#121212] border-[#27272a] text-sm text-white focus-visible:ring-[#FFC107]"
+                  className="h-10 bg-[#121212] border-[#27272a] text-sm text-white focus-visible:ring-[#FFC107] focus-visible:border-[#FFC107] transition-colors"
                   value={previewName}
                   onChange={e => setPreviewName(e.target.value)}
                   required
                 />
               </div>
               <div className="space-y-2">
+<<<<<<< HEAD
                 <label className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">
                   Category
                 </label>
@@ -141,6 +161,13 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                   value={previewCategory}
                   onChange={e => setPreviewCategory(e.target.value as FoodCategory)}
                   className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] px-3 text-sm focus:ring-1 focus:ring-[#FFC107] outline-none text-white cursor-pointer"
+=======
+                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Category</label>
+                <select
+                  value={previewCategory}
+                  onChange={(e) => setPreviewCategory(e.target.value as FoodCategory)}
+                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] px-3 text-sm focus:border-[#FFC107] focus:ring-1 focus:ring-[#FFC107] outline-none text-white cursor-pointer transition-colors"
+>>>>>>> origin/feature/admin-customer-bookings
                 >
                   <option value="Snacks">Snacks</option>
                   <option value="Drinks">Drinks</option>
@@ -149,11 +176,15 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2">
+<<<<<<< HEAD
                 <label className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">
                   Price
                 </label>
+=======
+                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Price</label>
+>>>>>>> origin/feature/admin-customer-bookings
                 <div className="relative rounded-md shadow-sm">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <span className="text-[#a1a1aa] text-sm">₹</span>
@@ -164,31 +195,46 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                     placeholder="0"
                     min="0"
                     value={price}
+<<<<<<< HEAD
                     onChange={e => setPrice(e.target.value)}
                     className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] pl-7 pr-3 text-sm focus:ring-1 focus:ring-[#FFC107] outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:border-[#FFC107]"
+=======
+                    onChange={(e) => setPrice(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] pl-7 pr-3 text-sm focus:ring-1 focus:ring-[#FFC107] focus:border-[#FFC107] outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
+>>>>>>> origin/feature/admin-customer-bookings
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
+<<<<<<< HEAD
                 <label className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">
                   Available Quantity
                 </label>
+=======
+                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Available Quantity</label>
+>>>>>>> origin/feature/admin-customer-bookings
                 <input
                   type="number"
                   name="quantity"
                   placeholder="10"
                   min="0"
                   value={quantity}
+<<<<<<< HEAD
                   onChange={e => setQuantity(e.target.value)}
                   className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] px-3 text-sm focus:ring-1 focus:ring-[#FFC107] outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:border-[#FFC107]"
+=======
+                  onChange={(e) => setQuantity(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] px-3 text-sm focus:ring-1 focus:ring-[#FFC107] focus:border-[#FFC107] outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
+>>>>>>> origin/feature/admin-customer-bookings
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
+<<<<<<< HEAD
               <label className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">
                 Food Visual Asset
               </label>
@@ -199,6 +245,14 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                     {localFile
                       ? `Selected: ${localFile.name.substring(0, 25)}...`
                       : 'Select a menu food image cover'}
+=======
+              <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Food Visual Asset</label>
+              <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-[#27272a] border-dashed rounded-xl cursor-pointer bg-[#121212] hover:bg-[#161616] hover:border-[#FFC107]/40 transition-all group">
+                <div className="flex items-center gap-3">
+                  <UploadCloud className="w-5 h-5 text-[#FFC107] group-hover:scale-110 transition-transform" />
+                  <p className="text-xs text-[#a1a1aa] font-medium max-w-[280px] truncate">
+                    {localFile ? localFile.name : "Select or drag a menu food image cover"}
+>>>>>>> origin/feature/admin-customer-bookings
                   </p>
                 </div>
                 <input
@@ -211,6 +265,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
             </div>
 
             <div className="space-y-2">
+<<<<<<< HEAD
               <label className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">
                 Availability Status
               </label>
@@ -229,12 +284,21 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                       onChange={() => setPreviewStatus(status as FoodStatus)}
                     />
                     <span className="capitalize">{status.replace('_', ' ')}</span>
+=======
+              <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Availability Status</label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {['available', 'out_of_stock', 'hidden'].map((status) => (
+                  <label key={status} className={`flex items-center justify-center cursor-pointer rounded-lg border py-2.5 text-xs font-bold transition-all ${previewStatus === status ? 'border-[#FFC107] bg-[#FFC107]/10 text-[#FFC107]' : 'border-[#27272a] bg-[#121212] text-[#a1a1aa] hover:border-zinc-700'}`}>
+                    <input type="radio" name="status_radio" value={status} className="hidden" checked={previewStatus === status} onChange={() => setPreviewStatus(status as FoodStatus)} />
+                    <span className="capitalize tracking-wide">{status.replace('_', ' ')}</span>
+>>>>>>> origin/feature/admin-customer-bookings
                   </label>
                 ))}
               </div>
             </div>
 
             <div className="space-y-2">
+<<<<<<< HEAD
               <label className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">
                 Description
               </label>
@@ -260,20 +324,39 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                       alt="Preview display"
                       className="w-full h-full object-cover"
                     />
+=======
+              <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Description</label>
+              <textarea name="description" placeholder="Describe flavors, cooking styles, textures, or key details..." className="w-full rounded-md border border-[#27272a] bg-[#121212] px-3 py-2.5 text-sm text-white focus:ring-1 focus:ring-[#FFC107] focus:border-[#FFC107] h-24 outline-none resize-none transition-colors" />
+            </div>
+          </div>
+
+          {/* Right Static Preview Column — Non Scrolling */}
+          <div className="w-full md:w-[350px] bg-[#121212] border-l border-[#27272a]/70 p-6 flex flex-col justify-start space-y-6 flex-shrink-0 overflow-hidden select-none h-full md:sticky md:top-0">
+            <div className="w-full text-center md:text-left flex-shrink-0">
+              <p className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Card Display Preview</p>
+            </div>
+            
+            <div className="w-full flex-shrink-0 flex items-center justify-center">
+              <Card className="bg-[#0a0a0a] border-[#27272a] overflow-hidden w-full max-w-[245px] shadow-2xl transition-all duration-300">
+                <div className="h-32 w-full bg-zinc-950 border-b border-[#27272a] flex items-center justify-center overflow-hidden relative">
+                  {filePreviewUrl ? (
+                    <img src={filePreviewUrl} alt="Preview display" className="w-full h-full object-cover animate-in fade-in duration-300" />
+>>>>>>> origin/feature/admin-customer-bookings
                   ) : (
-                    <div className="flex flex-col items-center text-zinc-600 gap-1">
-                      <ImageIcon className="h-5 w-5" />
+                    <div className="flex flex-col items-center text-zinc-700 gap-1.5">
+                      <ImageIcon className="h-5 w-5 text-zinc-600" />
                       <span className="text-[10px]">No image file selected</span>
                     </div>
                   )}
                 </div>
-                <div className="p-4 flex flex-col space-y-3">
+                <div className="p-4 flex flex-col space-y-3 bg-[#0a0a0a]">
                   <div className="flex justify-between items-start">
                     <div className="p-1.5 bg-[#1a1a1a] rounded-md border border-zinc-800">
                       <Utensils className="h-4 w-4 text-[#FFC107]" />
                     </div>
                     <PreviewFoodBadge previewStatus={previewStatus} />
                   </div>
+<<<<<<< HEAD
                   <div>
                     <h3 className="text-lg font-black text-white tracking-tight truncate">
                       {previewName || 'FOOD ITEM TITLE'}
@@ -282,12 +365,17 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                       <span className="w-1.5 h-1.5 rounded-full bg-[#FFC107]"></span>
                       {previewCategory}
                     </p>
+=======
+                  <div className="space-y-0.5">
+                    <h3 className="text-base font-black text-white tracking-tight truncate">{previewName || "FOOD ITEM TITLE"}</h3>
+                    <p className="text-[#a1a1aa] text-[11px] flex items-center gap-1.5 truncate"><span className="w-1.5 h-1.5 rounded-full bg-[#FFC107] flex-shrink-0"></span>{previewCategory}</p>
+>>>>>>> origin/feature/admin-customer-bookings
                   </div>
-                  <div className="flex items-center justify-between border-t border-zinc-900 pt-2 text-xs">
+                  <div className="flex items-center justify-between border-t border-zinc-900/60 pt-2 text-xs">
                     <span className="text-[#a1a1aa] font-medium">Menu Price</span>
                     <span className="font-bold text-[#FFC107] text-sm">₹{price || '0'}</span>
                   </div>
-                  <div className="flex items-center justify-between border-t border-zinc-900/50 pt-2 text-xs">
+                  <div className="flex items-center justify-between border-t border-zinc-900/40 pt-2 text-xs">
                     <span className="text-[#a1a1aa] font-medium">Stock Pool</span>
                     <span className="font-bold text-white text-sm">{quantity || '0'} Units</span>
                   </div>
@@ -295,6 +383,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
               </Card>
             </div>
 
+<<<<<<< HEAD
             {/* Fixed Footer Control Row */}
             <div className="w-full flex justify-end gap-2 mt-4 pt-4 border-t border-[#27272a]/40">
               <Button
@@ -311,6 +400,13 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                 className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-bold px-6 h-10 text-sm rounded-md shadow-md"
               >
                 {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Food Item'}
+=======
+            {/* Form control tracking footer alignment */}
+            <div className="w-full flex justify-end gap-3 pt-6 border-t border-[#27272a]/40 flex-shrink-0 mt-auto">
+              <Button type="button" variant="ghost" className="text-[#a1a1aa] hover:bg-zinc-900 hover:text-white transition-colors text-xs font-semibold" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={isPending} className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-bold px-5 h-9 text-xs rounded-md shadow-md transition-all flex items-center justify-center gap-1.5">
+                {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save Food Item"}
+>>>>>>> origin/feature/admin-customer-bookings
               </Button>
             </div>
           </div>

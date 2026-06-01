@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import bookingReducer from './slices/bookingSlice'
 import sessionReducer from './slices/sessionSlice'
 import adminReducer from './slices/adminSlice'
+import foodCartReducer from './slices/foodCartSlice'
 
 export const makeStore = () => {
   return configureStore({
@@ -9,6 +10,7 @@ export const makeStore = () => {
       booking: bookingReducer,
       session: sessionReducer,
       admin: adminReducer,
+      foodCart: foodCartReducer,
     },
   })
 }

@@ -79,13 +79,14 @@ export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTabl
                 <td className="py-4 px-6 font-bold text-white group-hover:text-[#FFC107] transition-all duration-300">
                   {device.station_number}
                 </td>
-                <td className="py-4 px-6 text-[#a1a1aa]">{device.type}</td>
+                <td className="py-4 px-6 text-[#a1a1aa]">{device.device_type?.display_name || 'N/A'}</td>
                 <td className="py-4 px-6 text-sm text-[#a1a1aa] max-w-xs truncate">
                   {device.specs || (
                     <span className="text-zinc-600 italic text-xs">None listed</span>
                   )}
                 </td>
                 <td className="py-4 px-6 font-semibold text-white">
+<<<<<<< HEAD
                   ₹{device.hourly_rate ? Number(device.hourly_rate).toLocaleString('en-IN') : '0'}
                   /hr
                 </td>
@@ -96,6 +97,13 @@ export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTabl
                   ) : (
                     <span className="text-zinc-600 font-normal">-</span>
                   )}
+=======
+                  ₹{device.device_type?.regular_hourly_rate ? Number(device.device_type.regular_hourly_rate).toLocaleString('en-IN') : "0"}/hr
+                </td>
+
+                <td className="py-4 px-6 font-medium text-[#a1a1aa]">
+                  <span className="text-xs text-zinc-600">{device.device_type?.included_players || 1}p inc.</span>
+>>>>>>> origin/feature/admin-customer-bookings
                 </td>
 
                 <td className="py-4 px-6">

@@ -82,17 +82,10 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
                 </div>
               )}
 
-              {/* Absolute Corner Category Tag */}
-              <div className="absolute top-3 left-3 z-10">
-                <span className="inline-flex items-center px-2 py-0.5 text-[9px] font-black text-[#FFC107] bg-black/60 border border-[#FFC107]/20 rounded-md backdrop-blur-md uppercase tracking-wider">
-                  {item.category}
-                </span>
-              </div>
-
-              {/* Dynamic Stock Volume Metric Tag */}
+              {/* Dynamic Stock Volume Metric Tag (Kept on top right as a dark container pill) */}
               {isCurrentlyAvailable && (
                 <div className="absolute top-3 right-3 z-10 animate-in fade-in zoom-in-95 duration-200">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-white bg-black/60 border border-green-500/30 rounded-md backdrop-blur-md">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[9px] font-black text-white bg-black/60 border border-green-500/30 rounded-md backdrop-blur-md">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1 inline-block animate-pulse" />
                     {totalQty} UNITS
                   </span>
@@ -101,9 +94,9 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
             </div>
 
             {/* 2. DESCRIPTION TEXT AND OPERATOR CONTROLS CONTAINER */}
-            <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+            <div className="p-4 flex-1 flex flex-col justify-between space-y-4">
               <div className="space-y-2.5">
-                {/* 💡 FIXED: Split title and status into a flexible row wrapper without max-width caps or truncation cuts */}
+                {/* Title and Status Row */}
                 <div className="flex items-start justify-between gap-4">
                   <h3
                     className="font-black text-base text-white group-hover:text-[#FFC107] transition-colors leading-snug break-words flex-1"
@@ -142,15 +135,23 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
                   </button>
                 </div>
 
+                {/* Short Description Field Area */}
                 <p className="text-[11px] text-[#a1a1aa]/70 line-clamp-2 h-8 leading-relaxed pt-0.5">
                   {item.description ||
                     'Premium operational kitchen item configuration with zero details logged.'}
                 </p>
               </div>
+
+              {/* 💡 REPOSITIONED: Category Pill Badge fixed securely on the solid black bottom-left area */}
+              <div className="pt-1 flex justify-start items-center">
+                <span className="inline-flex items-center px-2 py-1 text-[9px] font-black text-[#FFC107] bg-[#1a1a1a] border border-[#27272a] rounded-md uppercase tracking-wider select-none">
+                  {item.category}
+                </span>
+              </div>
             </div>
 
             {/* 3. ACCORDION HOVER PANEL */}
-            <div className="mt-auto h-0 opacity-0 group-hover:h-14 group-hover:opacity-100 transition-all duration-300 ease-out bg-[#0e0e0e]/60 border-t border-[#27272a]/30 flex items-center justify-end gap-2 px-4 overflow-hidden w-full">
+            <div className="mt-auto h-0 opacity-0 group-hover:h-14 group-hover:opacity-100 transition-all duration-300 ease-out bg-[#0e0e0e]/95 backdrop-blur-sm border-t border-[#27272a]/30 flex items-center justify-end gap-2 px-4 overflow-hidden w-full z-20">
               <Button
                 variant="ghost"
                 size="icon"

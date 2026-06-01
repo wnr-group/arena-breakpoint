@@ -10,6 +10,7 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
+<<<<<<< HEAD
   MonitorPlay,
 } from 'lucide-react'
 import { deleteDevice, getDevices } from './actions'
@@ -24,6 +25,23 @@ export default function DevicesPage() {
   const [isPending, startTransition] = useTransition()
   const [devicesArray, setDevicesArray] = useState<any[]>([])
   const [isLoadingData, setIsLoadingData] = useState(true)
+=======
+  MonitorPlay
+} from "lucide-react";
+import { deleteDevice, getDevices, getDeviceTypes } from "./actions";
+import { DeviceFilters } from "@/components/admin/devices/DeviceFilters";
+import { AddDeviceModal } from "@/components/admin/devices/AddDeviceModal";
+import { EditDeviceModal } from "@/components/admin/devices/EditDeviceModal";
+import { DeviceTable } from "@/components/admin/devices/DeviceTable";
+import { DeviceGrid } from "@/components/admin/devices/DeviceGrid";
+import { toast } from "sonner";
+
+export default function DevicesPage() {
+  const [isPending, startTransition] = useTransition();
+  const [devicesArray, setDevicesArray] = useState<any[]>([]);
+  const [deviceTypes, setDeviceTypes] = useState<any[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+>>>>>>> origin/feature/admin-customer-bookings
 
   // --- CONTROLLER UI STATES ---
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
@@ -48,14 +66,25 @@ export default function DevicesPage() {
   }
 
   useEffect(() => {
+<<<<<<< HEAD
     fetchFreshDevices()
   }, [])
+=======
+    async function loadData() {
+      const types = await getDeviceTypes();
+      setDeviceTypes(types);
+      await fetchFreshDevices();
+    }
+    loadData();
+  }, []);
+>>>>>>> origin/feature/admin-customer-bookings
 
   // --- DATA FILTER MATRIX ---
   const filteredDevices = useMemo(() => {
     return devicesArray.filter(device => {
       if (!device) return false
 
+<<<<<<< HEAD
       const stationNumber = String(device.station_number || '')
         .toLowerCase()
         .trim()
@@ -80,6 +109,21 @@ export default function DevicesPage() {
       } else {
         matchesType = deviceType === activeTab
       }
+=======
+      const stationNumber = String(device.station_number || "").toLowerCase().trim();
+      const deviceTypeName = String(device.device_type?.display_name || "").toLowerCase().trim();
+      const deviceStatus = String(device.status || "").toLowerCase().trim();
+      const search = searchQuery.toLowerCase().trim();
+
+      const matchesSearch =
+        search === "" ||
+        stationNumber.includes(search) ||
+        deviceTypeName.includes(search);
+
+      const matchesType =
+        typeTab === "All Devices" ||
+        device.device_type_id === typeTab;
+>>>>>>> origin/feature/admin-customer-bookings
 
       const matchesStatus =
         statusFilter === 'All' || deviceStatus === statusFilter.toLowerCase().trim()
@@ -89,6 +133,7 @@ export default function DevicesPage() {
   }, [devicesArray, searchQuery, typeTab, statusFilter])
 
   const devicesForCounting = useMemo(() => {
+<<<<<<< HEAD
     return typeTab.toLowerCase().trim() === 'all devices'
       ? devicesArray
       : devicesArray.filter(d => {
@@ -116,6 +161,26 @@ export default function DevicesPage() {
   const inactiveDevices = devicesForCounting
     .filter(d => String(d?.status).toLowerCase() === 'inactive')
     .reduce((acc, d) => acc + (Number(d.quantity) || 1), 0)
+=======
+    return typeTab === "All Devices"
+      ? devicesArray
+      : devicesArray.filter(d => d.device_type_id === typeTab);
+  }, [devicesArray, typeTab]);
+
+  const totalDevices = devicesForCounting.length;
+
+  const availableDevices = devicesForCounting
+    .filter(d => String(d?.status).toLowerCase() === 'available').length;
+
+  const occupiedDevices = devicesForCounting
+    .filter(d => String(d?.status).toLowerCase() === 'occupied').length;
+
+  const maintenanceDevices = devicesForCounting
+    .filter(d => String(d?.status).toLowerCase() === 'maintenance').length;
+
+  const inactiveDevices = devicesForCounting
+    .filter(d => String(d?.status).toLowerCase() === 'inactive').length;
+>>>>>>> origin/feature/admin-customer-bookings
 
   const handleDelete = (id: string) => {
     startTransition(async () => {
@@ -200,6 +265,7 @@ export default function DevicesPage() {
         setStatusFilter={setStatusFilter}
         viewMode={viewMode}
         setViewMode={setViewMode}
+        deviceTypes={deviceTypes}
       />
 
       {/* VIEW SELECTION ROUTER LAYER */}
