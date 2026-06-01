@@ -158,7 +158,7 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
                 <button
                   onClick={e => {
                     e.stopPropagation()
-                    router.push(`/customer/subscription/${plan.id}`)
+                    router.push(`/subscription/${plan.id}`)
                   }}
                   className={`w-full py-3 rounded-lg font-bold text-sm transition-all duration-300 mt-auto ${
                     isActive

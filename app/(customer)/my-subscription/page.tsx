@@ -72,7 +72,7 @@ export default function MySubscriptionPage() {
 
   return (
     <main
-      className="min-h-screen bg-[#0a0a0a] text-white font-sans py-8 md:py-12"
+      className="min-h-screen bg-[#0a0a0a] text-white font-sans "
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
     >
       <div className="max-w-300 mx-auto px-4 sm:px-6 lg:px-8">
