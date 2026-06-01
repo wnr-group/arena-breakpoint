@@ -1,10 +1,75 @@
 'use client'
 
-import React from 'react'
-import { Percent, Gamepad2, Ticket, Wallet, Monitor, AlertTriangle, History } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import { Percent, Gamepad2, Ticket, Wallet, Monitor, AlertTriangle, History, Loader2, AlertCircle } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
+import { useRouter } from 'next/navigation'
+import { getMyActiveSubscription } from './action'
+
 
 export default function MySubscriptionPage() {
+  const router = useRouter()
+  const [subscription, setSubscription] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      try {
+        setIsLoading(true)
+        const mockCustomerId = "e9355243-1ce2-4543-a6f3-f2587da4e6ab" 
+        
+        const response = await getMyActiveSubscription(mockCustomerId)
+        if (response.success && response.data) {
+          setSubscription(response.data)
+        }
+      } catch (error) {
+        console.error('Error fetching subscription:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchSubscription()
+  }, [])
+
+  // Helper to format dates like "June 07"
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'long',
+      day: '2-digit',
+    })
+  }
+
+  // Loading State
+  if (isLoading) {
+    return (
+      <main className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center text-yellow-500">
+        <Loader2 className="w-12 h-12 animate-spin mb-4" />
+        <p className="text-neutral-400 font-medium">Loading your arena pass...</p>
+      </main>
+    )
+  }
+
+  // Calculate dynamic progress values if subscription exists
+  let daysRemaining = 0
+  let progressPercentage = 0
+
+  if (subscription) {
+    const today = new Date()
+    const endDate = new Date(subscription.end_date)
+    const startDate = new Date(subscription.start_date)
+
+    // Calculate days
+    daysRemaining = Math.max(0, Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 3600 * 24)))
+    const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24))
+    
+    // Calculate progress (how much time has elapsed)
+    if (totalDays > 0) {
+      progressPercentage = Math.min(100, Math.max(0, Math.round(((totalDays - daysRemaining) / totalDays) * 100)))
+    }
+  }
+
   return (
     <main
       className="min-h-screen bg-[#0a0a0a] text-white font-sans py-8 md:py-12"
@@ -37,75 +102,102 @@ export default function MySubscriptionPage() {
 
         {/* Main Dashboard Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+          
           {/* Left Column (Main Subscription & Savings) */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Active Subscription Card */}
-            <div className="bg-[#111111] border border-neutral-800 rounded-md p-6 md:p-8">
-              {/* Card Header */}
-              <div className="flex justify-between items-start mb-8">
-                <div>
-                  <h3 className="text-yellow-500 text-xs font-bold tracking-widest uppercase mb-1">
-                    Elite Membership
-                  </h3>
-                  <h2 className="text-2xl md:text-3xl font-extrabold text-white">Monthly Pro</h2>
+            
+            {subscription ? (
+              /* DYNAMIC ACTIVE SUBSCRIPTION CARD */
+              <div className="bg-[#111111] border border-neutral-800 rounded-md p-6 md:p-8">
+                {/* Card Header */}
+                <div className="flex justify-between items-start mb-8">
+                  <div>
+                    <h3 className="text-yellow-500 text-xs font-bold tracking-widest uppercase mb-1">
+                      Elite Membership
+                    </h3>
+                    <h2 className="text-2xl md:text-3xl font-extrabold text-white">
+                      {subscription.plan.name}
+                    </h2>
+                  </div>
+                  <div className="bg-[#1a1a1a] border border-neutral-700/50 rounded-full px-3 py-1.5 flex items-center shadow-sm">
+                    <div className="w-2 h-2 rounded-full bg-green-500 mr-2 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+                    <span className="text-neutral-200 text-xs font-bold tracking-wider uppercase">
+                      Active
+                    </span>
+                  </div>
                 </div>
-                <div className="bg-[#1a1a1a] border border-neutral-700/50 rounded-full px-3 py-1.5 flex items-center shadow-sm">
-                  <div className="w-2 h-2 rounded-full bg-green-500 mr-2 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
-                  <span className="text-neutral-200 text-xs font-bold tracking-wider uppercase">
-                    Active
-                  </span>
+
+                {/* Progress Bar Section */}
+                <div className="mb-8">
+                  <div className="flex justify-between items-end mb-3">
+                    <div>
+                      <div className="text-neutral-400 text-xs font-semibold mb-1">
+                        Validity Status
+                      </div>
+                      <div className="text-white font-bold text-lg">
+                        Valid until {formatDate(subscription.end_date)}{' '}
+                        <span className="text-yellow-500 text-sm ml-1">
+                          ({daysRemaining} days remaining)
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-neutral-400 text-xs font-bold">{progressPercentage}% Complete</div>
+                  </div>
+                  {/* Bar */}
+                  <div className="w-full bg-[#222222] rounded-full h-2.5 overflow-hidden">
+                    <div
+                      className="bg-linear-to-r from-yellow-600 to-yellow-400 h-2.5 rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: `${progressPercentage}%` }}
+                    ></div>
+                  </div>
+                </div>
+
+                {/* Perks Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-[#1a1a1a] border border-neutral-800 rounded-xl p-4 flex items-center">
+                    <div className="bg-yellow-500/10 p-3 rounded-sm mr-4">
+                      <Percent className="w-5 h-5 text-yellow-500" />
+                    </div>
+                    <div>
+                      <div className="text-neutral-400 text-xs font-semibold mb-0.5">
+                        Loyalty Discount
+                      </div>
+                      <div className="text-white font-extrabold text-lg">
+                        {subscription.plan.discount_percentage}% OFF
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-[#1a1a1a] border border-neutral-800 rounded-xl p-4 flex items-center">
+                    <div className="bg-yellow-500/10 p-3 rounded-sm mr-4">
+                      <Gamepad2 className="w-5 h-5 text-yellow-500" />
+                    </div>
+                    <div>
+                      <div className="text-neutral-400 text-xs font-semibold mb-0.5">Arena Pass</div>
+                      <div className="text-white font-extrabold text-lg">All Access</div>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              {/* Progress Bar Section */}
-              <div className="mb-8">
-                <div className="flex justify-between items-end mb-3">
-                  <div>
-                    <div className="text-neutral-400 text-xs font-semibold mb-1">
-                      Validity Status
-                    </div>
-                    <div className="text-white font-bold text-lg">
-                      Valid until June 07{' '}
-                      <span className="text-yellow-500 text-sm ml-1">(23 days remaining)</span>
-                    </div>
-                  </div>
-                  <div className="text-neutral-400 text-xs font-bold">77% Complete</div>
+            ) : (
+              /* EMPTY STATE: If user has no active subscription */
+              <div className="bg-[#111111] border border-neutral-800 rounded-md p-10 text-center flex flex-col items-center">
+                <div className="w-16 h-16 bg-neutral-900 rounded-full flex items-center justify-center mb-4">
+                  <AlertCircle className="w-8 h-8 text-neutral-500" />
                 </div>
-                {/* Bar */}
-                <div className="w-full bg-[#222222] rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className="bg-linear-to-r from-yellow-600 to-yellow-400 h-2.5 rounded-full"
-                    style={{ width: '77%' }}
-                  ></div>
-                </div>
+                <h3 className="text-xl font-bold text-white mb-2">No Active Subscription</h3>
+                <p className="text-neutral-400 text-sm max-w-md mb-6">
+                  You currently don't have an active membership. Subscribe to unlock elite benefits and arena discounts.
+                </p>
+                <button 
+                  onClick={() => router.push('/customer/subscription')}
+                  className="bg-[#FFD700] hover:bg-[#F2C900] text-black font-bold py-3 px-8 rounded-lg transition-colors text-sm"
+                >
+                  Browse Plans
+                </button>
               </div>
+            )}
 
-              {/* Perks Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-[#1a1a1a] border border-neutral-800 rounded-xl p-4 flex items-center">
-                  <div className="bg-yellow-500/10 p-3 rounded-sm mr-4">
-                    <Percent className="w-5 h-5 text-yellow-500" />
-                  </div>
-                  <div>
-                    <div className="text-neutral-400 text-xs font-semibold mb-0.5">
-                      Loyalty Discount
-                    </div>
-                    <div className="text-white font-extrabold text-lg">20% OFF</div>
-                  </div>
-                </div>
-                <div className="bg-[#1a1a1a] border border-neutral-800 rounded-xl p-4 flex items-center">
-                  <div className="bg-yellow-500/10 p-3 rounded-sm mr-4">
-                    <Gamepad2 className="w-5 h-5 text-yellow-500" />
-                  </div>
-                  <div>
-                    <div className="text-neutral-400 text-xs font-semibold mb-0.5">Arena Pass</div>
-                    <div className="text-white font-extrabold text-lg">All Access</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Savings Section */}
+            {/* Savings Section (Kept static for now, connect to a bookings API later) */}
             <div>
               <h3 className="text-sm font-bold text-white mb-4">Your Savings So Far</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
@@ -153,7 +245,7 @@ export default function MySubscriptionPage() {
               <div className="relative z-10">
                 <h3 className="text-white font-bold mb-2">Feeling Hungry?</h3>
                 <p className="text-neutral-400 text-sm leading-relaxed mb-5">
-                  Elite members get 15% off on our Signature Gaming Menu.
+                  Elite members get {subscription?.plan.discount_percentage || 15}% off on our Signature Gaming Menu.
                 </p>
                 <button className="w-full bg-[#1a1a1a] hover:bg-[#222] border border-neutral-700 text-white font-bold py-3 rounded-lg transition-colors text-sm">
                   Browse Food Menu
@@ -172,7 +264,7 @@ export default function MySubscriptionPage() {
                     <Gamepad2 className="w-5 h-5 text-yellow-500 mr-4" />
                     <div>
                       <div className="text-white font-bold text-sm">3hr PS5 Solo</div>
-                      <div className="text-neutral-500 text-xs mt-0.5">May 26, 2024</div>
+                      <div className="text-neutral-500 text-xs mt-0.5">May 26, 2026</div>
                     </div>
                   </div>
                   <div className="text-yellow-500 font-bold text-sm">- ₹150</div>
@@ -184,7 +276,7 @@ export default function MySubscriptionPage() {
                     <Monitor className="w-5 h-5 text-yellow-500 mr-4" />
                     <div>
                       <div className="text-white font-bold text-sm">3hr PC Arena</div>
-                      <div className="text-neutral-500 text-xs mt-0.5">May 25, 2024</div>
+                      <div className="text-neutral-500 text-xs mt-0.5">May 25, 2026</div>
                     </div>
                   </div>
                   <div className="text-yellow-500 font-bold text-sm">- ₹150</div>
@@ -196,7 +288,7 @@ export default function MySubscriptionPage() {
                     <Gamepad2 className="w-5 h-5 text-yellow-500 mr-4" />
                     <div>
                       <div className="text-white font-bold text-sm">3hr PS5 Solo</div>
-                      <div className="text-neutral-500 text-xs mt-0.5">May 18, 2024</div>
+                      <div className="text-neutral-500 text-xs mt-0.5">May 18, 2026</div>
                     </div>
                   </div>
                   <div className="text-yellow-500 font-bold text-sm">- ₹150</div>
