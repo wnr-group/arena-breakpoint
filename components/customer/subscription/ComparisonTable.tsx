@@ -2,28 +2,25 @@
 
 import React from 'react'
 export interface SubscriptionPlanDB {
-  id: number;
-  name: string;
-  description: string | null;
-  duration_days?: number;
-  duration_months?: number;
-  price: number;
-  discount_percentage: number;
-  is_active: boolean;
+  id: number
+  name: string
+  description: string | null
+  duration_days?: number
+  duration_months?: number
+  price: number
+  discount_percentage: number
+  is_active: boolean
 }
-
 
 interface ComparisonTableProps {
   plans?: SubscriptionPlanDB[]
 }
 
 export const ComparisonTable: React.FC<ComparisonTableProps> = ({ plans = [] }) => {
-  
   // Do not render the table if there are no active plans
   if (!plans || plans.length === 0) {
-    return null; 
+    return null
   }
-
 
   const activePlans = plans.filter(plan => plan.is_active)
 
@@ -49,18 +46,16 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ plans = [] }) 
         {/* Table Body */}
         <div className="flex flex-col">
           {activePlans.map((plan, i) => {
-            
-            const duration = plan.duration_months 
-              ? `${plan.duration_months} Months` 
-              : `${plan.duration_days || 30} Days`;
-              
-            const savings = plan.discount_percentage > 0 
-              ? `Up to ${plan.discount_percentage}%` 
-              : 'None';
-              
-            const topBenefit = plan.description 
-              ? plan.description.split(',')[0].trim() 
-              : 'Standard Access';
+            const duration = plan.duration_months
+              ? `${plan.duration_months} Months`
+              : `${plan.duration_days || 30} Days`
+
+            const savings =
+              plan.discount_percentage > 0 ? `Up to ${plan.discount_percentage}%` : 'None'
+
+            const topBenefit = plan.description
+              ? plan.description.split(',')[0].trim()
+              : 'Standard Access'
 
             return (
               <div

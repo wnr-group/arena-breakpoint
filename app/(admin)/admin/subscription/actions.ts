@@ -15,13 +15,13 @@ export async function getSubscriptionPlans() {
     return {
       success: true,
       data: data || [],
-      mesaage:"Subscription Plan fetch successfully"
+      mesaage: 'Subscription Plan fetch successfully',
     }
   } catch (error: any) {
     return {
       success: false,
       data: null,
-      error: error.message || 'Failed to fetch plans'
+      error: error.message || 'Failed to fetch plans',
     }
   }
 }
@@ -94,4 +94,41 @@ export async function deleteSubscriptionPlan(id: string) {
 
   revalidatePath('/admin/subscription')
   return { success: true }
+}
+
+export async function getSubscriptionPlanDetails(id: string) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('subscription_plans')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    const currentDate = new Date()
+    const validityDate = new Date(currentDate)
+
+    if (data.duration_months) {
+      validityDate.setMonth(validityDate.getMonth() + data.duration_months)
+    }
+
+    const responseData = {
+      ...data,
+      validity: validityDate.toISOString(),
+    }
+    if (error) throw new Error(error.message)
+
+    revalidatePath('/admin/subscription')
+
+    return {
+      success: true,
+      data: responseData,
+      message: 'Plan details fetch successfully',
+    }
+  } catch (error: any) {
+    return {
+      success: false,
+      data: null,
+      message: error.message || 'Failed to fetch plans details',
+    }
+  }
 }

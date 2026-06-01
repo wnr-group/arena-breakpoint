@@ -3,20 +3,20 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { CheckCircle2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase/client'
 
 // The DB Interface
 interface SubscriptionPlanDB {
-  id: number;
-  name: string;
-  description: string | null; 
-  duration_days?: number;
-  duration_months?: number;
-  price: number;
-  discount_percentage: number;
-  applicable_days?: string[] | null; 
-  is_active: boolean;
+  id: number
+  name: string
+  description: string | null
+  duration_days?: number
+  duration_months?: number
+  price: number
+  discount_percentage: number
+  applicable_days?: string[] | null
+  is_active: boolean
 }
 
 // Define the props for this component
@@ -29,33 +29,33 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
 
   const plans = useMemo(() => {
     return initialPlans
-      .filter((plan) => plan.is_active)
-      .map((plan) => {
-        const discountFeature = plan.discount_percentage > 0 
-          ? `${plan.discount_percentage}% off all bookings` 
-          : 'Standard arena pricing';
+      .filter(plan => plan.is_active)
+      .map(plan => {
+        const discountFeature =
+          plan.discount_percentage > 0
+            ? `${plan.discount_percentage}% off all bookings`
+            : 'Standard arena pricing'
 
-        const otherFeatures = plan.description 
-          ? plan.description.split(',').map(f => f.trim()) 
-          : ['Standard Access'];
+        const otherFeatures = plan.description
+          ? plan.description.split(',').map(f => f.trim())
+          : ['Standard Access']
 
         return {
           id: plan.id,
-          category: plan.discount_percentage >= 20 ? 'CORE GAMER' : 'ENTRY LEVEL', 
+          category: plan.discount_percentage >= 20 ? 'CORE GAMER' : 'ENTRY LEVEL',
           title: plan.name,
           price: plan.price,
-          duration: `/ ${plan.duration_months ? plan.duration_months + ' Months' : (plan.duration_days + ' Days' || '30 Days')}`, 
+          duration: `/ ${plan.duration_months ? plan.duration_months + ' Months' : plan.duration_days + ' Days' || '30 Days'}`,
           features: [discountFeature, ...otherFeatures],
           isPopular: plan.discount_percentage >= 20,
           badge: plan.discount_percentage >= 20 ? '★ POPULAR' : null,
-          buttonText: 'Select Plan'
+          buttonText: 'Select Plan',
         }
       })
   }, [initialPlans])
 
   // SUPABASE REALTIME CHANGES
   useEffect(() => {
-    
     // Subscribe to any changes on the subscription_plans table
     const channel = supabase
       .channel('public:subscription_plans')
@@ -66,7 +66,7 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
           schema: 'public',
           table: 'subscription_plans',
         },
-        (payload) => {
+        payload => {
           console.log('Database changed! Fetching fresh data...', payload)
           router.refresh()
         }
@@ -97,7 +97,7 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
 
       <div className="max-w-300 mx-auto relative z-10 w-full ">
         <div className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-12 pt-8 px-[5vw] md:px-8 hide-scrollbar items-stretch justify-start">
-          {plans.map((plan) => {
+          {plans.map(plan => {
             const isActive = activeCard === plan.id
 
             return (
