@@ -3,9 +3,6 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-/**
- * FETCH: Get all device types
- */
 export async function getDeviceTypes() {
   const { data, error } = await supabaseAdmin
     .from('device_types')
@@ -21,9 +18,6 @@ export async function getDeviceTypes() {
   return data || []
 }
 
-/**
- * FETCH: Get all devices from the database with device type info
- */
 export async function getDevices() {
   const { data, error } = await supabaseAdmin
     .from('devices')
@@ -41,9 +35,6 @@ export async function getDevices() {
   return data || []
 }
 
-/**
- * CREATE: Add a new device
- */
 export async function createDevice(formData: FormData) {
   const device_type_id = formData.get('device_type_id') as string;
   const station_number = formData.get('station_number') as string;
@@ -69,9 +60,6 @@ export async function createDevice(formData: FormData) {
   return { success: true };
 }
 
-/**
- * UPDATE: Modify an existing device's full parameters
- */
 export async function updateDevice(formData: FormData) {
   const id = formData.get('id') as string;
   const device_type_id = formData.get('device_type_id') as string;
@@ -103,9 +91,6 @@ export async function updateDevice(formData: FormData) {
   return { success: true };
 }
 
-/**
- * DELETE: Remove a device completely
- */
 export async function deleteDevice(id: string) {
   const { error } = await supabaseAdmin
     .from('devices')
