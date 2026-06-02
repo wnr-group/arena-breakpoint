@@ -34,7 +34,6 @@ export default function FlexibleSlotBookingPage() {
   const [mobileCalendarOpen, setMobileCalendarOpen] = useState(false);
   const [mobileStartTimeOpen, setMobileStartTimeOpen] = useState(false);
   const [mobileDurationOpen, setMobileDurationOpen] = useState(false);
-  const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   const allStartTimes = useMemo(() => generateStartTimes(), []);
@@ -45,7 +44,6 @@ export default function FlexibleSlotBookingPage() {
     setCalendarDay(new Date());
   }, []);
 
-  // Check availability when date or duration changes
   useEffect(() => {
     if (!mounted || !calendarDay || !deviceTypeId) return;
     checkAvailability();
@@ -72,7 +70,7 @@ export default function FlexibleSlotBookingPage() {
   }, [selectedStartTime, selectedDuration]);
 
   const maxDurationForSelectedStartTime = useMemo(() => {
-    if (!selectedStartTime) return 300; // 5 hours in minutes
+    if (!selectedStartTime) return 300;
     return getMaxDurationForStartTime(selectedStartTime);
   }, [selectedStartTime]);
 
@@ -81,13 +79,12 @@ export default function FlexibleSlotBookingPage() {
     return allDurations.filter(d => d.value <= maxDurationForSelectedStartTime);
   }, [allDurations, maxDurationForSelectedStartTime, selectedStartTime]);
 
-  // Pricing calculations
   const additivesCostAggregated = useMemo(() => {
     return addons.reduce((sum, asset) => sum + (asset.price * asset.quantity), 0);
   }, [addons]);
 
   const extraPlayersCount = Math.max(0, playerCount - includedPlayers);
-  const durationHours = selectedDuration / 60; // Convert minutes to hours
+  const durationHours = selectedDuration / 60;
   const extraPlayersCharge = extraPlayersCount * extraPlayerCharge * durationHours;
   const baselineSubtotal = calculatePrice(hourlyRate || 0, selectedDuration);
   const aggregatedPayableTotal = baselineSubtotal + extraPlayersCharge + additivesCostAggregated;
@@ -100,7 +97,6 @@ export default function FlexibleSlotBookingPage() {
   const handleRegisterTransactionLock = async () => {
     if (!calendarDay || !selectedStartTime || !endTime || !deviceTypeId) return;
 
-    // Validate within business hours
     if (!isWithinBusinessHours(selectedStartTime, endTime)) {
       toast.error("Selected time range exceeds business hours");
       return;
@@ -197,8 +193,8 @@ export default function FlexibleSlotBookingPage() {
             </div>
           </Card>
 
-          {/* Mobile Flow */}
-          <div className="space-y-3 md:hidden">
+          {/* Mobile Flow Container */}
+          <div className="space-y-4 md:hidden">
             <div onClick={() => setMobileCalendarOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer">
               <div className="space-y-0.5">
                 <span className="text-[8px] font-black text-zinc-500 uppercase block">Select Date</span>
@@ -223,17 +219,67 @@ export default function FlexibleSlotBookingPage() {
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
 
-            <div onClick={() => setMobileSummaryOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer">
-              <div className="space-y-0.5">
-                <span className="text-[8px] font-black text-zinc-500 uppercase block">Booking Summary</span>
-                <span className="text-xs font-medium text-zinc-400">Review before checkout</span>
+            {/* Inline Dynamic Mobile Summary Card Block */}
+            <Card className="bg-[#111] border border-zinc-900 p-5 space-y-4 shadow-xl rounded-xl">
+              <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider border-b border-zinc-900/60 pb-2">Booking Summary</h3>
+              
+              <div className="space-y-2.5 text-xs text-zinc-400 border-b border-zinc-900/60 pb-3">
+                <div className="flex justify-between"><span>Date:</span><strong className="text-white font-bold">{calendarDay ? calendarDay.toLocaleDateString() : "Not Selected"}</strong></div>
+                <div className="flex justify-between"><span>Start Time:</span><strong className="text-primary font-black">{selectedStartTime || "Not Selected"}</strong></div>
+                <div className="flex justify-between"><span>Duration:</span><strong className="text-white font-bold">{selectedDurationLabel}</strong></div>
+                <div className="flex justify-between"><span>End Time:</span><strong className="text-primary font-black">{endTime || "--"}</strong></div>
+                <div className="flex justify-between"><span>Device:</span><strong className="text-white uppercase truncate max-w-[150px]">{deviceTypeName || "N/A"}</strong></div>
               </div>
-              <ChevronRight className="h-4 w-4 text-zinc-600" />
-            </div>
 
-            <Button disabled={!canProceed || submittingLock} onClick={handleRegisterTransactionLock} className="w-full bg-primary text-black font-black uppercase text-xs py-5 rounded-xl flex items-center justify-center gap-1 mt-4">
+              {/* Player Multiplier Controller */}
+              <div className="space-y-2">
+                <h4 className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Number of Players</h4>
+                <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-lg p-2.5">
+                  <p className="text-[11px] text-zinc-500">{includedPlayers} included • Max {maxPlayers}</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => playerCount > 1 && dispatch(setPlayerCount(playerCount - 1))}
+                      disabled={playerCount <= 1}
+                      className="w-7 h-7 rounded-md bg-zinc-900 border border-zinc-800 text-white disabled:opacity-30 flex items-center justify-center"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </button>
+                    <span className="text-base font-black text-white w-6 text-center">{playerCount}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (playerCount >= maxPlayers) {
+                          toast.error(`Maximum ${maxPlayers} players only`);
+                        } else {
+                          dispatch(setPlayerCount(playerCount + 1));
+                        }
+                      }}
+                      disabled={playerCount >= maxPlayers}
+                      className="w-7 h-7 rounded-md bg-primary text-black flex items-center justify-center font-bold"
+                    >
+                      <Plus className="h-3 w-3 stroke-[3]" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Price Calculations */}
+              <div className="space-y-2 text-xs text-zinc-500 pt-1">
+                <div className="flex justify-between"><span>Base Rate ({selectedDurationLabel})</span><span className="text-white font-bold">₹{Math.round(baselineSubtotal)}.00</span></div>
+                {extraPlayersCount > 0 && (
+                  <div className="flex justify-between"><span>Extra Players ({extraPlayersCount} × {selectedDurationLabel})</span><span className="text-primary font-bold">₹{Math.round(extraPlayersCharge)}.00</span></div>
+                )}
+                <div className="flex justify-between items-baseline pt-2.5 border-t border-zinc-900 text-white font-black">
+                  <span className="text-xs uppercase">Total Payable</span>
+                  <span className="text-xl text-primary">₹{Math.round(aggregatedPayableTotal)}.00</span>
+                </div>
+              </div>
+            </Card>
+
+            <Button disabled={!canProceed || submittingLock} onClick={handleRegisterTransactionLock} className="w-full bg-primary text-black font-black uppercase text-xs py-5 rounded-xl flex items-center justify-center gap-1 mt-2 shadow-[0_4px_20px_rgba(255,193,7,0.2)]">
               {submittingLock ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Continue <ChevronRight className="h-4 w-4 stroke-[3]" />
+              Confirm & Hold Slot <ChevronRight className="h-4 w-4 stroke-[3]" />
             </Button>
           </div>
 
@@ -339,7 +385,7 @@ export default function FlexibleSlotBookingPage() {
               </div>
             </div>
 
-            {/* Player Selection */}
+            {/* Player Selection Desktop */}
             <div className="border-b border-zinc-900 pb-4">
               <h4 className="text-xs font-black text-zinc-400 uppercase tracking-wider mb-3">Number of Players</h4>
               <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-lg p-3">
@@ -397,7 +443,7 @@ export default function FlexibleSlotBookingPage() {
               className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase py-5 text-xs rounded-xl flex items-center justify-center gap-1"
             >
               {submittingLock ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Continue <ChevronRight className="h-4 w-4 stroke-[3]" />
+              Confirm & Hold Slot <ChevronRight className="h-4 w-4 stroke-[3]" />
             </Button>
           </Card>
         </div>
@@ -422,28 +468,31 @@ export default function FlexibleSlotBookingPage() {
 
       {mobileStartTimeOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end md:hidden">
-          <div className="bg-[#121212] border-t border-zinc-800 rounded-t-2xl w-full p-5 space-y-4 max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
+          <div className="bg-[#121212] border-t border-zinc-800 rounded-t-2xl w-full p-5 space-y-4 max-h-[75vh] flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center border-b border-zinc-900 pb-2 flex-shrink-0">
               <span className="text-xs font-black uppercase text-zinc-400">Select Start Time</span>
               <button onClick={() => setMobileStartTimeOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-500">
                 <X className="h-4 w-4"/>
               </button>
             </div>
-            <div className="space-y-1.5">
+            
+            {/* Optimized High Contrast 2-Column Grid Layout for Mobile Time Windows */}
+            <div className="grid grid-cols-2 gap-2 overflow-y-auto pr-1 pb-4 scrollbar-thin">
               {allStartTimes.map((time) => {
                 const isAvailable = isTimeAvailable(time);
                 const isSelected = selectedStartTime === time;
                 return (
                   <button
                     key={time}
+                    type="button"
                     disabled={!isAvailable}
                     onClick={() => { setSelectedStartTime(time); setMobileStartTimeOpen(false); }}
-                    className={`w-full p-3 border text-left rounded-xl text-sm font-bold ${
+                    className={`p-3 text-center rounded-xl text-xs font-black uppercase transition-all tracking-wider border ${
                       !isAvailable
-                        ? "bg-zinc-950/20 border-zinc-950 text-zinc-800"
+                        ? "bg-zinc-950/40 border-zinc-900/40 text-zinc-800 cursor-not-allowed line-through"
                         : isSelected
-                        ? "bg-primary text-black"
-                        : "bg-[#111] text-zinc-300"
+                        ? "bg-primary border-transparent text-black shadow-[0_0_15px_rgba(255,193,7,0.25)]"
+                        : "bg-zinc-900 border-zinc-800 text-zinc-300 active:border-zinc-700"
                     }`}
                   >
                     {time}
@@ -473,7 +522,7 @@ export default function FlexibleSlotBookingPage() {
                     key={duration.value}
                     onClick={() => { setSelectedDuration(duration.value); setMobileDurationOpen(false); }}
                     className={`w-full p-3 border text-left rounded-xl ${
-                      isSelected ? "bg-primary text-black" : "bg-[#111] border-zinc-900 text-zinc-300"
+                      isSelected ? "bg-primary text-black border-transparent" : "bg-[#111] border-zinc-900 text-zinc-300"
                     }`}
                   >
                     <div className="flex justify-between items-center">
@@ -485,79 +534,6 @@ export default function FlexibleSlotBookingPage() {
                   </button>
                 );
               })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {mobileSummaryOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end md:hidden">
-          <div className="bg-[#121212] border-t border-zinc-800 rounded-t-2xl w-full p-5 space-y-4">
-            <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
-              <span className="text-xs font-black uppercase text-zinc-400">Summary</span>
-              <button onClick={() => setMobileSummaryOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-500">
-                <X className="h-4 w-4"/>
-              </button>
-            </div>
-
-            {/* Player Selection Mobile */}
-            <div className="border-b border-zinc-900 pb-3">
-              <h4 className="text-xs font-black text-zinc-400 uppercase tracking-wider mb-2">Number of Players</h4>
-              <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-lg p-3">
-                <div className="flex-1">
-                  <p className="text-xs text-zinc-500">
-                    {includedPlayers} included • Max {maxPlayers}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => playerCount > 1 && dispatch(setPlayerCount(playerCount - 1))}
-                    disabled={playerCount <= 1}
-                    className="w-8 h-8 rounded-md bg-zinc-900 border border-zinc-800 text-white disabled:opacity-30 flex items-center justify-center"
-                  >
-                    <Minus className="h-3 w-3" />
-                  </button>
-                  <span className="text-xl font-black text-white w-8 text-center">{playerCount}</span>
-                  <button
-                    onClick={() => {
-                      if (playerCount >= maxPlayers) {
-                        toast.error(`Maximum ${maxPlayers} players only`);
-                      } else {
-                        dispatch(setPlayerCount(playerCount + 1));
-                      }
-                    }}
-                    disabled={playerCount >= maxPlayers}
-                    className="w-8 h-8 rounded-md bg-primary text-black disabled:opacity-30 flex items-center justify-center font-bold"
-                  >
-                    <Plus className="h-3 w-3 stroke-[3]" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3 pt-1 text-xs text-zinc-500">
-              <div className="flex justify-between">
-                <span>Base Rate ({selectedDurationLabel})</span>
-                <span className="text-white font-bold">₹{Math.round(baselineSubtotal)}.00</span>
-              </div>
-              {extraPlayersCount > 0 && (
-                <div className="flex justify-between">
-                  <span>Extra Players ({extraPlayersCount} × {selectedDurationLabel})</span>
-                  <span className="text-primary font-bold">₹{Math.round(extraPlayersCharge)}.00</span>
-                </div>
-              )}
-              <div className="flex justify-between font-black text-white border-t border-zinc-900 pt-2">
-                <span>Total Payable</span>
-                <span className="text-primary">₹{Math.round(aggregatedPayableTotal)}</span>
-              </div>
-              <Button
-                onClick={() => { setMobileSummaryOpen(false); handleRegisterTransactionLock(); }}
-                disabled={!canProceed || submittingLock}
-                className="w-full bg-primary text-black font-black uppercase py-4 rounded-xl text-xs mt-2"
-              >
-                {submittingLock ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Confirm & Hold Slot
-              </Button>
             </div>
           </div>
         </div>
