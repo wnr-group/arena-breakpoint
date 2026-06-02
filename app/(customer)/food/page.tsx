@@ -30,12 +30,10 @@ function FoodMenuPageContent() {
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.foodCart.items);
-  const bookingContext = useAppSelector((state) => ({
-    bookingId: state.foodCart.bookingId,
-    bookingNumber: state.foodCart.bookingNumber,
-    customerPhone: state.foodCart.customerPhone,
-    customerName: state.foodCart.customerName,
-  }));
+  const bookingId = useAppSelector((state) => state.foodCart.bookingId);
+  const bookingNumber = useAppSelector((state) => state.foodCart.bookingNumber);
+  const customerPhone = useAppSelector((state) => state.foodCart.customerPhone);
+  const customerName = useAppSelector((state) => state.foodCart.customerName);
 
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -46,16 +44,16 @@ function FoodMenuPageContent() {
 
   useEffect(() => {
     // Check if coming from booking
-    const bookingId = searchParams.get("bookingId");
-    const bookingNumber = searchParams.get("bookingNumber");
+    const urlBookingId = searchParams.get("bookingId");
+    const urlBookingNumber = searchParams.get("bookingNumber");
     const phone = searchParams.get("phone");
     const name = searchParams.get("name");
 
-    if (bookingId && bookingNumber && phone && name) {
+    if (urlBookingId && urlBookingNumber && phone && name) {
       dispatch(
         setBookingContext({
-          bookingId,
-          bookingNumber,
+          bookingId: urlBookingId,
+          bookingNumber: urlBookingNumber,
           customerPhone: phone,
           customerName: name,
         })
@@ -151,11 +149,11 @@ function FoodMenuPageContent() {
               Order delicious food and drinks
             </p>
           </div>
-          {bookingContext.bookingNumber && (
+          {bookingNumber && (
             <div className="bg-[#111] border border-zinc-900 px-4 py-2 rounded-lg">
               <p className="text-[9px] text-zinc-600 uppercase">Booking</p>
               <p className="text-xs font-black text-primary font-mono">
-                {bookingContext.bookingNumber}
+                {bookingNumber}
               </p>
             </div>
           )}

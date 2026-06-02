@@ -54,7 +54,7 @@ export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTabl
                     )}
                   </div>
                 </td>
-                <td className="py-4 px-6 font-bold text-white group-hover:text-[#FFC107] transition-all duration-300">
+                <td className="py-4 px-6 font-bold text-white group-hover:text-primary transition-all duration-300">
                   {device.station_number}
                 </td>
                 <td className="py-4 px-6 text-[#a1a1aa]">{device.device_type?.display_name || 'N/A'}</td>
@@ -108,7 +108,7 @@ export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTabl
                           </AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => onDelete(device.id)}
-                            className="bg-[#FFC107] text-black font-semibold"
+                            className="bg-primary text-black font-semibold"
                           >
                             Confirm Delete
                           </AlertDialogAction>

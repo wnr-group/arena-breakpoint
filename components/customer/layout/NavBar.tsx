@@ -14,38 +14,38 @@ export function Navbar() {
       
       {/* BRAND SITE NAME LOGO */}
       <Link href="/" className="text-white font-black text-xl tracking-tight uppercase select-none transition-transform active:scale-97">
-        BREAK POINT <span className="text-[#FFC107]">ARENA</span>
+        BREAK POINT <span className="text-primary">ARENA</span>
       </Link>
       
       {/* DESKTOP ROUTING LINKS ROW */}
       <nav className="hidden md:flex items-center gap-6 text-xs font-black uppercase tracking-widest text-zinc-400">
         <Link 
           href="/" 
-          className={pathname === "/" ? "text-[#FFC107] border-b-2 border-[#FFC107] pb-1" : "hover:text-white transition-colors"}
+          className={pathname === "/" ? "text-primary border-b-2 border-primary pb-1" : "hover:text-white transition-colors"}
         >
           Home
         </Link>
         <Link 
           href="/subscription" 
-          className={pathname === "/subscriptions" ? "text-[#FFC107] border-b-2 border-[#FFC107] pb-1" : "hover:text-white transition-colors"}
+          className={pathname === "/subscriptions" ? "text-primary border-b-2 border-primary pb-1" : "hover:text-white transition-colors"}
         >
           Subscriptions
         </Link>
         <Link 
           href="/retrieve" 
-          className={pathname === "/retrieve" ? "text-[#FFC107] border-b-2 border-[#FFC107] pb-1" : "hover:text-white transition-colors"}
+          className={pathname === "/retrieve" ? "text-primary border-b-2 border-primary pb-1" : "hover:text-white transition-colors"}
         >
           Retrieve Booking
         </Link>
         
         {/* Action CTAs */}
         <Link href="/food">
-          <button className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black text-[10px] tracking-wider rounded-md px-4 py-2.5 transition-all active:scale-95 ml-4">
+          <button className="bg-primary hover:bg-primary-hover text-black font-black text-[10px] tracking-wider rounded-md px-4 py-2.5 transition-all active:scale-95 ml-4">
             FOOD MENU
           </button>
         </Link>
         <Link href="/booking">
-          <button className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black text-[10px] tracking-wider rounded-md px-4 py-2.5 transition-all active:scale-95">
+          <button className="bg-primary hover:bg-primary-hover text-black font-black text-[10px] tracking-wider rounded-md px-4 py-2.5 transition-all active:scale-95">
             BOOK SLOT
           </button>
         </Link>
@@ -70,17 +70,17 @@ export function Navbar() {
           </button>
 
           <div className="flex flex-col items-center gap-6 text-base font-black uppercase tracking-widest w-full max-w-xs text-zinc-400">
-            <Link href="/" onClick={() => setMobileMenuOpen(false)} className={pathname === "/" ? "text-[#FFC107]" : "hover:text-white"}>Home</Link>
-            <Link href="/subscription" onClick={() => setMobileMenuOpen(false)} className={pathname === "/subscriptions" ? "text-[#FFC107]" : "hover:text-white"}>Subscriptions</Link>
-            <Link href="/retrieve" onClick={() => setMobileMenuOpen(false)} className={pathname === "/retrieve" ? "text-[#FFC107]" : "hover:text-white"}>Retrieve Booking</Link>
+            <Link href="/" onClick={() => setMobileMenuOpen(false)} className={pathname === "/" ? "text-primary" : "hover:text-white"}>Home</Link>
+            <Link href="/subscription" onClick={() => setMobileMenuOpen(false)} className={pathname === "/subscriptions" ? "text-primary" : "hover:text-white"}>Subscriptions</Link>
+            <Link href="/retrieve" onClick={() => setMobileMenuOpen(false)} className={pathname === "/retrieve" ? "text-primary" : "hover:text-white"}>Retrieve Booking</Link>
 
             <Link href="/food" className="w-full" onClick={() => setMobileMenuOpen(false)}>
-              <button className="w-full bg-[#FFC107] text-black font-black py-4 rounded-xl text-xs tracking-widest shadow-md transition-transform active:scale-97 mt-4">
+              <button className="w-full bg-primary text-black font-black py-4 rounded-xl text-xs tracking-widest shadow-md transition-transform active:scale-97 mt-4">
                 FOOD MENU
               </button>
             </Link>
             <Link href="/booking" className="w-full" onClick={() => setMobileMenuOpen(false)}>
-              <button className="w-full bg-[#FFC107] text-black font-black py-4 rounded-xl text-xs tracking-widest shadow-md transition-transform active:scale-97">
+              <button className="w-full bg-primary text-black font-black py-4 rounded-xl text-xs tracking-widest shadow-md transition-transform active:scale-97">
                 BOOK SLOT
               </button>
             </Link>

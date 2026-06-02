@@ -41,8 +41,8 @@ export function ConfirmDialog({
       bg: "bg-amber-950/10",
     },
     info: {
-      icon: "text-[#FFC107]",
-      confirmButton: "bg-[#FFC107] hover:bg-[#ffcd38] text-black",
+      icon: "text-primary",
+      confirmButton: "bg-primary hover:bg-primary-hover text-black",
       border: "border-zinc-900",
       bg: "bg-[#111]",
     },

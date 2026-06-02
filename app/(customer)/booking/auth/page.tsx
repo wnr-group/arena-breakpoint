@@ -163,7 +163,7 @@ export default function CustomerDetailsPage() {
           {/* Live Active Hold Summary Strip */}
           <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900 grid grid-cols-2 gap-2 text-xs">
             <div className="space-y-0.5"><span className="text-[8px] font-black text-zinc-500 uppercase block">Selected Setup</span><span className="text-white font-black truncate max-w-[180px] block uppercase">{deviceTypeName || "PLAYSTATION 5"}</span></div>
-            <div className="space-y-0.5 text-right"><span className="text-[8px] font-black text-zinc-500 uppercase block">Reserved Slot</span><span className="text-[#FFC107] font-black">{selectedSlot || "Pending Hold"}</span></div>
+            <div className="space-y-0.5 text-right"><span className="text-[8px] font-black text-zinc-500 uppercase block">Reserved Slot</span><span className="text-primary font-black">{selectedSlot || "Pending Hold"}</span></div>
           </div>
 
           {/* Form Inputs Fields Element Column */}
@@ -182,14 +182,14 @@ export default function CustomerDetailsPage() {
                   placeholder="Enter 10-digit phone number"
                   value={mobileNumber}
                   onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ""))}
-                  className="bg-zinc-950 border-zinc-900 h-12 pl-12 text-sm text-white focus-visible:ring-[#FFC107] font-mono tracking-wide"
+                  className="bg-zinc-950 border-zinc-900 h-12 pl-12 text-sm text-white focus-visible:ring-primary font-mono tracking-wide"
                 />
               </div>
             </div>
 
             {/* Action Call buttons */}
             <div className="pt-4 space-y-2">
-              <Button type="submit" disabled={isSubmitting} className="w-full bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 shadow-xl transition-all active:scale-[0.99]">
+              <Button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 shadow-xl transition-all active:scale-[0.99]">
                 {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "CONTINUE"} <ChevronRight className="h-4 w-4 stroke-[3]" />
               </Button>
 
@@ -215,8 +215,8 @@ export default function CustomerDetailsPage() {
       <div className="w-full max-w-xl mx-auto py-4 px-2 animate-in fade-in duration-300">
         <div className="w-full max-w-xs mx-auto flex items-center justify-between pb-8 select-none">
           <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-green-500 text-black font-black text-[9px] flex items-center justify-center"><CheckCircle2 className="h-3 w-3"/></div><span className="text-[8px] font-black uppercase text-green-500 tracking-wider">Phone</span></div>
-          <div className="h-0.5 bg-[#FFC107] flex-1 mx-2" />
-          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-[#FFC107] text-black font-black text-[9px] flex items-center justify-center">2</div><span className="text-[8px] font-black uppercase text-[#FFC107] tracking-wider">Details</span></div>
+          <div className="h-0.5 bg-primary flex-1 mx-2" />
+          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">2</div><span className="text-[8px] font-black uppercase text-primary tracking-wider">Details</span></div>
           <div className="h-0.5 bg-zinc-800 flex-1 mx-2" />
           <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-bold text-[9px] flex items-center justify-center border border-zinc-800">3</div><span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Confirm</span></div>
         </div>
@@ -229,7 +229,7 @@ export default function CustomerDetailsPage() {
 
           <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900 text-xs">
             <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4 text-[#FFC107]"/>
+              <Phone className="h-4 w-4 text-primary"/>
               <span className="text-zinc-500">Phone Number:</span>
               <span className="text-white font-black">+91 {mobileNumber}</span>
             </div>
@@ -245,7 +245,7 @@ export default function CustomerDetailsPage() {
                 placeholder="Enter your full name"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-[#FFC107]"
+                className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary"
               />
             </div>
 
@@ -257,12 +257,12 @@ export default function CustomerDetailsPage() {
                 placeholder="Enter your email (optional)"
                 value={customerEmail}
                 onChange={(e) => setCustomerEmail(e.target.value)}
-                className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-[#FFC107]"
+                className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary"
               />
             </div>
 
             <div className="pt-4 space-y-2">
-              <Button type="submit" className="w-full bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
+              <Button type="submit" className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
                 CONTINUE TO SUMMARY <ChevronRight className="h-4 w-4 stroke-[3]" />
               </Button>
               <Button type="button" onClick={() => setStep("phone")} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
@@ -283,8 +283,8 @@ export default function CustomerDetailsPage() {
           <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-green-500 text-black font-black text-[9px] flex items-center justify-center"><CheckCircle2 className="h-3 w-3"/></div><span className="text-[8px] font-black uppercase text-green-500 tracking-wider">Phone</span></div>
           <div className="h-0.5 bg-green-500 flex-1 mx-2" />
           <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-green-500 text-black font-black text-[9px] flex items-center justify-center"><CheckCircle2 className="h-3 w-3"/></div><span className="text-[8px] font-black uppercase text-green-500 tracking-wider">Details</span></div>
-          <div className="h-0.5 bg-[#FFC107] flex-1 mx-2" />
-          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-[#FFC107] text-black font-black text-[9px] flex items-center justify-center">3</div><span className="text-[8px] font-black uppercase text-[#FFC107] tracking-wider">Confirm</span></div>
+          <div className="h-0.5 bg-primary flex-1 mx-2" />
+          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">3</div><span className="text-[8px] font-black uppercase text-primary tracking-wider">Confirm</span></div>
         </div>
 
         <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6">
@@ -309,7 +309,7 @@ export default function CustomerDetailsPage() {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-zinc-500">Device:</span> <span className="text-white font-black">{deviceTypeName}</span></div>
               <div className="flex justify-between"><span className="text-zinc-500">Date:</span> <span className="text-white font-bold">{new Date(selectedDate!).toLocaleDateString()}</span></div>
-              <div className="flex justify-between"><span className="text-zinc-500">Time Slot:</span> <span className="text-[#FFC107] font-black">{selectedSlot}</span></div>
+              <div className="flex justify-between"><span className="text-zinc-500">Time Slot:</span> <span className="text-primary font-black">{selectedSlot}</span></div>
               <div className="flex justify-between"><span className="text-zinc-500">Duration:</span> <span className="text-white font-bold">{slotStartTime} - {slotEndTime}</span></div>
             </div>
           </div>
@@ -322,12 +322,12 @@ export default function CustomerDetailsPage() {
               {addons.length > 0 && addons.map((addon) => (
                 <div key={addon.id} className="flex justify-between"><span className="text-zinc-500">{addon.name} (x{addon.quantity}):</span> <span className="text-white">₹{addon.price * addon.quantity}</span></div>
               ))}
-              <div className="border-t border-zinc-800 pt-2 flex justify-between font-black"><span className="text-white">TOTAL AMOUNT:</span> <span className="text-[#FFC107] text-lg">₹{total}</span></div>
+              <div className="border-t border-zinc-800 pt-2 flex justify-between font-black"><span className="text-white">TOTAL AMOUNT:</span> <span className="text-primary text-lg">₹{total}</span></div>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Button onClick={handleConfirmBooking} disabled={isSubmitting} className="w-full bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
+            <Button onClick={handleConfirmBooking} disabled={isSubmitting} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "CONFIRM BOOKING"} <CheckCircle2 className="h-4 w-4" />
             </Button>
             <Button type="button" onClick={() => customerExists ? setStep("phone") : setStep("details")} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
@@ -368,7 +368,7 @@ export default function CustomerDetailsPage() {
             </div>
             <div className="text-center">
               <p className="text-xs text-zinc-500 mb-1">Booking Number</p>
-              <p className="text-lg font-black text-[#FFC107] font-mono tracking-wider">{bookingNumber}</p>
+              <p className="text-lg font-black text-primary font-mono tracking-wider">{bookingNumber}</p>
             </div>
           </div>
 
@@ -377,17 +377,17 @@ export default function CustomerDetailsPage() {
             <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Booking Details</h4>
             <div className="flex justify-between text-sm"><span className="text-zinc-500">Customer:</span> <span className="text-white font-bold">{customerName}</span></div>
             <div className="flex justify-between text-sm"><span className="text-zinc-500">Device:</span> <span className="text-white font-bold">{deviceTypeName}</span></div>
-            <div className="flex justify-between text-sm"><span className="text-zinc-500">Date & Time:</span> <span className="text-[#FFC107] font-bold">{new Date(selectedDate!).toLocaleDateString()} • {selectedSlot}</span></div>
+            <div className="flex justify-between text-sm"><span className="text-zinc-500">Date & Time:</span> <span className="text-primary font-bold">{new Date(selectedDate!).toLocaleDateString()} • {selectedSlot}</span></div>
             <div className="flex justify-between text-sm border-t border-zinc-800 pt-2 mt-2"><span className="text-zinc-500">Amount Paid:</span> <span className="text-white font-black">₹{total}</span></div>
           </div>
 
           {/* Action Buttons */}
           <div className="space-y-2 pt-2">
-            <Button onClick={() => router.push(`/booking/${bookingId}/food`)} className="w-full bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-2">
+            <Button onClick={() => router.push(`/booking/${bookingId}/food`)} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-2">
               <UtensilsCrossed className="h-4 w-4" />
               ORDER FOOD & DRINKS
             </Button>
-            <Button onClick={handleNewBooking} variant="outline" className="w-full border-2 border-[#FFC107] text-[#FFC107] hover:bg-[#FFC107]/10 font-black uppercase text-xs h-11 rounded-xl">
+            <Button onClick={handleNewBooking} variant="outline" className="w-full border-2 border-primary text-primary hover:bg-primary/10 font-black uppercase text-xs h-11 rounded-xl">
               BOOK ANOTHER SLOT
             </Button>
             <Button onClick={() => router.push(`/my-bookings?phone=${mobileNumber}`)} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">

@@ -72,7 +72,7 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
         <div className="flex justify-between items-center p-5 border-b border-zinc-900 bg-zinc-950/80">
           <div>
             <h3 className="font-black text-base text-white uppercase tracking-wider flex items-center gap-2">
-              <span className="w-2 h-4 bg-[#FFC107] rounded-sm block shadow-[0_0_10px_#FFC107]" />
+              <span className="w-2 h-4 bg-primary rounded-sm block shadow-[0_0_10px_#FFC107]" />
               Create New Promotion
             </h3>
             <p className="text-[11px] text-zinc-500 font-semibold mt-0.5 tracking-wide">Configure custom campaign definitions, timelines, and value assets.</p>
@@ -80,7 +80,7 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
           <button 
             type="button" 
             onClick={onClose} 
-            className="p-2 rounded-xl bg-zinc-900/50 border border-zinc-800 text-zinc-400 hover:text-[#FFC107] hover:border-[#FFC107]/40 transition-all duration-200"
+            className="p-2 rounded-xl bg-zinc-900/50 border border-zinc-800 text-zinc-400 hover:text-primary hover:border-primary/40 transition-all duration-200"
           >
             <X className="h-4 w-4"/>
           </button>
@@ -90,26 +90,26 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div className="space-y-2 md:col-span-1">
               <Label className="text-[10px] font-black tracking-widest uppercase text-zinc-300 flex items-center gap-1.5">
-                <Tag className="h-3 w-3 text-[#FFC107]" /> Promo Code
+                <Tag className="h-3 w-3 text-primary" /> Promo Code
               </Label>
               <Input 
                 required
                 placeholder="SUMMERTREAT30"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
-                className="bg-zinc-950 border-zinc-800 h-12 uppercase text-xs tracking-wider font-black text-[#FFC107] placeholder-zinc-700 rounded-xl focus-visible:ring-1 focus-visible:ring-[#FFC107] focus-visible:border-transparent transition-all"
+                className="bg-zinc-950 border-zinc-800 h-12 uppercase text-xs tracking-wider font-black text-primary placeholder-zinc-700 rounded-xl focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-transparent transition-all"
               />
             </div>
 
             <div className="space-y-2 md:col-span-2">
               <Label className="text-[10px] font-black tracking-widest uppercase text-zinc-300 flex items-center gap-1.5">
-                <AlignLeft className="h-3 w-3 text-[#FFC107]" /> Description 
+                <AlignLeft className="h-3 w-3 text-primary" /> Description 
               </Label>
               <Textarea 
                 placeholder="Enter context tags, internal notes, or client display messages..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="bg-zinc-950 border-zinc-800 text-xs text-zinc-200 placeholder-zinc-700 rounded-xl focus-visible:ring-1 focus-visible:ring-[#FFC107] focus-visible:border-transparent resize-none h-12 font-medium leading-normal transition-all py-3"
+                className="bg-zinc-950 border-zinc-800 text-xs text-zinc-200 placeholder-zinc-700 rounded-xl focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-transparent resize-none h-12 font-medium leading-normal transition-all py-3"
               />
             </div>
           </div>
@@ -117,7 +117,7 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-2">
               <Label className="text-[10px] font-black tracking-widest uppercase text-zinc-300 flex items-center gap-1.5">
-                {discountType === "percentage" ? <Percent className="h-3 w-3 text-[#FFC107]" /> : <Banknote className="h-3 w-3 text-[#FFC107]" />}
+                {discountType === "percentage" ? <Percent className="h-3 w-3 text-primary" /> : <Banknote className="h-3 w-3 text-primary" />}
                 Discount Type 
               </Label>
               <select 
@@ -144,9 +144,9 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
                   placeholder={discountType === "percentage" ? "25" : "200"}
                   value={discountValue}
                   onChange={(e) => setDiscountValue(e.target.value)}
-                  className="bg-zinc-950 border-zinc-800 h-12 text-xs text-white placeholder-zinc-700 font-black rounded-xl focus-visible:ring-1 focus-visible:ring-[#FFC107] focus-visible:border-transparent transition-all pr-14"
+                  className="bg-zinc-950 border-zinc-800 h-12 text-xs text-white placeholder-zinc-700 font-black rounded-xl focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-transparent transition-all pr-14"
                 />
-                <span className="absolute right-2 text-[9px] font-black text-black bg-[#FFC107] border border-[#FFC107] px-2 py-1.5 rounded-lg select-none shadow-[0_0_10px_rgba(255,193,7,0.2)]">
+                <span className="absolute right-2 text-[9px] font-black text-black bg-primary border border-primary px-2 py-1.5 rounded-lg select-none shadow-[0_0_10px_rgba(255,193,7,0.2)]">
                   {discountType === "percentage" ? "PCT" : "INR"}
                 </span>
               </div>
@@ -156,7 +156,7 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-2 w-full">
               <Label className="text-[10px] font-black tracking-widest uppercase text-zinc-300 flex items-center gap-1.5">
-                <CalendarDays className="h-3 w-3 text-[#FFC107]" /> Active From Date
+                <CalendarDays className="h-3 w-3 text-primary" /> Active From Date
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -165,7 +165,7 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
                     className="w-full bg-zinc-950 border border-zinc-800 h-12 rounded-xl px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-[#FFC107]"
                   >
                     <span>{dateFrom ? format(dateFrom, "dd-MM-yyyy") : <span className="text-zinc-600">dd-mm-yyyy</span>}</span>
-                    <CalendarDays className="h-4 w-4 text-[#FFC107] drop-shadow-[0_0_4px_rgba(255,193,7,0.3)]" />
+                    <CalendarDays className="h-4 w-4 text-primary drop-shadow-[0_0_4px_rgba(255,193,7,0.3)]" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[280px] p-3 bg-[#0c0c0e] border border-zinc-800 rounded-xl shadow-2xl z-50" align="start" side="top" sideOffset={8}>
@@ -181,7 +181,7 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
 
             <div className="space-y-2 w-full">
               <Label className="text-[10px] font-black tracking-widest uppercase text-zinc-300 flex items-center gap-1.5">
-                <CalendarDays className="h-3 w-3 text-[#FFC107]" /> Expiry Date
+                <CalendarDays className="h-3 w-3 text-primary" /> Expiry Date
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -190,7 +190,7 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
                     className="w-full bg-zinc-950 border border-zinc-800 h-12 rounded-xl px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-[#FFC107]"
                   >
                     <span>{dateTo ? format(dateTo, "dd-MM-yyyy") : <span className="text-zinc-600">dd-mm-yyyy</span>}</span>
-                    <CalendarDays className="h-4 w-4 text-[#FFC107] drop-shadow-[0_0_4px_rgba(255,193,7,0.3)]" />
+                    <CalendarDays className="h-4 w-4 text-primary drop-shadow-[0_0_4px_rgba(255,193,7,0.3)]" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[280px] p-3 bg-[#0c0c0e] border border-zinc-800 rounded-xl shadow-2xl z-50" align="start" side="top" sideOffset={8}>
@@ -208,7 +208,7 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
           <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800/60 p-4 rounded-xl transition-all">
             <div className="space-y-0.5">
               <Label className="text-[11px] font-black text-white uppercase tracking-wider block flex items-center gap-1.5">
-                <ShieldCheck className={`h-3.5 w-3.5 ${isActive ? "text-[#FFC107]" : "text-zinc-600"}`} /> Promotion Active State
+                <ShieldCheck className={`h-3.5 w-3.5 ${isActive ? "text-primary" : "text-zinc-600"}`} /> Promotion Active State
               </Label>
               <span className="text-[10px] text-zinc-500 font-medium block">If deactivated, validation processing will lock this code instantly.</span>
             </div>
@@ -219,7 +219,7 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
                 onChange={(e) => setIsActive(e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-10 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-zinc-400 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FFC107] peer-checked:after:bg-black peer-checked:after:border-black shadow-inner" />
+              <div className="w-10 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-zinc-400 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary peer-checked:after:bg-black peer-checked:after:border-black shadow-inner" />
             </label>
           </div>
 
@@ -235,7 +235,7 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
             <Button 
               type="submit" 
               disabled={formSubmitting} 
-              className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black uppercase text-xs h-12 px-6 rounded-xl flex items-center gap-1.5 shadow-[0_4px_20px_rgba(255,193,7,0.3)] transition-all active:scale-[0.98]"
+              className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 px-6 rounded-xl flex items-center gap-1.5 shadow-[0_4px_20px_rgba(255,193,7,0.3)] transition-all active:scale-[0.98]"
             >
               {formSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "Publish Promo"}
             </Button>

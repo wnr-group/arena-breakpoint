@@ -16,7 +16,6 @@ const navItems = [
   { name: "Customer", href: "/admin/customers", icon: User2Icon },
   { name: "Promo Codes", href: "/admin/promo-code", icon: Tag },
   { name: "Happy Hours", href: "/admin/happy-hours", icon: PartyPopper },
-  { name: "Check-In", href: "/admin/check-in", icon: UserCheck },
   { name: "Billing", href: "/admin/billing", icon: CreditCard },
   { name: "Reports", href: "/admin/reports", icon: BarChart2 },
   { name: "Settings", href: "/admin/settings", icon: Settings },
@@ -59,13 +58,13 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
         <div className="p-4 flex items-center justify-between border-b border-[#27272a]/40 h-20 overflow-hidden">
           {isOpen ? (
             <div className="pl-2 hover:scale-[1.02] transition-transform duration-300 cursor-pointer animate-in fade-in duration-300">
-              <h1 className="text-lg font-black tracking-tight text-[#FFC107] drop-shadow-[0_0_10px_rgba(255,193,7,0.3)] whitespace-nowrap">
+              <h1 className="text-lg font-black tracking-tight text-primary drop-shadow-[0_0_10px_rgba(255,193,7,0.3)] whitespace-nowrap">
                 Break Point Arena
               </h1>
               <p className="text-[10px] text-[#a1a1aa] mt-0.5 font-medium">Operational Command</p>
             </div>
           ) : (
-            <div className="mx-auto text-[#FFC107] font-black text-xl animate-in fade-in duration-300">
+            <div className="mx-auto text-primary font-black text-xl animate-in fade-in duration-300">
               BP
             </div>
           )}
@@ -98,7 +97,7 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
                     isOpen ? "px-4" : "justify-center px-0 h-11 w-11 mx-auto"
                   } ${
                     isActive
-                      ? "bg-[#FFC107] text-black font-bold shadow-[0_0_20px_rgba(255,193,7,0.2)] scale-[1.02]"
+                      ? "bg-primary text-black font-bold shadow-[0_0_20px_rgba(255,193,7,0.2)] scale-[1.02]"
                       : "text-[#a1a1aa] hover:text-white hover:bg-[#1a1a1a] hover:translate-x-1"
                   }`}
                   style={{ animationDelay: `${index * 30 + 50}ms` }}

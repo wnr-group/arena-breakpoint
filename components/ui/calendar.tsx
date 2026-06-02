@@ -107,15 +107,15 @@ function Calendar({
           defaultClassNames.day
         ),
         range_start: cn(
-          "bg-[#FFC107]/20 rounded-l-md",
+          "bg-primary/20 rounded-l-md",
           defaultClassNames.range_start
         ),
         range_middle: cn("bg-zinc-900 text-white rounded-none", defaultClassNames.range_middle),
-        range_end: cn("bg-[#FFC107]/20 rounded-r-md", defaultClassNames.range_end),
+        range_end: cn("bg-primary/20 rounded-r-md", defaultClassNames.range_end),
         
         // Custom interactive visual matching your exact amber styling rules
         today: cn(
-          "border border-[#FFC107] text-[#FFC107] rounded-md font-bold",
+          "border border-primary text-primary rounded-md font-bold",
           defaultClassNames.today
         ),
         outside: cn(
@@ -207,9 +207,9 @@ function CalendarDayButton({
       data-range-middle={modifiers.range_middle}
       className={cn(
         // Custom data selectors matching the Break Point Arena amber/gold look
-        "data-[selected-single=true]:bg-[#FFC107] data-[selected-single=true]:text-black data-[selected-single=true]:font-black text-xs transition-all duration-200",
-        "data-[range-start=true]:bg-[#FFC107] data-[range-start=true]:text-black data-[range-end=true]:bg-[#FFC107] data-[range-end=true]:text-black",
-        "hover:bg-[#FFC107]/20 hover:text-white rounded-md",
+        "data-[selected-single=true]:bg-primary data-[selected-single=true]:text-black data-[selected-single=true]:font-black text-xs transition-all duration-200",
+        "data-[range-start=true]:bg-primary data-[range-start=true]:text-black data-[range-end=true]:bg-primary data-[range-end=true]:text-black",
+        "hover:bg-primary/20 hover:text-white rounded-md",
         defaultClassNames.day,
         className
       )}

@@ -80,13 +80,13 @@ function MyBookingsPageContent() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    className="bg-zinc-950 border-zinc-900 h-12 pl-12 text-sm text-white focus-visible:ring-[#FFC107] font-mono tracking-wide"
+                    className="bg-zinc-950 border-zinc-900 h-12 pl-12 text-sm text-white focus-visible:ring-primary font-mono tracking-wide"
                   />
                 </div>
                 <Button
                   onClick={handleSearch}
                   disabled={isLoading}
-                  className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black uppercase text-xs h-12 px-6 rounded-xl"
+                  className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 px-6 rounded-xl"
                 >
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "SEARCH"}
                 </Button>
@@ -98,7 +98,7 @@ function MyBookingsPageContent() {
         {/* Loading State */}
         {isLoading && (
           <div className="flex justify-center items-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-[#FFC107]" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         )}
 
@@ -121,13 +121,13 @@ function MyBookingsPageContent() {
             {bookings.map((booking) => (
               <Card
                 key={booking.id}
-                className="bg-[#111] border border-zinc-900 p-5 shadow-lg rounded-xl hover:border-[#FFC107]/50 transition-all cursor-pointer"
+                className="bg-[#111] border border-zinc-900 p-5 shadow-lg rounded-xl hover:border-primary/50 transition-all cursor-pointer"
                 onClick={() => setSelectedBooking(booking)}
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="space-y-2 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-black text-[#FFC107] font-mono">{booking.booking_number}</span>
+                      <span className="text-xs font-black text-primary font-mono">{booking.booking_number}</span>
                       <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
                         booking.status === 'confirmed' ? 'bg-green-500/10 text-green-500 border border-green-500/30' :
                         booking.status === 'completed' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/30' :
@@ -165,7 +165,7 @@ function MyBookingsPageContent() {
                       setSelectedBooking(booking);
                     }}
                     variant="outline"
-                    className="border-[#FFC107] text-[#FFC107] hover:bg-[#FFC107]/10 font-bold uppercase text-xs h-10 px-4"
+                    className="border-primary text-primary hover:bg-primary/10 font-bold uppercase text-xs h-10 px-4"
                   >
                     View Details
                   </Button>
@@ -228,7 +228,7 @@ function MyBookingsPageContent() {
                   <div key={idx} className="text-sm space-y-1 border-b border-zinc-900 pb-2 last:border-0">
                     <div className="flex justify-between"><span className="text-zinc-500">Device:</span> <span className="text-white font-bold">{slot.device_type} #{slot.device_station_number}</span></div>
                     <div className="flex justify-between"><span className="text-zinc-500">Date:</span> <span className="text-white">{new Date(slot.slot_date).toLocaleDateString()}</span></div>
-                    <div className="flex justify-between"><span className="text-zinc-500">Time:</span> <span className="text-[#FFC107] font-bold">{slot.slot_start_time} - {slot.slot_end_time}</span></div>
+                    <div className="flex justify-between"><span className="text-zinc-500">Time:</span> <span className="text-primary font-bold">{slot.slot_start_time} - {slot.slot_end_time}</span></div>
                   </div>
                 ))}
               </div>
@@ -257,7 +257,7 @@ function MyBookingsPageContent() {
             {selectedBooking.status === 'confirmed' && (
               <Button
                 onClick={() => router.push(`/booking/${selectedBooking.id}/food`)}
-                className="w-full bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-2"
+                className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-2"
               >
                 <UtensilsCrossed className="h-4 w-4" />
                 ORDER FOOD & DRINKS

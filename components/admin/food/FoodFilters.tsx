@@ -31,7 +31,7 @@ export function FoodFilters({
           placeholder="Search orders or menu items..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9 h-10 bg-[#0a0a0a] border-[#27272a] text-white placeholder:text-zinc-600 focus-visible:ring-[#FFC107]"
+          className="pl-9 h-10 bg-[#0a0a0a] border-[#27272a] text-white placeholder:text-zinc-600 focus-visible:ring-primary"
         />
       </div>
 
@@ -43,7 +43,7 @@ export function FoodFilters({
               type="button"
               onClick={() => setCategoryTab(cat)}
               className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
-                categoryTab === cat ? "bg-[#FFC107] text-black" : "text-[#a1a1aa] hover:text-white"
+                categoryTab === cat ? "bg-primary text-black" : "text-[#a1a1aa] hover:text-white"
               }`}
             >
               {cat === "All Menu" ? "All" : cat}

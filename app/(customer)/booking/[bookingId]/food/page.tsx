@@ -102,7 +102,7 @@ export default function FoodOrderPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-[#FFC107] animate-spin" />
+        <Loader2 className="h-8 w-8 text-primary animate-spin" />
       </div>
     );
   }
@@ -114,7 +114,7 @@ export default function FoodOrderPage() {
         {/* Header */}
         <div className="space-y-2">
           <h1 className="text-2xl font-black uppercase text-white tracking-tight flex items-center gap-2">
-            <UtensilsCrossed className="h-6 w-6 text-[#FFC107]" />
+            <UtensilsCrossed className="h-6 w-6 text-primary" />
             ORDER FOOD & DRINKS
           </h1>
           <p className="text-sm text-zinc-500">Add food items to your booking</p>
@@ -128,7 +128,7 @@ export default function FoodOrderPage() {
               onClick={() => setActiveCategory(category)}
               className={`px-4 py-2 text-xs font-black uppercase border rounded-lg transition-all whitespace-nowrap ${
                 activeCategory === category
-                  ? "bg-[#FFC107] text-black border-transparent"
+                  ? "bg-primary text-black border-transparent"
                   : "bg-[#111] border-zinc-800 text-zinc-400 hover:border-zinc-700"
               }`}
             >
@@ -144,7 +144,7 @@ export default function FoodOrderPage() {
             const isAvailable = item.status === 'available';
 
             return (
-              <Card key={item.id} className={`bg-[#111] border overflow-hidden ${isAvailable ? 'border-zinc-900 hover:border-[#FFC107]/50' : 'border-zinc-900/50 opacity-60'} transition-all`}>
+              <Card key={item.id} className={`bg-[#111] border overflow-hidden ${isAvailable ? 'border-zinc-900 hover:border-primary/50' : 'border-zinc-900/50 opacity-60'} transition-all`}>
                 {/* Image */}
                 {item.image_url && (
                   <div className="h-40 w-full bg-zinc-950 overflow-hidden">
@@ -171,7 +171,7 @@ export default function FoodOrderPage() {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-black text-[#FFC107]">₹{item.price}</span>
+                    <span className="text-lg font-black text-primary">₹{item.price}</span>
 
                     {isAvailable ? (
                       inCart ? (
@@ -185,7 +185,7 @@ export default function FoodOrderPage() {
                           <span className="text-xs font-black text-white w-6 text-center">{inCart.quantity}</span>
                           <button
                             onClick={() => addToCart(item)}
-                            className="p-1 text-black bg-[#FFC107] hover:bg-[#ffcd38] rounded transition-all"
+                            className="p-1 text-black bg-primary hover:bg-primary-hover rounded transition-all"
                           >
                             <Plus className="h-3 w-3" />
                           </button>
@@ -194,7 +194,7 @@ export default function FoodOrderPage() {
                         <Button
                           onClick={() => addToCart(item)}
                           size="sm"
-                          className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-bold uppercase text-xs h-8 px-3 rounded-lg"
+                          className="bg-primary hover:bg-primary-hover text-black font-bold uppercase text-xs h-8 px-3 rounded-lg"
                         >
                           <Plus className="h-3 w-3 mr-1" /> Add
                         </Button>
@@ -224,7 +224,7 @@ export default function FoodOrderPage() {
         <div className="fixed bottom-0 left-0 right-0 bg-[#111] border-t border-zinc-900 p-4 shadow-2xl">
           <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="bg-[#FFC107] text-black rounded-full w-8 h-8 flex items-center justify-center font-black text-sm">
+              <div className="bg-primary text-black rounded-full w-8 h-8 flex items-center justify-center font-black text-sm">
                 {cartItemsCount}
               </div>
               <div>
@@ -244,7 +244,7 @@ export default function FoodOrderPage() {
               <Button
                 onClick={handleSubmitOrder}
                 disabled={isSubmitting}
-                className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black uppercase text-xs h-12 px-8 flex items-center gap-2"
+                className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 px-8 flex items-center gap-2"
               >
                 {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
                 Place Order

@@ -62,12 +62,12 @@ export default function GamingStationPage() {
   const handleCommitSelectionAndForward = () => {
     dispatch(setPricing({ subtotal: activeBaseCost, subscriptionDiscount: 0, promoDiscount: 0, total: definitiveCombinedTotalValue }));
     setSelectedDeviceType(null);
-    router.push("/booking/slots");
+    router.push("/booking/slots-v2");
   };
 
   if (loading) {
     return (
-      <div className="h-[50vh] flex items-center justify-center"><Loader2 className="h-5 w-5 text-[#FFC107] animate-spin" /></div>
+      <div className="h-[50vh] flex items-center justify-center"><Loader2 className="h-5 w-5 text-primary animate-spin" /></div>
     );
   }
 
