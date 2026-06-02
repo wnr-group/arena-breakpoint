@@ -65,7 +65,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
       if (result.success) {
         toast.success("Configuration Updated", {
           description: `Station ${editStation} overrides applied successfully.`,
-          icon: <CheckCircle2 className="h-5 w-5 text-[#FFC107]" />
+          icon: <CheckCircle2 className="h-5 w-5 text-primary" />
         });
         onFormSuccess();
       } else {
@@ -101,7 +101,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
                   name="type"
                   value={editType}
                   onChange={(e) => setEditType(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] px-3 text-sm focus:border-[#FFC107] focus:ring-1 focus:ring-[#FFC107] outline-none text-white cursor-pointer transition-colors"
+                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] px-3 text-sm focus:border-primary focus:ring-1 focus:ring-[#FFC107] outline-none text-white cursor-pointer transition-colors"
                 >
                   <option value="PS5" className="bg-[#121212]">PS 5</option>
                   <option value="Standard Snooker" className="bg-[#121212]">Standard Snooker</option>
@@ -115,7 +115,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
                   name="station_number"
                   value={editStation}
                   onChange={(e) => setEditStation(e.target.value)}
-                  className="h-10 bg-[#121212] border-[#27272a] text-sm text-white focus-visible:ring-[#FFC107] focus-visible:border-[#FFC107] transition-colors"
+                  className="h-10 bg-[#121212] border-[#27272a] text-sm text-white focus-visible:ring-primary focus-visible:border-primary transition-colors"
                   required
                 />
               </div>
@@ -135,7 +135,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
                   min="0"
                   value={hourlyRate}
                   onChange={(e) => setHourlyRate(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] pl-7 pr-3 text-sm focus:ring-1 focus:ring-[#FFC107] focus:border-[#FFC107] outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
+                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] pl-7 pr-3 text-sm focus:ring-1 focus:ring-[#FFC107] focus:border-primary outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
                   required
                 />
               </div>
@@ -144,9 +144,9 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
             {/* 💡 FIX: Replaced simple input line with modern high-fidelity uploader field component */}
             <div className="space-y-2">
               <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Hardware Visual Image</label>
-              <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-[#27272a] border-dashed rounded-xl cursor-pointer bg-[#121212] hover:bg-[#161616] hover:border-[#FFC107]/40 transition-all group">
+              <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-[#27272a] border-dashed rounded-xl cursor-pointer bg-[#121212] hover:bg-[#161616] hover:border-primary/40 transition-all group">
                 <div className="flex items-center gap-3">
-                  <UploadCloud className="w-5 h-5 text-[#FFC107] group-hover:scale-110 transition-transform" />
+                  <UploadCloud className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
                   <p className="text-xs text-[#a1a1aa] font-medium max-w-[280px] truncate">
                     {localFile ? localFile.name : "Choose a file to update existing image path"}
                   </p>
@@ -160,7 +160,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
               <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Device Status</label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {['available', 'maintenance', 'occupied', 'inactive'].map((status) => (
-                  <label key={status} className={`flex items-center justify-center cursor-pointer rounded-lg border py-2.5 text-xs font-bold transition-all ${editStatus === status ? 'border-[#FFC107] bg-[#FFC107]/10 text-[#FFC107]' : 'border-[#27272a] bg-[#121212] text-[#a1a1aa] hover:border-zinc-700'}`}>
+                  <label key={status} className={`flex items-center justify-center cursor-pointer rounded-lg border py-2.5 text-xs font-bold transition-all ${editStatus === status ? 'border-primary bg-primary/10 text-primary' : 'border-[#27272a] bg-[#121212] text-[#a1a1aa] hover:border-zinc-700'}`}>
                     <input type="radio" name="status_radio" value={status} className="hidden" checked={editStatus === status} onChange={() => setEditStatus(status)} />
                     <span className="capitalize tracking-wide">{status}</span>
                   </label>
@@ -170,7 +170,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
 
             <div className="space-y-2">
               <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Description</label>
-              <textarea name="specs" defaultValue={device.specs} placeholder="GPU parameters, hardware configurations..." className="w-full rounded-md border border-[#27272a] bg-[#121212] px-3 py-2.5 text-sm text-white focus:ring-1 focus:ring-[#FFC107] focus:border-[#FFC107] h-24 outline-none resize-none transition-colors" />
+              <textarea name="specs" defaultValue={device.specs} placeholder="GPU parameters, hardware configurations..." className="w-full rounded-md border border-[#27272a] bg-[#121212] px-3 py-2.5 text-sm text-white focus:ring-1 focus:ring-[#FFC107] focus:border-primary h-24 outline-none resize-none transition-colors" />
             </div>
           </div>
 
@@ -192,16 +192,16 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
                 </div>
                 <div className="p-4 flex flex-col space-y-3">
                   <div className="flex justify-between items-start">
-                    <div className="p-1.5 bg-[#1a1a1a] rounded-md border border-zinc-800"><Gamepad2 className="h-4 w-4 text-[#FFC107]" /></div>
+                    <div className="p-1.5 bg-[#1a1a1a] rounded-md border border-zinc-800"><Gamepad2 className="h-4 w-4 text-primary" /></div>
                     <EditPreviewBadge previewStatus={editStatus} />
                   </div>
                   <div>
                     <h3 className="text-base font-black text-white tracking-tight uppercase">{editStation || "STATION-ID"}</h3>
-                    <p className="text-[#a1a1aa] text-[11px] flex items-center gap-1.5 mt-0.5"><span className="w-1.5 h-1.5 rounded-full bg-[#FFC107]"></span>{editType}</p>
+                    <p className="text-[#a1a1aa] text-[11px] flex items-center gap-1.5 mt-0.5"><span className="w-1.5 h-1.5 rounded-full bg-primary"></span>{editType}</p>
                   </div>
                   <div className="flex items-center justify-between border-t border-zinc-900/60 pt-2 text-xs">
                     <span className="text-[#a1a1aa] font-medium">Rate / Hour</span>
-                    <span className="font-bold text-[#FFC107] text-sm">₹{hourlyRate || "0"}</span>
+                    <span className="font-bold text-primary text-sm">₹{hourlyRate || "0"}</span>
                   </div>
                 </div>
               </Card>
@@ -210,7 +210,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
             {/* Bottom Footer Control Row */}
             <div className="w-full flex justify-end gap-3 mt-6 pt-4 border-t border-[#27272a]/40 flex-shrink-0">
               <Button type="button" variant="ghost" className="text-[#a1a1aa] hover:bg-zinc-900 hover:text-white" onClick={onClose}>Cancel</Button>
-              <Button type="submit" disabled={isPending} className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-bold px-6 h-10 text-sm rounded-md shadow-md transition-all">
+              <Button type="submit" disabled={isPending} className="bg-primary hover:bg-primary-hover text-black font-bold px-6 h-10 text-sm rounded-md shadow-md transition-all">
                 {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply Overrides"}
               </Button>
             </div>
@@ -223,7 +223,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
 }
 
 function EditPreviewBadge({ previewStatus }: { previewStatus: string }) {
-  if (previewStatus === 'available') return <span className="inline-flex px-2 py-0.5 text-[10px] font-bold text-[#FFC107] border border-[#FFC107]/30 rounded uppercase bg-[#FFC107]/5">Available</span>;
+  if (previewStatus === 'available') return <span className="inline-flex px-2 py-0.5 text-[10px] font-bold text-primary border border-primary/30 rounded uppercase bg-primary/5">Available</span>;
   if (previewStatus === 'maintenance') return <span className="inline-flex px-2 py-0.5 text-[10px] font-bold text-[#f43f5e] border border-[#f43f5e]/30 rounded uppercase bg-[#f43f5e]/5">Maintenance</span>;
   if (previewStatus === 'inactive') return <span className="inline-flex px-2 py-0.5 text-[10px] font-bold text-[#f43f5e] border border-[#f43f5e]/30 rounded uppercase bg-[#f43f5e]/5">Inactive</span>;
   return <span className="inline-flex px-2 py-0.5 text-[10px] font-bold text-[#a1a1aa] border border-[#27272a] rounded uppercase bg-[#121212]">Occupied</span>;

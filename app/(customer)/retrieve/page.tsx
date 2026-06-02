@@ -75,7 +75,7 @@ export default function RetrieveBookingPage() {
         {/* Header */}
         <div className="space-y-2">
           <h1 className="text-2xl font-black uppercase text-white tracking-tight flex items-center gap-2">
-            <Search className="h-6 w-6 text-[#FFC107]" />
+            <Search className="h-6 w-6 text-primary" />
             RETRIEVE BOOKING
           </h1>
           <p className="text-sm text-zinc-500">Enter your phone number to view all your bookings</p>
@@ -99,13 +99,13 @@ export default function RetrieveBookingPage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    className="bg-zinc-950 border-zinc-900 h-12 pl-12 text-sm text-white focus-visible:ring-[#FFC107] font-mono tracking-wide"
+                    className="bg-zinc-950 border-zinc-900 h-12 pl-12 text-sm text-white focus-visible:ring-primary font-mono tracking-wide"
                   />
                 </div>
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black uppercase text-xs h-12 px-8 rounded-xl"
+                  className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 px-8 rounded-xl"
                 >
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "SEARCH"}
                 </Button>
@@ -117,7 +117,7 @@ export default function RetrieveBookingPage() {
         {/* Loading State */}
         {isLoading && (
           <div className="flex justify-center items-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-[#FFC107]" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         )}
 
@@ -140,13 +140,13 @@ export default function RetrieveBookingPage() {
             {bookings.map((booking) => (
               <Card
                 key={booking.id}
-                className="bg-[#111] border border-zinc-900 p-5 shadow-lg rounded-xl hover:border-[#FFC107]/50 transition-all cursor-pointer"
+                className="bg-[#111] border border-zinc-900 p-5 shadow-lg rounded-xl hover:border-primary/50 transition-all cursor-pointer"
                 onClick={() => setSelectedBooking(booking)}
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="space-y-2 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-black text-[#FFC107] font-mono">{booking.booking_number}</span>
+                      <span className="text-xs font-black text-primary font-mono">{booking.booking_number}</span>
                       {getStatusBadge(booking.status)}
                     </div>
 
@@ -178,7 +178,7 @@ export default function RetrieveBookingPage() {
                       setSelectedBooking(booking);
                     }}
                     variant="outline"
-                    className="border-[#FFC107] text-[#FFC107] hover:bg-[#FFC107]/10 font-bold uppercase text-xs h-10 px-4"
+                    className="border-primary text-primary hover:bg-primary/10 font-bold uppercase text-xs h-10 px-4"
                   >
                     View Details
                   </Button>
@@ -193,11 +193,11 @@ export default function RetrieveBookingPage() {
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
             {/* Status Banner */}
-            <Card className="bg-gradient-to-r from-[#FFC107]/10 to-transparent border border-[#FFC107]/30 p-4">
+            <Card className="bg-gradient-to-r from-primary/10 to-transparent border border-primary/30 p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-[#FFC107]/20 border-2 border-[#FFC107] flex items-center justify-center">
-                    <CheckCircle2 className="h-6 w-6 text-[#FFC107]" />
+                  <div className="w-12 h-12 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center">
+                    <CheckCircle2 className="h-6 w-6 text-primary" />
                   </div>
                   <div>
                     <p className="text-xs text-zinc-500">Booking Status</p>
@@ -229,7 +229,7 @@ export default function RetrieveBookingPage() {
                 </div>
                 <div className="text-center space-y-1">
                   <p className="text-xs text-zinc-500">Booking Number</p>
-                  <p className="text-xl font-black text-[#FFC107] font-mono tracking-wider">{selectedBooking.booking_number}</p>
+                  <p className="text-xl font-black text-primary font-mono tracking-wider">{selectedBooking.booking_number}</p>
                   <p className="text-xs text-zinc-600">Show this QR code at the counter</p>
                 </div>
               </div>
@@ -280,7 +280,7 @@ export default function RetrieveBookingPage() {
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-zinc-500">Time:</span>
-                          <span className="text-[#FFC107] font-black flex items-center gap-1.5">
+                          <span className="text-primary font-black flex items-center gap-1.5">
                             <Clock className="h-3.5 w-3.5" />
                             {slot.slot_start_time} - {slot.slot_end_time}
                           </span>
@@ -329,7 +329,7 @@ export default function RetrieveBookingPage() {
                 )}
                 <div className="flex items-center justify-between pt-3 border-t border-zinc-800">
                   <span className="text-white font-black text-base">TOTAL AMOUNT:</span>
-                  <span className="text-[#FFC107] font-black text-2xl">₹{selectedBooking.total_amount}</span>
+                  <span className="text-primary font-black text-2xl">₹{selectedBooking.total_amount}</span>
                 </div>
               </div>
             </Card>

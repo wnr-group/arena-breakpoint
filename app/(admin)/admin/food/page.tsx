@@ -83,12 +83,12 @@ export default function FoodPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           { title: "Total Stock Volume", count: totalQuantity, sub: "Real-time kitchen bulk inventory", icon: Utensils },
-          { title: "Active Live Menu Items", count: activeCount, sub: "Orderable floor assets", icon: CheckCircle2, color: "text-[#FFC107]" },
+          { title: "Active Live Menu Items", count: activeCount, sub: "Orderable floor assets", icon: CheckCircle2, color: "text-primary" },
           { title: "Out Of Stock Items", count: outOfStockCount, sub: "Requires batch ingredient logging", icon: AlertTriangle, color: "text-red-400" },
         ].map((stat) => (
-          <Card key={stat.title} className="bg-[#121212] border-[#27272a] hover:border-[#FFC107]/70 hover:-translate-y-1 transition-all duration-500 group">
+          <Card key={stat.title} className="bg-[#121212] border-[#27272a] hover:border-primary/70 hover:-translate-y-1 transition-all duration-500 group">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <stat.icon className="h-5 w-5 text-[#FFC107]" />
+              <stat.icon className="h-5 w-5 text-primary" />
               <span className="text-[10px] text-[#a1a1aa] uppercase tracking-wider">{stat.title}</span>
             </CardHeader>
             <CardContent>
@@ -108,7 +108,7 @@ export default function FoodPage() {
       <div className="mt-2">
         {isLoadingData ? (
           <div className="text-center py-12 bg-[#121212] border border-[#27272a] rounded-xl text-[#a1a1aa] flex justify-center items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin text-[#FFC107]" /> Loading café configuration tracks...
+            <Loader2 className="h-4 w-4 animate-spin text-primary" /> Loading café configuration tracks...
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="text-center py-12 bg-[#121212] border border-[#27272a] rounded-xl text-[#a1a1aa]">

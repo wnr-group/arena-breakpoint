@@ -24,11 +24,11 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
         </Button>
 
         <div className="hidden sm:flex items-center w-full relative group transition-all duration-500 focus-within:max-w-lg">
-          <Search className="absolute left-3 h-4 w-4 text-[#a1a1aa] group-focus-within:text-[#FFC107] transition-colors duration-300" />
+          <Search className="absolute left-3 h-4 w-4 text-[#a1a1aa] group-focus-within:text-primary transition-colors duration-300" />
           <Input
             type="text"
             placeholder="Search operations..."
-            className="bg-[#121212] border border-transparent pl-10 text-white placeholder:text-[#a1a1aa] focus-visible:ring-1 focus-visible:ring-[#FFC107]/50 focus-visible:border-[#FFC107] focus-visible:bg-[#1a1a1a] shadow-none text-sm w-full transition-all duration-300 rounded-full"
+            className="bg-[#121212] border border-transparent pl-10 text-white placeholder:text-[#a1a1aa] focus-visible:ring-1 focus-visible:ring-primary/50 focus-visible:border-primary focus-visible:bg-[#1a1a1a] shadow-none text-sm w-full transition-all duration-300 rounded-full"
           />
         </div>
       </div>
@@ -57,12 +57,12 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
         {/* User Account Frame Section */}
         <div className="flex items-center gap-2 md:gap-3 cursor-pointer group select-none">
           <div className="text-right transition-transform duration-300 group-hover:-translate-x-0.5 hidden md:block">
-            <p className="text-sm font-bold text-white group-hover:text-[#FFC107] transition-colors leading-tight">Alex Mercer</p>
+            <p className="text-sm font-bold text-white group-hover:text-primary transition-colors leading-tight">Alex Mercer</p>
             <p className="text-[10px] text-[#a1a1aa] uppercase tracking-widest mt-0.5 leading-none">Arena Manager</p>
           </div>
           
           {/* Profile Circle Avatar Frame */}
-          <div className="h-9 w-9 md:h-10 md:w-10 rounded-full bg-[#27272a] border-2 border-transparent group-hover:border-[#FFC107] group-hover:shadow-[0_0_15px_rgba(255,193,7,0.3)] transition-all duration-300 overflow-hidden transform group-hover:scale-105">
+          <div className="h-9 w-9 md:h-10 md:w-10 rounded-full bg-[#27272a] border-2 border-transparent group-hover:border-primary group-hover:shadow-[0_0_15px_rgba(255,193,7,0.3)] transition-all duration-300 overflow-hidden transform group-hover:scale-105">
             <img 
               src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex&backgroundColor=FFC107" 
               alt="Avatar" 

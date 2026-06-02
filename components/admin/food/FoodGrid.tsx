@@ -69,7 +69,7 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
         return (
           <Card
             key={item.id}
-            className="bg-[#121212] border-[#27272a] hover:border-[#FFC107]/50 hover:shadow-[0_0_20px_rgba(255,193,7,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden group relative"
+            className="bg-[#121212] border-[#27272a] hover:border-primary/50 hover:shadow-[0_0_20px_rgba(255,193,7,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden group relative"
           >
             {/* 1. MEDIA HEADER ASSET FRAME */}
             <div className="h-48 w-full bg-zinc-950 border-b border-[#27272a] flex items-center justify-center overflow-hidden relative">
@@ -102,12 +102,12 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
               <div className="space-y-2.5">
                 {/* Title and Status Row */}
                 <div className="flex items-start justify-between gap-4">
-                  <h3 className="font-black text-base text-white group-hover:text-[#FFC107] transition-colors leading-snug break-words flex-1" title={item.name}>
+                  <h3 className="font-black text-base text-white group-hover:text-primary transition-colors leading-snug break-words flex-1" title={item.name}>
                     {item.name}
                   </h3>
                   
                   <span className={`text-[10px] font-extrabold uppercase tracking-wide transition-colors mt-0.5 flex-shrink-0 ${
-                    isCurrentlyAvailable ? "text-[#FFC107]" : "text-zinc-600"
+                    isCurrentlyAvailable ? "text-primary" : "text-zinc-600"
                   }`}>
                     {isCurrentlyAvailable ? "Available" : "Not Available"}
                   </span>
@@ -115,7 +115,7 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
 
                 {/* Pricing + Custom Toggle Switch Row */}
                 <div className="flex items-center justify-between">
-                  <div className="text-[#FFC107] font-black text-xl">
+                  <div className="text-primary font-black text-xl">
                     ₹{item.price ? Number(item.price).toLocaleString('en-IN') : "0"}
                   </div>
 
@@ -123,7 +123,7 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
                     type="button"
                     onClick={() => handleToggleStatus(item)}
                     className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out outline-none ${
-                      isCurrentlyAvailable ? "bg-[#FFC107]" : "bg-zinc-800"
+                      isCurrentlyAvailable ? "bg-primary" : "bg-zinc-800"
                     }`}
                   >
                     <span
@@ -142,7 +142,7 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
 
               {/* Category Pill Badge fixed securely on the bottom-left area */}
               <div className="pt-1 flex justify-start items-center">
-                <span className="inline-flex items-center px-2 py-1 text-[9px] font-black text-[#FFC107] bg-[#1a1a1a] border border-[#27272a] rounded-md uppercase tracking-wider select-none">
+                <span className="inline-flex items-center px-2 py-1 text-[9px] font-black text-primary bg-[#1a1a1a] border border-[#27272a] rounded-md uppercase tracking-wider select-none">
                   {item.category}
                 </span>
               </div>
@@ -180,7 +180,7 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
                   </AlertDialogHeader>
                   <AlertDialogFooter className="mt-4">
                     <AlertDialogCancel className="bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800">Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => onDelete(item.id)} className="bg-[#FFC107] text-black hover:bg-[#FFC107]/90 font-semibold">
+                    <AlertDialogAction onClick={() => onDelete(item.id)} className="bg-primary text-black hover:bg-primary/90 font-semibold">
                       Confirm Delete
                     </AlertDialogAction>
                   </AlertDialogFooter>

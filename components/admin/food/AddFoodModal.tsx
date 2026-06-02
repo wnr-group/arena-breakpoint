@@ -76,7 +76,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
 
         toast.success("New Item Registered", {
           description: `${previewName || "Menu item"} added successfully to kitchen operations.`,
-          icon: <CheckCircle2 className="h-5 w-5 text-[#FFC107]" />
+          icon: <CheckCircle2 className="h-5 w-5 text-primary" />
         });
 
         await onFormSuccess();
@@ -92,7 +92,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-semibold rounded-md px-6 transition-all duration-300 hover:scale-[1.02] shadow-[0_0_15px_rgba(255,193,7,0.15)]">
+        <Button className="bg-primary hover:bg-primary-hover text-black font-semibold rounded-md px-6 transition-all duration-300 hover:scale-[1.02] shadow-[0_0_15px_rgba(255,193,7,0.15)]">
           <PlusCircle className="mr-2 h-4 w-4" /> Add Item
         </Button>
       </DialogTrigger>
@@ -116,7 +116,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                 <Input
                   name="name"
                   placeholder="e.g. Cyber Steak Burger"
-                  className="h-10 bg-[#121212] border-[#27272a] text-sm text-white focus-visible:ring-[#FFC107] focus-visible:border-[#FFC107] transition-colors"
+                  className="h-10 bg-[#121212] border-[#27272a] text-sm text-white focus-visible:ring-primary focus-visible:border-primary transition-colors"
                   value={previewName}
                   onChange={(e) => setPreviewName(e.target.value)}
                   required
@@ -127,7 +127,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                 <select
                   value={previewCategory}
                   onChange={(e) => setPreviewCategory(e.target.value as FoodCategory)}
-                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] px-3 text-sm focus:border-[#FFC107] focus:ring-1 focus:ring-[#FFC107] outline-none text-white cursor-pointer transition-colors"
+                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] px-3 text-sm focus:border-primary focus:ring-1 focus:ring-[#FFC107] outline-none text-white cursor-pointer transition-colors"
                 >
                   <option value="Snacks">Snacks</option>
                   <option value="Drinks">Drinks</option>
@@ -150,7 +150,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                     min="0"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] pl-7 pr-3 text-sm focus:ring-1 focus:ring-[#FFC107] focus:border-[#FFC107] outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
+                    className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] pl-7 pr-3 text-sm focus:ring-1 focus:ring-[#FFC107] focus:border-primary outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
                     required
                   />
                 </div>
@@ -165,7 +165,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                   min="0"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] px-3 text-sm focus:ring-1 focus:ring-[#FFC107] focus:border-[#FFC107] outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
+                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] px-3 text-sm focus:ring-1 focus:ring-[#FFC107] focus:border-primary outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
                   required
                 />
               </div>
@@ -173,9 +173,9 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
 
             <div className="space-y-2">
               <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Food Visual Asset</label>
-              <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-[#27272a] border-dashed rounded-xl cursor-pointer bg-[#121212] hover:bg-[#161616] hover:border-[#FFC107]/40 transition-all group">
+              <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-[#27272a] border-dashed rounded-xl cursor-pointer bg-[#121212] hover:bg-[#161616] hover:border-primary/40 transition-all group">
                 <div className="flex items-center gap-3">
-                  <UploadCloud className="w-5 h-5 text-[#FFC107] group-hover:scale-110 transition-transform" />
+                  <UploadCloud className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
                   <p className="text-xs text-[#a1a1aa] font-medium max-w-[280px] truncate">
                     {localFile ? localFile.name : "Select or drag a menu food image cover"}
                   </p>
@@ -188,7 +188,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
               <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Availability Status</label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {['available', 'out_of_stock', 'hidden'].map((status) => (
-                  <label key={status} className={`flex items-center justify-center cursor-pointer rounded-lg border py-2.5 text-xs font-bold transition-all ${previewStatus === status ? 'border-[#FFC107] bg-[#FFC107]/10 text-[#FFC107]' : 'border-[#27272a] bg-[#121212] text-[#a1a1aa] hover:border-zinc-700'}`}>
+                  <label key={status} className={`flex items-center justify-center cursor-pointer rounded-lg border py-2.5 text-xs font-bold transition-all ${previewStatus === status ? 'border-primary bg-primary/10 text-primary' : 'border-[#27272a] bg-[#121212] text-[#a1a1aa] hover:border-zinc-700'}`}>
                     <input type="radio" name="status_radio" value={status} className="hidden" checked={previewStatus === status} onChange={() => setPreviewStatus(status as FoodStatus)} />
                     <span className="capitalize tracking-wide">{status.replace('_', ' ')}</span>
                   </label>
@@ -198,7 +198,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
 
             <div className="space-y-2">
               <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Description</label>
-              <textarea name="description" placeholder="Describe flavors, cooking styles, textures, or key details..." className="w-full rounded-md border border-[#27272a] bg-[#121212] px-3 py-2.5 text-sm text-white focus:ring-1 focus:ring-[#FFC107] focus:border-[#FFC107] h-24 outline-none resize-none transition-colors" />
+              <textarea name="description" placeholder="Describe flavors, cooking styles, textures, or key details..." className="w-full rounded-md border border-[#27272a] bg-[#121212] px-3 py-2.5 text-sm text-white focus:ring-1 focus:ring-[#FFC107] focus:border-primary h-24 outline-none resize-none transition-colors" />
             </div>
           </div>
 
@@ -222,16 +222,16 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                 </div>
                 <div className="p-4 flex flex-col space-y-3 bg-[#0a0a0a]">
                   <div className="flex justify-between items-start">
-                    <div className="p-1.5 bg-[#1a1a1a] rounded-md border border-zinc-800"><Utensils className="h-4 w-4 text-[#FFC107]" /></div>
+                    <div className="p-1.5 bg-[#1a1a1a] rounded-md border border-zinc-800"><Utensils className="h-4 w-4 text-primary" /></div>
                     <PreviewFoodBadge previewStatus={previewStatus} />
                   </div>
                   <div className="space-y-0.5">
                     <h3 className="text-base font-black text-white tracking-tight truncate">{previewName || "FOOD ITEM TITLE"}</h3>
-                    <p className="text-[#a1a1aa] text-[11px] flex items-center gap-1.5 truncate"><span className="w-1.5 h-1.5 rounded-full bg-[#FFC107] flex-shrink-0"></span>{previewCategory}</p>
+                    <p className="text-[#a1a1aa] text-[11px] flex items-center gap-1.5 truncate"><span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></span>{previewCategory}</p>
                   </div>
                   <div className="flex items-center justify-between border-t border-zinc-900/60 pt-2 text-xs">
                     <span className="text-[#a1a1aa] font-medium">Menu Price</span>
-                    <span className="font-bold text-[#FFC107] text-sm">₹{price || "0"}</span>
+                    <span className="font-bold text-primary text-sm">₹{price || "0"}</span>
                   </div>
                   <div className="flex items-center justify-between border-t border-zinc-900/40 pt-2 text-xs">
                     <span className="text-[#a1a1aa] font-medium">Stock Pool</span>
@@ -244,7 +244,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
             {/* Form control tracking footer alignment */}
             <div className="w-full flex justify-end gap-3 pt-6 border-t border-[#27272a]/40 flex-shrink-0 mt-auto">
               <Button type="button" variant="ghost" className="text-[#a1a1aa] hover:bg-zinc-900 hover:text-white transition-colors text-xs font-semibold" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={isPending} className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-bold px-5 h-9 text-xs rounded-md shadow-md transition-all flex items-center justify-center gap-1.5">
+              <Button type="submit" disabled={isPending} className="bg-primary hover:bg-primary-hover text-black font-bold px-5 h-9 text-xs rounded-md shadow-md transition-all flex items-center justify-center gap-1.5">
                 {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save Food Item"}
               </Button>
             </div>
@@ -257,7 +257,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
 }
 
 function PreviewFoodBadge({ previewStatus }: { previewStatus: string }) {
-  if (previewStatus === 'available') return <span className="inline-flex px-2 py-0.5 text-[10px] font-bold text-[#FFC107] border border-[#FFC107]/30 rounded uppercase bg-[#FFC107]/5">Available</span>;
+  if (previewStatus === 'available') return <span className="inline-flex px-2 py-0.5 text-[10px] font-bold text-primary border border-primary/30 rounded uppercase bg-primary/5">Available</span>;
   if (previewStatus === 'out_of_stock') return <span className="inline-flex px-2 py-0.5 text-[10px] font-bold text-[#f43f5e] border border-[#f43f5e]/30 rounded uppercase bg-[#f43f5e]/5">Out of Stock</span>;
   return <span className="inline-flex px-2 py-0.5 text-[10px] font-bold text-zinc-500 border border-zinc-800 rounded uppercase bg-zinc-900">Hidden</span>;
 }

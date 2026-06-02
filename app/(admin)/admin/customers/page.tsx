@@ -58,13 +58,13 @@ export default function AdminCustomersDashboard() {
       </div>
 
       <div className="relative max-w-md group">
-        <Search className="absolute left-4 top-3.5 h-4 w-4 text-zinc-500 group-focus-within:text-[#FFC107] transition-colors" />
+        <Search className="absolute left-4 top-3.5 h-4 w-4 text-zinc-500 group-focus-within:text-primary transition-colors" />
         <Input
           type="text"
           placeholder="Search by name, phone number, or email..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="bg-[#111] border-zinc-800 h-11 pl-11 text-xs font-medium text-white placeholder-zinc-600 rounded-xl focus-visible:ring-1 focus-visible:ring-[#FFC107] focus-visible:border-transparent transition-all group-hover:border-zinc-700 w-full"
+          className="bg-[#111] border-zinc-800 h-11 pl-11 text-xs font-medium text-white placeholder-zinc-600 rounded-xl focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-transparent transition-all group-hover:border-zinc-700 w-full"
         />
       </div>
 

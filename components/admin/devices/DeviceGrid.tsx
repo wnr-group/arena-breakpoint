@@ -31,7 +31,7 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
         return (
           <Card
             key={device.id}
-            className="bg-[#121212] border-[#27272a] hover:border-[#FFC107]/50 hover:shadow-[0_0_20px_rgba(255,193,7,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden group relative animate-in zoom-in-95"
+            className="bg-[#121212] border-[#27272a] hover:border-primary/50 hover:shadow-[0_0_20px_rgba(255,193,7,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden group relative animate-in zoom-in-95"
           >
             {/* 1. MEDIA CONTAINER FRAME */}
             <div className="h-48 w-full bg-zinc-950 border-b border-[#27272a] flex items-center justify-center overflow-hidden relative">
@@ -57,14 +57,14 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
               <div>
                 <div className="flex items-baseline justify-between gap-2 mb-2">
                   <div>
-                    <h3 className="font-black text-xl text-[#FFC107] uppercase tracking-wide truncate max-w-[130px]" title={device.station_number}>
+                    <h3 className="font-black text-xl text-primary uppercase tracking-wide truncate max-w-[130px]" title={device.station_number}>
                       {device.station_number}
                     </h3>
                     <p className="text-xs text-[#a1a1aa] font-medium truncate max-w-[130px]">{device.device_type?.display_name || 'N/A'}</p>
                   </div>
 
                   {/* HOURLY PRICING NODE */}
-                  <div className="text-[#FFC107] font-black text-xl text-right flex-shrink-0">
+                  <div className="text-primary font-black text-xl text-right flex-shrink-0">
                     ₹{device.device_type?.regular_hourly_rate ? Number(device.device_type.regular_hourly_rate).toLocaleString('en-IN') : "0"}
                     <span className="text-[#a1a1aa] text-[10px] font-normal tracking-tight">/hr</span>
                   </div>
@@ -119,7 +119,7 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
                     </AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => onDelete(device.id)}
-                      className="bg-[#FFC107] text-black hover:bg-[#FFC107]/90 font-semibold"
+                      className="bg-primary text-black hover:bg-primary/90 font-semibold"
                     >
                       Confirm Delete
                     </AlertDialogAction>

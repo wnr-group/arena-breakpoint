@@ -276,6 +276,7 @@ export async function initializeSoftLockReservation(payload: {
   addons: AddonSelection[];
   subtotal: number;
   total: number;
+  durationMinutes?: number; // Optional: for flexible bookings
 }) {
   try {
     // Convert time format from "10:00 AM" to "10:00:00"
@@ -593,5 +594,117 @@ export async function confirmBooking(payload: {
   } catch (err: any) {
     console.error("Booking error:", err);
     return { success: false, error: err.message };
+  }
+}
+
+/**
+ * NEW: Check flexible availability for a specific date, device type, and duration
+ * Returns available start times in 30-minute intervals
+ */
+export async function checkFlexibleAvailability(
+  dateString: string,
+  deviceTypeId: string,
+  durationMinutes: number
+) {
+  try {
+    // Helper: Convert 24h time to minutes since midnight
+    const timeToMinutes = (time: string): number => {
+      const [hours, minutes] = time.split(':').map(Number);
+      return hours * 60 + minutes;
+    };
+
+    // Helper: Convert minutes to 12h format
+    const minutesTo12h = (mins: number): string => {
+      const hours = Math.floor(mins / 60);
+      const minutes = mins % 60;
+      const period = hours >= 12 ? 'PM' : 'AM';
+      const hour12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+      return `${hour12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${period}`;
+    };
+
+    // Step 1: Get total available devices of this type
+    const { count: totalDevices, error: devicesError } = await supabaseAdmin
+      .from("devices")
+      .select("id", { count: "exact", head: true })
+      .eq("device_type_id", deviceTypeId)
+      .eq("status", "available");
+
+    if (devicesError) throw devicesError;
+
+    const totalAvailable = totalDevices || 0;
+
+    if (totalAvailable === 0) {
+      return {
+        success: true,
+        availableStartTimes: []
+      };
+    }
+
+    // Step 2: Get all bookings for this device type on this date
+    const { data: bookings, error: bookingsError } = await supabaseAdmin
+      .from("booking_device_slots")
+      .select(`
+        slot_start_time,
+        slot_end_time,
+        device:devices!inner(device_type_id),
+        bookings!inner(status, lock_expires_at)
+      `)
+      .eq("device.device_type_id", deviceTypeId)
+      .eq("slot_date", dateString)
+      .in("bookings.status", ["locked", "confirmed", "checked_in"]);
+
+    if (bookingsError) throw bookingsError;
+
+    const rightNow = new Date().toISOString();
+
+    // Step 3: Build array of occupied time ranges per device (we have totalAvailable devices)
+    const activeBookings = (bookings || [])
+      .filter((booking: any) => {
+        const bookingRecord = booking.bookings;
+        // Skip expired locks
+        if (bookingRecord.status === "locked" && bookingRecord.lock_expires_at) {
+          return new Date(bookingRecord.lock_expires_at) > new Date(rightNow);
+        }
+        return true;
+      })
+      .map((booking: any) => ({
+        start: timeToMinutes(booking.slot_start_time),
+        end: timeToMinutes(booking.slot_end_time)
+      }));
+
+    // Step 4: Generate all possible start times (10 AM to 11 PM in 30-min intervals)
+    const availableStartTimes: string[] = [];
+    const businessStart = 10 * 60; // 10:00 AM in minutes
+    const businessEnd = 23 * 60; // 11:00 PM in minutes
+
+    for (let startMins = businessStart; startMins < businessEnd; startMins += 30) {
+      const endMins = startMins + durationMinutes;
+
+      // Check if end time exceeds business hours
+      if (endMins > businessEnd) break;
+
+      // Count how many devices are busy during this time range
+      const conflictCount = activeBookings.filter(booking => {
+        // Check if this booking overlaps with [startMins, endMins]
+        return booking.start < endMins && booking.end > startMins;
+      }).length;
+
+      // If fewer than totalAvailable devices are busy, this slot is available
+      if (conflictCount < totalAvailable) {
+        availableStartTimes.push(minutesTo12h(startMins));
+      }
+    }
+
+    return {
+      success: true,
+      availableStartTimes,
+      totalDevices: totalAvailable
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err.message,
+      availableStartTimes: []
+    };
   }
 }

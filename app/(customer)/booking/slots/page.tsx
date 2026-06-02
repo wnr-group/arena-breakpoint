@@ -96,9 +96,9 @@ export default function SlotBookingPage() {
       
       {/* 2. PROGRESS timeline tracks */}
       <div className="w-full max-w-md mx-auto flex items-center justify-between pb-6 px-2 select-none">
-        <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-[#FFC107] text-black font-black text-[9px] flex items-center justify-center">1</div><span className="text-[8px] font-black uppercase text-[#FFC107] tracking-wider">Date</span></div>
+        <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">1</div><span className="text-[8px] font-black uppercase text-primary tracking-wider">Date</span></div>
         <div className="h-0.5 bg-zinc-800 flex-1 mx-2" />
-        <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-[#FFC107] text-black font-black text-[9px] flex items-center justify-center">2</div><span className="text-[8px] font-black uppercase text-[#FFC107] tracking-wider">Time</span></div>
+        <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">2</div><span className="text-[8px] font-black uppercase text-primary tracking-wider">Time</span></div>
         <div className="h-0.5 bg-zinc-800 flex-1 mx-2" />
         <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-bold text-[9px] flex items-center justify-center border border-zinc-800">3</div><span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Summary</span></div>
       </div>
@@ -107,7 +107,7 @@ export default function SlotBookingPage() {
         <div className="flex-1 space-y-4 md:space-y-6">
           <div className="bg-[#111] border border-zinc-900 rounded-xl p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="p-2.5 bg-zinc-950 border border-zinc-800 text-[#FFC107] rounded-lg"><Clock className="h-4 w-4"/></div>
+              <div className="p-2.5 bg-zinc-950 border border-zinc-800 text-primary rounded-lg"><Clock className="h-4 w-4"/></div>
               <div className="min-w-0"><h4 className="font-black text-xs sm:text-sm text-white uppercase truncate">{deviceTypeName || "PLAYSTATION 5 - STATION #2"}</h4><p className="text-zinc-500 text-[10px] font-bold mt-0.5">₹ {hourlyRate || 300}/hour</p></div>
             </div>
             <Button onClick={() => router.push("/booking")} variant="outline" className="border-zinc-800 text-[10px] uppercase h-8 px-3 text-zinc-400">Change</Button>
@@ -121,7 +121,7 @@ export default function SlotBookingPage() {
             </div>
 
             <div onClick={() => setMobileTimeDrawerOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer">
-              <div className="space-y-0.5"><span className="text-[8px] font-black text-zinc-500 uppercase block">Select Time Slot</span><span className="text-xs font-black text-[#FFC107]">{selectedSlotNode ? selectedSlotNode.label : "Choose Operational Slot"}</span></div>
+              <div className="space-y-0.5"><span className="text-[8px] font-black text-zinc-500 uppercase block">Select Time Slot</span><span className="text-xs font-black text-primary">{selectedSlotNode ? selectedSlotNode.label : "Choose Operational Slot"}</span></div>
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
 
@@ -130,7 +130,7 @@ export default function SlotBookingPage() {
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
 
-            <Button disabled={!selectedSlotNode} onClick={handleRegisterTransactionLock} className="w-full bg-[#FFC107] text-black font-black uppercase text-xs py-5 rounded-xl flex items-center justify-center gap-1 mt-4">Continue <ChevronRight className="h-4 w-4 stroke-[3]" /></Button>
+            <Button disabled={!selectedSlotNode} onClick={handleRegisterTransactionLock} className="w-full bg-primary text-black font-black uppercase text-xs py-5 rounded-xl flex items-center justify-center gap-1 mt-4">Continue <ChevronRight className="h-4 w-4 stroke-[3]" /></Button>
           </div>
 
           {/* WIDESCREEN DESKTOP CONSTANT INLINE CONTAINERS MAPS */}
@@ -141,7 +141,7 @@ export default function SlotBookingPage() {
             </div>
             <div className="space-y-4">
               <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">🕒 Select Time Slot</h3>
-              {queryingDb ? <div className="h-32 flex items-center justify-center"><Loader2 className="h-5 w-5 text-[#FFC107] animate-spin" /></div> : (
+              {queryingDb ? <div className="h-32 flex items-center justify-center"><Loader2 className="h-5 w-5 text-primary animate-spin" /></div> : (
                 ["Morning Slots", "Afternoon Slots", "Evening R Night"].map((g) => (
                   <div key={g} className="space-y-1.5">
                     <p className="text-[9px] font-black uppercase text-zinc-600 tracking-wider flex items-center gap-1"><span className="w-1 h-1 bg-zinc-800 rounded-full"/> {g}</p>
@@ -151,7 +151,7 @@ export default function SlotBookingPage() {
                         const isSelected = selectedSlotNode?.id === slot.id;
                         const availability = slotAvailability[slot.label];
                         return (
-                          <button key={slot.id} disabled={isBooked} onClick={() => setSelectedSlotNode(slot)} className={`p-3.5 border text-left flex justify-between items-center rounded-xl transition-all ${isBooked ? "bg-zinc-950/20 border-zinc-950 text-zinc-800 line-through cursor-not-allowed" : isSelected ? "bg-[#FFC107] border-transparent text-black font-black" : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-zinc-800"}`}>
+                          <button key={slot.id} disabled={isBooked} onClick={() => setSelectedSlotNode(slot)} className={`p-3.5 border text-left flex justify-between items-center rounded-xl transition-all ${isBooked ? "bg-zinc-950/20 border-zinc-950 text-zinc-800 line-through cursor-not-allowed" : isSelected ? "bg-primary border-transparent text-black font-black" : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-zinc-800"}`}>
                             <span className="text-xs font-bold tracking-tight">{slot.label}</span>
                             <div className="flex items-center gap-2">
                               {availability && !isBooked && (
@@ -178,7 +178,7 @@ export default function SlotBookingPage() {
             <h3 className="text-sm font-black text-zinc-400 uppercase tracking-wider border-b border-zinc-900 pb-3">Booking Summary</h3>
             <div className="space-y-4 text-xs text-zinc-400 border-b border-zinc-900 pb-3">
               <div className="flex justify-between"><span>Selected Date:</span><strong className="text-white font-bold">{calendarDay ? calendarDay.toDateString() : "Pending"}</strong></div>
-              <div className="flex justify-between"><span>Time Slot Frame:</span><strong className="text-[#FFC107] font-black">{selectedSlotNode ? selectedSlotNode.label : "Pending"}</strong></div>
+              <div className="flex justify-between"><span>Time Slot Frame:</span><strong className="text-primary font-black">{selectedSlotNode ? selectedSlotNode.label : "Pending"}</strong></div>
               <div className="flex justify-between"><span>Station Layout:</span><strong className="text-white uppercase truncate max-w-[160px]">{deviceTypeName || "PLAYSTATION 5 - STATION #2"}</strong></div>
             </div>
 
@@ -211,7 +211,7 @@ export default function SlotBookingPage() {
                       }
                     }}
                     disabled={playerCount >= maxPlayers}
-                    className="w-7 h-7 rounded-md bg-[#FFC107] border border-transparent text-black disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#ffcd38] transition-all flex items-center justify-center font-bold"
+                    className="w-7 h-7 rounded-md bg-primary border border-transparent text-black disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary-hover transition-all flex items-center justify-center font-bold"
                   >
                     <Plus className="h-3 w-3 stroke-[3]" />
                   </button>
@@ -222,11 +222,11 @@ export default function SlotBookingPage() {
             <div className="space-y-2.5 text-xs text-zinc-500">
               <div className="flex justify-between"><span>Base Rate</span><span className="text-white font-bold">₹ {baselineSubtotal}.00</span></div>
               {extraPlayersCount > 0 && (
-                <div className="flex justify-between"><span>Extra Players ({extraPlayersCount})</span><span className="text-[#FFC107] font-bold">₹ {extraPlayersCharge}.00</span></div>
+                <div className="flex justify-between"><span>Extra Players ({extraPlayersCount})</span><span className="text-primary font-bold">₹ {extraPlayersCharge}.00</span></div>
               )}
-              <div className="flex justify-between items-baseline pt-3 border-t border-zinc-900 text-white font-black"><span className="text-xs uppercase">Total Payable</span><span className="text-2xl text-[#FFC107]">₹ {aggregatedPayableTotal}.00</span></div>
+              <div className="flex justify-between items-baseline pt-3 border-t border-zinc-900 text-white font-black"><span className="text-xs uppercase">Total Payable</span><span className="text-2xl text-primary">₹ {aggregatedPayableTotal}.00</span></div>
             </div>
-            <Button disabled={submittingLock || !selectedSlotNode} onClick={handleRegisterTransactionLock} className="w-full bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black uppercase py-5 text-xs rounded-xl flex items-center justify-center gap-1">Continue <ChevronRight className="h-4 w-4 stroke-[3]" /></Button>
+            <Button disabled={submittingLock || !selectedSlotNode} onClick={handleRegisterTransactionLock} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase py-5 text-xs rounded-xl flex items-center justify-center gap-1">Continue <ChevronRight className="h-4 w-4 stroke-[3]" /></Button>
           </Card>
         </div>
       </div>
@@ -252,7 +252,7 @@ export default function SlotBookingPage() {
                     {staticDaylightSchedulesMatrix.filter(s => s.tier === tg).map((slot) => {
                       const isBooked = disabledLabelsArray.includes(slot.label);
                       return (
-                        <button key={slot.id} disabled={isBooked} onClick={() => { setSelectedSlotNode(slot); setMobileTimeDrawerOpen(false); }} className={`p-3.5 border text-left flex justify-between items-center rounded-xl ${isBooked ? "bg-zinc-950/20 border-zinc-950 text-zinc-800 line-through" : selectedSlotNode?.id === slot.id ? "bg-[#FFC107] text-black font-black" : "bg-[#111] text-zinc-300"}`}><span className="text-xs font-bold">{slot.label}</span></button>
+                        <button key={slot.id} disabled={isBooked} onClick={() => { setSelectedSlotNode(slot); setMobileTimeDrawerOpen(false); }} className={`p-3.5 border text-left flex justify-between items-center rounded-xl ${isBooked ? "bg-zinc-950/20 border-zinc-950 text-zinc-800 line-through" : selectedSlotNode?.id === slot.id ? "bg-primary text-black font-black" : "bg-[#111] text-zinc-300"}`}><span className="text-xs font-bold">{slot.label}</span></button>
                       );
                     })}
                   </div>
@@ -297,7 +297,7 @@ export default function SlotBookingPage() {
                       }
                     }}
                     disabled={playerCount >= maxPlayers}
-                    className="w-8 h-8 rounded-md bg-[#FFC107] border border-transparent text-black disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#ffcd38] transition-all flex items-center justify-center font-bold"
+                    className="w-8 h-8 rounded-md bg-primary border border-transparent text-black disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary-hover transition-all flex items-center justify-center font-bold"
                   >
                     <Plus className="h-3 w-3 stroke-[3]" />
                   </button>
@@ -308,10 +308,10 @@ export default function SlotBookingPage() {
             <div className="space-y-3 pt-1 text-xs text-zinc-500">
               <div className="flex justify-between"><span>Base Rate</span><span className="text-white font-bold">₹ {baselineSubtotal}.00</span></div>
               {extraPlayersCount > 0 && (
-                <div className="flex justify-between"><span>Extra Players ({extraPlayersCount})</span><span className="text-[#FFC107] font-bold">₹ {extraPlayersCharge}.00</span></div>
+                <div className="flex justify-between"><span>Extra Players ({extraPlayersCount})</span><span className="text-primary font-bold">₹ {extraPlayersCharge}.00</span></div>
               )}
-              <div className="flex justify-between font-black text-white border-t border-zinc-900 pt-2"><span>Total Payable</span><span className="text-[#FFC107]">₹ {aggregatedPayableTotal}</span></div>
-              <Button onClick={() => { setMobileSummaryDrawerOpen(false); handleRegisterTransactionLock(); }} className="w-full bg-[#FFC107] text-black font-black uppercase py-4 rounded-xl text-xs mt-2">Confirm & Hold Slot</Button>
+              <div className="flex justify-between font-black text-white border-t border-zinc-900 pt-2"><span>Total Payable</span><span className="text-primary">₹ {aggregatedPayableTotal}</span></div>
+              <Button onClick={() => { setMobileSummaryDrawerOpen(false); handleRegisterTransactionLock(); }} className="w-full bg-primary text-black font-black uppercase py-4 rounded-xl text-xs mt-2">Confirm & Hold Slot</Button>
             </div>
           </div>
         </div>

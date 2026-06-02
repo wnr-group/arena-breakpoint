@@ -142,7 +142,7 @@ export default function DevicesPage() {
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4 animate-in slide-in-from-bottom-8 duration-700 delay-100 fill-mode-both">
         {[
           { title: "Total", count: totalDevices, label: "Total Asset Range", icon: Monitor },
-          { title: "Online", count: availableDevices, label: "Available Now", icon: CheckCircle, color: "text-[#FFC107]" },
+          { title: "Online", count: availableDevices, label: "Available Now", icon: CheckCircle, color: "text-primary" },
           { title: "Busy", count: occupiedDevices, label: "Currently Occupied", icon: PlayCircle },
           { title: "Alert", count: maintenanceDevices, label: "Under Maintenance", icon: Wrench },
           { title: "Offline", count: inactiveDevices, label: "Deactivated Stations", icon: MonitorPlay, color: "text-zinc-500" }

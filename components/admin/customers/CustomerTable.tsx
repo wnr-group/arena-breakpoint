@@ -41,10 +41,10 @@ export function CustomerTable({ customers }: CustomerTableProps) {
               >
                 {/* Customer Details Name Block */}
                 <td className="p-4 font-black tracking-wide truncate flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 group-hover:border-[#FFC107]/50 group-hover:bg-[#FFC107]/5 transition-all duration-200 shadow-inner">
-                    <User className="h-4 w-4  text-[#FFC107] transition-colors" />
+                  <div className="h-8 w-8 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-200 shadow-inner">
+                    <User className="h-4 w-4  text-primary transition-colors" />
                   </div>
-                  <span className="text-zinc-200 group-hover:text-[#FFC107] transition-colors font-black text-sm tracking-normal truncate">
+                  <span className="text-zinc-200 group-hover:text-primary transition-colors font-black text-sm tracking-normal truncate">
                     {row.name}
                   </span>
                 </td>
@@ -53,7 +53,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 <td className="p-4 text-zinc-300 font-mono tracking-wider truncate">
                   <div className="flex items-center gap-2">
                     <div className="h-5 w-5 bg-zinc-900/50 border border-zinc-800/80 rounded-md flex items-center justify-center">
-                      <Phone className="h-4 w-4 text-[#FFC107]" />
+                      <Phone className="h-4 w-4 text-primary" />
                     </div>
                     <span className="font-bold text-zinc-300">{row.phone}</span>
                   </div>
@@ -64,14 +64,14 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                   {row.email ? (
                     <div className="flex items-center gap-2 truncate">
                       <div className="h-5 w-5 bg-zinc-900/50 border border-zinc-800/80 rounded-md flex items-center justify-center">
-                        <Mail className="h-4 w-4 text-[#FFC107] transition-colors" />
+                        <Mail className="h-4 w-4 text-primary transition-colors" />
                       </div>
                       <span className="truncate text-zinc-400 group-hover:text-zinc-300 transition-colors">{row.email}</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 text-zinc-700 italic">
                       <div className="h-5 w-5 bg-zinc-900/20 border border-zinc-900/40 rounded-md flex items-center justify-center">
-                        <Mail className="h-4 w-4 text-[#FFC107]" />
+                        <Mail className="h-4 w-4 text-primary" />
                       </div>
                       <span>No mail configured</span>
                     </div>
@@ -106,14 +106,14 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 <td className="p-4 text-right font-mono whitespace-nowrap">
                   {row.expiry_date ? (
                     <div className="inline-flex items-center justify-end gap-2">
-                      <span className={`text-xs ${isActive ? "text-[#FFC107] font-black drop-shadow-[0_0_6px_rgba(255,193,7,0.2)]" : "text-zinc-600 line-through font-semibold"}`}>
+                      <span className={`text-xs ${isActive ? "text-primary font-black drop-shadow-[0_0_6px_rgba(255,193,7,0.2)]" : "text-zinc-600 line-through font-semibold"}`}>
                         {new Date(row.expiry_date).toLocaleDateString('en-IN', {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric'
                         })}
                       </span>
-                      <CalendarRange className={`h-3.5 w-3.5 ${isActive ? "text-[#FFC107]/70" : "text-zinc-700"}`} />
+                      <CalendarRange className={`h-3.5 w-3.5 ${isActive ? "text-primary/70" : "text-zinc-700"}`} />
                     </div>
                   ) : (
                     <span className="text-zinc-800 font-sans italic text-[11px] pr-4">—</span>

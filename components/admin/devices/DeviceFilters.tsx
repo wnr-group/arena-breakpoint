@@ -34,7 +34,7 @@ export function DeviceFilters({
         <button
           onClick={() => setTypeTab("All Devices")}
           className={`pb-3 text-sm font-medium transition-all duration-300 whitespace-nowrap ${
-            typeTab === "All Devices" ? "text-[#FFC107] border-b-2 border-[#FFC107]" : "text-[#a1a1aa] hover:text-white"
+            typeTab === "All Devices" ? "text-primary border-b-2 border-primary" : "text-[#a1a1aa] hover:text-white"
           }`}
         >
           All Devices
@@ -44,7 +44,7 @@ export function DeviceFilters({
             key={dt.id}
             onClick={() => setTypeTab(dt.id)}
             className={`pb-3 text-sm font-medium transition-all duration-300 whitespace-nowrap ${
-              typeTab === dt.id ? "text-[#FFC107] border-b-2 border-[#FFC107]" : "text-[#a1a1aa] hover:text-white"
+              typeTab === dt.id ? "text-primary border-b-2 border-primary" : "text-[#a1a1aa] hover:text-white"
             }`}
           >
             {dt.display_name}

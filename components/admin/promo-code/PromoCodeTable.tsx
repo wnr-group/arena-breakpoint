@@ -24,7 +24,7 @@ export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTab
         {onAdd && (
           <Button
             onClick={onAdd}
-            className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black uppercase text-xs"
+            className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs"
           >
             Create First Promo Code
           </Button>
@@ -52,7 +52,7 @@ export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTab
         <tbody className="divide-y divide-zinc-900/60 font-medium">
           {promos.map((row) => (
             <tr key={row.id} className="group hover:bg-zinc-950/30 transition-colors">
-              <td className="p-4 font-black text-[#FFC107] tracking-wide uppercase truncate">{row.code}</td>
+              <td className="p-4 font-black text-primary tracking-wide uppercase truncate">{row.code}</td>
               <td className="p-4 text-zinc-400 truncate">{row.description || "—"}</td>
               <td className="p-4 text-white font-bold whitespace-nowrap">
                 {row.discount_type === "percentage" ? `${Math.round(row.discount_value)}% Off` : `₹${Math.round(row.discount_value)}`}
@@ -71,7 +71,7 @@ export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTab
               </td>
               <td className="p-4 w-24 min-w-[96px] whitespace-nowrap">
                 <div className="flex justify-end gap-1.5 opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">
-                  <Button onClick={() => onEdit(row)} variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-[#FFC107] hover:bg-zinc-900 rounded-md">
+                  <Button onClick={() => onEdit(row)} variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-primary hover:bg-zinc-900 rounded-md">
                     <Edit2 className="h-3.5 w-3.5" />
                   </Button>
                   <Button onClick={() => onDelete(row.id)} variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-red-400 hover:bg-zinc-900 rounded-md">
