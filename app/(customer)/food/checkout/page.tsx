@@ -3,34 +3,35 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import {
-  clearCart,
-  removeFromCart,
-  incrementQuantity,
-  decrementQuantity
-} from "@/lib/redux/slices/foodCartSlice";
+import { 
+  clearCart, 
+  removeFromCart, 
+  incrementQuantity, 
+  decrementQuantity } 
+  from "@/lib/redux/slices/foodCartSlice";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  addFoodOrderToBooking,
-  createStandaloneFoodOrder,
-  validateMenuItems
+import { 
+  addFoodOrderToBooking, 
+  createStandaloneFoodOrder, 
+  validateMenuItems 
 } from "../actions";
 import { checkCustomerExists } from "../../booking/actions";
-import {
-  Loader2,
-  Trash2,
-  Plus,
-  Minus,
-  CheckCircle2,
-  User,
-  Phone,
-  Mail,
-  Sparkles,
-  ChevronRight,
-  ShoppingCart,
+import { 
+  Loader2, 
+  Trash2, 
+  Plus, 
+  Minus, 
+  ShoppingCart, 
+  User, 
+  Phone, 
+  Mail, 
+  Sparkles, 
+  ChevronRight, 
+  ShieldCheck, 
+  RefreshCw 
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
@@ -67,6 +68,7 @@ export default function FoodCheckoutPage() {
   const cartTotal = useMemo(() => {
     return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   }, [cartItems]);
+
 
   const cartItemCount = useMemo(() => {
     return cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -279,6 +281,14 @@ export default function FoodCheckoutPage() {
   if (step === "phone") {
     return (
       <div className="w-full max-w-xl mx-auto py-8 px-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="w-full max-w-xs mx-auto flex items-center justify-between pb-8 select-none">
+          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-500 font-bold text-[9px] flex items-center justify-center">1</div><span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Cart</span></div>
+          <div className="h-0.5 bg-primary flex-1 mx-2" />
+          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">2</div><span className="text-[8px] font-black uppercase text-primary tracking-wider">Details</span></div>
+          <div className="h-0.5 bg-zinc-800 flex-1 mx-2" />
+          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-bold text-[9px] flex items-center justify-center border border-zinc-800">3</div><span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Confirm</span></div>
+        </div>
+
         <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6">
           <div className="border-b border-zinc-900 pb-4 space-y-1">
             <h3 className="text-lg font-black uppercase text-white tracking-tight">CUSTOMER IDENTIFICATION</h3>
@@ -287,7 +297,7 @@ export default function FoodCheckoutPage() {
 
           <form onSubmit={handlePhoneLookupSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><Phone className="h-3 w-3 text-zinc-600" /> MOBILE NUMBER <span className="text-red-500">*</span></Label>
+              <Label htmlFor="phone" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><Phone className="h-3 w-3 text-zinc-600"/> MOBILE NUMBER <span className="text-red-500">*</span></Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-600 border-r border-zinc-900 pr-2">+91</span>
                 <Input
@@ -309,6 +319,10 @@ export default function FoodCheckoutPage() {
               </Button>
             </div>
           </form>
+
+          <div className="pt-2 flex gap-2 items-center text-[10px] text-zinc-600 justify-center select-none border-t border-zinc-950">
+            <ShieldCheck className="h-4 w-4 text-zinc-700" /><span>Your account is tracked safely inside active operational clusters.</span>
+          </div>
         </Card>
       </div>
     );
@@ -323,20 +337,34 @@ export default function FoodCheckoutPage() {
             <p className="text-xs text-zinc-500 font-medium">Please provide your credentials to map this checkout profile transaction.</p>
           </div>
 
+          <div className="bg-zinc-950 p-4 border border-zinc-900 rounded-xl flex items-center justify-between gap-4 text-xs">
+            <div className="space-y-0.5">
+              <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest block">Entered Identity</span>
+              <span className="text-primary font-mono font-black tracking-wider">+91 {phone}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setStep("phone")}
+              className="px-3 h-8 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[10px] font-black uppercase text-zinc-400 hover:text-primary rounded-lg tracking-wider flex items-center gap-1.5 transition-colors select-none"
+            >
+              <RefreshCw className="h-3 w-3" /> Change Number
+            </button>
+          </div>
+
           <form onSubmit={handleNewCustomerSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><User className="h-3 w-3 text-zinc-600" /> FULL NAME <span className="text-red-500">*</span></Label>
+              <Label htmlFor="name" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><User className="h-3 w-3 text-zinc-600"/> FULL NAME <span className="text-red-500">*</span></Label>
               <Input id="name" type="text" required placeholder="Enter full name" value={name} onChange={(e) => setName(e.target.value)} className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl" />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><Mail className="h-3 w-3 text-zinc-600" /> EMAIL ADDRESS</Label>
+              <Label htmlFor="email" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><Mail className="h-3 w-3 text-zinc-600"/> EMAIL ADDRESS</Label>
               <Input id="email" type="email" placeholder="Enter your email (optional)" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl" />
             </div>
 
             <div className="pt-4 space-y-2">
               <Button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
-                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "PLACE ARENA ORDER"} <ChevronRight className="h-4 w-4 stroke-[3]" />
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "PLACE FOOD ORDER"} <ChevronRight className="h-4 w-4 stroke-[3]" />
               </Button>
             </div>
           </form>
@@ -348,12 +376,13 @@ export default function FoodCheckoutPage() {
   if (step === "success") {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4 space-y-8 animate-in fade-in duration-300 flex flex-col items-center">
+        
 
         <div className="text-center space-y-3 select-none">
           <div className="flex justify-center">
-            <div className="flex justify-center">
-              <div className="w-20 h-20 rounded-full bg-green-500/10 border-2 border-green-500 flex items-center justify-center">
-                <CheckCircle2 className="h-10 w-10 text-green-500" />
+            <div className="w-16 h-16 rounded-full bg-transparent border-2 border-emerald-500 flex items-center justify-center p-1 shadow-[0_0_25px_rgba(16,185,129,0.2)]">
+              <div className="w-full h-full rounded-full bg-emerald-500 flex items-center justify-center">
+                <Plus className="h-6 w-6 text-black rotate-45 stroke-[4.5]" />
               </div>
             </div>
           </div>
@@ -366,6 +395,7 @@ export default function FoodCheckoutPage() {
         </div>
 
         <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch max-w-3xl">
+
           <Card className="bg-[#111113] border border-zinc-900 p-6 md:col-span-2 flex flex-col justify-between min-h-[220px] relative overflow-hidden rounded-xl shadow-2xl">
             <div className="w-full space-y-4">
               <div className="flex justify-between items-start w-full">
@@ -373,7 +403,7 @@ export default function FoodCheckoutPage() {
                   <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest block">Order ID</span>
                   <span className="text-base font-black text-white font-mono tracking-wide">#{orderNumber || "FO-12345"}</span>
                 </div>
-
+                
                 <div className="space-y-1 text-right">
                   <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest block">Status</span>
                   <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-emerald-400 uppercase tracking-wide">
@@ -411,15 +441,15 @@ export default function FoodCheckoutPage() {
         </div>
 
         <div className="flex items-center justify-center gap-4 pt-2 w-full max-w-lg">
-          <Button
-            onClick={handleNewOrder}
-            className="flex-1 mr-10 bg-transparent hover:bg-zinc-900/60 border border-primary/40 text-[11px] font-black text-primary uppercase h-11 px-6 rounded-xl transition-all shadow-inner tracking-wider flex items-center justify-center gap-1.5"
+          <Button 
+            onClick={handleNewOrder} 
+            className="flex-1 mr-10 bg-transparent hover:bg-zinc-900/60 border border-primary/40 text-[11px] font-black text-primary uppercase h-11 px-5 rounded-xl transition-all shadow-inner tracking-wider flex items-center justify-center gap-1.5"
           >
             Place Another Order
           </Button>
-          <Button
-            onClick={() => router.push("/")}
-            variant="ghost"
+          <Button 
+            onClick={() => router.push("/")} 
+            variant="ghost" 
             className="text-[11px] font-black uppercase text-zinc-400 hover:text-white h-11 px-4 tracking-wider transition-colors"
           >
             Back to Home
