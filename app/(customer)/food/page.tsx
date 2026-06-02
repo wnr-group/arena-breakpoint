@@ -20,8 +20,10 @@ import {
   Minus,
   UtensilsCrossed,
   Loader2,
-  Filter,
-  X,
+  ChevronRight,
+  ShoppingBag,
+  Star,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,20 +32,15 @@ function FoodMenuPageContent() {
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.foodCart.items);
-  const bookingId = useAppSelector((state) => state.foodCart.bookingId);
   const bookingNumber = useAppSelector((state) => state.foodCart.bookingNumber);
-  const customerPhone = useAppSelector((state) => state.foodCart.customerPhone);
-  const customerName = useAppSelector((state) => state.foodCart.customerName);
 
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
-  const [cartOpen, setCartOpen] = useState(false);
 
   useEffect(() => {
-    // Check if coming from booking
     const urlBookingId = searchParams.get("bookingId");
     const urlBookingNumber = searchParams.get("bookingNumber");
     const phone = searchParams.get("phone");
@@ -70,14 +67,8 @@ function FoodMenuPageContent() {
       getMenuCategories(),
     ]);
 
-    if (menuResult.success) {
-      setMenuItems(menuResult.menuItems);
-    }
-
-    if (categoriesResult.success) {
-      setCategories(categoriesResult.categories);
-    }
-
+    if (menuResult.success) setMenuItems(menuResult.menuItems);
+    if (categoriesResult.success) setCategories(categoriesResult.categories);
     setLoading(false);
   };
 
@@ -96,11 +87,8 @@ function FoodMenuPageContent() {
 
   const filteredItems = useMemo(() => {
     return menuItems.filter((item) => {
-      const matchesCategory =
-        activeCategory === "all" || item.category === activeCategory;
-      const matchesSearch =
-        !searchQuery ||
-        item.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = activeCategory === "all" || item.category === activeCategory;
+      const matchesSearch = !searchQuery || item.name.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
   }, [menuItems, activeCategory, searchQuery]);
@@ -108,9 +96,7 @@ function FoodMenuPageContent() {
   const groupedItems = useMemo(() => {
     const groups: Record<string, any[]> = {};
     filteredItems.forEach((item) => {
-      if (!groups[item.category]) {
-        groups[item.category] = [];
-      }
+      if (!groups[item.category]) groups[item.category] = [];
       groups[item.category].push(item);
     });
     return groups;
@@ -130,55 +116,54 @@ function FoodMenuPageContent() {
 
   if (loading) {
     return (
-      <div className="h-[50vh] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
+      <div className="h-[60vh] w-full flex items-center justify-center bg-black">
+        <Loader2 className="h-7 w-7 text-primary animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-6 px-4 space-y-6 pb-32">
-      {/* Header */}
-      <div className="space-y-1">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-black uppercase text-white tracking-tight">
-              FOOD & BEVERAGES
-            </h1>
-            <p className="text-xs text-zinc-500 font-medium mt-1">
-              Order delicious food and drinks
-            </p>
-          </div>
-          {bookingNumber && (
-            <div className="bg-[#111] border border-zinc-900 px-4 py-2 rounded-lg">
-              <p className="text-[9px] text-zinc-600 uppercase">Booking</p>
-              <p className="text-xs font-black text-primary font-mono">
-                {bookingNumber}
-              </p>
-            </div>
-          )}
-        </div>
+    <div className="w-full max-w-7xl mx-auto py-4 px-4 space-y-8 pb-36 animate-in fade-in duration-300">
+      
+      {/* Breadcrumb Navigation Block */}
+      <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 select-none">
+        <span>Home</span>
+        <ChevronRight className="h-3 w-3 text-zinc-700" />
+        <span className="text-primary">Food Menu</span>
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600" />
-          <Input
-            placeholder="Search menu items..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-[#111] border-zinc-900 text-white h-12"
-          />
+      {/* Main Intro Header block matching image_8d461e.png */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-900 pb-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-black uppercase tracking-tight text-white">
+            Break Point Arena – Food Menu
+          </h1>
+          <p className="text-xs text-zinc-400 font-medium">
+            Fuel your gaming session with premium snacks, meals, and beverages crafted for high-performance competitors.
+          </p>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto scrollbar-none">
+        {bookingNumber && (
+          <div className="bg-[#111] border border-zinc-800/80 px-4 py-2 rounded-xl flex items-center gap-3 shadow-inner">
+            <div>
+              <p className="text-[9px] text-zinc-600 uppercase font-black tracking-widest">Active Hub Track</p>
+              <p className="text-xs font-black text-primary font-mono tracking-wide">{bookingNumber}</p>
+            </div>
+            <div className="h-6 w-[1px] bg-zinc-800" />
+            <ShoppingBag className="h-4 w-4 text-zinc-500" />
+          </div>
+        )}
+      </div>
+
+      {/* Combined Action Row: Category Grid Layout & Search */}
+      <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center bg-[#0c0c0e]/60 p-4 rounded-2xl border border-zinc-900/80">
+        <div className="flex gap-2 overflow-x-auto w-full xl:w-auto scrollbar-none py-0.5">
           <button
             onClick={() => setActiveCategory("all")}
-            className={`px-4 py-2 text-[11px] font-black uppercase border rounded-lg transition-all whitespace-nowrap ${
+            className={`px-5 py-2.5 text-[10px] font-black uppercase border rounded-lg transition-all duration-200 whitespace-nowrap tracking-wider ${
               activeCategory === "all"
-                ? "bg-primary text-black border-transparent"
-                : "bg-[#111] border-zinc-900 text-zinc-400"
+                ? "bg-primary text-black border-transparent shadow-[0_4px_12px_rgba(255,193,7,0.15)]"
+                : "bg-zinc-900/40 border-zinc-800/60 text-zinc-400 hover:text-white hover:border-zinc-700"
             }`}
           >
             All Items
@@ -187,108 +172,141 @@ function FoodMenuPageContent() {
             <button
               key={category}
               onClick={() => setActiveCategory(category)}
-              className={`px-4 py-2 text-[11px] font-black uppercase border rounded-lg transition-all whitespace-nowrap ${
+              className={`px-5 py-2.5 text-[10px] font-black uppercase border rounded-lg transition-all duration-200 whitespace-nowrap tracking-wider ${
                 activeCategory === category
-                  ? "bg-primary text-black border-transparent"
-                  : "bg-[#111] border-zinc-900 text-zinc-400"
+                  ? "bg-primary text-black border-transparent shadow-[0_4px_12px_rgba(255,193,7,0.15)]"
+                  : "bg-zinc-900/40 border-zinc-800/60 text-zinc-400 hover:text-white hover:border-zinc-700"
               }`}
             >
               {category}
             </button>
           ))}
         </div>
+
+        <div className="relative group w-full xl:max-w-xs flex-shrink-0">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500 group-focus-within:text-primary transition-colors" />
+          <Input
+            placeholder="Search menu items..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-zinc-950 border-zinc-800/80 text-xs font-medium text-white h-11 rounded-xl focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-transparent transition-all"
+          />
+        </div>
       </div>
 
-      {/* Menu Items */}
+      {/* Menu Categories Grid Loop Output */}
       {Object.keys(groupedItems).length === 0 ? (
-        <Card className="bg-[#111] border-zinc-900 p-12">
-          <div className="text-center space-y-2">
-            <UtensilsCrossed className="h-12 w-12 text-zinc-700 mx-auto" />
-            <h3 className="text-lg font-black text-zinc-600 uppercase">
-              No Items Found
-            </h3>
-            <p className="text-sm text-zinc-600">
-              Try adjusting your search or filters
-            </p>
+        <Card className="bg-[#111]/40 border-zinc-900 p-16 rounded-2xl shadow-xl">
+          <div className="text-center space-y-3 max-w-sm mx-auto">
+            <div className="h-12 w-12 rounded-2xl bg-zinc-950 border border-zinc-800 text-zinc-700 flex items-center justify-center mx-auto">
+              <UtensilsCrossed className="h-5 w-5" />
+            </div>
+            <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest">No Items Available</h3>
+            <p className="text-xs text-zinc-600 leading-relaxed">We couldn't locate anything matching your criteria. Try resetting filters or adjust typing variables.</p>
           </div>
         </Card>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-12">
           {Object.entries(groupedItems).map(([category, items]) => (
-            <div key={category} className="space-y-4">
-              <h2 className="text-lg font-black uppercase text-white tracking-tight flex items-center gap-2">
-                <span className="w-1 h-1 bg-primary rounded-full" />
-                {category}
-              </h2>
+            <div key={category} className="space-y-5">
+              <div className="flex items-center gap-2 pl-1 select-none">
+                <span className="w-1.5 h-1.5 bg-primary rounded-full block shadow-[0_0_8px_var(--primary)]" />
+                <h2 className="text-sm font-black uppercase tracking-widest text-zinc-200">
+                  {category}
+                </h2>
+                <div className="flex-1 h-[1px] bg-gradient-to-r from-zinc-900 to-transparent ml-2" />
+              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {/* Exact 4-Column Presentation Layer matching image_8c653b.jpg */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                 {items.map((item) => {
                   const quantityInCart = getCartItemQuantity(item.id);
 
                   return (
                     <Card
                       key={item.id}
-                      className="bg-[#111] border-zinc-900 overflow-hidden group hover:border-zinc-800 transition-all"
+                      className="bg-[#111] border border-zinc-900/90 overflow-hidden group hover:border-zinc-800/80 transition-all duration-300 flex flex-col rounded-xl relative shadow-lg"
                     >
-                      {item.image_url && (
-                        <div className="h-32 w-full overflow-hidden border-b border-zinc-900">
-                          <img
-                            src={item.image_url}
-                            alt={item.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        </div>
-                      )}
+                      {/* Top Media Frame Banner - Fixed edge-to-edge side coverage configuration */}
+                      <div className="h-48 w-full overflow-hidden relative bg-zinc-950 flex-shrink-0 border-b border-zinc-900/60">
+                        {item.image_url ? (
+                          <>
+                            <img
+                              src={item.image_url}
+                              alt={item.name}
+                              className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
+                          </>
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-zinc-800 bg-zinc-950 select-none">
+                            <Sparkles className="h-6 w-6 opacity-30 animate-pulse" />
+                            <span className="text-[9px] uppercase tracking-widest font-black mt-1">Arena Item</span>
+                          </div>
+                        )}
 
-                      <div className="p-4 space-y-3">
-                        <div>
-                          <h3 className="font-bold text-sm text-white truncate">
-                            {item.name}
-                          </h3>
-                          <p className="text-[10px] text-zinc-600 mt-0.5">
-                            {item.category}
+                        {/* Inventory Warning Tags */}
+                        {item.quantity <= 10 && item.quantity > 0 && (
+                          <span className="absolute top-3 right-3 z-10 inline-flex items-center px-2 py-0.5 text-[8px] font-black text-white bg-red-600 border border-red-500/20 rounded uppercase tracking-wider scale-90">
+                            LOW STOCK
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Content Stack Area Box */}
+                      <div className="p-4 flex-1 flex flex-col justify-between space-y-4">
+                        <div className="space-y-1.5">
+                          <div className="flex items-start justify-between gap-3">
+                            <h3 className="font-black text-sm text-zinc-100 group-hover:text-primary transition-colors tracking-tight line-clamp-1" title={item.name}>
+                              {item.name}
+                            </h3>
+                          </div>
+                          <p className="text-[11px] text-zinc-500 line-clamp-2 leading-relaxed font-medium">
+                            {item.description || "Premium operational live kitchen item configuration prepared fresh to order."}
                           </p>
                         </div>
 
-                        <div className="flex items-center justify-between">
-                          <span className="text-base font-black text-primary">
-                            ₹{Number(item.price)}
+                        {/* Bottom Action Ribbon Panel */}
+                        <div className="flex items-center justify-between pt-2 border-t border-zinc-900/60 w-full">
+                          <span className="text-sm font-black text-primary font-mono">
+                            ₹{Number(item.price)}.00
                           </span>
-                          {item.quantity <= 10 && item.quantity > 0 && (
-                            <span className="text-[9px] text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded uppercase font-black">
-                              Only {item.quantity} left
-                            </span>
-                          )}
-                        </div>
 
-                        {quantityInCart > 0 ? (
-                          <div className="flex items-center justify-between bg-zinc-950 border border-zinc-900 p-1.5 rounded-lg">
-                            <button
-                              onClick={() => dispatch(decrementQuantity(item.id))}
-                              className="p-1.5 text-zinc-500 hover:text-white transition-all"
-                            >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                            <span className="text-sm font-black text-white min-w-[24px] text-center">
-                              {quantityInCart}
-                            </span>
-                            <button
-                              onClick={() => dispatch(incrementQuantity(item.id))}
-                              className="p-1.5 text-black bg-primary hover:bg-primary-hover rounded transition-all"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
+                          <div className="w-[110px] flex justify-end">
+                            {quantityInCart > 0 ? (
+                              <div className="flex items-center bg-zinc-950 border border-zinc-800/80 p-1 rounded-lg w-full shadow-inner animate-in zoom-in-95 duration-150">
+                                <button
+                                  type="button"
+                                  onClick={() => dispatch(decrementQuantity(item.id))}
+                                  className="h-6 w-6 flex items-center justify-center rounded-md text-zinc-500 hover:text-white hover:bg-zinc-900 transition-all"
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </button>
+                                <span className="text-xs font-black text-white flex-1 text-center font-mono">
+                                  {quantityInCart}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => dispatch(incrementQuantity(item.id))}
+                                  className="h-6 w-6 flex items-center justify-center rounded-md text-black bg-primary hover:bg-primary-hover transition-all"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleAddToCart(item)}
+                                disabled={item.quantity === 0}
+                                className="h-8 w-8 bg-primary hover:bg-primary-hover text-black flex items-center justify-center rounded-lg shadow-sm active:scale-95 transition-all disabled:bg-zinc-900 disabled:text-zinc-700 disabled:border-transparent cursor-pointer"
+                              >
+                                <ShoppingCart className="h-3.5 w-3.5 stroke-[2.5]" />
+                              </button>
+                            )}
                           </div>
-                        ) : (
-                          <Button
-                            onClick={() => handleAddToCart(item)}
-                            disabled={item.quantity === 0}
-                            className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-10"
-                          >
-                            {item.quantity === 0 ? "Out of Stock" : "Add to Cart"}
-                          </Button>
-                        )}
+                        </div>
                       </div>
+
                     </Card>
                   );
                 })}
@@ -298,23 +316,37 @@ function FoodMenuPageContent() {
         </div>
       )}
 
-      {/* Floating Cart Button */}
+      {/* Floating Checkout Sticky Bottom Ribbon Segment */}
       {cartItemCount > 0 && (
-        <div className="fixed bottom-6 right-6 z-50">
-          <Button
-            onClick={() => router.push("/food/checkout")}
-            className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-sm h-14 px-6 rounded-full shadow-2xl flex items-center gap-3"
-          >
-            <ShoppingCart className="h-5 w-5" />
-            <div className="flex flex-col items-start">
-              <span className="text-[10px] leading-none">
-                {cartItemCount} {cartItemCount === 1 ? "item" : "items"}
-              </span>
-              <span className="text-base leading-none font-black">
-                ₹{cartTotal}
-              </span>
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/80 backdrop-blur-md border-t border-zinc-900 p-4 animate-in slide-in-from-bottom duration-300 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+          <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 bg-primary/10 border border-primary/20 text-primary hidden sm:flex items-center justify-center rounded-xl shadow-md">
+                <ShoppingCart className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest">Lounge Basket Summary</p>
+                <p className="text-xs text-zinc-300 font-medium">
+                  Added <span className="text-white font-black">{cartItemCount} items</span> inside your cart
+                </p>
+              </div>
             </div>
-          </Button>
+
+            <div className="flex items-center gap-5">
+              <div className="text-right">
+                <span className="text-[9px] text-zinc-500 block font-black uppercase tracking-wider">Subtotal</span>
+                <span className="text-xl font-black text-primary tracking-tight">
+                  ₹{cartTotal}.00
+                </span>
+              </div>
+              <Button
+                onClick={() => router.push("/food/checkout")}
+                className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-11 px-5 rounded-xl flex items-center gap-2 shadow-[0_4px_15px_rgba(255,193,7,0.25)] active:scale-[0.98] transition-all"
+              >
+                <ShoppingCart className="h-6 w-4 stroke-[3]"/>  Your Cart 
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -323,7 +355,7 @@ function FoodMenuPageContent() {
 
 export default function FoodMenuPage() {
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>}>
+    <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-black"><Loader2 className="h-6 w-6 text-primary animate-spin" /></div>}>
       <FoodMenuPageContent />
     </Suspense>
   );
