@@ -1,0 +1,1 @@
+insert into customers (name,phone,email) values('santu pramanik','9832487454','santu700141@gmail.com');

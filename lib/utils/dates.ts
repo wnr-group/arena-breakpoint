@@ -9,7 +9,7 @@ export function formatBookingDate(date: Date): string {
 }
 
 export function isSlotAvailable(slotStart: Date, slotEnd: Date, bookings: any[]): boolean {
-  return !bookings.some((booking) => {
+  return !bookings.some(booking => {
     const bookingStart = new Date(booking.slot_start)
     const bookingEnd = new Date(booking.slot_end)
     return (

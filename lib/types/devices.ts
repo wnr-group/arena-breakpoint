@@ -1,5 +1,5 @@
-export type DeviceType = 'PS5' | 'Standard Snooker' | 'Medium Snooker' | 'American Snooker';
-export type DeviceStatus = 'available' | 'occupied' | 'maintenance' | 'inactive';
+export type DeviceType = 'PS5' | 'Standard Snooker' | 'Medium Snooker' | 'American Snooker'
+export type DeviceStatus = 'available' | 'occupied' | 'maintenance' | 'inactive'
 
 export interface Device {
   id: string;
