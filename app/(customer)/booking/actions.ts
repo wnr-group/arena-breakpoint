@@ -606,6 +606,13 @@ export async function checkFlexibleAvailability(
   deviceTypeId: string,
   durationMinutes: number
 ) {
+  const requestId = Math.random().toString(36).substring(7);
+  console.log(`\n[Availability ${requestId}] ========================================`);
+  console.log(`[Availability ${requestId}] NEW REQUEST`);
+  console.log(`[Availability ${requestId}] Date: ${dateString}`);
+  console.log(`[Availability ${requestId}] Device Type: ${deviceTypeId}`);
+  console.log(`[Availability ${requestId}] Duration: ${durationMinutes} minutes`);
+
   try {
     // Helper: Convert 24h time to minutes since midnight
     const timeToMinutes = (time: string): number => {
@@ -633,7 +640,11 @@ export async function checkFlexibleAvailability(
 
     const totalAvailable = totalDevices || 0;
 
+    console.log(`[Availability ${requestId}] Total devices of this type: ${totalAvailable}`);
+
     if (totalAvailable === 0) {
+      console.log(`[Availability ${requestId}] ❌ No devices available - returning empty`);
+      console.log(`[Availability ${requestId}] ========================================\n`);
       return {
         success: true,
         availableStartTimes: []
@@ -646,6 +657,7 @@ export async function checkFlexibleAvailability(
       .select(`
         slot_start_time,
         slot_end_time,
+        slot_date,
         device:devices!inner(device_type_id),
         bookings!inner(status, lock_expires_at)
       `)
@@ -653,9 +665,20 @@ export async function checkFlexibleAvailability(
       .eq("slot_date", dateString)
       .in("bookings.status", ["locked", "confirmed", "checked_in"]);
 
-    if (bookingsError) throw bookingsError;
+    if (bookingsError) {
+      console.error(`[Availability ${requestId}] ❌ Database error:`, bookingsError);
+      console.log(`[Availability ${requestId}] ========================================\n`);
+      throw bookingsError;
+    }
 
     const rightNow = new Date().toISOString();
+
+    console.log(`[Availability ${requestId}] Found ${bookings?.length || 0} bookings for this device type on ${dateString}`);
+    if (bookings && bookings.length > 0) {
+      console.log(`[Availability ${requestId}] Sample bookings:`, bookings.slice(0, 3).map(b =>
+        `${b.slot_start_time}-${b.slot_end_time} (date: ${b.slot_date}, status: ${b.bookings.status})`
+      ));
+    }
 
     // Step 3: Build array of occupied time ranges per device (we have totalAvailable devices)
     const activeBookings = (bookings || [])
@@ -667,33 +690,88 @@ export async function checkFlexibleAvailability(
         }
         return true;
       })
-      .map((booking: any) => ({
-        start: timeToMinutes(booking.slot_start_time),
-        end: timeToMinutes(booking.slot_end_time)
-      }));
+      .map((booking: any) => {
+        const start = timeToMinutes(booking.slot_start_time);
+        const end = timeToMinutes(booking.slot_end_time);
+        return {
+          start,
+          end,
+          isOvernight: end < start // Booking spans midnight (e.g., 23:00 to 02:00)
+        };
+      });
 
-    // Step 4: Generate all possible start times (10 AM to 11 PM in 30-min intervals)
+    // Helper function to check if two time ranges overlap
+    const doTimeRangesOverlap = (
+      reqStart: number,
+      reqEnd: number,
+      reqIsOvernight: boolean,
+      bookingStart: number,
+      bookingEnd: number,
+      bookingIsOvernight: boolean
+    ): boolean => {
+      // Case 1: Neither is overnight - simple overlap check
+      if (!reqIsOvernight && !bookingIsOvernight) {
+        return bookingStart < reqEnd && bookingEnd > reqStart;
+      }
+
+      // Case 2: Request is overnight, booking is not
+      if (reqIsOvernight && !bookingIsOvernight) {
+        // Request spans [reqStart, 1440) and [0, reqEnd)
+        // Check if booking overlaps with either part
+        const overlapBeforeMidnight = bookingStart < 1440 && bookingEnd > reqStart;
+        const overlapAfterMidnight = bookingStart < reqEnd && bookingEnd > 0;
+        return overlapBeforeMidnight || overlapAfterMidnight;
+      }
+
+      // Case 3: Booking is overnight, request is not
+      if (!reqIsOvernight && bookingIsOvernight) {
+        // Booking spans [bookingStart, 1440) and [0, bookingEnd)
+        // Check if request overlaps with either part
+        const overlapBeforeMidnight = reqStart < 1440 && reqEnd > bookingStart;
+        const overlapAfterMidnight = reqStart < bookingEnd && reqEnd > 0;
+        return overlapBeforeMidnight || overlapAfterMidnight;
+      }
+
+      // Case 4: Both are overnight - they always overlap
+      // (Two overnight bookings will always conflict)
+      return true;
+    };
+
+    // Step 4: Generate all possible start times (24-hour operation: 12:00 AM to 11:30 PM in 30-min intervals)
     const availableStartTimes: string[] = [];
-    const businessStart = 10 * 60; // 10:00 AM in minutes
-    const businessEnd = 23 * 60; // 11:00 PM in minutes
 
-    for (let startMins = businessStart; startMins < businessEnd; startMins += 30) {
+    // 24-hour operation: check all 30-minute intervals in a day
+    for (let startMins = 0; startMins < 24 * 60; startMins += 30) {
       const endMins = startMins + durationMinutes;
-
-      // Check if end time exceeds business hours
-      if (endMins > businessEnd) break;
+      const requestIsOvernight = endMins >= 24 * 60;
+      const requestEndMins = requestIsOvernight ? endMins - 24 * 60 : endMins;
 
       // Count how many devices are busy during this time range
       const conflictCount = activeBookings.filter(booking => {
-        // Check if this booking overlaps with [startMins, endMins]
-        return booking.start < endMins && booking.end > startMins;
+        return doTimeRangesOverlap(
+          startMins,
+          requestEndMins,
+          requestIsOvernight,
+          booking.start,
+          booking.end,
+          booking.isOvernight
+        );
       }).length;
 
       // If fewer than totalAvailable devices are busy, this slot is available
-      if (conflictCount < totalAvailable) {
+      const isAvailable = conflictCount < totalAvailable;
+
+      if (isAvailable) {
         availableStartTimes.push(minutesTo12h(startMins));
       }
     }
+
+    console.log(`[Availability ${requestId}] Active bookings after filtering expired: ${activeBookings.length}`);
+    console.log(`[Availability ${requestId}] ✅ RESULT: ${availableStartTimes.length} out of 48 slots available`);
+    if (availableStartTimes.length > 0) {
+      console.log(`[Availability ${requestId}] Sample available times:`, availableStartTimes.slice(0, 5));
+    }
+    console.log(`[Availability ${requestId}] ========================================\n`);
 
     return {
       success: true,
@@ -701,6 +779,8 @@ export async function checkFlexibleAvailability(
       totalDevices: totalAvailable
     };
   } catch (err: any) {
+    console.error(`[Availability ${requestId}] ❌ ERROR:`, err.message);
+    console.log(`[Availability ${requestId}] ========================================\n`);
     return {
       success: false,
       error: err.message,

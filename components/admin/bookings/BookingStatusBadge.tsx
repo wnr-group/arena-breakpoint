@@ -14,8 +14,8 @@ export function BookingStatusBadge({ status, size = "md" }: BookingStatusBadgePr
 
   if (statusClean === "confirmed") {
     return (
-      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-black text-white bg-black/60 border border-blue-500/40 rounded-full backdrop-blur-md whitespace-nowrap uppercase tracking-wide`}>
-        <span className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
+      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-black text-white bg-gradient-to-r from-blue-600/80 to-blue-400/80 border-2 border-blue-400/60 rounded-full backdrop-blur-md whitespace-nowrap uppercase tracking-wide glow-secondary transition-all duration-300`}>
+        <span className="w-1 h-1 rounded-full bg-white animate-pulse shadow-lg shadow-blue-400" />
         CONFIRMED
       </span>
     );
@@ -23,8 +23,8 @@ export function BookingStatusBadge({ status, size = "md" }: BookingStatusBadgePr
 
   if (statusClean === "checked_in") {
     return (
-      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-black text-white bg-black/60 border border-green-500/40 rounded-full backdrop-blur-md whitespace-nowrap uppercase tracking-wide`}>
-        <span className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
+      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-black text-white bg-gradient-success border-2 border-green-400/60 rounded-full backdrop-blur-md whitespace-nowrap uppercase tracking-wide shadow-lg shadow-green-500/30 transition-all duration-300`}>
+        <span className="w-1 h-1 rounded-full bg-white animate-pulse shadow-lg shadow-green-400" />
         CHECKED IN
       </span>
     );
@@ -32,8 +32,8 @@ export function BookingStatusBadge({ status, size = "md" }: BookingStatusBadgePr
 
   if (statusClean === "completed") {
     return (
-      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-black text-white bg-black/60 border border-green-600/40 rounded-full backdrop-blur-md whitespace-nowrap uppercase tracking-wide`}>
-        <span className="w-1 h-1 rounded-full bg-green-600" />
+      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-black text-zinc-300 bg-gradient-to-r from-zinc-700 to-zinc-600 border-2 border-zinc-500/60 rounded-full backdrop-blur-md whitespace-nowrap uppercase tracking-wide transition-all duration-300`}>
+        <span className="w-1 h-1 rounded-full bg-zinc-400" />
         COMPLETED
       </span>
     );
@@ -41,8 +41,8 @@ export function BookingStatusBadge({ status, size = "md" }: BookingStatusBadgePr
 
   if (statusClean === "cancelled") {
     return (
-      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-black text-white bg-black/60 border border-red-500/40 rounded-full backdrop-blur-md whitespace-nowrap uppercase tracking-wide`}>
-        <span className="w-1 h-1 rounded-full bg-red-500" />
+      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-black text-white bg-gradient-accent border-2 border-red-400/60 rounded-full backdrop-blur-md whitespace-nowrap uppercase tracking-wide shadow-lg shadow-red-500/30 transition-all duration-300`}>
+        <span className="w-1 h-1 rounded-full bg-white" />
         CANCELLED
       </span>
     );
@@ -50,8 +50,8 @@ export function BookingStatusBadge({ status, size = "md" }: BookingStatusBadgePr
 
   if (statusClean === "locked") {
     return (
-      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-black text-white bg-black/60 border border-amber-500/40 rounded-full backdrop-blur-md whitespace-nowrap uppercase tracking-wide`}>
-        <span className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />
+      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-black text-black bg-gradient-primary border-2 border-yellow-300/60 rounded-full backdrop-blur-md whitespace-nowrap uppercase tracking-wide glow-primary transition-all duration-300`}>
+        <span className="w-1 h-1 rounded-full bg-black animate-pulse shadow-lg shadow-yellow-600" />
         LOCKED
       </span>
     );

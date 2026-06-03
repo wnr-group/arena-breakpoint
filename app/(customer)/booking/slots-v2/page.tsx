@@ -12,6 +12,7 @@ import { Clock, Loader2, ChevronRight, X, Plus, Minus, AlertCircle } from "lucid
 import { toast } from "sonner";
 import {
   generateStartTimes,
+  filterPastTimeSlots,
   generateDurationOptions,
   calculateEndTime,
   getMaxDurationForStartTime,
@@ -39,29 +40,80 @@ export default function FlexibleSlotBookingPage() {
   const allStartTimes = useMemo(() => generateStartTimes(), []);
   const allDurations = useMemo(() => generateDurationOptions(), []);
 
+  // Filter out past time slots for today
+  const availableStartTimesForDate = useMemo(() => {
+    if (!calendarDay) return allStartTimes;
+    return filterPastTimeSlots(allStartTimes, calendarDay);
+  }, [allStartTimes, calendarDay]);
+
   useEffect(() => {
     setMounted(true);
     setCalendarDay(new Date());
-  }, []);
+
+    // Redirect if no device type selected
+    if (!deviceTypeId) {
+      console.warn('[Frontend] No device type selected, redirecting to booking page');
+      router.push('/booking');
+    }
+  }, [deviceTypeId, router]);
 
   useEffect(() => {
-    if (!mounted || !calendarDay || !deviceTypeId) return;
+    if (!mounted || !calendarDay || !deviceTypeId) {
+      console.log('[Frontend] Skipping availability check:', { mounted, calendarDay: !!calendarDay, deviceTypeId: !!deviceTypeId });
+      return;
+    }
+
+    console.log('[Frontend] Date/Duration changed, resetting and fetching new availability');
+
+    // Reset states when date/duration changes
+    setSelectedStartTime(null);
+    setAvailableStartTimes(new Set());
+
     checkAvailability();
   }, [calendarDay, selectedDuration, mounted, deviceTypeId]);
 
   const checkAvailability = async () => {
-    if (!calendarDay || !deviceTypeId) return;
+    if (!calendarDay || !deviceTypeId) {
+      console.log('[Frontend] Skipping availability check - missing date or deviceTypeId');
+      return;
+    }
+
     setQueryingDb(true);
+    setAvailableStartTimes(new Set()); // Clear immediately when starting new check
 
     const dateStr = calendarDay.toISOString().split("T")[0];
-    const res = await checkFlexibleAvailability(dateStr, deviceTypeId, selectedDuration);
 
-    if (res.success && res.availableStartTimes) {
-      setAvailableStartTimes(new Set(res.availableStartTimes));
-    } else {
+    console.log(`[Frontend] ========================================`);
+    console.log(`[Frontend] Checking availability for:`);
+    console.log(`[Frontend] - Date: ${dateStr}`);
+    console.log(`[Frontend] - Device Type: ${deviceTypeId}`);
+    console.log(`[Frontend] - Duration: ${selectedDuration} minutes`);
+
+    try {
+      const res = await checkFlexibleAvailability(dateStr, deviceTypeId, selectedDuration);
+
+      console.log(`[Frontend] Response received:`, {
+        success: res.success,
+        slotsCount: res.availableStartTimes?.length || 0,
+        error: res.error
+      });
+
+      if (res.success && res.availableStartTimes) {
+        const newAvailableSlots = new Set(res.availableStartTimes);
+        setAvailableStartTimes(newAvailableSlots);
+        console.log(`[Frontend] ✅ Set ${res.availableStartTimes.length} available slots for ${dateStr}`);
+        console.log(`[Frontend] Sample available times:`, res.availableStartTimes.slice(0, 5));
+      } else {
+        setAvailableStartTimes(new Set());
+        console.warn(`[Frontend] ❌ No available slots for ${dateStr}:`, res.error);
+      }
+    } catch (error) {
+      console.error('[Frontend] ❌ Error checking availability:', error);
       setAvailableStartTimes(new Set());
+    } finally {
+      setQueryingDb(false);
+      console.log(`[Frontend] ========================================\n`);
     }
-    setQueryingDb(false);
   };
 
   const endTime = useMemo(() => {
@@ -93,6 +145,14 @@ export default function FlexibleSlotBookingPage() {
     const duration = allDurations.find(d => d.value === selectedDuration);
     return duration?.label || "";
   }, [selectedDuration, allDurations]);
+
+  // Clear selected start time if it's no longer available after date/duration change
+  useEffect(() => {
+    if (selectedStartTime && availableStartTimes.size > 0 && !availableStartTimes.has(selectedStartTime)) {
+      console.log(`[Frontend] Selected time ${selectedStartTime} is no longer available, resetting`);
+      setSelectedStartTime(null);
+    }
+  }, [availableStartTimes, selectedStartTime]);
 
   const handleRegisterTransactionLock = async () => {
     if (!calendarDay || !selectedStartTime || !endTime || !deviceTypeId) return;
@@ -297,12 +357,19 @@ export default function FlexibleSlotBookingPage() {
             <div className="space-y-3">
               <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">🕒 Start Time</h3>
               {queryingDb ? (
-                <div className="h-96 flex items-center justify-center">
+                <div className="h-96 flex flex-col items-center justify-center gap-2">
                   <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                  <p className="text-xs text-zinc-500">Checking availability...</p>
+                </div>
+              ) : availableStartTimesForDate.length === 0 ? (
+                <div className="h-96 flex flex-col items-center justify-center gap-2 text-center px-4">
+                  <Clock className="h-8 w-8 text-zinc-700" />
+                  <p className="text-sm text-zinc-400 font-bold">No time slots available</p>
+                  <p className="text-xs text-zinc-600">Try selecting a different date or duration</p>
                 </div>
               ) : (
                 <div className="space-y-1.5 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-zinc-950">
-                  {allStartTimes.map((time) => {
+                  {availableStartTimesForDate.map((time) => {
                     const isAvailable = isTimeAvailable(time);
                     const isSelected = selectedStartTime === time;
                     return (
@@ -478,7 +545,7 @@ export default function FlexibleSlotBookingPage() {
             
             {/* Optimized High Contrast 2-Column Grid Layout for Mobile Time Windows */}
             <div className="grid grid-cols-2 gap-2 overflow-y-auto pr-1 pb-4 scrollbar-thin">
-              {allStartTimes.map((time) => {
+              {availableStartTimesForDate.map((time) => {
                 const isAvailable = isTimeAvailable(time);
                 const isSelected = selectedStartTime === time;
                 return (

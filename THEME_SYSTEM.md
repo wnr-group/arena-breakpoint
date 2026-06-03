@@ -115,6 +115,28 @@ Copy-paste these values directly:
 --primary-dark: #DB2777;
 ```
 
+#### 💜 Purple Neon (Vibrant Glow Effect)
+```css
+--primary: #A855F7;
+--primary-hover: #C084FC;
+--primary-dark: #7C3AED;
+```
+**Special Effect:** Add glow shadows for neon look:
+```tsx
+className="bg-primary shadow-[0_0_20px_rgba(168,85,247,0.5)]"
+```
+
+#### 🌊 Blue Gradient (Ocean/Sky Vibes)
+```css
+--primary: #0EA5E9;
+--primary-hover: #38BDF8;
+--primary-dark: #0284C7;
+```
+**Pro Tip:** Combine with gradients for stunning effects:
+```tsx
+className="bg-gradient-to-r from-primary via-primary-hover to-blue-600"
+```
+
 ---
 
 ## 👨‍💻 Developer Guide: Using Theme Colors

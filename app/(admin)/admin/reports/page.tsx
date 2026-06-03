@@ -83,6 +83,78 @@ export default function AdminReportsPage() {
     toast.success("Export feature coming soon!");
   };
 
+  const setQuickDateRange = (preset: "today" | "7days" | "30days" | "month" | "90days" | "all") => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    switch (preset) {
+      case "today":
+        setDateFrom(todayStr);
+        setDateTo(todayStr);
+        break;
+      case "7days":
+        const week = new Date(today);
+        week.setDate(week.getDate() - 7);
+        setDateFrom(week.toISOString().split('T')[0]);
+        setDateTo(todayStr);
+        break;
+      case "30days":
+        const month = new Date(today);
+        month.setDate(month.getDate() - 30);
+        setDateFrom(month.toISOString().split('T')[0]);
+        setDateTo(todayStr);
+        break;
+      case "month":
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        setDateFrom(firstDay.toISOString().split('T')[0]);
+        setDateTo(lastDay.toISOString().split('T')[0]);
+        break;
+      case "90days":
+        const quarter = new Date(today);
+        quarter.setDate(quarter.getDate() - 90);
+        setDateFrom(quarter.toISOString().split('T')[0]);
+        setDateTo(todayStr);
+        break;
+      case "all":
+        setDateFrom("");
+        setDateTo("");
+        break;
+    }
+    // Auto-apply after setting dates
+    setTimeout(() => handleApplyFilters(), 100);
+  };
+
+  const handleQuickDateFilter = (days: number | "today" | "month" | "all") => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    if (days === "today") {
+      setDateFrom(todayStr);
+      setDateTo(todayStr);
+    } else if (days === "month") {
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      setDateFrom(firstDay.toISOString().split('T')[0]);
+      setDateTo(lastDay.toISOString().split('T')[0]);
+    } else if (days === "all") {
+      setDateFrom("");
+      setDateTo("");
+    } else {
+      const fromDate = new Date();
+      fromDate.setDate(fromDate.getDate() - days);
+      setDateFrom(fromDate.toISOString().split('T')[0]);
+      setDateTo(todayStr);
+    }
+  };
+
+  // Auto-load when quick filter changes
+  useEffect(() => {
+    if (dateFrom !== "" || dateTo !== "") {
+      loadData();
+    }
+  }, [dateFrom, dateTo]);
+
   const tabs = [
     { id: "overview", label: "Overview", icon: BarChart3 },
     { id: "food", label: "Food Reports", icon: UtensilsCrossed },
@@ -113,39 +185,126 @@ export default function AdminReportsPage() {
       </div>
 
       {/* Date Filters */}
-      <Card className="bg-[#121212] border-[#27272a] p-4">
-        <div className="flex flex-col md:flex-row gap-4 items-end">
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-xs font-black uppercase text-zinc-500">
-                From Date
-              </Label>
-              <Input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="bg-[#0a0a0a] border-zinc-900 text-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-black uppercase text-zinc-500">
-                To Date
-              </Label>
-              <Input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="bg-[#0a0a0a] border-zinc-900 text-white"
-              />
-            </div>
+      <Card className="bg-[#121212] border-[#27272a] p-4 space-y-4">
+        {/* Quick Filter Buttons */}
+        <div>
+          <Label className="text-[10px] font-black uppercase text-zinc-600 mb-2 block">
+            Quick Filters
+          </Label>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setQuickDateRange("today")}
+              className="border-[#27272a] text-zinc-400 hover:text-black hover:bg-gradient-primary font-bold uppercase text-[10px] h-8 transition-all"
+            >
+              Today
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setQuickDateRange("7days")}
+              className="border-[#27272a] text-zinc-400 hover:text-black hover:bg-gradient-primary font-bold uppercase text-[10px] h-8 transition-all"
+            >
+              Last 7 Days
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setQuickDateRange("30days")}
+              className="border-[#27272a] text-zinc-400 hover:text-black hover:bg-gradient-primary font-bold uppercase text-[10px] h-8 transition-all"
+            >
+              Last 30 Days
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setQuickDateRange("month")}
+              className="border-[#27272a] text-zinc-400 hover:text-black hover:bg-gradient-primary font-bold uppercase text-[10px] h-8 transition-all"
+            >
+              This Month
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setQuickDateRange("90days")}
+              className="border-[#27272a] text-zinc-400 hover:text-black hover:bg-gradient-primary font-bold uppercase text-[10px] h-8 transition-all"
+            >
+              Last 90 Days
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setQuickDateRange("all")}
+              className="border-[#27272a] text-zinc-400 hover:text-black hover:bg-gradient-primary font-bold uppercase text-[10px] h-8 transition-all"
+            >
+              All Time
+            </Button>
           </div>
-          <Button
-            onClick={handleApplyFilters}
-            className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs"
-          >
-            Apply Filters
-          </Button>
         </div>
+
+        {/* Custom Date Range */}
+        <div>
+          <Label className="text-[10px] font-black uppercase text-zinc-600 mb-2 block">
+            Custom Date Range
+          </Label>
+          <div className="flex flex-col md:flex-row gap-4 items-end">
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-black uppercase text-zinc-500">
+                  From Date
+                </Label>
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="bg-[#0a0a0a] border-zinc-900 text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-black uppercase text-zinc-500">
+                  To Date
+                </Label>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="bg-[#0a0a0a] border-zinc-900 text-white"
+                />
+              </div>
+            </div>
+            <Button
+              onClick={handleApplyFilters}
+              className="bg-gradient-primary hover:bg-gradient-primary-hover text-black font-black uppercase text-xs h-10 glow-primary-hover"
+            >
+              Apply Custom Range
+            </Button>
+          </div>
+        </div>
+
+        {/* Active Filter Display */}
+        {(dateFrom || dateTo) && (
+          <div className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#27272a] rounded-lg">
+            <div className="flex items-center gap-2 text-xs text-zinc-400">
+              <Calendar className="h-3 w-3 text-primary" />
+              <span className="font-bold">
+                Showing: {dateFrom ? new Date(dateFrom).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'All time'}
+                {' → '}
+                {dateTo ? new Date(dateTo).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Now'}
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                setDateFrom("");
+                setDateTo("");
+                handleApplyFilters();
+              }}
+              className="text-[10px] font-black uppercase text-zinc-500 hover:text-primary transition-colors"
+            >
+              Clear Filter
+            </button>
+          </div>
+        )}
       </Card>
 
       {/* Tabs */}

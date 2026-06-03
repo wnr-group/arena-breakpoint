@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BookingStatusBadge } from "./BookingStatusBadge";
-import { getBookingDetails, checkInBooking, checkOutBooking, cancelBooking, addFoodToBooking } from "@/app/(admin)/admin/bookings/actions";
+import { getBookingDetails, checkInBooking, checkOutBooking, cancelBooking, addFoodToBooking, updatePlayerCount } from "@/app/(admin)/admin/bookings/actions";
 import { getMenuItems } from "@/app/(admin)/admin/food/actions";
 import { QRCodeSVG } from "qrcode.react";
 import {
@@ -35,9 +35,10 @@ interface BookingDetailModalProps {
   open: boolean;
   onClose: () => void;
   onUpdate?: () => void;
+  openFoodModalDirectly?: boolean;
 }
 
-export function BookingDetailModal({ bookingId, open, onClose, onUpdate }: BookingDetailModalProps) {
+export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoodModalDirectly }: BookingDetailModalProps) {
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -45,13 +46,17 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate }: Booki
   const [addFoodModalOpen, setAddFoodModalOpen] = useState(false);
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [selectedFoodItems, setSelectedFoodItems] = useState<Record<string, number>>({});
+  const [updatingPlayerCount, setUpdatingPlayerCount] = useState(false);
 
   useEffect(() => {
     if (open && bookingId) {
       loadBookingDetails();
       loadMenuItems();
+      if (openFoodModalDirectly) {
+        setAddFoodModalOpen(true);
+      }
     }
-  }, [open, bookingId]);
+  }, [open, bookingId, openFoodModalDirectly]);
 
   const loadBookingDetails = async () => {
     if (!bookingId) return;
@@ -151,6 +156,23 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate }: Booki
       toast.error("Cancellation failed", { description: result.error });
     }
     setActionLoading(false);
+  };
+
+  const handleUpdatePlayerCount = async (slotId: string, newCount: number, maxPlayers: number) => {
+    setUpdatingPlayerCount(true);
+    const result = await updatePlayerCount(slotId, newCount, maxPlayers);
+
+    if (result.success) {
+      toast.success(result.message, {
+        description: `New total: ₹${result.newTotal?.toLocaleString('en-IN')}`
+      });
+      loadBookingDetails();
+      onUpdate?.();
+    } else {
+      toast.error("Failed to update player count", { description: result.error });
+    }
+
+    setUpdatingPlayerCount(false);
   };
 
   const deviceSlot = booking?.booking_device_slots?.[0];
@@ -291,8 +313,12 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate }: Booki
                   </h3>
                   <div className="space-y-3">
                     {booking.booking_device_slots.map((slot: any) => {
-                      const extraPlayers = Math.max(0, (slot.player_count || 0) - (slot.included_players || 1));
+                      const currentPlayerCount = slot.player_count || slot.included_players || 1;
+                      const includedPlayers = slot.included_players || 1;
+                      const maxPlayers = slot.devices?.device_type?.max_players || 10;
+                      const extraPlayers = Math.max(0, currentPlayerCount - includedPlayers);
                       const extraPlayersCharge = extraPlayers * (slot.extra_player_charge || 0);
+                      const canEdit = booking.status !== "cancelled" && booking.status !== "completed";
 
                       return (
                         <div key={slot.id} className="bg-[#121212] border border-[#27272a] rounded-lg p-4 space-y-3">
@@ -310,21 +336,59 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate }: Booki
                             </div>
                           </div>
 
-                          {/* Extra Players */}
-                          {extraPlayers > 0 && (
-                            <div className="flex justify-between items-center pt-2 border-t border-[#27272a]/50">
+                          {/* Player Count Control */}
+                          <div className="pt-2 border-t border-[#27272a]/50 space-y-2">
+                            <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-sm font-bold text-primary">Extra Players</p>
-                                <p className="text-xs text-zinc-600">
-                                  {extraPlayers} player{extraPlayers > 1 ? 's' : ''} × ₹{Number(slot.extra_player_charge || 0).toLocaleString('en-IN')}
+                                <p className="text-xs text-zinc-500 uppercase">Player Count</p>
+                                <p className="text-[10px] text-zinc-600">
+                                  {includedPlayers} included • Max {maxPlayers}
                                 </p>
                               </div>
-                              <div className="text-right">
-                                <p className="text-sm font-black text-primary">₹{extraPlayersCharge.toLocaleString('en-IN')}</p>
-                                <p className="text-[9px] text-zinc-600 uppercase">Additional</p>
-                              </div>
+                              {canEdit ? (
+                                <div className="flex items-center gap-3">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleUpdatePlayerCount(slot.id, currentPlayerCount - 1, maxPlayers)}
+                                    disabled={updatingPlayerCount || currentPlayerCount <= 1}
+                                    className="h-8 w-8 p-0 border-[#27272a] text-zinc-400 hover:text-white disabled:opacity-30"
+                                  >
+                                    <Minus className="h-3 w-3" />
+                                  </Button>
+                                  <span className="text-lg font-black text-white w-8 text-center">
+                                    {currentPlayerCount}
+                                  </span>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleUpdatePlayerCount(slot.id, currentPlayerCount + 1, maxPlayers)}
+                                    disabled={updatingPlayerCount || currentPlayerCount >= maxPlayers}
+                                    className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-black disabled:opacity-30"
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span className="text-lg font-black text-white">{currentPlayerCount}</span>
+                              )}
                             </div>
-                          )}
+
+                            {/* Extra Players Charge */}
+                            {extraPlayers > 0 && (
+                              <div className="flex justify-between items-center pt-2 border-t border-[#27272a]/30">
+                                <div>
+                                  <p className="text-sm font-bold text-primary">Extra Players</p>
+                                  <p className="text-xs text-zinc-600">
+                                    {extraPlayers} player{extraPlayers > 1 ? 's' : ''} × ₹{Number(slot.extra_player_charge || 0).toLocaleString('en-IN')}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm font-black text-primary">₹{extraPlayersCharge.toLocaleString('en-IN')}</p>
+                                  <p className="text-[9px] text-zinc-600 uppercase">Additional</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
