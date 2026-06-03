@@ -4,10 +4,21 @@
   --background: #ffffff;
   --foreground: #171717;
 
-  /* 🎨 PRIMARY BRAND COLOR - Change this to update the entire app theme */
+  /* 🎨 GRADIENT THEME - Golden/Amber Style */
   --primary: #FFC107;
   --primary-hover: #ffcd38;
   --primary-dark: #e6ad06;
+
+  /* Gradient Definitions */
+  --gradient-primary: linear-gradient(135deg, #FFC107 0%, #FF8F00 100%);
+  --gradient-primary-hover: linear-gradient(135deg, #FFD54F 0%, #FFA726 100%);
+  --gradient-secondary: linear-gradient(135deg, #0EA5E9 0%, #06B6D4 100%);
+  --gradient-accent: linear-gradient(135deg, #F59E0B 0%, #EF4444 100%);
+  --gradient-success: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  --gradient-dark: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+
+  /* Animated Gradient for backgrounds */
+  --gradient-animated: linear-gradient(270deg, #FFC107, #FF8F00, #FFAB00, #FFD54F);
 }
 
 @theme inline {
@@ -25,10 +36,21 @@
     --background: #0a0a0a;
     --foreground: #ededed;
 
-    /* 🎨 PRIMARY BRAND COLOR - Change this to update the entire app theme */
+    /* 🎨 GRADIENT THEME - Golden/Amber Style */
     --primary: #FFC107;
     --primary-hover: #ffcd38;
     --primary-dark: #e6ad06;
+
+    /* Gradient Definitions */
+    --gradient-primary: linear-gradient(135deg, #FFC107 0%, #FF8F00 100%);
+    --gradient-primary-hover: linear-gradient(135deg, #FFD54F 0%, #FFA726 100%);
+    --gradient-secondary: linear-gradient(135deg, #0EA5E9 0%, #06B6D4 100%);
+    --gradient-accent: linear-gradient(135deg, #F59E0B 0%, #EF4444 100%);
+    --gradient-success: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    --gradient-dark: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+
+    /* Animated Gradient for backgrounds */
+    --gradient-animated: linear-gradient(270deg, #FFC107, #FF8F00, #FFAB00, #FFD54F);
   }
 }
 
@@ -130,4 +152,118 @@ body {
   color: var(--primary) !important;
   height: 24px !important;
   width: 24px !important;
+}
+
+/* 🎨 GRADIENT UTILITY CLASSES */
+@layer utilities {
+  /* Gradient Backgrounds */
+  .bg-gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .bg-gradient-primary-hover {
+    background: var(--gradient-primary-hover);
+  }
+
+  .bg-gradient-secondary {
+    background: var(--gradient-secondary);
+  }
+
+  .bg-gradient-accent {
+    background: var(--gradient-accent);
+  }
+
+  .bg-gradient-success {
+    background: var(--gradient-success);
+  }
+
+  .bg-gradient-dark {
+    background: var(--gradient-dark);
+  }
+
+  /* Gradient Text */
+  .text-gradient-primary {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .text-gradient-secondary {
+    background: var(--gradient-secondary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Gradient Borders */
+  .border-gradient-primary {
+    border: 2px solid transparent;
+    background-image: var(--gradient-primary);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+  }
+
+  /* Animated Gradient Background */
+  .bg-gradient-animated {
+    background: var(--gradient-animated);
+    background-size: 300% 300%;
+    animation: gradient-shift 8s ease infinite;
+  }
+
+  /* Gradient Hover Effects */
+  .hover-gradient-shift {
+    transition: background-position 0.5s ease;
+    background-size: 200% 200%;
+    background-position: left center;
+  }
+
+  .hover-gradient-shift:hover {
+    background-position: right center;
+  }
+
+  /* Glow Effects */
+  .glow-primary {
+    box-shadow: 0 0 20px rgba(255, 193, 7, 0.5), 0 0 40px rgba(255, 143, 0, 0.3);
+  }
+
+  .glow-primary-hover:hover {
+    box-shadow: 0 0 30px rgba(255, 193, 7, 0.7), 0 0 60px rgba(255, 143, 0, 0.5);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .glow-secondary {
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.5), 0 0 40px rgba(6, 182, 212, 0.3);
+  }
+
+  /* Animated Gradient Border */
+  .border-gradient-animated {
+    position: relative;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .border-gradient-animated::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    background: var(--gradient-animated);
+    background-size: 300% 300%;
+    border-radius: inherit;
+    z-index: -1;
+    animation: gradient-shift 8s ease infinite;
+  }
+}
+
+/* Gradient Animation Keyframes */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }

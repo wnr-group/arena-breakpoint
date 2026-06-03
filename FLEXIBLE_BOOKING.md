@@ -1,18 +1,20 @@
 # Flexible Booking System
 
 **Implemented:** 2026-06-02  
+**Updated:** 2026-06-02 (24-hour operation)
 **Feature:** Users can now book from 30 minutes to 5 hours in a single booking
 
 ---
 
 ## Overview
 
-The system now supports flexible duration bookings instead of fixed 1-hour slots:
+The system now supports flexible duration bookings with **24-hour operation**:
 - **Minimum Duration:** 30 minutes
 - **Maximum Duration:** 5 hours  
 - **Intervals:** 30-minute increments
-- **Start Times:** Every 30 minutes from 10:00 AM to 11:00 PM
+- **Start Times:** Every 30 minutes (12:00 AM to 11:30 PM) - **24/7 operation**
 - **Pricing:** Hourly rate × duration (e.g., ₹300/hr × 2.5hrs = ₹750)
+- **Smart Filtering:** Only shows future time slots for today (no past bookings)
 
 ---
 
@@ -25,9 +27,11 @@ Same as before - user selects PS5, Xbox, etc.
 User picks a date from the calendar
 
 ### Step 3: Select Start Time
-- Available times shown in 30-minute intervals
-- Unavailable times are grayed out based on device availability
-- Examples: 10:00 AM, 10:30 AM, 11:00 AM, etc.
+- Available times shown in 30-minute intervals (24-hour operation)
+- **Past times are hidden** - only shows upcoming hours for today
+- Unavailable times are grayed out when all devices are fully booked
+- Examples: 12:00 AM, 12:30 AM, 01:00 AM... 11:00 PM, 11:30 PM
+- **Overnight bookings supported** (e.g., 11:00 PM to 2:00 AM)
 
 ### Step 4: Select Duration
 - Options: 30 min, 1 hour, 1.5 hours, 2 hours, ... up to 5 hours
@@ -150,11 +154,11 @@ Examples:
 ## Business Rules
 
 ### Time Constraints
-- **Business Hours:** 10:00 AM - 11:00 PM
-- **Last Start Time:** Depends on duration
-  - For 30 min: Can start until 10:30 PM (ends at 11:00 PM)
-  - For 1 hour: Can start until 10:00 PM (ends at 11:00 PM)
-  - For 5 hours: Can start until 6:00 PM (ends at 11:00 PM)
+- **Business Hours:** 24/7 - Open all day, every day
+- **Last Start Time:** Any time (supports overnight bookings)
+  - Example: Start at 11:00 PM, end at 2:00 AM next day
+- **Today's Bookings:** Only shows time slots that are at least 30 minutes in the future
+  - If current time is 3:45 PM, earliest available slot is 4:30 PM
 
 ### Duration Limits
 - **Minimum:** 30 minutes
