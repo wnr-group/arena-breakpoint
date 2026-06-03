@@ -10,6 +10,21 @@ export interface BookingFilters {
   deviceType?: string;
 }
 
+export interface TimelineBooking {
+  id: string;
+  booking_number: string;
+  customer_name: string;
+  customer_phone: string;
+  device_type: string;
+  device_station_number: string;
+  device_id: string;
+  slot_start_time: string;
+  slot_end_time: string;
+  slot_date: string;
+  status: string;
+  total_amount: number;
+}
+
 export async function getAllBookings(filters?: BookingFilters) {
   try {
     let query = supabaseAdmin
@@ -494,5 +509,132 @@ export async function createWalkInBooking(payload: {
   } catch (err: any) {
     console.error("Create walk-in booking error:", err);
     return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Update player count for a booking slot
+ */
+export async function updatePlayerCount(slotId: string, newPlayerCount: number, maxPlayers: number) {
+  try {
+    // Validate player count
+    if (newPlayerCount < 1) {
+      return { success: false, error: "Player count must be at least 1" };
+    }
+
+    if (newPlayerCount > maxPlayers) {
+      return { success: false, error: `Player count cannot exceed ${maxPlayers}` };
+    }
+
+    // Get current slot details
+    const { data: slot, error: slotError } = await supabaseAdmin
+      .from("booking_device_slots")
+      .select("*, bookings!inner(id, device_subtotal, total_amount)")
+      .eq("id", slotId)
+      .single();
+
+    if (slotError || !slot) throw slotError || new Error("Slot not found");
+
+    const includedPlayers = slot.included_players || 1;
+    const extraPlayerCharge = slot.extra_player_charge || 0;
+    const oldPlayerCount = slot.player_count || includedPlayers;
+
+    // Calculate new extra players charge
+    const newExtraPlayers = Math.max(0, newPlayerCount - includedPlayers);
+    const newExtraPlayersTotal = newExtraPlayers * extraPlayerCharge;
+
+    // Calculate old extra players charge
+    const oldExtraPlayers = Math.max(0, oldPlayerCount - includedPlayers);
+    const oldExtraPlayersTotal = oldExtraPlayers * extraPlayerCharge;
+
+    // Calculate difference in total
+    const difference = newExtraPlayersTotal - oldExtraPlayersTotal;
+
+    // Update slot
+    const { error: updateSlotError } = await supabaseAdmin
+      .from("booking_device_slots")
+      .update({
+        player_count: newPlayerCount,
+        extra_players_total: newExtraPlayersTotal
+      })
+      .eq("id", slotId);
+
+    if (updateSlotError) throw updateSlotError;
+
+    // Update booking total amounts
+    const newDeviceSubtotal = slot.bookings.device_subtotal + difference;
+    const newTotalAmount = slot.bookings.total_amount + difference;
+
+    const { error: updateBookingError } = await supabaseAdmin
+      .from("bookings")
+      .update({
+        device_subtotal: newDeviceSubtotal,
+        total_amount: newTotalAmount,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", slot.bookings.id);
+
+    if (updateBookingError) throw updateBookingError;
+
+    return {
+      success: true,
+      message: `Player count updated to ${newPlayerCount}`,
+      newTotal: newTotalAmount
+    };
+  } catch (err: any) {
+    console.error("Update player count error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Get bookings for timeline view - specific date
+ */
+export async function getTimelineBookings(date: string): Promise<{ success: boolean; bookings: TimelineBooking[]; error?: string }> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("booking_device_slots")
+      .select(`
+        id,
+        device_id,
+        slot_date,
+        slot_start_time,
+        slot_end_time,
+        device_type,
+        device_station_number,
+        bookings!inner(
+          id,
+          booking_number,
+          customer_name,
+          customer_phone,
+          status,
+          total_amount
+        )
+      `)
+      .eq("slot_date", date)
+      .in("bookings.status", ["confirmed", "checked_in", "completed", "locked"])
+      .order("slot_start_time", { ascending: true });
+
+    if (error) throw error;
+
+    const timelineBookings: TimelineBooking[] = (data || []).map((slot: any) => ({
+      id: slot.bookings.id,
+      booking_number: slot.bookings.booking_number,
+      customer_name: slot.bookings.customer_name,
+      customer_phone: slot.bookings.customer_phone,
+      device_type: slot.device_type,
+      device_station_number: slot.device_station_number,
+      device_id: slot.device_id,
+      slot_start_time: slot.slot_start_time,
+      slot_end_time: slot.slot_end_time,
+      slot_date: slot.slot_date,
+      status: slot.bookings.status,
+      total_amount: slot.bookings.total_amount
+    }));
+
+    return { success: true, bookings: timelineBookings };
+  } catch (err: any) {
+    console.error("Get timeline bookings error:", err);
+    return { success: false, error: err.message, bookings: [] };
   }
 }
