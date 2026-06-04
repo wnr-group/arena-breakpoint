@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import { setCustomerDetails, resetBooking } from "@/lib/redux/slices/bookingSlice";
+import { setCustomerDetails, resetBooking, clearSlotTimer } from "@/lib/redux/slices/bookingSlice";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ShieldCheck, Phone, Loader2, ChevronRight, User, Mail, CheckCircle2, QrCode, UtensilsCrossed } from "lucide-react";
+import { ShieldCheck, Phone, Loader2, ChevronRight, User, Mail, CheckCircle2, QrCode, Cake, UtensilsCrossed } from "lucide-react";
 import { toast } from "sonner";
 import { checkCustomerExists, confirmBooking } from "../actions";
 import { QRCodeSVG } from "qrcode.react";
+import { generateDurationOptions } from "@/lib/utils/timeSlots";
 
 type Step = "phone" | "details" | "summary" | "success";
 
@@ -19,22 +20,49 @@ export default function CustomerDetailsPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const bookingState = useAppSelector((state) => state.booking);
-  const { deviceTypeName, selectedSlot, deviceTypeId, selectedDate, slotStartTime, slotEndTime, hourlyRate, addons, total, subtotal, playerCount, includedPlayers, extraPlayerCharge } = bookingState;
+  const { deviceTypeName, selectedSlot, deviceTypeId, selectedDate, slotStartTime, slotEndTime, selectedDuration, hourlyRate, addons, total, subtotal, playerCount, includedPlayers, extraPlayerCharge } = bookingState;
 
   const [step, setStep] = useState<Step>("phone");
   const [mobileNumber, setMobileNumber] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
+  const [customerDob, setCustomerDob] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customerExists, setCustomerExists] = useState(false);
   const [existingCustomerData, setExistingCustomerData] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
   const [bookingNumber, setBookingNumber] = useState<string>("");
   const [bookingId, setBookingId] = useState<string>("");
+  const allDurations = useMemo(() => generateDurationOptions(), []);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const selectedDurationLabel = useMemo(() => {
+    const duration = allDurations.find(d => d.value === selectedDuration);
+    return duration?.label || (selectedDuration ? `${selectedDuration} mins` : "--");
+  }, [selectedDuration, allDurations]);
+
+  const formatFromDB = (dateStr: string) => {
+    const [y, m, d] = dateStr.split('-');
+    return `${d}-${m}-${y}`;
+  };
+
+  const formatForDB = (dateStr: string) => {
+    const [d, m, y] = dateStr.split('-');
+    return `${y}-${m}-${d}`;
+  };
+
+  const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.replace(/[^0-9]/g, "");
+    if (val.length > 4) {
+      val = `${val.slice(0, 2)}-${val.slice(2, 4)}-${val.slice(4, 8)}`;
+    } else if (val.length > 2) {
+      val = `${val.slice(0, 2)}-${val.slice(2)}`;
+    }
+    setCustomerDob(val);
+  };
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,11 +88,13 @@ export default function CustomerDetailsPage() {
       setExistingCustomerData(result.customer);
       setCustomerName(result.customer.name);
       setCustomerEmail(result.customer.email || "");
+      setCustomerDob(formatFromDB(result.customer.date_of_birth));
 
       dispatch(setCustomerDetails({
         phone: mobileNumber,
         name: result.customer.name,
-        email: result.customer.email || ""
+        email: result.customer.email || "",
+        date_of_birth: result.customer.date_of_birth
       }));
 
       toast.success("Welcome back!", { description: `Hey ${result.customer.name}! We found your profile.` });
@@ -89,7 +119,8 @@ export default function CustomerDetailsPage() {
     dispatch(setCustomerDetails({
       phone: mobileNumber,
       name: customerName,
-      email: customerEmail
+      email: customerEmail,
+      date_of_birth: customerDob,
     }));
 
     toast.success("Details Saved", { description: "Review your booking summary." });
@@ -103,6 +134,7 @@ export default function CustomerDetailsPage() {
       phone: mobileNumber,
       name: customerName || existingCustomerData?.name,
       email: customerEmail || existingCustomerData?.email || "",
+      date_of_birth: formatForDB(customerDob) || existingCustomerData?.date_of_birth,
       deviceTypeId: deviceTypeId!,
       deviceTypeName: deviceTypeName!,
       selectedDate: selectedDate!,
@@ -121,8 +153,9 @@ export default function CustomerDetailsPage() {
     if (result.success) {
       setBookingNumber(result.bookingNumber || "");
       setBookingId(result.bookingId || "");
+      console.log("DEBUG: Booking Duration in Store:", selectedDuration);
       toast.success("Booking Confirmed!", { description: "Your slot has been reserved successfully." });
-      dispatch(resetBooking()); // Clear timer and booking state after successful confirmation
+      dispatch(clearSlotTimer()); // Clear timer and booking state after successful confirmation
       setStep("success");
     } else {
       toast.error("Booking Failed", { description: result.error || "Something went wrong. Please try again." });
@@ -145,11 +178,11 @@ export default function CustomerDetailsPage() {
 
         {/* Timeline Step Indicator HUD Tracks */}
         <div className="w-full max-w-xs mx-auto flex items-center justify-between pb-8 select-none">
-          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-500 font-bold text-[9px] flex items-center justify-center">1</div><span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Time</span></div>
+          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-500 font-bold text-[9px] flex items-center justify-center">1</div><span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Time Slot</span></div>
           <div className="h-0.5 bg-primary flex-1 mx-2" />
           <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">2</div><span className="text-[8px] font-black uppercase text-primary tracking-wider">Details</span></div>
           <div className="h-0.5 bg-zinc-800 flex-1 mx-2" />
-          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-bold text-[9px] flex items-center justify-center border border-zinc-800">3</div><span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Confirm</span></div>
+          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-bold text-[9px] flex items-center justify-center border border-zinc-800">3</div><span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Payment</span></div>
         </div>
 
         <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6">
@@ -162,8 +195,8 @@ export default function CustomerDetailsPage() {
 
           {/* Live Active Hold Summary Strip */}
           <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900 grid grid-cols-2 gap-2 text-xs">
-            <div className="space-y-0.5"><span className="text-[8px] font-black text-zinc-500 uppercase block">Selected Setup</span><span className="text-white font-black truncate max-w-[180px] block uppercase">{deviceTypeName || "PLAYSTATION 5"}</span></div>
-            <div className="space-y-0.5 text-right"><span className="text-[8px] font-black text-zinc-500 uppercase block">Reserved Slot</span><span className="text-primary font-black">{selectedSlot || "Pending Hold"}</span></div>
+            <div className="space-y-0.5"><span className="text-[8px] font-black text-zinc-500 uppercase block">Selected Setup</span><span className="text-white font-black text-left break-words leading-tight max-w-[200px] block uppercase">{deviceTypeName || "PLAYSTATION 5"}</span></div>
+            <div className="space-y-0.5 text-right"><span className="text-[8px] font-black text-zinc-500 uppercase block">Reserved Slot</span><span className="text-primary text-[12px] text-right font-black">{selectedSlot || "Pending Hold"}</span></div>
           </div>
 
           {/* Form Inputs Fields Element Column */}
@@ -171,7 +204,7 @@ export default function CustomerDetailsPage() {
 
             {/* Contact Mobile Input Box */}
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><Phone className="h-3 w-3 text-zinc-600"/> MOBILE NUMBER <span className="text-red-500">*</span></Label>
+              <Label htmlFor="phone" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><Phone className="h-3 w-3 text-zinc-600" /> MOBILE NUMBER <span className="text-red-500">*</span></Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-600 border-r border-zinc-900 pr-2">+91</span>
                 <Input
@@ -214,11 +247,11 @@ export default function CustomerDetailsPage() {
     return (
       <div className="w-full max-w-xl mx-auto py-4 px-2 animate-in fade-in duration-300">
         <div className="w-full max-w-xs mx-auto flex items-center justify-between pb-8 select-none">
-          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-green-500 text-black font-black text-[9px] flex items-center justify-center"><CheckCircle2 className="h-3 w-3"/></div><span className="text-[8px] font-black uppercase text-green-500 tracking-wider">Phone</span></div>
+          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-green-500 text-black font-black text-[9px] flex items-center justify-center"><CheckCircle2 className="h-3 w-3" /></div><span className="text-[8px] font-black uppercase text-green-500 tracking-wider">Phone</span></div>
           <div className="h-0.5 bg-primary flex-1 mx-2" />
           <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">2</div><span className="text-[8px] font-black uppercase text-primary tracking-wider">Details</span></div>
           <div className="h-0.5 bg-zinc-800 flex-1 mx-2" />
-          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-bold text-[9px] flex items-center justify-center border border-zinc-800">3</div><span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Confirm</span></div>
+          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-bold text-[9px] flex items-center justify-center border border-zinc-800">3</div><span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Payment</span></div>
         </div>
 
         <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6">
@@ -229,7 +262,7 @@ export default function CustomerDetailsPage() {
 
           <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900 text-xs">
             <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4 text-primary"/>
+              <Phone className="h-4 w-4 text-primary" />
               <span className="text-zinc-500">Phone Number:</span>
               <span className="text-white font-black">+91 {mobileNumber}</span>
             </div>
@@ -237,7 +270,7 @@ export default function CustomerDetailsPage() {
 
           <form onSubmit={handleDetailsSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><User className="h-3 w-3 text-zinc-600"/> FULL NAME <span className="text-red-500">*</span></Label>
+              <Label htmlFor="name" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><User className="h-3 w-3 text-zinc-600" /> FULL NAME <span className="text-red-500">*</span></Label>
               <Input
                 id="name"
                 type="text"
@@ -250,7 +283,23 @@ export default function CustomerDetailsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><Mail className="h-3 w-3 text-zinc-600"/> EMAIL ADDRESS</Label>
+              <Label htmlFor="dob" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Cake className="h-3 w-3 text-zinc-600" /> DATE OF BIRTH (DD-MM-YYYY)
+              </Label>
+              <Input
+                id="dob"
+                type="text"
+                placeholder="DD-MM-YYYY"
+                required
+                maxLength={10}
+                value={customerDob}
+                onChange={handleDobChange}
+                className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white font-mono tracking-wider focus-visible:ring-primary rounded-xl"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><Mail className="h-3 w-3 text-zinc-600" /> EMAIL ADDRESS</Label>
               <Input
                 id="email"
                 type="email"
@@ -280,11 +329,11 @@ export default function CustomerDetailsPage() {
     return (
       <div className="w-full max-w-2xl mx-auto py-4 px-2 animate-in fade-in duration-300">
         <div className="w-full max-w-xs mx-auto flex items-center justify-between pb-8 select-none">
-          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-green-500 text-black font-black text-[9px] flex items-center justify-center"><CheckCircle2 className="h-3 w-3"/></div><span className="text-[8px] font-black uppercase text-green-500 tracking-wider">Phone</span></div>
+          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-green-500 text-black font-black text-[9px] flex items-center justify-center"><CheckCircle2 className="h-3 w-3" /></div><span className="text-[8px] font-black uppercase text-green-500 tracking-wider">Phone</span></div>
           <div className="h-0.5 bg-green-500 flex-1 mx-2" />
-          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-green-500 text-black font-black text-[9px] flex items-center justify-center"><CheckCircle2 className="h-3 w-3"/></div><span className="text-[8px] font-black uppercase text-green-500 tracking-wider">Details</span></div>
+          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-green-500 text-black font-black text-[9px] flex items-center justify-center"><CheckCircle2 className="h-3 w-3" /></div><span className="text-[8px] font-black uppercase text-green-500 tracking-wider">Details</span></div>
           <div className="h-0.5 bg-primary flex-1 mx-2" />
-          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">3</div><span className="text-[8px] font-black uppercase text-primary tracking-wider">Confirm</span></div>
+          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">3</div><span className="text-[8px] font-black uppercase text-primary tracking-wider">Payment</span></div>
         </div>
 
         <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6">
@@ -293,39 +342,35 @@ export default function CustomerDetailsPage() {
             <p className="text-xs text-zinc-500 font-medium">Review your booking details before confirmation.</p>
           </div>
 
-          {/* Customer Details */}
+          {/* Customer Information */}
           <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3">
-            <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Customer Information</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div><span className="text-zinc-500 text-xs">Name:</span> <span className="text-white font-bold">{customerName || existingCustomerData?.name}</span></div>
-              <div><span className="text-zinc-500 text-xs">Phone:</span> <span className="text-white font-bold">+91 {mobileNumber}</span></div>
-              {(customerEmail || existingCustomerData?.email) && <div className="md:col-span-2"><span className="text-zinc-500 text-xs">Email:</span> <span className="text-white font-bold">{customerEmail || existingCustomerData?.email}</span></div>}
+            <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Customer Information</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-zinc-500">Customer:</span> <span className="text-white font-bold">{customerName || existingCustomerData?.name}</span></div>
+              <div className="flex justify-between"><span className="text-zinc-500">Phone:</span> <span className="text-primary font-bold">+91 {mobileNumber}</span></div>
+              <div className="flex justify-between"><span className="text-zinc-500">Email:</span> <span className="text-white font-bold truncate ml-4">{customerEmail || existingCustomerData?.email}</span></div>
+              <div className="flex justify-between"><span className="text-zinc-500">DOB:</span> <span className="text-white font-bold">{customerDob}</span></div>
             </div>
           </div>
 
           {/* Booking Details */}
           <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3">
-            <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Booking Details</h4>
+            <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Booking Details</h4>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-zinc-500">Device:</span> <span className="text-white font-black">{deviceTypeName}</span></div>
-              <div className="flex justify-between"><span className="text-zinc-500">Date:</span> <span className="text-white font-bold">{new Date(selectedDate!).toLocaleDateString()}</span></div>
-              <div className="flex justify-between"><span className="text-zinc-500">Time Slot:</span> <span className="text-primary font-black">{selectedSlot}</span></div>
-              <div className="flex justify-between"><span className="text-zinc-500">Duration:</span> <span className="text-white font-bold">{slotStartTime} - {slotEndTime}</span></div>
+              <div className="flex justify-between"><span className="text-zinc-500">Device:</span> <span className="text-white font-bold text-right">{deviceTypeName}</span></div>
+              <div className="flex justify-between"><span className="text-zinc-500">Date:</span> <span className="text-white font-bold">{selectedDate ? new Date(selectedDate).toLocaleDateString() : "--"}</span></div>
+              <div className="flex justify-between"><span className="text-zinc-500">Time Slot:</span> <span className="text-primary font-bold">{selectedSlot}</span></div>
+              <div className="flex justify-between"><span className="text-zinc-500">Duration:</span> <span className="text-white font-bold">{selectedDurationLabel}</span></div>
             </div>
           </div>
 
           {/* Pricing Details */}
           <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3">
-            <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Price Breakdown</h4>
+            <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Price Breakdown</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-zinc-500">Base Rate:</span> <span className="text-white">₹{hourlyRate}</span></div>
-              {addons.length > 0 && addons.map((addon) => (
-                <div key={addon.id} className="flex justify-between"><span className="text-zinc-500">{addon.name} (x{addon.quantity}):</span> <span className="text-white">₹{addon.price * addon.quantity}</span></div>
-              ))}
-              <div className="border-t border-zinc-800 pt-2 flex justify-between font-black"><span className="text-white">TOTAL AMOUNT:</span> <span className="text-primary text-lg">₹{total}</span></div>
             </div>
           </div>
-
           <div className="space-y-2">
             <Button onClick={handleConfirmBooking} disabled={isSubmitting} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "CONFIRM BOOKING"} <CheckCircle2 className="h-4 w-4" />
@@ -372,13 +417,15 @@ export default function CustomerDetailsPage() {
             </div>
           </div>
 
-          {/* Booking Details */}
-          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-2">
-            <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Booking Details</h4>
-            <div className="flex justify-between text-sm"><span className="text-zinc-500">Customer:</span> <span className="text-white font-bold">{customerName}</span></div>
-            <div className="flex justify-between text-sm"><span className="text-zinc-500">Device:</span> <span className="text-white font-bold">{deviceTypeName}</span></div>
-            <div className="flex justify-between text-sm"><span className="text-zinc-500">Date & Time:</span> <span className="text-primary font-bold">{new Date(selectedDate!).toLocaleDateString()} • {selectedSlot}</span></div>
-            <div className="flex justify-between text-sm border-t border-zinc-800 pt-2 mt-2"><span className="text-zinc-500">Amount Paid:</span> <span className="text-white font-black">₹{total}</span></div>
+          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 text-sm">
+            <h4 className="text-[10px] font-black text-zinc-500 uppercase">Booking Details</h4>
+            <div className="flex justify-between"><span className="text-zinc-500">Customer:</span> <span className="text-white font-bold">{customerName || existingCustomerData?.name}</span></div>
+            <div className="flex justify-between"><span className="text-zinc-500">Phone:</span> <span className="text-primary font-bold">+91 {mobileNumber}</span></div>
+            <div className="flex justify-between"><span className="text-zinc-500">Device:</span> <span className="text-white font-bold">{deviceTypeName}</span></div>
+            <div className="flex justify-between"><span className="text-zinc-500">Date:</span> <span className="text-white font-bold">{selectedDate ? new Date(selectedDate).toLocaleDateString() : "--"}</span></div>
+            <div className="flex justify-between"><span className="text-zinc-500">Time:</span> <span className="text-primary font-bold">{selectedSlot}</span></div>
+            <div className="flex justify-between"><span className="text-zinc-500">Duration:</span> <span className="text-white font-bold">{selectedDurationLabel}</span></div>
+            <div className="flex justify-between border-t border-zinc-800 pt-2 font-black"><span className="text-zinc-500">Amount Paid:</span> <span className="text-white">₹{total}</span></div>
           </div>
 
           {/* Action Buttons */}
@@ -387,13 +434,13 @@ export default function CustomerDetailsPage() {
               <UtensilsCrossed className="h-4 w-4" />
               ORDER FOOD & DRINKS
             </Button>
-            <Button onClick={handleNewBooking} variant="outline" className="w-full border-2 border-primary text-primary hover:bg-primary/10 font-black uppercase text-xs h-11 rounded-xl">
+            <Button onClick={handleNewBooking} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-11 rounded-xl">
               BOOK ANOTHER SLOT
             </Button>
-            <Button onClick={() => router.push(`/my-bookings?phone=${mobileNumber}`)} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
+            <Button onClick={() => router.push(`/my-bookings?phone=${mobileNumber}`)} variant="ghost" className="w-full border-2 border-primary text-zinc-300 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
               VIEW MY BOOKINGS
             </Button>
-            <Button onClick={() => router.push("/")} variant="ghost" className="w-full text-zinc-600 hover:text-zinc-400 font-bold uppercase text-[11px] h-10">
+            <Button onClick={() => router.push("/")} variant="ghost" className="w-full text-zinc-300 border border-zinc-800 hover:text-zinc-400 font-bold uppercase text-[11px] h-10 rounded-xl">
               BACK TO HOME
             </Button>
           </div>

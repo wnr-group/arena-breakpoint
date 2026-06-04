@@ -182,6 +182,7 @@ export async function createStandaloneFoodOrder(
   phone: string,
   name: string,
   email: string | null,
+  date_of_birth: string,
   items: Array<{
     menu_item_id: string;
     name: string;
@@ -198,6 +199,7 @@ export async function createStandaloneFoodOrder(
         p_phone: phone,
         p_name: name,
         p_email: email,
+        p_dob: date_of_birth,
       }
     );
 
@@ -224,6 +226,7 @@ export async function createStandaloneFoodOrder(
         customer_phone: phone,
         customer_name: name,
         customer_email: email,
+        customer_dob: date_of_birth,
         device_subtotal: 0,
         food_subtotal: totalAmount,
         total_amount: totalAmount,

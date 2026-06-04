@@ -8,13 +8,25 @@ import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  ArrowLeft, ChevronRight, Loader2, Users, Plus, Minus
+  ArrowLeft,
+  ChevronRight,
+  Loader2,
+  Users,
+  Plus,
+  Minus,
+  Phone,
+  User,
+  Mail,
+  ShieldCheck,
+  RefreshCw,
+  Cake
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   getDeviceTypesWithAvailability,
   checkAvailabilityByDeviceType
 } from "@/app/(customer)/booking/actions";
+import { checkCustomerExists } from "@/app/(customer)/booking/actions";
 import { createWalkInBooking } from "../actions";
 
 const staticDaylightSchedulesMatrix = [
@@ -29,7 +41,7 @@ const staticDaylightSchedulesMatrix = [
 
 export default function WalkInBookingPage() {
   const router = useRouter();
-  const [step, setStep] = useState(1); // 1: Device, 2: Slot, 3: Customer, 4: Confirm
+  const [step, setStep] = useState(1); // 1: Device, 2: Slot, 3: Customer Lookup/Form, 4: Confirm
 
   // Device selection
   const [deviceTypes, setDeviceTypes] = useState<any[]>([]);
@@ -46,10 +58,13 @@ export default function WalkInBookingPage() {
   // Player count
   const [playerCount, setPlayerCount] = useState(1);
 
-  // Customer details
-  const [customerName, setCustomerName] = useState("");
+  // Customer details flow states
   const [customerPhone, setCustomerPhone] = useState("");
+  const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
+  const [customerDob, setCustomerDob] = useState("");
+  const [showFullRegistrationFields, setShowFullRegistrationFields] = useState(false);
+  const [checkingProfile, setCheckingProfile] = useState(false);
 
   // Submission
   const [submitting, setSubmitting] = useState(false);
@@ -94,16 +109,45 @@ export default function WalkInBookingPage() {
   const handleSelectSlot = (slot: typeof staticDaylightSchedulesMatrix[0]) => {
     setSelectedSlot(slot);
     setStep(3);
+    setShowFullRegistrationFields(false);
+  };
+
+  const handleCustomerPhoneLookup = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!customerPhone.trim() || customerPhone.length < 10) {
+      toast.error("Invalid Entry", { description: "Please enter a valid 10-digit mobile number." });
+      return;
+    }
+
+    setCheckingProfile(true);
+    const result = await checkCustomerExists(customerPhone.trim());
+
+    if (result.exists && result.customer) {
+      setCustomerName(result.customer.name);
+      setCustomerEmail(result.customer.email || "");
+      setCustomerDob(result.customer.date_of_birth);
+      toast.success("Profile Authenticated", { description: `Welcome back, ${result.customer.name}! Adjust players if required on final step.` });
+      setStep(4);
+    } else {
+      toast.info("New Profile Detected", { description: "Please complete registration parameters below." });
+      setShowFullRegistrationFields(true);
+    }
+    setCheckingProfile(false);
+  };
+
+  const handleManualRegistrationSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customerName.trim()) {
+      toast.error("Validation Error", { description: "Full customer name field specification is required." });
+      return;
+    }
+    setStep(4);
   };
 
   const handleSubmit = async () => {
     if (!customerName.trim() || !customerPhone.trim()) {
       toast.error("Please fill in customer name and phone number");
-      return;
-    }
-
-    if (!/^\d{10}$/.test(customerPhone.trim())) {
-      toast.error("Please enter a valid 10-digit phone number");
       return;
     }
 
@@ -114,10 +158,16 @@ export default function WalkInBookingPage() {
     const baseRate = Number(selectedDeviceType?.regular_hourly_rate) || 0;
     const total = baseRate + extraPlayerCharge;
 
+    const formatForDB = (dateStr: string) => {
+      const [d, m, y] = dateStr.split('-');
+      return `${y}-${m}-${d}`;
+    };
+
     const result = await createWalkInBooking({
       customerName: customerName.trim(),
       customerPhone: customerPhone.trim(),
       customerEmail: customerEmail.trim() || null,
+      customerDob: formatForDB(customerDob),
       deviceTypeId: selectedDeviceType.id,
       deviceTypeName: selectedDeviceType.display_name,
       selectedDate: selectedDate.toISOString().split("T")[0],
@@ -147,6 +197,18 @@ export default function WalkInBookingPage() {
   const baseRate = Number(selectedDeviceType?.regular_hourly_rate) || 0;
   const totalAmount = baseRate + extraPlayerCharge;
 
+  const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.replace(/[^0-9]/g, "");
+
+    // 2. Apply auto-formatting (DD-MM-YYYY)
+    if (val.length > 4) {
+      val = `${val.slice(0, 2)}-${val.slice(2, 4)}-${val.slice(4, 8)}`;
+    } else if (val.length > 2) {
+      val = `${val.slice(0, 2)}-${val.slice(2)}`;
+    }
+    setCustomerDob(val);
+  };
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
@@ -154,16 +216,17 @@ export default function WalkInBookingPage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <Button
-              variant="outline"
               size="sm"
               onClick={() => {
-                if (step > 1) {
+                if (step === 4) {
+                  setStep(3);
+                } else if (step > 1) {
                   setStep(step - 1);
                 } else {
                   router.push("/admin/bookings");
                 }
               }}
-              className="border-[#27272a] text-zinc-400 hover:text-white"
+              className="bg-primary hover:bg-primary-hover text-black font-black"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               {step > 1 ? "Back" : "Cancel"}
@@ -174,8 +237,8 @@ export default function WalkInBookingPage() {
           </div>
         </div>
 
-        {/* Progress Steps */}
-        <div className="flex items-center justify-between mb-8 max-w-2xl mx-auto">
+        {/* Progress Steps HUD Track */}
+        <div className="flex items-center justify-between mb-8 max-w-2xl mx-auto select-none">
           {[
             { num: 1, label: "Device" },
             { num: 2, label: "Slot" },
@@ -185,17 +248,15 @@ export default function WalkInBookingPage() {
             <div key={s.num} className="flex items-center flex-1">
               <div className="flex flex-col items-center gap-1 flex-1">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${
-                    step >= s.num
-                      ? "bg-primary text-black"
-                      : "bg-zinc-900 text-zinc-600 border border-zinc-800"
-                  }`}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${step >= s.num
+                    ? "bg-primary text-black"
+                    : "bg-zinc-900 text-zinc-600 border border-zinc-800"
+                    }`}
                 >
                   {s.num}
                 </div>
-                <span className={`text-[9px] font-black uppercase tracking-wider ${
-                  step >= s.num ? "text-primary" : "text-zinc-600"
-                }`}>
+                <span className={`text-[9px] font-black uppercase tracking-wider ${step >= s.num ? "text-primary" : "text-zinc-600"
+                  }`}>
                   {s.label}
                 </span>
               </div>
@@ -221,11 +282,10 @@ export default function WalkInBookingPage() {
                   return (
                     <Card
                       key={deviceType.id}
-                      className={`bg-[#111] border p-4 cursor-pointer transition-all ${
-                        isAvailable
-                          ? "border-zinc-900 hover:border-primary"
-                          : "border-zinc-900 opacity-50 cursor-not-allowed"
-                      }`}
+                      className={`bg-[#111] border p-4 cursor-pointer transition-all ${isAvailable
+                        ? "border-zinc-900 hover:border-primary"
+                        : "border-zinc-900 opacity-50 cursor-not-allowed"
+                        }`}
                       onClick={() => isAvailable && handleSelectDeviceType(deviceType)}
                     >
                       <div className="space-y-3">
@@ -237,9 +297,8 @@ export default function WalkInBookingPage() {
                               {deviceType.included_players} included • Max {deviceType.max_players}
                             </p>
                           </div>
-                          <span className={`text-xs font-black px-2 py-1 rounded ${
-                            isAvailable ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
-                          }`}>
+                          <span className={`text-xs font-black px-2 py-1 rounded ${isAvailable ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
+                            }`}>
                             {deviceType.available_devices_count} AVAILABLE
                           </span>
                         </div>
@@ -305,11 +364,10 @@ export default function WalkInBookingPage() {
                                   key={slot.id}
                                   disabled={isBooked}
                                   onClick={() => handleSelectSlot(slot)}
-                                  className={`w-full p-3 border text-left flex justify-between items-center rounded-lg transition-all ${
-                                    isBooked
-                                      ? "bg-zinc-950/20 border-zinc-950 text-zinc-800 line-through cursor-not-allowed"
-                                      : "bg-[#0a0a0a] border-zinc-900 text-zinc-300 hover:border-primary"
-                                  }`}
+                                  className={`w-full p-3 border text-left flex justify-between items-center rounded-lg transition-all ${isBooked
+                                    ? "bg-zinc-950/20 border-zinc-950 text-zinc-800 line-through cursor-not-allowed"
+                                    : "bg-[#0a0a0a] border-zinc-900 text-zinc-300 hover:border-primary"
+                                    }`}
                                 >
                                   <span className="text-xs font-bold">{slot.label}</span>
                                   {availability && !isBooked && (
@@ -330,74 +388,184 @@ export default function WalkInBookingPage() {
           </div>
         )}
 
-        {/* Step 3: Customer Details */}
+        {/* Step 3: Progressive Customer Profile Form */}
         {step === 3 && selectedDeviceType && selectedSlot && (
-          <div className="space-y-6 max-w-2xl mx-auto">
-            <h2 className="text-xl font-black uppercase text-zinc-400">Customer Details</h2>
+          <div className="space-y-6 max-w-xl mx-auto">
 
-            <Card className="bg-[#111] border border-zinc-900 p-6 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-xs font-black uppercase text-zinc-500">
-                  Customer Name *
-                </Label>
-                <Input
-                  id="name"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Enter customer name"
-                  className="bg-[#0a0a0a] border-zinc-900 text-white"
-                />
-              </div>
+            {/* Phase 1: Primary Mobile Verification */}
+            {!showFullRegistrationFields ? (
+              <Card className="bg-[#111] border border-zinc-900 p-6 space-y-6 rounded-2xl shadow-2xl animate-in fade-in duration-200">
+                <div className="border-b border-zinc-900 pb-4 space-y-1">
+                  <h3 className="text-lg font-black uppercase text-white tracking-tight">WALK-IN PROFILE IDENTIFICATION</h3>
+                  <p className="text-xs text-zinc-500 font-medium">Verify the customer's mobile number to load profiles automatically.</p>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-xs font-black uppercase text-zinc-500">
-                  Phone Number *
-                </Label>
-                <Input
-                  id="phone"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  placeholder="10-digit phone number"
-                  maxLength={10}
-                  className="bg-[#0a0a0a] border-zinc-900 text-white"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-black uppercase text-zinc-500">
-                  Email (Optional)
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={customerEmail}
-                  onChange={(e) => setCustomerEmail(e.target.value)}
-                  placeholder="customer@example.com"
-                  className="bg-[#0a0a0a] border-zinc-900 text-white"
-                />
-              </div>
-
-              {/* Player Selection */}
-              <div className="border-t border-zinc-900 pt-4">
-                <Label className="text-xs font-black uppercase text-zinc-500 mb-3 block">
-                  Number of Players
-                </Label>
-                <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-lg p-3">
-                  <div className="flex-1">
-                    <p className="text-xs text-zinc-500">
-                      {selectedDeviceType.included_players} included • Max {selectedDeviceType.max_players}
-                    </p>
+                <form onSubmit={handleCustomerPhoneLookup} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Phone className="h-3.5 w-3.5 text-zinc-600" /> Mobile Number <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-600 border-r border-zinc-900 pr-2">+91</span>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        required
+                        maxLength={10}
+                        placeholder="Enter 10-digit number"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, ""))}
+                        className="bg-zinc-950 border-zinc-900 h-12 pl-12 text-sm text-white font-mono tracking-wider focus-visible:ring-primary rounded-xl"
+                      />
+                    </div>
                   </div>
+
+                  <Button type="submit" disabled={checkingProfile} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 shadow-xl">
+                    {checkingProfile ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "VERIFY CUSTOMER PROFILE"} <ChevronRight className="h-4 w-4 stroke-[3]" />
+                  </Button>
+                </form>
+
+                <div className="pt-2 flex gap-2 items-center text-[10px] text-zinc-600 justify-center border-t border-zinc-950">
+                  <ShieldCheck className="h-4 w-4 text-zinc-700" /><span>Instant index lookup map layers running safely.</span>
+                </div>
+              </Card>
+            ) : (
+              /* Phase 2: Supplemental Registration Form (Triggered for new entries) */
+              <Card className="bg-[#111] border border-zinc-900 p-6 space-y-6 rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200">
+                <div className="border-b border-zinc-900 pb-4 space-y-1">
+                  <h3 className="text-lg font-black uppercase text-white tracking-tight">WALK-IN ACCOUNT SIGNUP</h3>
+                  <p className="text-xs text-zinc-500 font-medium">Please generate contact tokens to instantiate profile logs.</p>
+                </div>
+
+                <div className="bg-zinc-950 p-3.5 border border-zinc-900 rounded-xl flex items-center justify-between gap-4 text-xs select-none">
+                  <div className="space-y-0.5">
+                    <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest block">Customer Phone Number:</span>
+                    <span className="text-primary font-mono font-black tracking-wider">+91 {customerPhone}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowFullRegistrationFields(false)}
+                    className="px-3 h-8 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[10px] font-black uppercase text-zinc-400 hover:text-primary rounded-lg tracking-wider flex items-center gap-1.5 transition-colors"
+                  >
+                    <RefreshCw className="h-3 w-3" /> Change Number
+                  </button>
+                </div>
+
+                <form onSubmit={handleManualRegistrationSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <User className="h-3.5 w-3.5 text-zinc-600" /> Customer Name *
+                    </Label>
+                    <Input
+                      id="name"
+                      required
+                      type="text"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="Enter customer's full name"
+                      className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="dob" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Cake className="h-3.5 w-3.5 text-zinc-600" /> Date of Birth (DD-MM-YYYY)
+                    </Label>
+                    <Input
+                      id="dob"
+                      type="text"
+                      placeholder="DD-MM-YYYY"
+                      required
+                      maxLength={10}
+                      value={customerDob}
+                      onChange={handleDobChange}
+                      className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white font-mono tracking-wider focus-visible:ring-primary rounded-xl placeholder:text-zinc-700"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Mail className="h-3.5 w-3.5 text-zinc-600" /> Email (Optional)
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={customerEmail}
+                      onChange={(e) => setCustomerEmail(e.target.value)}
+                      placeholder="customer@domain.com"
+                      className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl"
+                    />
+                  </div>
+
+                  <div className="pt-4 space-y-2">
+                    <Button type="submit" className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1 shadow-lg">
+                      PROCEED TO ORDER SUMMARY <ChevronRight className="h-4 w-4 stroke-[3]" />
+                    </Button>
+                  </div>
+                </form>
+              </Card>
+            )}
+
+          </div>
+        )}
+
+        {/* Step 4: Confirmation Summary Panel */}
+        {step === 4 && selectedDeviceType && selectedSlot && (
+          <div className="space-y-6 max-w-2xl mx-auto">
+            <h2 className="text-xl font-black uppercase text-zinc-400">Confirm Booking</h2>
+
+            <Card className="bg-[#111] border border-zinc-900 p-6 space-y-6 rounded-2xl">
+
+
+              {/* Summary Breakdown Fields Matrix */}
+              <div className="space-y-4 text-sm pt-2">
+                <div className="flex justify-between border-b border-zinc-900/60 pb-2">
+                  <span className="text-zinc-500">Customer Name:</span>
+                  <span className="text-white font-bold">{customerName}</span>
+                </div>
+                <div className="flex justify-between border-b border-zinc-900/60 pb-2">
+                  <span className="text-zinc-500">Phone Number:</span>
+                  <span className="text-white font-bold">{customerPhone}</span>
+                </div>
+                {customerEmail && (
+                  <div className="flex justify-between border-b border-zinc-900/60 pb-2">
+                    <span className="text-zinc-500">Email:</span>
+                    <span className="text-white font-bold">{customerEmail}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-b border-zinc-900/60 pb-2">
+                  <span className="text-zinc-500">Device Configuration:</span>
+                  <span className="text-white font-bold uppercase">{selectedDeviceType.display_name}</span>
+                </div>
+                <div className="flex justify-between border-b border-zinc-900/60 pb-2">
+                  <span className="text-zinc-500">Target Date:</span>
+                  <span className="text-white font-bold">{selectedDate.toDateString()}</span>
+                </div>
+                <div className="flex justify-between border-b border-zinc-900/60 pb-2">
+                  <span className="text-zinc-500">Selected Time Window:</span>
+                  <span className="text-primary font-bold">{selectedSlot.label}</span>
+                </div>
+              </div>
+              <div className="bg-zinc-950/40 p-4 border border-zinc-900 rounded-xl space-y-3">
+                <Label className="text-[10px] font-black uppercase text-zinc-400 tracking-wider block">
+                  Assign Player Allocation Count
+                </Label>
+                <div className="flex items-center justify-between bg-zinc-950 border border-zinc-900/60 rounded-lg p-3">
+                  <p className="text-xs text-zinc-500 font-medium">
+                    {selectedDeviceType.included_players} included • Max {selectedDeviceType.max_players}
+                  </p>
                   <div className="flex items-center gap-3">
                     <button
+                      type="button"
                       onClick={() => playerCount > 1 && setPlayerCount(playerCount - 1)}
                       disabled={playerCount <= 1}
-                      className="w-8 h-8 rounded-md bg-zinc-900 border border-zinc-800 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-800 transition-all flex items-center justify-center"
+                      className="w-7 h-7 rounded-md bg-zinc-900 border border-zinc-800 text-white disabled:opacity-30 flex items-center justify-center transition-colors"
                     >
                       <Minus className="h-3 w-3" />
                     </button>
-                    <span className="text-xl font-black text-white w-10 text-center">{playerCount}</span>
+                    <span className="text-base font-black text-white w-6 text-center font-mono">{playerCount}</span>
                     <button
+                      type="button"
                       onClick={() => {
                         if (playerCount >= selectedDeviceType.max_players) {
                           toast.error(`Maximum ${selectedDeviceType.max_players} players only`);
@@ -406,98 +574,47 @@ export default function WalkInBookingPage() {
                         }
                       }}
                       disabled={playerCount >= selectedDeviceType.max_players}
-                      className="w-8 h-8 rounded-md bg-primary text-black disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary-hover transition-all flex items-center justify-center font-bold"
+                      className="w-7 h-7 rounded-md bg-primary text-black flex items-center justify-center font-bold active:scale-95 transition-all"
                     >
-                      <Plus className="h-3 w-3" />
+                      <Plus className="h-3 w-3 stroke-[2.5]" />
                     </button>
                   </div>
                 </div>
               </div>
 
-              <Button
-                onClick={() => setStep(4)}
-                className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase"
-              >
-                Continue to Confirm
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-            </Card>
-          </div>
-        )}
-
-        {/* Step 4: Confirmation */}
-        {step === 4 && selectedDeviceType && selectedSlot && (
-          <div className="space-y-6 max-w-2xl mx-auto">
-            <h2 className="text-xl font-black uppercase text-zinc-400">Confirm Booking</h2>
-
-            <Card className="bg-[#111] border border-zinc-900 p-6 space-y-6">
-              <div className="space-y-4 text-sm">
-                <div className="flex justify-between border-b border-zinc-900 pb-2">
-                  <span className="text-zinc-500">Customer Name:</span>
-                  <span className="text-white font-bold">{customerName}</span>
-                </div>
-                <div className="flex justify-between border-b border-zinc-900 pb-2">
-                  <span className="text-zinc-500">Phone Number:</span>
-                  <span className="text-white font-bold">{customerPhone}</span>
-                </div>
-                {customerEmail && (
-                  <div className="flex justify-between border-b border-zinc-900 pb-2">
-                    <span className="text-zinc-500">Email:</span>
-                    <span className="text-white font-bold">{customerEmail}</span>
-                  </div>
-                )}
-                <div className="flex justify-between border-b border-zinc-900 pb-2">
-                  <span className="text-zinc-500">Device:</span>
-                  <span className="text-white font-bold">{selectedDeviceType.display_name}</span>
-                </div>
-                <div className="flex justify-between border-b border-zinc-900 pb-2">
-                  <span className="text-zinc-500">Date:</span>
-                  <span className="text-white font-bold">{selectedDate.toDateString()}</span>
-                </div>
-                <div className="flex justify-between border-b border-zinc-900 pb-2">
-                  <span className="text-zinc-500">Time Slot:</span>
-                  <span className="text-primary font-bold">{selectedSlot.label}</span>
-                </div>
-                <div className="flex justify-between border-b border-zinc-900 pb-2">
-                  <span className="text-zinc-500">Number of Players:</span>
-                  <span className="text-white font-bold">{playerCount}</span>
-                </div>
-              </div>
-
-              <div className="space-y-2 text-sm border-t border-zinc-900 pt-4">
+              <div className="space-y-2 text-sm border-t border-zinc-900 pt-4 bg-zinc-950/20 p-3 rounded-xl">
                 <div className="flex justify-between">
-                  <span className="text-zinc-500">Base Rate:</span>
+                  <span className="text-zinc-500">Base Station Rate:</span>
                   <span className="text-white font-bold">₹{baseRate}.00</span>
                 </div>
                 {extraPlayersCount > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">Extra Players ({extraPlayersCount}):</span>
+                  <div className="flex justify-between animate-in slide-in-from-top-2 duration-150">
+                    <span className="text-zinc-500">Extra Player Charge Layer ({extraPlayersCount}):</span>
                     <span className="text-primary font-bold">₹{extraPlayerCharge}.00</span>
                   </div>
                 )}
                 <div className="flex justify-between items-baseline pt-3 border-t border-zinc-900 font-black text-lg">
-                  <span className="text-white uppercase">Total Amount:</span>
-                  <span className="text-primary text-2xl">₹{totalAmount}.00</span>
+                  <span className="text-white uppercase text-xs tracking-wider">Gross Total Amount:</span>
+                  <span className="text-primary text-2xl font-mono">₹{totalAmount}.00</span>
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-zinc-900">
+              <div className="flex gap-3 pt-4 border-t border-zinc-900/60">
                 <Button
-                  variant="outline"
                   onClick={() => setStep(3)}
-                  className="flex-1 border-zinc-800 text-zinc-400 hover:text-white"
+                  className="flex-1 border-zinc-800 bg-primary hover:bg-primary-hover text-black font-black h-12 rounded-xl text-xs uppercase"
                 >
-                  Back
+                  Back to Registration
                 </Button>
                 <Button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="flex-1 bg-primary hover:bg-primary-hover text-black font-black uppercase"
+                  className="flex-1 bg-primary hover:bg-primary-hover text-black font-black uppercase h-12 rounded-xl text-xs shadow-xl transition-all active:scale-[0.99]"
                 >
                   {submitting ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Creating...
+                      <Loader2 className="h-4 w-4 animate-spin mr-2 text-black" />
+                      Creating Log Entry...
                     </>
                   ) : (
                     "Confirm Booking"

@@ -176,8 +176,7 @@ export default function AdminReportsPage() {
         </div>
         <Button
           onClick={handleExport}
-          variant="outline"
-          className="border-[#27272a] text-zinc-400 hover:text-white font-black uppercase text-xs"
+          className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs"
         >
           <Download className="h-4 w-4 mr-2" />
           Export Report
@@ -194,49 +193,43 @@ export default function AdminReportsPage() {
           <div className="flex flex-wrap gap-2">
             <Button
               size="sm"
-              variant="outline"
               onClick={() => setQuickDateRange("today")}
-              className="border-[#27272a] text-zinc-400 hover:text-black hover:bg-gradient-primary font-bold uppercase text-[10px] h-8 transition-all"
+              className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-[10px] h-8 transition-all"
             >
               Today
             </Button>
             <Button
               size="sm"
-              variant="outline"
               onClick={() => setQuickDateRange("7days")}
-              className="border-[#27272a] text-zinc-400 hover:text-black hover:bg-gradient-primary font-bold uppercase text-[10px] h-8 transition-all"
+              className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-[10px] h-8 transition-all"
             >
               Last 7 Days
             </Button>
             <Button
               size="sm"
-              variant="outline"
               onClick={() => setQuickDateRange("30days")}
-              className="border-[#27272a] text-zinc-400 hover:text-black hover:bg-gradient-primary font-bold uppercase text-[10px] h-8 transition-all"
+              className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-[10px] h-8 transition-all"
             >
               Last 30 Days
             </Button>
             <Button
               size="sm"
-              variant="outline"
               onClick={() => setQuickDateRange("month")}
-              className="border-[#27272a] text-zinc-400 hover:text-black hover:bg-gradient-primary font-bold uppercase text-[10px] h-8 transition-all"
+              className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-[10px] h-8 transition-all"
             >
               This Month
             </Button>
             <Button
               size="sm"
-              variant="outline"
               onClick={() => setQuickDateRange("90days")}
-              className="border-[#27272a] text-zinc-400 hover:text-black hover:bg-gradient-primary font-bold uppercase text-[10px] h-8 transition-all"
+              className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-[10px] h-8 transition-all"
             >
               Last 90 Days
             </Button>
             <Button
               size="sm"
-              variant="outline"
               onClick={() => setQuickDateRange("all")}
-              className="border-[#27272a] text-zinc-400 hover:text-black hover:bg-gradient-primary font-bold uppercase text-[10px] h-8 transition-all"
+              className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-[10px] h-8 transition-all"
             >
               All Time
             </Button>
@@ -315,11 +308,10 @@ export default function AdminReportsPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${
-                activeTab === tab.id
+              className={`flex items-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === tab.id
                   ? "text-primary border-b-2 border-primary"
                   : "text-zinc-500 hover:text-zinc-300"
-              }`}
+                }`}
             >
               <Icon className="h-4 w-4" />
               {tab.label}

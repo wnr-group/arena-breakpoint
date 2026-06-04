@@ -44,15 +44,16 @@ export async function getDeviceTypesWithAvailability() {
     // For each device type, count available devices
     const typesWithCounts = await Promise.all(
       (deviceTypes || []).map(async (type: any) => {
-        const { count, error: countError } = await supabaseAdmin
+        const { data: devices, error: devError } = await supabaseAdmin
           .from("devices")
-          .select("id", { count: "exact", head: true })
+          .select("id , image_url")
           .eq("device_type_id", type.id)
           .eq("status", "available");
 
         return {
           ...type,
-          available_devices_count: countError ? 0 : (count || 0)
+          available_devices_count: devError ? 0 : (devices || []).length,
+          image_url: (devices && devices.length > 0) ? devices[0].image_url : null
         };
       })
     );
@@ -373,7 +374,7 @@ export async function checkCustomerExists(phone: string) {
   try {
     const { data, error } = await supabaseAdmin
       .from("customers")
-      .select("id, name, phone, email")
+      .select("id, name, phone, email, date_of_birth")
       .eq("phone", phone)
       .single();
 
@@ -459,6 +460,7 @@ export async function confirmBooking(payload: {
   phone: string;
   name: string;
   email: string;
+  date_of_birth: string;
   deviceTypeId: string;  // Changed from deviceId
   deviceTypeName: string;  // Changed from deviceName
   selectedDate: string;
@@ -479,7 +481,8 @@ export async function confirmBooking(payload: {
       .rpc("get_or_create_customer", {
         p_phone: payload.phone,
         p_name: payload.name,
-        p_email: payload.email || null
+        p_email: payload.email || null,
+        p_dob: payload.date_of_birth
       });
 
     if (customerError) throw customerError;
@@ -499,6 +502,7 @@ export async function confirmBooking(payload: {
         customer_phone: payload.phone,
         customer_name: payload.name,
         customer_email: payload.email || null,
+        customer_dob: payload.date_of_birth,
         device_subtotal: payload.subtotal,
         food_subtotal: 0,
         total_amount: payload.total,

@@ -3,35 +3,38 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import { 
-  clearCart, 
-  removeFromCart, 
-  incrementQuantity, 
-  decrementQuantity } 
+import {
+  clearCart,
+  removeFromCart,
+  incrementQuantity,
+  decrementQuantity
+}
   from "@/lib/redux/slices/foodCartSlice";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  addFoodOrderToBooking, 
-  createStandaloneFoodOrder, 
-  validateMenuItems 
+import {
+  addFoodOrderToBooking,
+  createStandaloneFoodOrder,
+  validateMenuItems
 } from "../actions";
 import { checkCustomerExists } from "../../booking/actions";
-import { 
-  Loader2, 
-  Trash2, 
-  Plus, 
-  Minus, 
-  ShoppingCart, 
-  User, 
-  Phone, 
-  Mail, 
-  Sparkles, 
-  ChevronRight, 
-  ShieldCheck, 
-  RefreshCw 
+import {
+  Loader2,
+  Trash2,
+  Plus,
+  Minus,
+  ShoppingCart,
+  User,
+  Phone,
+  Mail,
+  Sparkles,
+  ChevronRight,
+  ShieldCheck,
+  RefreshCw,
+  Cake,
+  CheckCircle2, ArrowLeft
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
@@ -49,6 +52,7 @@ export default function FoodCheckoutPage() {
     bookingNumber: state.foodCart.bookingNumber,
     customerPhone: state.foodCart.customerPhone,
     customerName: state.foodCart.customerName,
+    customerDob: state.foodCart.customerDob,
   }));
 
   const [step, setStep] = useState<Step>("cart");
@@ -56,6 +60,7 @@ export default function FoodCheckoutPage() {
   const [phone, setPhone] = useState(bookingContext.customerPhone || "");
   const [name, setName] = useState(bookingContext.customerName || "");
   const [email, setEmail] = useState("");
+  const [customerDob, setCustomerDob] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
   const [mounted, setMounted] = useState(false);
 
@@ -63,7 +68,29 @@ export default function FoodCheckoutPage() {
     setMounted(true);
     if (bookingContext.customerPhone) setPhone(bookingContext.customerPhone);
     if (bookingContext.customerName) setName(bookingContext.customerName);
+    if (bookingContext.customerDob) setCustomerDob(formatFromDB(bookingContext.customerDob));
   }, [bookingContext.customerPhone, bookingContext.customerName]);
+
+
+  const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.replace(/[^0-9]/g, "");
+    if (val.length > 4) {
+      val = `${val.slice(0, 2)}-${val.slice(2, 4)}-${val.slice(4, 8)}`;
+    } else if (val.length > 2) {
+      val = `${val.slice(0, 2)}-${val.slice(2)}`;
+    }
+    setCustomerDob(val);
+  };
+
+  const formatFromDB = (dateStr: string) => {
+    const [y, m, d] = dateStr.split('-');
+    return `${d}-${m}-${y}`;
+  };
+
+  const formatForDB = (dateStr: string) => {
+    const [d, m, y] = dateStr.split('-');
+    return `${y}-${m}-${d}`;
+  };
 
   const cartTotal = useMemo(() => {
     return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -76,7 +103,7 @@ export default function FoodCheckoutPage() {
 
   const handleProceedToCheckout = () => {
     if (bookingContext.bookingId) {
-      submitOrderPayload(bookingContext.customerPhone || phone, bookingContext.customerName || name, null);
+      submitOrderPayload(bookingContext.customerPhone || phone, bookingContext.customerName || name, null, formatForDB(bookingContext.customerDob || customerDob));
     } else {
       setStep("phone");
     }
@@ -96,9 +123,10 @@ export default function FoodCheckoutPage() {
     if (result.exists && result.customer) {
       setName(result.customer.name);
       setEmail(result.customer.email || "");
+      setCustomerDob(formatFromDB(result.customer.date_of_birth));
       toast.success("Welcome back!", { description: `Hey ${result.customer.name}! Profile authenticated successfully.` });
 
-      await submitOrderPayload(phone, result.customer.name, result.customer.email || null);
+      await submitOrderPayload(phone, result.customer.name, result.customer.email || null, result.customer.date_of_birth);
     } else {
       toast.info("New Profile", { description: "Please complete registration to place your order." });
       setStep("details");
@@ -112,10 +140,10 @@ export default function FoodCheckoutPage() {
       toast.error("Required Field Missing", { description: "Name configuration is necessary." });
       return;
     }
-    await submitOrderPayload(phone, name, email.trim() || null);
+    await submitOrderPayload(phone, name, email.trim() || null, formatForDB(customerDob));
   };
 
-  const submitOrderPayload = async (targetPhone: string, targetName: string, targetEmail: string | null) => {
+  const submitOrderPayload = async (targetPhone: string, targetName: string, targetEmail: string | null, dob: string) => {
     setIsSubmitting(true);
 
     const validationResult = await validateMenuItems(
@@ -148,6 +176,7 @@ export default function FoodCheckoutPage() {
         targetPhone,
         targetName,
         targetEmail,
+        dob,
         cartItems.map((item) => ({
           menu_item_id: item.menu_item_id,
           name: item.name,
@@ -290,14 +319,27 @@ export default function FoodCheckoutPage() {
         </div>
 
         <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6">
-          <div className="border-b border-zinc-900 pb-4 space-y-1">
-            <h3 className="text-lg font-black uppercase text-white tracking-tight">CUSTOMER IDENTIFICATION</h3>
-            <p className="text-xs text-zinc-500 font-medium">Enter your mobile number to load profiles or route standalone orders.</p>
+          <div className="border-b border-zinc-900 pb-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => setStep("cart")}
+                className="h-8 flex items-center gap-2 text-zinc-500 hover:text-white px-2"
+              >
+                <ArrowLeft className="h-5 w-5" />
+                <span className="text-xs font-black uppercase tracking-wider">Back to Cart</span>
+              </Button>
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="text-lg font-black uppercase text-white tracking-tight">CUSTOMER IDENTIFICATION</h3>
+              <p className="text-xs text-zinc-500 font-medium">Enter your mobile number to load profiles or route standalone orders.</p>
+            </div>
           </div>
 
           <form onSubmit={handlePhoneLookupSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><Phone className="h-3 w-3 text-zinc-600"/> MOBILE NUMBER <span className="text-red-500">*</span></Label>
+              <Label htmlFor="phone" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><Phone className="h-3 w-3 text-zinc-600" /> MOBILE NUMBER <span className="text-red-500">*</span></Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-600 border-r border-zinc-900 pr-2">+91</span>
                 <Input
@@ -353,12 +395,28 @@ export default function FoodCheckoutPage() {
 
           <form onSubmit={handleNewCustomerSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><User className="h-3 w-3 text-zinc-600"/> FULL NAME <span className="text-red-500">*</span></Label>
+              <Label htmlFor="name" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><User className="h-3 w-3 text-zinc-600" /> FULL NAME <span className="text-red-500">*</span></Label>
               <Input id="name" type="text" required placeholder="Enter full name" value={name} onChange={(e) => setName(e.target.value)} className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl" />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><Mail className="h-3 w-3 text-zinc-600"/> EMAIL ADDRESS</Label>
+              <Label htmlFor="dob" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Cake className="h-3 w-3 text-zinc-600" /> DATE OF BIRTH (DD-MM-YYYY)
+              </Label>
+              <Input
+                id="dob"
+                type="text"
+                placeholder="DD-MM-YYYY"
+                required
+                maxLength={10}
+                value={customerDob}
+                onChange={handleDobChange}
+                className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><Mail className="h-3 w-3 text-zinc-600" /> EMAIL ADDRESS</Label>
               <Input id="email" type="email" placeholder="Enter your email (optional)" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl" />
             </div>
 
@@ -376,13 +434,13 @@ export default function FoodCheckoutPage() {
   if (step === "success") {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4 space-y-8 animate-in fade-in duration-300 flex flex-col items-center">
-        
+
 
         <div className="text-center space-y-3 select-none">
           <div className="flex justify-center">
-            <div className="w-16 h-16 rounded-full bg-transparent border-2 border-emerald-500 flex items-center justify-center p-1 shadow-[0_0_25px_rgba(16,185,129,0.2)]">
-              <div className="w-full h-full rounded-full bg-emerald-500 flex items-center justify-center">
-                <Plus className="h-6 w-6 text-black rotate-45 stroke-[4.5]" />
+            <div className="flex justify-center">
+              <div className="w-20 h-20 rounded-full bg-green-500/10 border-2 border-green-500 flex items-center justify-center">
+                <CheckCircle2 className="h-10 w-10 text-green-500" />
               </div>
             </div>
           </div>
@@ -403,11 +461,11 @@ export default function FoodCheckoutPage() {
                   <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest block">Order ID</span>
                   <span className="text-base font-black text-white font-mono tracking-wide">#{orderNumber || "FO-12345"}</span>
                 </div>
-                
+
                 <div className="space-y-1 text-right">
                   <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest block">Status</span>
                   <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-emerald-400 uppercase tracking-wide">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]" /> Paid Successfully
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]" /> PAID
                   </span>
                 </div>
               </div>
@@ -441,15 +499,15 @@ export default function FoodCheckoutPage() {
         </div>
 
         <div className="flex items-center justify-center gap-4 pt-2 w-full max-w-lg">
-          <Button 
-            onClick={handleNewOrder} 
+          <Button
+            onClick={handleNewOrder}
             className="flex-1 mr-10 bg-transparent hover:bg-zinc-900/60 border border-primary/40 text-[11px] font-black text-primary uppercase h-11 px-5 rounded-xl transition-all shadow-inner tracking-wider flex items-center justify-center gap-1.5"
           >
             Place Another Order
           </Button>
-          <Button 
-            onClick={() => router.push("/")} 
-            variant="ghost" 
+          <Button
+            onClick={() => router.push("/")}
+            variant="ghost"
             className="text-[11px] font-black uppercase text-zinc-400 hover:text-white h-11 px-4 tracking-wider transition-colors"
           >
             Back to Home

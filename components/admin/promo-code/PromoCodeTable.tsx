@@ -40,7 +40,7 @@ export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTab
       </div>
       <table className="w-full text-left border-collapse text-xs table-fixed min-w-[800px]">
         <thead>
-          <tr className="border-b border-zinc-900 bg-zinc-950/20 text-zinc-500 font-black uppercase text-[10px] tracking-wider select-none">
+          <tr className="border-b border-zinc-900 bg-zinc-950/20 text-zinc-500 font-black uppercase text-[11px] tracking-wider select-none">
             <th className="p-4 w-[20%]">Code</th>
             <th className="p-4 w-[30%]">Description</th>
             <th className="p-4 w-[15%]">Discount</th>
@@ -57,16 +57,16 @@ export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTab
               <td className="p-4 text-white font-bold whitespace-nowrap">
                 {row.discount_type === "percentage" ? `${Math.round(row.discount_value)}% Off` : `₹${Math.round(row.discount_value)}`}
               </td>
-              <td className="p-4 text-zinc-500 font-mono whitespace-nowrap">
+              <td className="p-4 text-data-placeholder font-mono whitespace-nowrap">
                 {new Date(row.valid_from).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                <span className="text-zinc-700 mx-0.5"> to </span>
+                <span className="text-data-placeholder mx-0.5"> to </span>
                 {new Date(row.valid_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
               </td>
               <td className="p-4 whitespace-nowrap">
                 {row.is_active ? (
                   <span className="bg-green-500/10 text-green-400 border border-green-500/20 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Live</span>
                 ) : (
-                  <span className="bg-zinc-900 text-zinc-600 border border-zinc-800 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Inactive</span>
+                  <span className="bg-zinc-950/80 text-red-400 border border-zinc-900 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Inactive</span>
                 )}
               </td>
               <td className="p-4 w-24 min-w-[96px] whitespace-nowrap">

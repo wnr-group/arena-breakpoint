@@ -18,6 +18,7 @@ export interface BookingState {
   selectedSlot: string | null
   slotStartTime: string | null
   slotEndTime: string | null
+  selectedDuration: number | null
   playerCount: number
 
   // Add-ons
@@ -39,6 +40,7 @@ export interface BookingState {
   phone: string | null
   name: string | null
   email: string | null
+  date_of_birth: string | null
 
   // Booking state
   bookingId: string | null
@@ -58,6 +60,7 @@ const initialState: BookingState = {
   selectedSlot: null,
   slotStartTime: null,
   slotEndTime: null,
+  selectedDuration: null,
   playerCount: 1,
   addons: [],
   subtotal: 0,
@@ -68,6 +71,7 @@ const initialState: BookingState = {
   phone: null,
   name: null,
   email: null,
+  date_of_birth: null,
   bookingId: null,
   slotLockExpiry: null,
 }
@@ -161,10 +165,12 @@ export const bookingSlice = createSlice({
       phone: string
       name: string
       email?: string
+      date_of_birth: string
     }>) => {
       state.phone = action.payload.phone
       state.name = action.payload.name
       state.email = action.payload.email || null
+      state.date_of_birth = action.payload.date_of_birth
     },
 
     setBookingId: (state, action: PayloadAction<string>) => {
@@ -173,6 +179,14 @@ export const bookingSlice = createSlice({
 
     setSlotLockExpiry: (state, action: PayloadAction<number>) => {
       state.slotLockExpiry = action.payload
+    },
+
+    setDuration: (state, action: PayloadAction<number>) => {
+      state.selectedDuration = action.payload;
+    },
+
+    clearSlotTimer: (state) => {
+      state.slotLockExpiry = null; // Only stops the countdown
     },
 
     resetBooking: () => initialState,
@@ -191,6 +205,8 @@ export const {
   setCustomerDetails,
   setBookingId,
   setSlotLockExpiry,
+  setDuration,
+  clearSlotTimer,
   resetBooking,
 } = bookingSlice.actions
 

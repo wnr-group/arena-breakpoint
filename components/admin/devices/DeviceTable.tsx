@@ -48,25 +48,25 @@ export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTabl
                 <td className="py-3 px-6">
                   <div className="h-10 w-14 bg-[#1a1a1a] border border-[#27272a] rounded overflow-hidden flex items-center justify-center">
                     {device.image_url ? (
-                      <img src={device.image_url} alt="Cover" className="w-full h-full object-contain p-1" />
+                      <img src={device.image_url} alt="Cover" className="w-full h-full object-cover p-1" />
                     ) : (
                       <ImageIcon className="h-4 w-4 text-zinc-700" />
                     )}
                   </div>
                 </td>
-                <td className="py-4 px-6 font-bold text-white group-hover:text-primary transition-all duration-300">
+                <td className="py-4 px-6 font-bold text-primary transition-all duration-300">
                   {device.station_number}
                 </td>
                 <td className="py-4 px-6 text-[#a1a1aa]">{device.device_type?.display_name || 'N/A'}</td>
                 <td className="py-4 px-6 text-sm text-[#a1a1aa] max-w-xs truncate">
                   {device.specs || <span className="text-zinc-600 italic text-xs">None listed</span>}
                 </td>
-                <td className="py-4 px-6 font-semibold text-white">
+                <td className="py-4 px-6 font-semibold text-primary">
                   ₹{device.device_type?.regular_hourly_rate ? Number(device.device_type.regular_hourly_rate).toLocaleString('en-IN') : "0"}/hr
                 </td>
 
                 <td className="py-4 px-6 font-medium text-[#a1a1aa]">
-                  <span className="text-xs text-zinc-600">{device.device_type?.included_players || 1}p inc.</span>
+                  <span className="text-xs text-data-placeholder">{device.device_type?.included_players || 1}p inc.</span>
                 </td>
 
                 <td className="py-4 px-6">
@@ -91,7 +91,7 @@ export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTabl
                           disabled={isPending}
                           className="h-8 w-8 text-[#a1a1aa] hover:text-[#ef4444] hover:bg-red-950/20"
                         >
-                          {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                          {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-red" />}
                         </Button>
                       </AlertDialogTrigger>
 

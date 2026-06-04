@@ -45,6 +45,7 @@ function FoodMenuPageContent() {
     const urlBookingNumber = searchParams.get("bookingNumber");
     const phone = searchParams.get("phone");
     const name = searchParams.get("name");
+    const dob = searchParams.get("date_of_birth");
 
     if (urlBookingId && urlBookingNumber && phone && name) {
       dispatch(
@@ -53,6 +54,7 @@ function FoodMenuPageContent() {
           bookingNumber: urlBookingNumber,
           customerPhone: phone,
           customerName: name,
+          customerDob: dob || ""
         })
       );
     }
@@ -124,15 +126,13 @@ function FoodMenuPageContent() {
 
   return (
     <div className="w-full max-w-7xl mx-auto py-4 px-4 space-y-8 pb-36 animate-in fade-in duration-300">
-      
-      {/* Breadcrumb Navigation Block */}
+
       <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 select-none">
         <span>Home</span>
         <ChevronRight className="h-3 w-3 text-zinc-700" />
         <span className="text-primary">Food Menu</span>
       </div>
 
-      {/* Main Intro Header block matching image_8d461e.png */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-900 pb-6">
         <div className="space-y-1">
           <h1 className="text-3xl font-black uppercase tracking-tight text-white">
@@ -155,16 +155,14 @@ function FoodMenuPageContent() {
         )}
       </div>
 
-      {/* Combined Action Row: Category Grid Layout & Search */}
       <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center bg-[#0c0c0e]/60 p-4 rounded-2xl border border-zinc-900/80">
         <div className="flex gap-2 overflow-x-auto w-full xl:w-auto scrollbar-none py-0.5">
           <button
             onClick={() => setActiveCategory("all")}
-            className={`px-5 py-2.5 text-[10px] font-black uppercase border rounded-lg transition-all duration-200 whitespace-nowrap tracking-wider ${
-              activeCategory === "all"
+            className={`px-5 py-2.5 text-[10px] font-black uppercase border rounded-lg transition-all duration-200 whitespace-nowrap tracking-wider ${activeCategory === "all"
                 ? "bg-primary text-black border-transparent shadow-[0_4px_12px_rgba(255,193,7,0.15)]"
                 : "bg-zinc-900/40 border-zinc-800/60 text-zinc-400 hover:text-white hover:border-zinc-700"
-            }`}
+              }`}
           >
             All Items
           </button>
@@ -172,11 +170,10 @@ function FoodMenuPageContent() {
             <button
               key={category}
               onClick={() => setActiveCategory(category)}
-              className={`px-5 py-2.5 text-[10px] font-black uppercase border rounded-lg transition-all duration-200 whitespace-nowrap tracking-wider ${
-                activeCategory === category
+              className={`px-5 py-2.5 text-[10px] font-black uppercase border rounded-lg transition-all duration-200 whitespace-nowrap tracking-wider ${activeCategory === category
                   ? "bg-primary text-black border-transparent shadow-[0_4px_12px_rgba(255,193,7,0.15)]"
                   : "bg-zinc-900/40 border-zinc-800/60 text-zinc-400 hover:text-white hover:border-zinc-700"
-              }`}
+                }`}
             >
               {category}
             </button>
@@ -217,8 +214,7 @@ function FoodMenuPageContent() {
                 <div className="flex-1 h-[1px] bg-gradient-to-r from-zinc-900 to-transparent ml-2" />
               </div>
 
-              {/* Exact 4-Column Presentation Layer matching image_8c653b.jpg */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {items.map((item) => {
                   const quantityInCart = getCartItemQuantity(item.id);
 
@@ -227,7 +223,6 @@ function FoodMenuPageContent() {
                       key={item.id}
                       className="bg-[#111] border border-zinc-900/90 overflow-hidden group hover:border-zinc-800/80 transition-all duration-300 flex flex-col rounded-xl relative shadow-lg"
                     >
-                      {/* Top Media Frame Banner - Fixed edge-to-edge side coverage configuration */}
                       <div className="h-48 w-full overflow-hidden relative bg-zinc-950 flex-shrink-0 border-b border-zinc-900/60">
                         {item.image_url ? (
                           <>
@@ -245,7 +240,6 @@ function FoodMenuPageContent() {
                           </div>
                         )}
 
-                        {/* Inventory Warning Tags */}
                         {item.quantity <= 10 && item.quantity > 0 && (
                           <span className="absolute top-3 right-3 z-10 inline-flex items-center px-2 py-0.5 text-[8px] font-black text-white bg-red-600 border border-red-500/20 rounded uppercase tracking-wider scale-90">
                             LOW STOCK
@@ -253,7 +247,6 @@ function FoodMenuPageContent() {
                         )}
                       </div>
 
-                      {/* Content Stack Area Box */}
                       <div className="p-4 flex-1 flex flex-col justify-between space-y-4">
                         <div className="space-y-1.5">
                           <div className="flex items-start justify-between gap-3">
@@ -266,7 +259,6 @@ function FoodMenuPageContent() {
                           </p>
                         </div>
 
-                        {/* Bottom Action Ribbon Panel */}
                         <div className="flex items-center justify-between pt-2 border-t border-zinc-900/60 w-full">
                           <span className="text-sm font-black text-primary font-mono">
                             ₹{Number(item.price)}.00
@@ -316,7 +308,6 @@ function FoodMenuPageContent() {
         </div>
       )}
 
-      {/* Floating Checkout Sticky Bottom Ribbon Segment */}
       {cartItemCount > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/80 backdrop-blur-md border-t border-zinc-900 p-4 animate-in slide-in-from-bottom duration-300 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
           <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
@@ -343,7 +334,7 @@ function FoodMenuPageContent() {
                 onClick={() => router.push("/food/checkout")}
                 className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-11 px-5 rounded-xl flex items-center gap-2 shadow-[0_4px_15px_rgba(255,193,7,0.25)] active:scale-[0.98] transition-all"
               >
-                <ShoppingCart className="h-6 w-4 stroke-[3]"/>  Your Cart 
+                <ShoppingCart className="h-6 w-4 stroke-[3]" />  Your Cart
               </Button>
             </div>
           </div>
