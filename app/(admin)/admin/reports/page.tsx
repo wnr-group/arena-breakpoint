@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
 import {
-  DollarSign, TrendingUp, ShoppingBag, Gamepad2, Users,
-  Calendar, Download, Loader2, UtensilsCrossed, BarChart3, PieChart
+  DollarSign, TrendingUp, ShoppingBag, Gamepad2,
+  Download, Loader2, UtensilsCrossed, BarChart3, CalendarDays
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -17,6 +17,8 @@ import {
   getRevenueReports,
   type ReportFilters
 } from "./actions";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
 
 export default function AdminReportsPage() {
   const [activeTab, setActiveTab] = useState<"overview" | "food" | "device" | "revenue">("overview");
@@ -237,46 +239,71 @@ export default function AdminReportsPage() {
         </div>
 
         {/* Custom Date Range */}
-        <div>
-          <Label className="text-[10px] font-black uppercase text-zinc-600 mb-2 block">
-            Custom Date Range
-          </Label>
-          <div className="flex flex-col md:flex-row gap-4 items-end">
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs font-black uppercase text-zinc-500">
-                  From Date
-                </Label>
-                <Input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  className="bg-[#0a0a0a] border-zinc-900 text-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-black uppercase text-zinc-500">
-                  To Date
-                </Label>
-                <Input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="bg-[#0a0a0a] border-zinc-900 text-white"
-                />
-              </div>
-            </div>
-            <Button
-              onClick={handleApplyFilters}
-              className="bg-gradient-primary hover:bg-gradient-primary-hover text-black font-black uppercase text-xs h-10 glow-primary-hover"
-            >
-              Apply Custom Range
-            </Button>
-          </div>
-        </div>
+        <div className="flex flex-col md:flex-row gap-4 items-end">
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
 
-        {/* Active Filter Display */}
-        {(dateFrom || dateTo) && (
+            {/* FROM DATE POP-OVER */}
+            <div className="space-y-2 w-full">
+              <Label className="text-[10px] font-black ml-2 tracking-widest uppercase text-zinc-500 flex items-center gap-1.5">
+                From Date
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="w-full bg-[#0a0a0a] border border-zinc-900 h-12 rounded-xl px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <span>{dateFrom ? format(new Date(dateFrom), "dd-MM-yyyy") : <span className="text-zinc-400">dd-mm-yyyy</span>}</span>
+                    <CalendarDays className="h-4 w-4 text-primary" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-3 bg-[#0c0c0e] border border-zinc-800 rounded-xl shadow-2xl" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateFrom ? new Date(dateFrom) : undefined}
+                    onSelect={(date) => date && setDateFrom(format(date, 'yyyy-MM-dd'))}
+                    className="text-white"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* TO DATE POP-OVER */}
+            <div className="space-y-2 w-full">
+              <Label className="text-[10px] font-black ml-2 tracking-widest uppercase text-zinc-500 flex items-center gap-1.5">
+                To Date
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="w-full bg-[#0a0a0a] border border-zinc-900 h-12 rounded-xl px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <span>{dateTo ? format(new Date(dateTo), "dd-MM-yyyy") : <span className="text-zinc-400">dd-mm-yyyy</span>}</span>
+                    <CalendarDays className="h-4 w-4 text-primary" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-3 bg-[#0c0c0e] border border-zinc-800 rounded-xl shadow-2xl" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateTo ? new Date(dateTo) : undefined}
+                    onSelect={(date) => date && setDateTo(format(date, 'yyyy-MM-dd'))}
+                    className="text-white "
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          <Button
+            onClick={handleApplyFilters}
+            className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-11 rounded-xl px-6"
+          >
+            Apply Range
+          </Button>
+
+          {/* Active Filter Display */}
+          {/* {(dateFrom || dateTo) && (
           <div className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#27272a] rounded-lg">
             <div className="flex items-center gap-2 text-xs text-zinc-400">
               <Calendar className="h-3 w-3 text-primary" />
@@ -286,18 +313,20 @@ export default function AdminReportsPage() {
                 {dateTo ? new Date(dateTo).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Now'}
               </span>
             </div>
-            <button
-              onClick={() => {
-                setDateFrom("");
-                setDateTo("");
-                handleApplyFilters();
-              }}
-              className="text-[10px] font-black uppercase text-zinc-500 hover:text-primary transition-colors"
-            >
-              Clear Filter
-            </button>
-          </div>
-        )}
+            </div> )} */}
+          <Button
+            onClick={() => {
+              setDateFrom("");
+              setDateTo("");
+              handleApplyFilters();
+            }}
+            className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-11 rounded-xl px-6"
+          >
+            Clear Filters
+          </Button>
+        </div>
+
+
       </Card>
 
       {/* Tabs */}
@@ -309,8 +338,8 @@ export default function AdminReportsPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === tab.id
-                  ? "text-primary border-b-2 border-primary"
-                  : "text-zinc-500 hover:text-zinc-300"
+                ? "text-primary border-b-2 border-primary"
+                : "text-zinc-500 hover:text-zinc-300"
                 }`}
             >
               <Icon className="h-4 w-4" />
@@ -391,7 +420,7 @@ export default function AdminReportsPage() {
                       </h3>
                     </div>
                     <div className="p-2 bg-purple-500/10 rounded-lg">
-                      <Calendar className="h-5 w-5 text-purple-500" />
+                      <CalendarDays className="h-5 w-5 text-purple-500" />
                     </div>
                   </div>
                 </Card>
@@ -399,47 +428,47 @@ export default function AdminReportsPage() {
 
               {/* Additional Stats */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="bg-[#121212] border-[#27272a] p-5">
+                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-black uppercase text-zinc-500">
                       Food Orders
                     </p>
                     <ShoppingBag className="h-4 w-4 text-zinc-600" />
                   </div>
-                  <h4 className="text-xl font-black text-white">
+                  <h4 className="text-xl font-black text-primary">
                     {overviewData.totalFoodOrders}
                   </h4>
-                  <p className="text-xs text-zinc-600 mt-1">
+                  <p className="text-xs text-data-placeholder mt-1">
                     {overviewData.totalItemsSold} items sold
                   </p>
                 </Card>
 
-                <Card className="bg-[#121212] border-[#27272a] p-5">
+                <Card className="bg-[#121212] p-5 hover:border-primary border-1 hover:-translate-y-1">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-black uppercase text-zinc-500">
                       Hours Booked
                     </p>
-                    <Calendar className="h-4 w-4 text-zinc-600" />
+                    <CalendarDays className="h-4 w-4 text-zinc-600" />
                   </div>
-                  <h4 className="text-xl font-black text-white">
+                  <h4 className="text-xl font-black text-primary">
                     {overviewData.totalHoursBooked}
                   </h4>
-                  <p className="text-xs text-zinc-600 mt-1">
+                  <p className="text-xs text-data-placeholder zinc-600 mt-1">
                     Total gaming hours
                   </p>
                 </Card>
 
-                <Card className="bg-[#121212] border-[#27272a] p-5">
+                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-black uppercase text-zinc-500">
                       Avg Revenue
                     </p>
                     <TrendingUp className="h-4 w-4 text-zinc-600" />
                   </div>
-                  <h4 className="text-xl font-black text-white">
+                  <h4 className="text-xl font-black text-primary">
                     ₹{(overviewData.totalRevenue / (overviewData.totalBookings || 1)).toFixed(0)}
                   </h4>
-                  <p className="text-xs text-zinc-600 mt-1">
+                  <p className="text-xs text-data-placeholder mt-1">
                     Per booking
                   </p>
                 </Card>
@@ -452,7 +481,7 @@ export default function AdminReportsPage() {
             <div className="space-y-6">
               {/* Food Summary */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="bg-[#121212] border-[#27272a] p-5">
+                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase text-zinc-500 mb-2">
                     Total Revenue
                   </p>
@@ -460,7 +489,7 @@ export default function AdminReportsPage() {
                     ₹{foodData.summary.totalRevenue.toLocaleString('en-IN')}
                   </h3>
                 </Card>
-                <Card className="bg-[#121212] border-[#27272a] p-5">
+                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase text-zinc-500 mb-2">
                     Items Sold
                   </p>
@@ -468,7 +497,7 @@ export default function AdminReportsPage() {
                     {foodData.summary.totalItemsSold}
                   </h3>
                 </Card>
-                <Card className="bg-[#121212] border-[#27272a] p-5">
+                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase text-zinc-500 mb-2">
                     Total Orders
                   </p>
@@ -476,7 +505,7 @@ export default function AdminReportsPage() {
                     {foodData.summary.totalOrders}
                   </h3>
                 </Card>
-                <Card className="bg-[#121212] border-[#27272a] p-5">
+                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase text-zinc-500 mb-2">
                     Avg Order Value
                   </p>
@@ -501,7 +530,7 @@ export default function AdminReportsPage() {
                         <p className="text-sm font-bold text-white">
                           {category.category}
                         </p>
-                        <p className="text-xs text-zinc-600">
+                        <p className="text-xs text-data-placeholder">
                           {category.totalQuantity} items • {category.itemCount} unique items
                         </p>
                       </div>
@@ -509,7 +538,7 @@ export default function AdminReportsPage() {
                         <p className="text-lg font-black text-primary">
                           ₹{category.totalRevenue.toLocaleString('en-IN')}
                         </p>
-                        <p className="text-[9px] text-zinc-600 uppercase">
+                        <p className="text-[9px] text-data-placeholder uppercase">
                           {((category.totalRevenue / foodData.summary.totalRevenue) * 100).toFixed(1)}% of total
                         </p>
                       </div>
@@ -535,7 +564,7 @@ export default function AdminReportsPage() {
                         </div>
                         <div>
                           <p className="text-sm font-bold text-white">{item.itemName}</p>
-                          <p className="text-xs text-zinc-600">
+                          <p className="text-xs text-data-placeholder">
                             {item.category} • {item.totalQuantity} sold
                           </p>
                         </div>
@@ -544,7 +573,7 @@ export default function AdminReportsPage() {
                         <p className="text-sm font-black text-white">
                           ₹{item.totalRevenue.toLocaleString('en-IN')}
                         </p>
-                        <p className="text-[9px] text-zinc-600 uppercase">
+                        <p className="text-[9px] text-data-placeholder uppercase">
                           {item.orderCount} orders
                         </p>
                       </div>
@@ -560,7 +589,7 @@ export default function AdminReportsPage() {
             <div className="space-y-6">
               {/* Device Summary */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="bg-[#121212] border-[#27272a] p-5">
+                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase text-zinc-500 mb-2">
                     Total Revenue
                   </p>
@@ -568,7 +597,7 @@ export default function AdminReportsPage() {
                     ₹{deviceData.summary.totalRevenue.toLocaleString('en-IN')}
                   </h3>
                 </Card>
-                <Card className="bg-[#121212] border-[#27272a] p-5">
+                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase text-zinc-500 mb-2">
                     Total Bookings
                   </p>
@@ -576,7 +605,7 @@ export default function AdminReportsPage() {
                     {deviceData.summary.totalBookings}
                   </h3>
                 </Card>
-                <Card className="bg-[#121212] border-[#27272a] p-5">
+                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase text-zinc-500 mb-2">
                     Hours Booked
                   </p>
@@ -584,7 +613,7 @@ export default function AdminReportsPage() {
                     {deviceData.summary.totalHours}
                   </h3>
                 </Card>
-                <Card className="bg-[#121212] border-[#27272a] p-5">
+                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase text-zinc-500 mb-2">
                     Avg Revenue
                   </p>
@@ -615,21 +644,21 @@ export default function AdminReportsPage() {
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                         <div>
-                          <p className="text-zinc-600">Bookings</p>
+                          <p className="text-data-placeholder">Bookings</p>
                           <p className="font-bold text-white">{device.totalBookings}</p>
                         </div>
                         <div>
-                          <p className="text-zinc-600">Hours</p>
+                          <p className="text-data-placeholder">Hours</p>
                           <p className="font-bold text-white">{device.totalHours}h</p>
                         </div>
                         <div>
-                          <p className="text-zinc-600">Avg Players</p>
+                          <p className="text-data-placeholder">Avg Players</p>
                           <p className="font-bold text-white">
                             {device.averagePlayersPerBooking.toFixed(1)}
                           </p>
                         </div>
                         <div>
-                          <p className="text-zinc-600">Extra Player Rev</p>
+                          <p className="text-data-placeholder">Extra Player Rev</p>
                           <p className="font-bold text-primary">
                             ₹{device.extraPlayerRevenue.toLocaleString('en-IN')}
                           </p>
@@ -647,7 +676,7 @@ export default function AdminReportsPage() {
             <div className="space-y-6">
               {/* Revenue Summary */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 p-6">
+                <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 p-6 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase text-green-500/70 mb-2">
                     Total Revenue
                   </p>
@@ -656,13 +685,13 @@ export default function AdminReportsPage() {
                   </h3>
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-zinc-500">Device Revenue:</span>
+                      <span className="text-data-placeholder">Device Revenue:</span>
                       <span className="font-bold text-white">
                         ₹{revenueData.summary.deviceRevenue.toLocaleString('en-IN')}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-zinc-500">Food Revenue:</span>
+                      <span className="text-data-placeholder">Food Revenue:</span>
                       <span className="font-bold text-white">
                         ₹{revenueData.summary.foodRevenue.toLocaleString('en-IN')}
                       </span>
@@ -670,14 +699,14 @@ export default function AdminReportsPage() {
                   </div>
                 </Card>
 
-                <Card className="bg-[#121212] border-[#27272a] p-6">
-                  <p className="text-xs font-black uppercase text-zinc-500 mb-2">
+                <Card className="bg-[#121212] border-[#27272a] p-6 hover:-translate-y-1">
+                  <p className="text-xs font-black uppercase 0text-zinc-50 mb-2">
                     Payment Status
                   </p>
                   <div className="space-y-3">
                     <div>
                       <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs text-zinc-500">Paid</span>
+                        <span className="text-xs text-data-placeholder">Paid</span>
                         <span className="text-sm font-black text-green-500">
                           {revenueData.summary.paidBookings}
                         </span>
@@ -693,7 +722,7 @@ export default function AdminReportsPage() {
                     </div>
                     <div>
                       <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs text-zinc-500">Pending</span>
+                        <span className="text-xs text-data-placeholder">Pending</span>
                         <span className="text-sm font-black text-amber-500">
                           {revenueData.summary.pendingBookings}
                         </span>
@@ -710,14 +739,14 @@ export default function AdminReportsPage() {
                   </div>
                 </Card>
 
-                <Card className="bg-[#121212] border-[#27272a] p-6">
-                  <p className="text-xs font-black uppercase text-zinc-500 mb-2">
+                <Card className="bg-[#121212] border-[#27272a] p-6 hover:-translate-y-1">
+                  <p className="text-xs font-black uppercase text-white mb-2">
                     Revenue Split
                   </p>
                   <div className="space-y-3">
                     <div>
                       <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs text-zinc-500">Device</span>
+                        <span className="text-xs text-data-placeholder">Device</span>
                         <span className="text-sm font-black text-blue-500">
                           {revenueData.summary.deviceRevenuePercentage.toFixed(1)}%
                         </span>
@@ -731,7 +760,7 @@ export default function AdminReportsPage() {
                     </div>
                     <div>
                       <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs text-zinc-500">Food</span>
+                        <span className="text-xs text-data-placeholder">Food</span>
                         <span className="text-sm font-black text-amber-500">
                           {revenueData.summary.foodRevenuePercentage.toFixed(1)}%
                         </span>
@@ -758,13 +787,13 @@ export default function AdminReportsPage() {
                       key={source.source}
                       className="p-4 bg-[#0a0a0a] border border-[#27272a] rounded-lg"
                     >
-                      <p className="text-xs font-black uppercase text-zinc-500 mb-2">
+                      <p className="text-xs font-black uppercase text-white mb-2">
                         {source.source === "walk_in" ? "Walk-In" : "Online"}
                       </p>
                       <h4 className="text-xl font-black text-primary mb-1">
                         ₹{source.totalRevenue.toLocaleString('en-IN')}
                       </h4>
-                      <p className="text-xs text-zinc-600">
+                      <p className="text-xs text-data-placeholder">
                         {source.bookingCount} bookings
                       </p>
                     </div>
@@ -785,7 +814,7 @@ export default function AdminReportsPage() {
                     return (
                       <div key={day.date} className="space-y-1">
                         <div className="flex justify-between text-xs">
-                          <span className="text-zinc-500">
+                          <span className="text-data-placeholder">
                             {new Date(day.date).toLocaleDateString('en-IN', {
                               month: 'short',
                               day: 'numeric'
@@ -818,11 +847,11 @@ export default function AdminReportsPage() {
                 <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-[#27272a]">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                    <span className="text-xs text-zinc-500">Device</span>
+                    <span className="text-xs text-data-placeholder">Device</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-amber-500 rounded"></div>
-                    <span className="text-xs text-zinc-500">Food</span>
+                    <span className="text-xs text-data-placeholder">Food</span>
                   </div>
                 </div>
               </Card>
