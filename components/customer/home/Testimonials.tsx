@@ -1,120 +1,116 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { motion, useMotionValue, useMotionValueEvent, animate } from 'framer-motion';
-import { Star } from 'lucide-react';
+import { motion, useMotionValue, useMotionValueEvent, animate, useInView, Variants } from 'framer-motion';
+import { Star, Quote } from 'lucide-react';
 
-// --- Dummy Data 
 const testimonials = [
   {
     id: 1,
     name: "Bryan G.",
-    text: "The DDoS protection from Playhost is a lifesaver. We used to get attacked regularly, but since switching to their servers, we haven't had any downtime.",
+    role: "Server Admin",
+    text: "The DDoS protection from Playhost is a lifesaver. We used to get attacked regularly, but since switching, we haven't had a single minute of downtime.",
     avatar: "https://i.pravatar.cc/150?u=bryan",
     rating: 5
   },
   {
     id: 2,
     name: "Michael S.",
-    text: "I've been using Playhost for my game server needs, and I couldn't be happier. The server uptime is fantastic, and the customer support team is always quick to assist with any issues.",
+    role: "Game Developer",
+    text: "I've been using Playhost for my game server needs and couldn't be happier. Uptime is fantastic and the support team is always quick to assist.",
     avatar: "https://i.pravatar.cc/150?u=michael",
     rating: 5
   },
   {
     id: 3,
     name: "Robert L.",
-    text: "Running a game server used to be a hassle, but Playhost makes it easy. The control panel is user-friendly, and I love how they handle server maintenance and updates.",
+    role: "Community Manager",
+    text: "Running a game server used to be a hassle, but Playhost makes it effortless. The control panel is intuitive and maintenance is handled automatically.",
     avatar: "https://i.pravatar.cc/150?u=robert",
     rating: 5
   },
   {
     id: 4,
     name: "Jake M.",
-    text: "I've tried several hosting providers in the past, and Playhost is by far the best. Their server performance is top-notch, and I've never experienced lag while playing with friends.",
+    role: "Esports Player",
+    text: "I've tried several hosting providers and Playhost is by far the best. Server performance is top-notch — zero lag even with a full lobby.",
     avatar: "https://i.pravatar.cc/150?u=jake",
     rating: 5
   },
   {
     id: 5,
     name: "Sarah T.",
+    role: "Streamer",
     text: "Customer support is unparalleled. Whenever I have a question about mod installations, they reply within minutes. Highly recommend to any serious gamer.",
     avatar: "https://i.pravatar.cc/150?u=sarah",
     rating: 5
   }
 ];
 
+// Scroll entrance variants
+const sectionVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.12, delayChildren: 0.1 }
+  }
+};
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 32 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] } }
+};
+
 export default function Testimonials() {
   const [singleSetWidth, setSingleSetWidth] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
-  
-  // Custom Cursor States
+  const sectionRef = useRef<HTMLElement>(null);
+
   const [isHovering, setIsHovering] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-
-  const x = useMotionValue(0);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // Measure the width of exactly ONE set of testimonials to calculate the seamless jump
+  const x = useMotionValue(0);
+
+  // useInView for scroll entrance
+  const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+
   useEffect(() => {
     const updateWidth = () => {
       if (cardRef.current) {
         const cardWidth = cardRef.current.offsetWidth;
-        const gap = 24; 
+        const gap = 20;
         const setWidth = (cardWidth + gap) * testimonials.length;
-        
         setSingleSetWidth(setWidth);
-        
-        // Start the carousel in the "middle" set so we can drag left OR right immediately
         x.jump(-setWidth);
       }
     };
-    
     updateWidth();
     window.addEventListener('resize', updateWidth);
     return () => window.removeEventListener('resize', updateWidth);
   }, [x]);
 
-  // Infinite Scroll Logic: Seamlessly jump the X coordinate when crossing thresholds
   useMotionValueEvent(x, "change", (latestX) => {
     if (singleSetWidth === 0) return;
-
-    // If we drag too far Right (entering the first cloned set) -> Jump left to the middle set
     if (latestX > -singleSetWidth) {
       x.jump(latestX - singleSetWidth);
-      return; 
-    } 
-    // If we drag too far Left (entering the third cloned set) -> Jump right to the middle set
-    else if (latestX <= -singleSetWidth * 2) {
+      return;
+    } else if (latestX <= -singleSetWidth * 2) {
       x.jump(latestX + singleSetWidth);
       return;
     }
-
-    // Calculate Active Dot based on the current position within the middle set
     const positionWithinSet = Math.abs(latestX + singleSetWidth);
     const scrollPercentage = positionWithinSet / singleSetWidth;
     let index = Math.round(scrollPercentage * testimonials.length);
     if (index >= testimonials.length) index = 0;
-    
     setActiveIndex(index);
   });
 
-  // Handle clicking on a dot to scroll to that specific card
   const handleDotClick = (index: number) => {
     if (singleSetWidth === 0) return;
-    
-    // Calculate the exact width of a single card + gap
     const itemWidth = singleSetWidth / testimonials.length;
-    
-    // Target the specific card inside the *middle* set
     const targetX = -singleSetWidth - (index * itemWidth);
-    
-    // Animate the carousel to that position
-    animate(x, targetX, {
-      type: "spring",
-      stiffness: 200,
-      damping: 25
-    });
+    animate(x, targetX, { type: "spring", stiffness: 220, damping: 28 });
   };
 
-  // Update custom cursor position
   const handleMouseMove = (e: React.MouseEvent) => {
     setMousePosition({ x: e.clientX, y: e.clientY });
   };
@@ -122,115 +118,151 @@ export default function Testimonials() {
   const extendedTestimonials = [...testimonials, ...testimonials, ...testimonials];
 
   return (
-    <section className="w-full bg-[#141414] py-24 overflow-hidden  relative">
-      
-      {/* Custom Black Circle Cursor with SVGs */}
+    <section
+      ref={sectionRef}
+      className="w-full bg-[#0f0f0f] py-24 overflow-hidden relative"
+    >
+      {/* Custom cursor */}
       {isHovering && (
-        <motion.div 
-          className="fixed top-0 left-0 w-20 h-20 bg-[#0a0a0a] rounded-full flex items-center justify-center pointer-events-none z-50 shadow-2xl hidden md:flex gap-3"
-          animate={{ 
-            x: mousePosition.x - 40, 
-            y: mousePosition.y - 40 
-          }}
-          transition={{ type: "tween", ease: "backOut", duration: 0.1 }}
+        <motion.div
+          className="fixed top-0 left-0 w-16 h-16 bg-[#FFC107] rounded-full flex items-center justify-center pointer-events-none z-50 shadow-2xl hidden md:flex gap-2"
+          animate={{ x: mousePosition.x - 32, y: mousePosition.y - 32 }}
+          transition={{ type: "tween", ease: "backOut", duration: 0.08 }}
         >
-          {/* Solid Left Triangle */}
-          <svg width="12" height="14" viewBox="0 0 12 14" fill="white" className="opacity-90">
+          <svg width="10" height="12" viewBox="0 0 12 14" fill="#0a0a0a">
             <path d="M12 14L0 7L12 0V14Z" />
           </svg>
-          
-          {/* Solid Right Triangle */}
-          <svg width="12" height="14" viewBox="0 0 12 14" fill="white" className="opacity-90">
+          <svg width="10" height="12" viewBox="0 0 12 14" fill="#0a0a0a">
             <path d="M0 0L12 7L0 14V0Z" />
           </svg>
         </motion.div>
       )}
 
-      <div className="max-w-[1500px] mx-auto px-6 md:px-12 relative border">
-        
-        {/* Header Section */}
-        <div className="mb-14 flex flex-col items-start gap-5">
-          <div className="px-5 py-2 rounded-full border border-white/10 bg-transparent">
-            <span className="text-sm font-medium text-white tracking-wide">
-              Customer reviews
-            </span>
-          </div>
-          
-          <h2 
-            className="text-5xl md:text-6xl font-black tracking-wide text-gray-200"
-            style={{ textShadow: "0 4px 20px rgba(0,0,0,0.5)" }}
-          >
-            4.85 out of 5
-          </h2>
-        </div>
+      <div className="max-w-[1400px] mx-auto px-6 md:px-12">
 
-        {/* Draggable Infinite Carousel Container */}
-        <motion.div 
-          className="overflow-hidden md:cursor-none select-none py-4 "
+        {/* Header — scroll entrance */}
+        <motion.div
+          variants={sectionVariants}
+          initial="hidden"
+          animate={isInView ? "visible" : "hidden"}
+          className="mb-14 flex flex-col md:flex-row md:items-end md:justify-between gap-6"
+        >
+          <div className="flex flex-col gap-4">
+            <motion.div variants={fadeUp}>
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs font-semibold text-[#FFC107] tracking-[0.18em] uppercase">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#FFC107] animate-pulse" />
+                Customer Reviews
+              </span>
+            </motion.div>
+
+            <motion.h2
+              variants={fadeUp}
+              className="text-5xl md:text-6xl font-black text-white leading-none"
+            >
+              4.85{" "}
+              <span className="text-2xl md:text-3xl font-bold text-zinc-500">out of 5</span>
+            </motion.h2>
+          </div>
+
+          <motion.div variants={fadeUp} className="flex items-center gap-1.5">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} className="w-5 h-5 fill-[#FFC107] text-[#FFC107]" />
+            ))}
+            <span className="ml-2 text-zinc-400 text-sm font-medium">Based on 2,400+ reviews</span>
+          </motion.div>
+        </motion.div>
+
+        {/* Carousel */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+          transition={{ duration: 0.7, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          className="overflow-hidden md:cursor-none select-none py-3"
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
           onMouseMove={handleMouseMove}
         >
-          <motion.div 
+          <motion.div
             drag="x"
             dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
             style={{ x }}
-            className="flex gap-6 w-max"
+            className="flex gap-5 w-max"
           >
-            {extendedTestimonials.map((testimonial, idx) => (
-              <div 
-                // Attach the ref to the first card to calculate our set widths
+            {extendedTestimonials.map((t, idx) => (
+              <div
                 ref={idx === 0 ? cardRef : null}
-                key={`${testimonial.id}-${idx}`} 
-                className="w-[340px] md:w-[420px] bg-[#1f1f1f] rounded-2xl p-8 md:p-10 border border-transparent hover:border-white/5 transition-colors duration-300 flex flex-col justify-between shadow-lg"
+                key={`${t.id}-${idx}`}
+                className="w-[300px] md:w-[340px] flex-shrink-0 rounded-2xl p-6 flex flex-col justify-between relative overflow-hidden group"
+                style={{
+                  background: "linear-gradient(160deg, #1c1c1c 0%, #161616 100%)",
+                  border: "1px solid #272727",
+                }}
               >
-                <div>
-                  <div className="flex items-center gap-1.5 mb-6">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star 
-                        key={i} 
-                        className="w-5 h-5 fill-[var(--primary)] text-[var(--primary)]" 
-                      />
+                {/* Subtle top accent line */}
+                <div
+                  className="absolute top-0 left-6 right-6 h-[1.5px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                  style={{ background: "linear-gradient(90deg, transparent, #FFC107, transparent)" }}
+                />
+
+                {/* Quote icon */}
+                <div className="absolute top-5 right-5 opacity-[0.06]">
+                  <Quote className="w-14 h-14 text-[#FFC107] fill-[#FFC107]" />
+                </div>
+
+                <div className="relative z-10">
+                  {/* Stars */}
+                  <div className="flex items-center gap-1 mb-4">
+                    {[...Array(t.rating)].map((_, i) => (
+                      <Star key={i} className="w-3.5 h-3.5 fill-[#FFC107] text-[#FFC107]" />
                     ))}
                   </div>
 
-                  <p className="text-gray-300 text-[15px] md:text-[17px] leading-relaxed font-light mb-10">
-                    "{testimonial.text}"
+                  {/* Text */}
+                  <p className="text-zinc-300 text-[13.5px] leading-relaxed font-light mb-6">
+                    "{t.text}"
                   </p>
                 </div>
 
-                <div className="flex items-center gap-4">
-                  <img 
-                    src={testimonial.avatar} 
-                    alt={testimonial.name}
-                    className="w-12 h-12 rounded-full object-cover shadow-md pointer-events-none"
-                    draggable="false" 
-                  />
-                  <span className="text-white font-bold tracking-wide">
-                    {testimonial.name}
-                  </span>
+                {/* Avatar + name */}
+                <div className="relative z-10 flex items-center gap-3 pt-4 border-t border-white/5">
+                  <div className="relative">
+                    <img
+                      src={t.avatar}
+                      alt={t.name}
+                      className="w-9 h-9 rounded-full object-cover ring-2 ring-[#FFC107]/30"
+                      draggable="false"
+                    />
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#1c1c1c]" />
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-bold leading-none mb-0.5">{t.name}</p>
+                    <p className="text-zinc-500 text-[11px] font-medium">{t.role}</p>
+                  </div>
                 </div>
               </div>
             ))}
           </motion.div>
         </motion.div>
 
-        {/* Bottom Section: Dots Indicator */}
-        <div className="mt-14 flex items-center justify-center w-full">
-          <div className="flex items-center gap-3 relative z-10">
-            {testimonials.map((_, idx) => (
-              <div 
-                key={idx}
-                onClick={() => handleDotClick(idx)}
-                className={`w-2.5 h-2.5 rounded-full cursor-pointer transition-all duration-300 ${
-                  activeIndex === idx 
-                    ? "bg-[var(--primary)] scale-125" 
-                    : "bg-white/20 hover:bg-white/50"
-                }`}
-              />
-            ))}
-          </div>
-        </div>
+        {/* Dots */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="mt-10 flex items-center justify-center gap-2"
+        >
+          {testimonials.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleDotClick(idx)}
+              className="relative h-1.5 rounded-full transition-all duration-300 overflow-hidden"
+              style={{
+                width: activeIndex === idx ? 28 : 8,
+                background: activeIndex === idx ? "#FFC107" : "rgba(255,255,255,0.15)",
+              }}
+            />
+          ))}
+        </motion.div>
 
       </div>
     </section>
