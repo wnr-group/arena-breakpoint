@@ -4,7 +4,8 @@ import DevicePage from './home/device/page'
 import FoodMenu from './home/food/page'
 import SubscriptionPage from './home/subscription/page'
 import Footer from '@/components/customer/layout/Footer'
-import Testimonials from '@/components/customer/home/Testimonials'
+import Testimonials from './home/testimonial/page'
+
 
 export default function LandingPage(){
   return (
