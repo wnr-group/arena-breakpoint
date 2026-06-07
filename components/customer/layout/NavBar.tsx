@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Gamepad2, Menu, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
@@ -34,21 +34,36 @@ const linkItemVariants: Variants = {
   visible: { opacity: 1, x: 0, transition: { duration: 0.3 } }
 };
 
-const Navbar = () => {
+export default function Navbar  ()  {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Add a scroll listener to detect when the page is scrolled
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <nav className="absolute top-0 left-0 w-full z-50">
-      {/* Main Top Bar */}
-      <div className="relative z-50 flex items-center justify-between px-6 py-6 md:px-12 bg-gradient-to-b from-black/90 to-transparent">
+    // FIX 1: Changed 'absolute' to 'fixed'. 
+    // Added transition-all to handle the background change smoothly.
+    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
+      scrolled ? "bg-[#0a0a0a]/80 backdrop-blur-md py-4 shadow-xl" : "bg-transparent py-6"
+    }`}>
+      
+      {/* Main Bar */}
+      <div className="flex items-center justify-between px-6 md:px-12">
         
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 cursor-pointer group">
           <Gamepad2 className="w-8 h-8 text-[var(--primary)] group-hover:scale-110 transition-transform duration-300" />
-          <span className="text-2xl font-bold text-white tracking-wide">Breakpoint Arena</span>
+          <span className="text-2xl font-bold text-white tracking-wide uppercase">Breakpoint Arena</span>
         </Link>
 
-        {/* Desktop Links (Hidden on Mobile) */}
+        {/* Desktop Links */}
         <div className="hidden lg:flex items-center gap-10">
           {navLinks.map((link) => (
             <Link 
@@ -64,16 +79,15 @@ const Navbar = () => {
           ))}
         </div>
 
-        {/* Desktop CTA & Mobile Toggle */}
+        {/* CTA & Mobile Toggle */}
         <div className="flex items-center gap-4">
           <Link 
             href="/book-slot"
-            className="hidden md:inline-block px-6 py-2.5 border-gradient-animated cursor-pointer font-bold text-xs tracking-widest uppercase hover:bg-[var(--primary)] hover:text-black transition-all duration-300 text-center"
+            className="hidden lg:inline-block px-6 py-2.5 border-gradient-animated cursor-pointer font-bold text-xs tracking-widest uppercase hover:bg-[var(--primary)] hover:text-black transition-all duration-300 text-center"
           >
             Book Slot
           </Link>
           
-          {/* Mobile Hamburger / Close Button */}
           <button 
             className="lg:hidden text-white hover:text-[var(--primary)] transition-colors p-2 z-50"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -92,9 +106,9 @@ const Navbar = () => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="absolute top-0 left-0 w-full h-screen bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-8 gap-8 lg:hidden z-40"
+            className="fixed top-0 left-0 w-full h-screen bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-8 gap-8 lg:hidden z-40"
           >
-            <div className="flex flex-col items-center gap-6 w-full max-w-sm mt-10">
+             <div className="flex flex-col items-center gap-6 w-full max-w-sm mt-10">
               {navLinks.map((link) => (
                 <motion.div 
                   variants={linkItemVariants}
@@ -106,7 +120,7 @@ const Navbar = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="w-full flex items-center justify-center cursor-pointer group py-2"
                   >
-                    <span className="text-md md:text-xl font-bold text-gray-400 group-hover:text-white group-hover:scale-105 transition-all duration-300 uppercase tracking-widest text-center flex items-center gap-3">
+                    <span className="text-md md:text-sm font-bold text-gray-400 group-hover:text-white group-hover:scale-105 transition-all duration-300 uppercase tracking-widest text-center flex items-center gap-3">
                       {link.label}
                       {/* Arrow that appears on hover/tap */}
                       <ArrowRight className="w-6 h-6 text-[var(--primary)] opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
@@ -116,9 +130,9 @@ const Navbar = () => {
               ))}
             </div>
             
-            {/* Mobile CTA Button */}
-            <motion.div variants={linkItemVariants} className="w-full max-w-xs mt-8">
-              <Link 
+             {/* Mobile CTA Button */}
+             <motion.div variants={linkItemVariants} className="w-full max-w-xs mt-8">
+             <Link 
                 href="/book-slot"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block w-full py-4 bg-gradient-primary text-black text-center font-extrabold text-sm tracking-widest uppercase rounded hover:scale-105 transition-transform duration-300 shadow-[0_0_20px_rgba(255,193,7,0.3)]"
@@ -132,5 +146,3 @@ const Navbar = () => {
     </nav>
   );
 };
-
-export default Navbar;

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Gamepad2, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
-import Navbar from '@/components/customer/layout/NavBar';
+import  Navbar  from '@/components/customer/layout/NavBar';
+
 
 interface SlideData {
   id: number;
