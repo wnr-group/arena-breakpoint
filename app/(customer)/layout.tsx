@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { Timer, ShieldAlert } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/lib/redux/hooks";
 import { resetBooking } from "@/lib/redux/slices/bookingSlice";
-import { Navbar } from "@/components/customer/layout/NavBar";
-import { Footer } from "@/components/customer/layout/Footer";
 import { toast } from "sonner";
+import Navbar from "@/components/customer/layout/NavBar";
+import Footer from "@/components/customer/layout/Footer";
+
 
 export default function CustomerRouteGroupLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -64,7 +65,7 @@ export default function CustomerRouteGroupLayout({ children }: { children: React
       {/* REUSABLE COMPONENT INJECTIONS */}
       <Navbar />
 
-      <main className="flex-1 w-full max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col">
+      <main className="flex-1 w-full max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col mt-10">
         {children}
       </main>
 

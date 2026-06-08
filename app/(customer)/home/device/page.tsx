@@ -166,7 +166,7 @@ export default function DevicePage() {
   }, []);
 
   return (
-    <section id="features" className="relative min-h-screen py-24 overflow-hidden border border-red-400">
+    <section id="features" className="relative min-h-screen py-24 overflow-hidden">
 
       {/* BG image — inline style z-index to avoid Tailwind v4 negative-z issues */}
       <div
@@ -231,7 +231,7 @@ export default function DevicePage() {
                   isAvailable: device.status === 'available',
                   availability: device.status === 'available' ? 'Available' : 'Booked',
                   description: device.specs || device.device_type?.description || '',
-                  image: device.image || "https://s40091.pcdn.co/uk/wp-content/uploads/sites/3/2024/08/POOL-HERO.jpg"
+                  image: device.image_url || "https://s40091.pcdn.co/uk/wp-content/uploads/sites/3/2024/08/POOL-HERO.jpg"
                 };
 
                 return (

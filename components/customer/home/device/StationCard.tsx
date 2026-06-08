@@ -19,7 +19,7 @@ export function StationCard({ station, motionProps }: { station: Station; motion
         <img
           src={station.image}
           alt={station.name}
-          className="absolute inset-0 w-full h-full  transition-transform duration-700 ease-[cubic-bezier(.25,1,.5,1)] group-hover:scale-105"
+          className="absolute inset-0 w-full h-full object-cover  transition-transform duration-700 ease-[cubic-bezier(.25,1,.5,1)] group-hover:scale-105"
         />
 
         {/* Gradient Overlay*/}

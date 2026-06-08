@@ -1,13 +1,16 @@
+"use client"; 
+
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Gamepad2, Menu, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation'; 
 
 const navLinks = [
   { label: "Home", path: "/" },
-  { label: "Subscriptions", path: "/subscriptions" },
-  { label: "Retrieve Booking", path: "/retrieve-booking" },
-  { label: "FOOD MENU", path: "/food-menu" }
+  { label: "Subscriptions", path: "/subscription" },
+  { label: "Retrieve Booking", path: "/retrieve" },
+  { label: "FOOD MENU", path: "/food" }
 ];
 
 // Framer Motion variants
@@ -34,11 +37,14 @@ const linkItemVariants: Variants = {
   visible: { opacity: 1, x: 0, transition: { duration: 0.3 } }
 };
 
-export default function Navbar  ()  {
+export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  
+  // Get the current route path
+  const pathname = usePathname();
 
-  // Add a scroll listener to detect when the page is scrolled
+  
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
@@ -48,8 +54,6 @@ export default function Navbar  ()  {
   }, []);
 
   return (
-    // FIX 1: Changed 'absolute' to 'fixed'. 
-    // Added transition-all to handle the background change smoothly.
     <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
       scrolled ? "bg-[#0a0a0a]/80 backdrop-blur-md py-4 shadow-xl" : "bg-transparent py-6"
     }`}>
@@ -65,24 +69,33 @@ export default function Navbar  ()  {
 
         {/* Desktop Links */}
         <div className="hidden lg:flex items-center gap-10">
-          {navLinks.map((link) => (
-            <Link 
-              key={link.label} 
-              href={link.path}
-              className="group cursor-pointer relative py-2"
-            >
-              <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors duration-300 uppercase tracking-widest">
-                {link.label}
-              </span>
-              <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary)] transition-all duration-300 group-hover:w-full"></span>
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const isActive = pathname === link.path; // Check if active
+            
+            return (
+              <Link 
+                key={link.label} 
+                href={link.path}
+                className="group cursor-pointer relative py-2"
+              >
+                <span className={`text-sm font-medium transition-colors duration-300 uppercase tracking-widest ${
+                  isActive ? "text-white" : "text-gray-300 group-hover:text-white"
+                }`}>
+                  {link.label}
+                </span>
+                {/* Underline: stays full width if active */}
+                <span className={`absolute bottom-0 left-0 h-[2px] bg-[var(--primary)] transition-all duration-300 ${
+                  isActive ? "w-full" : "w-0 group-hover:w-full"
+                }`}></span>
+              </Link>
+            );
+          })}
         </div>
 
         {/* CTA & Mobile Toggle */}
         <div className="flex items-center gap-4">
           <Link 
-            href="/book-slot"
+            href="/booking"
             className="hidden lg:inline-block px-6 py-2.5 border-gradient-animated cursor-pointer font-bold text-xs tracking-widest uppercase hover:bg-[var(--primary)] hover:text-black transition-all duration-300 text-center"
           >
             Book Slot
@@ -109,31 +122,39 @@ export default function Navbar  ()  {
             className="fixed top-0 left-0 w-full h-screen bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-8 gap-8 lg:hidden z-40"
           >
              <div className="flex flex-col items-center gap-6 w-full max-w-sm mt-10">
-              {navLinks.map((link) => (
-                <motion.div 
-                  variants={linkItemVariants}
-                  key={link.label} 
-                  className="w-full"
-                >
-                  <Link
-                    href={link.path}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-center cursor-pointer group py-2"
+              {navLinks.map((link) => {
+                const isActive = pathname === link.path; // Check if active
+
+                return (
+                  <motion.div 
+                    variants={linkItemVariants}
+                    key={link.label} 
+                    className="w-full"
                   >
-                    <span className="text-md md:text-sm font-bold text-gray-400 group-hover:text-white group-hover:scale-105 transition-all duration-300 uppercase tracking-widest text-center flex items-center gap-3">
-                      {link.label}
-                      {/* Arrow that appears on hover/tap */}
-                      <ArrowRight className="w-6 h-6 text-[var(--primary)] opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
-                    </span>
-                  </Link>
-                </motion.div>
-              ))}
+                    <Link
+                      href={link.path}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="w-full flex items-center justify-center cursor-pointer group py-2"
+                    >
+                      <span className={`text-md md:text-sm font-bold transition-all duration-300 uppercase tracking-widest text-center flex items-center gap-3 ${
+                        isActive ? "text-white scale-105" : "text-gray-400 group-hover:text-white group-hover:scale-105"
+                      }`}>
+                        {link.label}
+                        {/* Arrow: stays visible if active */}
+                        <ArrowRight className={`w-6 h-6 text-[var(--primary)] transition-all duration-300 ${
+                          isActive ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0"
+                        }`} />
+                      </span>
+                    </Link>
+                  </motion.div>
+                );
+              })}
             </div>
             
              {/* Mobile CTA Button */}
              <motion.div variants={linkItemVariants} className="w-full max-w-xs mt-8">
              <Link 
-                href="/book-slot"
+                href="/booking"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block w-full py-4 bg-gradient-primary text-black text-center font-extrabold text-sm tracking-widest uppercase rounded hover:scale-105 transition-transform duration-300 shadow-[0_0_20px_rgba(255,193,7,0.3)]"
               >
