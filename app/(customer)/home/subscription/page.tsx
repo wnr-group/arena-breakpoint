@@ -4,7 +4,7 @@ import PlatformCard from '@/components/customer/home/subscription/SubscriptionCa
 import { motion, Variants } from 'framer-motion'
 import { useEffect} from 'react'
 
-export const platforms = [
+const platforms = [
   {
     brand: 'SONY PLATFORM',
     name: 'PlayStation 5',

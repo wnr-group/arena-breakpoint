@@ -69,7 +69,7 @@ export default function FoodCheckoutPage() {
     setMounted(true);
     if (bookingContext.customerPhone) setPhone(bookingContext.customerPhone);
     if (bookingContext.customerName) setName(bookingContext.customerName);
-    if (bookingContext.customerDob) setCustomerDob(formatFromDB(bookingContext.customerDob));
+    if (bookingContext.customerDob) setCustomerDob(bookingContext.customerDob);
   }, [bookingContext.customerPhone, bookingContext.customerName]);
 
 

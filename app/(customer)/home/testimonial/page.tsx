@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, useMotionValue, useMotionValueEvent, animate, useInView, Variants } from 'framer-motion';
 import { Star, Quote } from 'lucide-react';

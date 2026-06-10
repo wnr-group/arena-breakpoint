@@ -41,7 +41,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
   }, []);
 
   // Generate 48 time slots (24 hours × 2 for 30-min intervals)
-  const timeSlots = [];
+  const timeSlots: string[] = [];
   for (let hour = 0; hour < 24; hour++) {
     for (let minute of [0, 30]) {
       const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;

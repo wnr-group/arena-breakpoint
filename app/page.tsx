@@ -1,12 +1,7 @@
 "use client";
-import HeroCarousel from "./(customer)/page";
-import Testimonials from "@/components/customer/home/Testimonials";
-import AvailableDevices from "@/app/(customer)/home/device/page";
 
 import React, { useEffect } from 'react';
 import { motion, useMotionValue, useSpring } from 'framer-motion';
-import DemoPreview from "@/components/admin/devices/DemoPreview";
-import GameCollection from "@/components/admin/devices/GameCollection";
 import LandingPage from "./(customer)/page";
 
 function AmbientCursor() {

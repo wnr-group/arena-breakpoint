@@ -132,7 +132,7 @@ export default function AdminBookingsPage() {
 
   // Sort each group by date/time and calculate stats
   const customerGroups = Object.entries(groupedBookings).map(([phone, customerBookings]) => {
-    const sorted = customerBookings.sort((a, b) => {
+    const sorted = (customerBookings as any[]).sort((a, b) => {
       const slotA = a.booking_device_slots?.[0];
       const slotB = b.booking_device_slots?.[0];
       const dateA = slotA?.slot_date || a.created_at;

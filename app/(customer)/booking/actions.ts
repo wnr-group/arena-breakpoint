@@ -679,7 +679,7 @@ export async function checkFlexibleAvailability(
 
     console.log(`[Availability ${requestId}] Found ${bookings?.length || 0} bookings for this device type on ${dateString}`);
     if (bookings && bookings.length > 0) {
-      console.log(`[Availability ${requestId}] Sample bookings:`, bookings.slice(0, 3).map(b =>
+      console.log(`[Availability ${requestId}] Sample bookings:`, bookings.slice(0, 3).map((b: any) =>
         `${b.slot_start_time}-${b.slot_end_time} (date: ${b.slot_date}, status: ${b.bookings.status})`
       ));
     }
@@ -751,7 +751,7 @@ export async function checkFlexibleAvailability(
       const requestEndMins = requestIsOvernight ? endMins - 24 * 60 : endMins;
 
       // Count how many devices are busy during this time range
-      const conflictCount = activeBookings.filter(booking => {
+      const conflictCount = activeBookings.filter((booking: any) => {
         return doTimeRangesOverlap(
           startMins,
           requestEndMins,

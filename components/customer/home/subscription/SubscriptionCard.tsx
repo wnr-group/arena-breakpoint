@@ -1,7 +1,16 @@
 import { useState } from "react";
 import { motion, Variants } from 'framer-motion'
-import { platforms } from "@/app/(customer)/home/subscription/page";
 import { CheckIcon } from "lucide-react";
+
+type Platform = {
+  brand: string;
+  name: string;
+  price: number;
+  icon: React.ReactNode;
+  features: string[];
+  accent: string;
+  accentDark: string;
+};
 
 const cardVariants: Variants = {
   hidden: { opacity: 0, y: 40, scale: 0.95 },
@@ -29,7 +38,7 @@ const featureVariants: Variants = {
   }),
 }
 
-export default function PlatformCard({ platform, index }: { platform: (typeof platforms)[0]; index: number }) {
+export default function PlatformCard({ platform, index }: { platform: Platform; index: number }) {
   const [hovered, setHovered] = useState(false)
 
   return (
