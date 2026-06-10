@@ -108,47 +108,74 @@ BEGIN
 END;
 $function$ LANGUAGE plpgsql;
 
--- Function to get customer's active subscription
+-- Function to get customer's active subscription (updated for new schema)
 CREATE OR REPLACE FUNCTION get_customer_active_subscription(p_customer_id UUID)
 RETURNS TABLE (
   subscription_id UUID,
   subscription_name TEXT,
-  device_discount_percentage NUMERIC,
-  food_discount_percentage NUMERIC,
-  expires_at TIMESTAMPTZ
+  discount_percentage INTEGER,
+  end_date DATE
 ) AS $function$
 BEGIN
-  RETURN QUERY
-  SELECT
-    sp.id,
-    s.name,
-    sp.device_discount_percentage,
-    sp.food_discount_percentage,
-    sp.expires_at
-  FROM public.subscription_purchases_legacy_legacy sp
-  JOIN public.subscriptions s ON s.id = sp.subscription_id
-  WHERE sp.customer_id = p_customer_id
-    AND sp.is_active = true
-    AND sp.expires_at > NOW()
-  ORDER BY sp.expires_at DESC
-  LIMIT 1;
+  -- Check if new subscriptions table exists, otherwise use legacy
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'subscriptions') THEN
+    RETURN QUERY
+    SELECT
+      s.id,
+      sp.name,
+      sp.discount_percentage,
+      s.end_date
+    FROM public.subscriptions s
+    JOIN public.subscription_plans sp ON sp.id = s.subscription_plan_id
+    WHERE s.customer_id = p_customer_id
+      AND s.status = 'active'
+      AND s.end_date >= CURRENT_DATE
+    ORDER BY s.end_date DESC
+    LIMIT 1;
+  ELSIF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'subscription_purchases_legacy') THEN
+    RETURN QUERY
+    SELECT
+      spl.id,
+      sp.name,
+      sp.discount_percentage::INTEGER,
+      spl.expires_at::DATE
+    FROM public.subscription_purchases_legacy spl
+    JOIN public.subscription_plans_legacy sp ON sp.id = spl.subscription_id
+    WHERE spl.customer_id = p_customer_id
+      AND spl.is_active = true
+      AND spl.expires_at > NOW()
+    ORDER BY spl.expires_at DESC
+    LIMIT 1;
+  END IF;
 END;
 $function$ LANGUAGE plpgsql;
 
--- Function to update customer's active subscription
+-- Function to update customer's active subscription (updated for new schema)
 CREATE OR REPLACE FUNCTION update_customer_active_subscription(p_customer_id UUID)
 RETURNS VOID AS $function$
 DECLARE
   v_active_subscription_id UUID;
 BEGIN
-  -- Find the most recent active subscription
-  SELECT id INTO v_active_subscription_id
-  FROM public.subscription_purchases_legacy
-  WHERE customer_id = p_customer_id
-    AND is_active = true
-    AND expires_at > NOW()
-  ORDER BY expires_at DESC
-  LIMIT 1;
+  -- Check if new subscriptions table exists
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'subscriptions') THEN
+    -- Find the most recent active subscription from new table
+    SELECT subscription_plan_id INTO v_active_subscription_id
+    FROM public.subscriptions
+    WHERE customer_id = p_customer_id
+      AND status = 'active'
+      AND end_date >= CURRENT_DATE
+    ORDER BY end_date DESC
+    LIMIT 1;
+  ELSIF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'subscription_purchases_legacy') THEN
+    -- Find from legacy table
+    SELECT id INTO v_active_subscription_id
+    FROM public.subscription_purchases_legacy
+    WHERE customer_id = p_customer_id
+      AND is_active = true
+      AND expires_at > NOW()
+    ORDER BY expires_at DESC
+    LIMIT 1;
+  END IF;
 
   -- Update customer record
   UPDATE public.customers
