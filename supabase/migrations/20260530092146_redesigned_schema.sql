@@ -126,9 +126,9 @@ CREATE UNIQUE INDEX idx_promo_code ON public.promo_codes(UPPER(code));
 CREATE INDEX idx_promo_active ON public.promo_codes(is_active, valid_from, valid_until);
 
 -- ================================================
--- 6. SUBSCRIPTIONS TABLE
+-- 6. SUBSCRIPTION PLANS TABLE (renamed to avoid conflict)
 -- ================================================
-CREATE TABLE public.subscriptions (
+CREATE TABLE public.subscription_plans_legacy (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   description TEXT,
@@ -146,14 +146,14 @@ CREATE TABLE public.subscriptions (
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE INDEX idx_subscriptions_active ON public.subscriptions(is_active, display_order);
+CREATE INDEX idx_subscription_plans_legacy_active ON public.subscription_plans_legacy(is_active, display_order);
 
 -- ================================================
--- 7. SUBSCRIPTION PURCHASES TABLE
+-- 7. SUBSCRIPTION PURCHASES TABLE (legacy - will be replaced)
 -- ================================================
-CREATE TABLE public.subscription_purchases (
+CREATE TABLE public.subscription_purchases_legacy (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  subscription_id UUID NOT NULL REFERENCES public.subscriptions(id) ON DELETE RESTRICT,
+  subscription_id UUID NOT NULL REFERENCES public.subscription_plans_legacy(id) ON DELETE RESTRICT,
 
   customer_phone TEXT NOT NULL,
   customer_name TEXT,
@@ -177,8 +177,8 @@ CREATE TABLE public.subscription_purchases (
   CONSTRAINT valid_period CHECK (expires_at > starts_at)
 );
 
-CREATE INDEX idx_subscription_purchases_customer ON public.subscription_purchases(customer_phone, is_active);
-CREATE INDEX idx_subscription_purchases_validity ON public.subscription_purchases(expires_at, is_active);
+CREATE INDEX idx_subscription_purchases_legacy_customer ON public.subscription_purchases_legacy(customer_phone, is_active);
+CREATE INDEX idx_subscription_purchases_legacy_validity ON public.subscription_purchases_legacy(expires_at, is_active);
 
 -- ================================================
 -- 8. BOOKINGS TABLE (MAIN)
@@ -349,14 +349,14 @@ CREATE POLICY "Allow public read promo_codes" ON public.promo_codes FOR SELECT U
 CREATE POLICY "Allow admin manage promo_codes" ON public.promo_codes FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Subscriptions
-ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public read subscriptions" ON public.subscriptions FOR SELECT USING (true);
-CREATE POLICY "Allow admin manage subscriptions" ON public.subscriptions FOR ALL TO authenticated USING (true) WITH CHECK (true);
+ALTER TABLE public.subscription_plans_legacy ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public read subscription_plans_legacy" ON public.subscription_plans_legacy FOR SELECT USING (true);
+CREATE POLICY "Allow admin manage subscription_plans_legacy" ON public.subscription_plans_legacy FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Subscription Purchases
-ALTER TABLE public.subscription_purchases ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public read subscription_purchases" ON public.subscription_purchases FOR SELECT USING (true);
-CREATE POLICY "Allow public insert subscription_purchases" ON public.subscription_purchases FOR INSERT WITH CHECK (true);
+ALTER TABLE public.subscription_purchases_legacy ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public read subscription_purchases_legacy" ON public.subscription_purchases_legacy FOR SELECT USING (true);
+CREATE POLICY "Allow public insert subscription_purchases_legacy" ON public.subscription_purchases_legacy FOR INSERT WITH CHECK (true);
 
 -- Admin Users
 ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;

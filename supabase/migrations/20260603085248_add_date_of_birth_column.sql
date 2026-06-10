@@ -3,20 +3,32 @@
 -- =========================================
 
 -- Add Date of Birth (DOB) column to the customers table
-ALTER TABLE public.customers 
-ADD COLUMN IF NOT EXISTS date_of_birth DATE NOT NULL;
+ALTER TABLE public.customers
+ADD COLUMN IF NOT EXISTS date_of_birth DATE;
 
--- Add customer_dob column to subscription_purchases
-ALTER TABLE public.subscription_purchases 
-ADD COLUMN IF NOT EXISTS customer_dob DATE NOT NULL;
+-- Add customer_dob column to subscription_purchases_legacy (if it exists)
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'subscription_purchases_legacy') THEN
+    ALTER TABLE public.subscription_purchases_legacy
+    ADD COLUMN IF NOT EXISTS customer_dob DATE;
+  END IF;
+END $$;
 
 -- Add customer_dob column to the bookings table
-ALTER TABLE public.bookings 
-ADD COLUMN IF NOT EXISTS customer_dob DATE NOT NULL;
+ALTER TABLE public.bookings
+ADD COLUMN IF NOT EXISTS customer_dob DATE;
 
 -- Create indices for streamlined indexing queries
 CREATE INDEX IF NOT EXISTS idx_customers_dob ON public.customers(date_of_birth);
-CREATE INDEX IF NOT EXISTS idx_subscription_purchases_dob ON public.subscription_purchases(customer_dob);
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'subscription_purchases_legacy') THEN
+    CREATE INDEX IF NOT EXISTS idx_subscription_purchases_legacy_dob ON public.subscription_purchases_legacy(customer_dob);
+  END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_bookings_customer_dob ON public.bookings(customer_dob);
 
 --  function logic to add customer DOB inputs
