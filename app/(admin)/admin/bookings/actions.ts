@@ -35,6 +35,7 @@ export async function getAllBookings(filters?: BookingFilters) {
         customer_name,
         customer_phone,
         customer_email,
+        customer_dob,
         total_amount,
         device_subtotal,
         food_subtotal,
@@ -364,6 +365,7 @@ export async function createWalkInBooking(payload: {
   customerName: string;
   customerPhone: string;
   customerEmail: string | null;
+  customerDob: string;
   deviceTypeId: string;
   deviceTypeName: string;
   selectedDate: string;
@@ -400,7 +402,8 @@ export async function createWalkInBooking(payload: {
       .rpc("get_or_create_customer", {
         p_phone: payload.customerPhone,
         p_name: payload.customerName,
-        p_email: payload.customerEmail || null
+        p_email: payload.customerEmail || null,
+        p_dob: payload.customerDob
       });
 
     if (customerError) throw customerError;
@@ -467,12 +470,13 @@ export async function createWalkInBooking(payload: {
         customer_name: payload.customerName,
         customer_phone: payload.customerPhone,
         customer_email: payload.customerEmail,
+        customer_dob: payload.customerDob,
         device_subtotal: payload.total,
         food_subtotal: 0,
         total_amount: payload.total,
         status: "confirmed", // Walk-in bookings are immediately confirmed
         payment_status: "pending",
-        booking_source: "walk_in",
+        booking_source: "walk-in",
         lock_expires_at: null
       })
       .select()
@@ -638,3 +642,7 @@ export async function getTimelineBookings(date: string): Promise<{ success: bool
     return { success: false, error: err.message, bookings: [] };
   }
 }
+
+
+
+

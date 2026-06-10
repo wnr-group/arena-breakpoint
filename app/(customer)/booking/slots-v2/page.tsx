@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import { setSlot, setPricing, setSlotLockExpiry, setBookingId, setPlayerCount } from "@/lib/redux/slices/bookingSlice";
+import { setSlot, setPricing, setSlotLockExpiry, setBookingId, setPlayerCount, setDuration } from "@/lib/redux/slices/bookingSlice";
 import { checkFlexibleAvailability, initializeSoftLockReservation as createSoftLockTransaction } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -205,22 +205,18 @@ export default function FlexibleSlotBookingPage() {
       <div className="w-full max-w-md mx-auto flex items-center justify-between pb-6 px-2 select-none">
         <div className="flex flex-col items-center gap-1">
           <div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">1</div>
-          <span className="text-[8px] font-black uppercase text-primary tracking-wider">Date</span>
+          <span className="text-[8px] font-black uppercase text-primary tracking-wider">Time Slot</span>
         </div>
         <div className="h-0.5 bg-zinc-800 flex-1 mx-2" />
         <div className="flex flex-col items-center gap-1">
-          <div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">2</div>
-          <span className="text-[8px] font-black uppercase text-primary tracking-wider">Time</span>
+          <div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-black text-[9px] flex items-center justify-center">2</div>
+          <span className="text-[8px] font-black uppercase text-primary tracking-wider">Details</span>
         </div>
+
         <div className="h-0.5 bg-zinc-800 flex-1 mx-2" />
         <div className="flex flex-col items-center gap-1">
-          <div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">3</div>
-          <span className="text-[8px] font-black uppercase text-primary tracking-wider">Duration</span>
-        </div>
-        <div className="h-0.5 bg-zinc-800 flex-1 mx-2" />
-        <div className="flex flex-col items-center gap-1">
-          <div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-bold text-[9px] flex items-center justify-center border border-zinc-800">4</div>
-          <span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Summary</span>
+          <div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-bold text-[9px] flex items-center justify-center border border-zinc-800">3</div>
+          <span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Payment</span>
         </div>
       </div>
 
@@ -230,25 +226,25 @@ export default function FlexibleSlotBookingPage() {
           <div className="bg-[#111] border border-zinc-900 rounded-xl p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center gap-3 min-w-0">
               <div className="p-2.5 bg-zinc-950 border border-zinc-800 text-primary rounded-lg">
-                <Clock className="h-4 w-4"/>
+                <Clock className="h-4 w-4" />
               </div>
               <div className="min-w-0">
-                <h4 className="font-black text-xs sm:text-sm text-white uppercase truncate">{deviceTypeName || "Gaming Device"}</h4>
+                <h4 className="font-black text-xs sm:text-sm min-w-0 text-white uppercase break-words leading-tight">{deviceTypeName || "Gaming Device"}</h4>
                 <p className="text-zinc-500 text-[10px] font-bold mt-0.5">₹{hourlyRate || 0}/hour</p>
               </div>
             </div>
-            <Button onClick={() => router.push("/booking")} variant="outline" className="border-zinc-800 text-[10px] uppercase h-8 px-3 text-zinc-400">
+            <Button onClick={() => router.push("/booking")} className="bg-primary hover:bg-primary-hover text-black font-black text-[10px]  uppercase h-7 px-3 ">
               Change
             </Button>
           </div>
 
           {/* Info Banner */}
-          <Card className="bg-blue-500/5 border-blue-500/20 p-4">
+          <Card className="bg-gradient-to-r from-primary/5 via-yellow-400/5 to-primary/5 border-primary/20 p-4">
             <div className="flex gap-3">
-              <AlertCircle className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <p className="text-sm font-bold text-blue-300">Flexible Booking</p>
-                <p className="text-xs text-blue-400/80">Book from 30 minutes to 5 hours. Choose your preferred start time and duration.</p>
+                <p className="text-sm font-bold bg-gradient-to-r from-primary via-yellow-300 to-primary bg-clip-text text-transparent">Flexible Booking</p>
+                <p className="text-xs text-zinc-400">Book from 30 minutes to 5 hours. Choose your preferred start time and duration.</p>
               </div>
             </div>
           </Card>
@@ -263,14 +259,6 @@ export default function FlexibleSlotBookingPage() {
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
 
-            <div onClick={() => setMobileStartTimeOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer">
-              <div className="space-y-0.5">
-                <span className="text-[8px] font-black text-zinc-500 uppercase block">Start Time</span>
-                <span className="text-xs font-black text-primary">{selectedStartTime || "Choose Start Time"}</span>
-              </div>
-              <ChevronRight className="h-4 w-4 text-zinc-600" />
-            </div>
-
             <div onClick={() => setMobileDurationOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer">
               <div className="space-y-0.5">
                 <span className="text-[8px] font-black text-zinc-500 uppercase block">Duration</span>
@@ -279,16 +267,26 @@ export default function FlexibleSlotBookingPage() {
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
 
+            <div onClick={() => setMobileStartTimeOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer">
+              <div className="space-y-0.5">
+                <span className="text-[8px] font-black text-zinc-500 uppercase block">Start Time</span>
+                <span className="text-xs font-black text-primary">{selectedStartTime || "Choose Start Time"}</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-zinc-600" />
+            </div>
+
+
+
             {/* Inline Dynamic Mobile Summary Card Block */}
             <Card className="bg-[#111] border border-zinc-900 p-5 space-y-4 shadow-xl rounded-xl">
               <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider border-b border-zinc-900/60 pb-2">Booking Summary</h3>
-              
+
               <div className="space-y-2.5 text-xs text-zinc-400 border-b border-zinc-900/60 pb-3">
                 <div className="flex justify-between"><span>Date:</span><strong className="text-white font-bold">{calendarDay ? calendarDay.toLocaleDateString() : "Not Selected"}</strong></div>
-                <div className="flex justify-between"><span>Start Time:</span><strong className="text-primary font-black">{selectedStartTime || "Not Selected"}</strong></div>
                 <div className="flex justify-between"><span>Duration:</span><strong className="text-white font-bold">{selectedDurationLabel}</strong></div>
+                <div className="flex justify-between"><span>Start Time:</span><strong className="text-primary font-black">{selectedStartTime || "Not Selected"}</strong></div>
                 <div className="flex justify-between"><span>End Time:</span><strong className="text-primary font-black">{endTime || "--"}</strong></div>
-                <div className="flex justify-between"><span>Device:</span><strong className="text-white uppercase truncate max-w-[150px]">{deviceTypeName || "N/A"}</strong></div>
+                <div className="flex justify-between"><span>Device:</span><strong className="text-white uppercase truncate max-w-[200px]">{deviceTypeName || "N/A"}</strong></div>
               </div>
 
               {/* Player Multiplier Controller */}
@@ -301,7 +299,7 @@ export default function FlexibleSlotBookingPage() {
                       type="button"
                       onClick={() => playerCount > 1 && dispatch(setPlayerCount(playerCount - 1))}
                       disabled={playerCount <= 1}
-                      className="w-7 h-7 rounded-md bg-zinc-900 border border-zinc-800 text-white disabled:opacity-30 flex items-center justify-center"
+                      className="w-7 h-7 rounded-md bg-zinc-900 border border-zinc-800 text-white disabled:opacity-30 flex items-center justify-center hover:border-primary/50 hover:bg-primary/10 transition-all duration-300"
                     >
                       <Minus className="h-3 w-3" />
                     </button>
@@ -316,7 +314,7 @@ export default function FlexibleSlotBookingPage() {
                         }
                       }}
                       disabled={playerCount >= maxPlayers}
-                      className="w-7 h-7 rounded-md bg-primary text-black flex items-center justify-center font-bold"
+                      className="w-7 h-7 rounded-md bg-gradient-to-r from-primary to-yellow-400 text-black flex items-center justify-center font-bold hover:shadow-[0_0_15px_rgba(255,193,7,0.5)] disabled:opacity-30 transition-all duration-300"
                     >
                       <Plus className="h-3 w-3 stroke-[3]" />
                     </button>
@@ -349,8 +347,39 @@ export default function FlexibleSlotBookingPage() {
             <div className="space-y-3">
               <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">📅 Select Date</h3>
               <Card className="bg-[#111] border border-zinc-900 p-4 w-full flex justify-center rounded-2xl">
-                <Calendar mode="single" selected={calendarDay} onSelect={setCalendarDay} disabled={(day) => day < new Date(new Date().setHours(0,0,0,0))} />
+                <Calendar mode="single" selected={calendarDay} onSelect={setCalendarDay} disabled={(day) => day < new Date(new Date().setHours(0, 0, 0, 0))} />
               </Card>
+            </div>
+
+            {/* Duration Selection */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">⏱️ Duration</h3>
+              <div className="space-y-1.5">
+                {filteredDurations.map((duration) => {
+                  const isSelected = selectedDuration === duration.value;
+                  const price = calculatePrice(hourlyRate || 0, duration.value);
+                  return (
+                    <button
+                      key={duration.value}
+                      onClick={() => {
+                        setSelectedDuration(duration.value);
+                        dispatch(setDuration(duration.value))
+                      }}
+                      className={`w-full p-3 border text-left rounded-xl transition-all duration-300 ${isSelected
+                          ? "bg-gradient-to-r from-primary via-yellow-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
+                          : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
+                        }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-bold">{duration.label}</span>
+                        <span className={`text-xs font-black ${isSelected ? "text-black" : "text-primary"}`}>
+                          ₹{price}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Start Time Selection */}
@@ -377,13 +406,12 @@ export default function FlexibleSlotBookingPage() {
                         key={time}
                         disabled={!isAvailable}
                         onClick={() => setSelectedStartTime(time)}
-                        className={`w-full p-3 border text-left rounded-xl transition-all text-sm font-bold ${
-                          !isAvailable
+                        className={`w-full p-3 border text-left rounded-xl transition-all duration-300 text-sm font-bold ${!isAvailable
                             ? "bg-zinc-950/20 border-zinc-950 text-zinc-800 cursor-not-allowed"
                             : isSelected
-                            ? "bg-primary border-transparent text-black"
-                            : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-zinc-700"
-                        }`}
+                              ? "bg-gradient-to-r from-primary via-yellow-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
+                              : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
+                          }`}
                       >
                         {time}
                       </button>
@@ -391,35 +419,6 @@ export default function FlexibleSlotBookingPage() {
                   })}
                 </div>
               )}
-            </div>
-
-            {/* Duration Selection */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">⏱️ Duration</h3>
-              <div className="space-y-1.5">
-                {filteredDurations.map((duration) => {
-                  const isSelected = selectedDuration === duration.value;
-                  const price = calculatePrice(hourlyRate || 0, duration.value);
-                  return (
-                    <button
-                      key={duration.value}
-                      onClick={() => setSelectedDuration(duration.value)}
-                      className={`w-full p-3 border text-left rounded-xl transition-all ${
-                        isSelected
-                          ? "bg-primary border-transparent text-black"
-                          : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-zinc-700"
-                      }`}
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-bold">{duration.label}</span>
-                        <span className={`text-xs font-black ${isSelected ? "text-black" : "text-primary"}`}>
-                          ₹{price}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
             </div>
           </div>
         </div>
@@ -435,12 +434,12 @@ export default function FlexibleSlotBookingPage() {
                 <strong className="text-white font-bold">{calendarDay ? calendarDay.toDateString() : "Not Selected"}</strong>
               </div>
               <div className="flex justify-between">
-                <span>Start Time:</span>
-                <strong className="text-primary font-black">{selectedStartTime || "Not Selected"}</strong>
-              </div>
-              <div className="flex justify-between">
                 <span>Duration:</span>
                 <strong className="text-white font-bold">{selectedDurationLabel}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span>Start Time:</span>
+                <strong className="text-primary font-black">{selectedStartTime || "Not Selected"}</strong>
               </div>
               <div className="flex justify-between">
                 <span>End Time:</span>
@@ -448,7 +447,7 @@ export default function FlexibleSlotBookingPage() {
               </div>
               <div className="flex justify-between">
                 <span>Device:</span>
-                <strong className="text-white uppercase truncate max-w-[160px]">{deviceTypeName || "N/A"}</strong>
+                <strong className="text-white uppercase text-right max-w-[200px] break-words leading-tight max-w-[160px]">{deviceTypeName || "N/A"}</strong>
               </div>
             </div>
 
@@ -465,7 +464,7 @@ export default function FlexibleSlotBookingPage() {
                   <button
                     onClick={() => playerCount > 1 && dispatch(setPlayerCount(playerCount - 1))}
                     disabled={playerCount <= 1}
-                    className="w-7 h-7 rounded-md bg-zinc-900 border border-zinc-800 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-800 transition-all flex items-center justify-center"
+                    className="w-7 h-7 rounded-md bg-zinc-900 border border-zinc-800 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:border-primary/50 hover:bg-primary/10 transition-all duration-300 flex items-center justify-center"
                   >
                     <Minus className="h-3 w-3" />
                   </button>
@@ -479,7 +478,7 @@ export default function FlexibleSlotBookingPage() {
                       }
                     }}
                     disabled={playerCount >= maxPlayers}
-                    className="w-7 h-7 rounded-md bg-primary border border-transparent text-black disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary-hover transition-all flex items-center justify-center font-bold"
+                    className="w-7 h-7 rounded-md bg-gradient-to-r from-primary to-yellow-400 border border-transparent text-black disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-[0_0_15px_rgba(255,193,7,0.5)] transition-all duration-300 flex items-center justify-center font-bold"
                   >
                     <Plus className="h-3 w-3 stroke-[3]" />
                   </button>
@@ -523,49 +522,11 @@ export default function FlexibleSlotBookingPage() {
             <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
               <span className="text-xs font-black uppercase text-zinc-400">Select Date</span>
               <button onClick={() => setMobileCalendarOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-500">
-                <X className="h-4 w-4"/>
+                <X className="h-4 w-4" />
               </button>
             </div>
             <div className="flex justify-center bg-zinc-950 p-2 rounded-xl">
-              <Calendar mode="single" selected={calendarDay} onSelect={(day) => { setCalendarDay(day); setMobileCalendarOpen(false); }} disabled={(day) => day < new Date(new Date().setHours(0,0,0,0))} />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {mobileStartTimeOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end md:hidden">
-          <div className="bg-[#121212] border-t border-zinc-800 rounded-t-2xl w-full p-5 space-y-4 max-h-[75vh] flex flex-col overflow-hidden">
-            <div className="flex justify-between items-center border-b border-zinc-900 pb-2 flex-shrink-0">
-              <span className="text-xs font-black uppercase text-zinc-400">Select Start Time</span>
-              <button onClick={() => setMobileStartTimeOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-500">
-                <X className="h-4 w-4"/>
-              </button>
-            </div>
-            
-            {/* Optimized High Contrast 2-Column Grid Layout for Mobile Time Windows */}
-            <div className="grid grid-cols-2 gap-2 overflow-y-auto pr-1 pb-4 scrollbar-thin">
-              {availableStartTimesForDate.map((time) => {
-                const isAvailable = isTimeAvailable(time);
-                const isSelected = selectedStartTime === time;
-                return (
-                  <button
-                    key={time}
-                    type="button"
-                    disabled={!isAvailable}
-                    onClick={() => { setSelectedStartTime(time); setMobileStartTimeOpen(false); }}
-                    className={`p-3 text-center rounded-xl text-xs font-black uppercase transition-all tracking-wider border ${
-                      !isAvailable
-                        ? "bg-zinc-950/40 border-zinc-900/40 text-zinc-800 cursor-not-allowed line-through"
-                        : isSelected
-                        ? "bg-primary border-transparent text-black shadow-[0_0_15px_rgba(255,193,7,0.25)]"
-                        : "bg-zinc-900 border-zinc-800 text-zinc-300 active:border-zinc-700"
-                    }`}
-                  >
-                    {time}
-                  </button>
-                );
-              })}
+              <Calendar mode="single" selected={calendarDay} onSelect={(day) => { setCalendarDay(day); setMobileCalendarOpen(false); }} disabled={(day) => day < new Date(new Date().setHours(0, 0, 0, 0))} />
             </div>
           </div>
         </div>
@@ -577,7 +538,7 @@ export default function FlexibleSlotBookingPage() {
             <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
               <span className="text-xs font-black uppercase text-zinc-400">Select Duration</span>
               <button onClick={() => setMobileDurationOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-500">
-                <X className="h-4 w-4"/>
+                <X className="h-4 w-4" />
               </button>
             </div>
             <div className="space-y-1.5">
@@ -587,10 +548,13 @@ export default function FlexibleSlotBookingPage() {
                 return (
                   <button
                     key={duration.value}
-                    onClick={() => { setSelectedDuration(duration.value); setMobileDurationOpen(false); }}
-                    className={`w-full p-3 border text-left rounded-xl ${
-                      isSelected ? "bg-primary text-black border-transparent" : "bg-[#111] border-zinc-900 text-zinc-300"
-                    }`}
+                    onClick={() => {
+                      setSelectedDuration(duration.value);
+                      setMobileDurationOpen(false);
+                      dispatch(setDuration(duration.value))
+                    }}
+                    className={`w-full p-3 border text-left rounded-xl ${isSelected ? "bg-primary text-black border-transparent" : "bg-[#111] border-zinc-900 text-zinc-300"
+                      }`}
                   >
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-bold">{duration.label}</span>
@@ -605,6 +569,45 @@ export default function FlexibleSlotBookingPage() {
           </div>
         </div>
       )}
+
+      {mobileStartTimeOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end md:hidden">
+          <div className="bg-[#121212] border-t border-zinc-800 rounded-t-2xl w-full p-5 space-y-4 max-h-[75vh] flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center border-b border-zinc-900 pb-2 flex-shrink-0">
+              <span className="text-xs font-black uppercase text-zinc-400">Select Start Time</span>
+              <button onClick={() => setMobileStartTimeOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-500">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Optimized High Contrast 2-Column Grid Layout for Mobile Time Windows */}
+            <div className="grid grid-cols-2 gap-2 overflow-y-auto pr-1 pb-4 scrollbar-thin">
+              {availableStartTimesForDate.map((time) => {
+                const isAvailable = isTimeAvailable(time);
+                const isSelected = selectedStartTime === time;
+                return (
+                  <button
+                    key={time}
+                    type="button"
+                    disabled={!isAvailable}
+                    onClick={() => { setSelectedStartTime(time); setMobileStartTimeOpen(false); }}
+                    className={`p-3 text-center rounded-xl text-xs font-black uppercase transition-all tracking-wider border ${!isAvailable
+                        ? "bg-zinc-950/40 border-zinc-900/40 text-zinc-800 cursor-not-allowed line-through"
+                        : isSelected
+                          ? "bg-primary border-transparent text-black shadow-[0_0_15px_rgba(255,193,7,0.25)]"
+                          : "bg-zinc-900 border-zinc-800 text-zinc-300 active:border-zinc-700"
+                      }`}
+                  >
+                    {time}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+
 
     </div>
   );

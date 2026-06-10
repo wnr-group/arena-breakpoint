@@ -79,9 +79,8 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
 
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      {/* 💡 FIX: Removed strict h-[720px] limit. Enforced spacious padding boundaries and dynamic screen tracking overflow scroll layers */}
       <DialogContent className="bg-[#0a0a0a] border-[#27272a] text-white max-w-[900px] w-[95vw] p-0 overflow-hidden shadow-2xl h-auto max-h-[90vh] flex flex-col justify-between">
-        
+
         {/* Header Panel */}
         <div className="p-6 border-b border-[#27272a]/70 bg-[#121212] flex-shrink-0">
           <DialogTitle className="text-xl font-black tracking-tight text-white">Edit Device Configuration</DialogTitle>
@@ -89,24 +88,21 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col md:flex-row overflow-y-auto min-h-0">
-          
+
           {/* Left Panel: Grid Input Layout Container */}
           <div className="flex-1 p-8 space-y-6 bg-[#0a0a0a] overflow-y-auto">
-            
+
             {/* Form row block 1 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2">
                 <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Platform Type</label>
                 <select
-                  name="type"
-                  value={editType}
-                  onChange={(e) => setEditType(e.target.value)}
+                  name="device_type_id"
+                  defaultValue={device.device_type_id}
+                  required
                   className="flex h-10 w-full rounded-md border border-[#27272a] bg-[#121212] px-3 text-sm focus:border-primary focus:ring-1 focus:ring-[#FFC107] outline-none text-white cursor-pointer transition-colors"
                 >
-                  <option value="PS5" className="bg-[#121212]">PS 5</option>
-                  <option value="Standard Snooker" className="bg-[#121212]">Standard Snooker</option>
-                  <option value="Medium Snooker" className="bg-[#121212]">Medium Snooker</option>
-                  <option value="American Snooker" className="bg-[#121212]">American Snooker</option>
+                  <option value={device.device_type_id}>{device.device_type?.display_name || "Current Type"}</option>
                 </select>
               </div>
               <div className="space-y-2">
@@ -141,7 +137,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
               </div>
             </div>
 
-            {/* 💡 FIX: Replaced simple input line with modern high-fidelity uploader field component */}
+            {/*  Replaced simple input line with modern  field component */}
             <div className="space-y-2">
               <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Hardware Visual Image</label>
               <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-[#27272a] border-dashed rounded-xl cursor-pointer bg-[#121212] hover:bg-[#161616] hover:border-primary/40 transition-all group">
@@ -155,7 +151,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
               </label>
             </div>
 
-            {/* 💡 FIX: Upgraded layout status into a clean grid tracking radio node set */}
+            {/* Upgraded layout status into a clean grid  */}
             <div className="space-y-2">
               <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Device Status</label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -174,11 +170,10 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
             </div>
           </div>
 
-          {/* Right Panel - Sticky Card Display Preview & Save Action Footer */}
           <div className="w-full md:w-[350px] bg-[#121212] border-l border-[#27272a]/70 p-8 flex flex-col justify-between items-center flex-shrink-0">
             <div className="w-full flex-1 flex flex-col justify-center">
               <p className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider mb-4 text-center">Adjusted Display Preview</p>
-              
+
               <Card className="bg-[#0a0a0a] border-[#27272a] overflow-hidden w-full max-w-[250px] mx-auto shadow-2xl">
                 <div className="h-32 w-full bg-zinc-950 border-b border-[#27272a] flex items-center justify-center overflow-hidden relative">
                   {filePreviewUrl ? (

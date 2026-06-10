@@ -212,7 +212,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                     <div className="flex flex-wrap gap-3 justify-center md:justify-start text-xs text-zinc-500">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3.5 w-3.5" />
-                        <span>Created: {new Date(booking.created_at).toLocaleString()}</span>
+                        <span className="text-data-placeholder">Created: {new Date(booking.created_at).toLocaleString()}</span>
                       </div>
                       {booking.checked_in_at && (
                         <div className="flex items-center gap-1 text-green-500">
@@ -241,14 +241,14 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                     <div className="flex items-start gap-3">
                       <User className="h-4 w-4 text-primary mt-0.5" />
                       <div className="flex-1">
-                        <p className="text-[10px] text-zinc-600 uppercase">Name</p>
+                        <p className="text-[10px] text-data-placeholder uppercase">Customer</p>
                         <p className="text-sm font-bold text-white">{booking.customer_name}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
                       <Phone className="h-4 w-4 text-primary mt-0.5" />
                       <div className="flex-1">
-                        <p className="text-[10px] text-zinc-600 uppercase">Phone</p>
+                        <p className="text-[10px] text-data-placeholder uppercase">Phone</p>
                         <p className="text-sm font-mono text-white">{booking.customer_phone}</p>
                       </div>
                     </div>
@@ -256,7 +256,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                       <div className="flex items-start gap-3">
                         <Mail className="h-4 w-4 text-primary mt-0.5" />
                         <div className="flex-1">
-                          <p className="text-[10px] text-zinc-600 uppercase">Email</p>
+                          <p className="text-[10px] text-data-placeholder uppercase">Email</p>
                           <p className="text-sm text-white break-all">{booking.customer_email}</p>
                         </div>
                       </div>
@@ -273,7 +273,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                     <div className="flex items-start gap-3">
                       <MapPin className="h-4 w-4 text-primary mt-0.5" />
                       <div className="flex-1">
-                        <p className="text-[10px] text-zinc-600 uppercase">Device</p>
+                        <p className="text-[10px] text-data-placeholder uppercase">Device</p>
                         <p className="text-sm font-bold text-white">
                           {deviceSlot?.device_type} #{deviceSlot?.device_station_number}
                         </p>
@@ -282,7 +282,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                     <div className="flex items-start gap-3">
                       <Calendar className="h-4 w-4 text-primary mt-0.5" />
                       <div className="flex-1">
-                        <p className="text-[10px] text-zinc-600 uppercase">Date</p>
+                        <p className="text-[10px] text-data-placeholder uppercase">Date</p>
                         <p className="text-sm text-white">
                           {deviceSlot?.slot_date ? new Date(deviceSlot.slot_date).toLocaleDateString() : "N/A"}
                         </p>
@@ -291,11 +291,11 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                     <div className="flex items-start gap-3">
                       <Clock className="h-4 w-4 text-primary mt-0.5" />
                       <div className="flex-1">
-                        <p className="text-[10px] text-zinc-600 uppercase">Time Slot</p>
+                        <p className="text-[10px] text-data-placeholder uppercase">Time Slot</p>
                         <p className="text-sm text-white">
                           {deviceSlot?.slot_start_time} - {deviceSlot?.slot_end_time}
                         </p>
-                        <p className="text-xs text-zinc-600 mt-0.5">
+                        <p className="text-xs text-data-placeholder mt-0.5">
                           Duration: {deviceSlot?.duration_hours}h
                         </p>
                       </div>
@@ -326,13 +326,13 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                           <div className="flex justify-between items-start">
                             <div>
                               <p className="text-sm font-black text-white">{slot.device_type}</p>
-                              <p className="text-xs text-zinc-600">
+                              <p className="text-xs text-data-placeholder">
                                 {slot.duration_hours}h × ₹{Number(slot.hourly_rate).toLocaleString('en-IN')}/hr
                               </p>
                             </div>
                             <div className="text-right">
                               <p className="text-sm font-black text-white">₹{Number(slot.slot_total).toLocaleString('en-IN')}</p>
-                              <p className="text-[9px] text-zinc-600 uppercase">Base Rate</p>
+                              <p className="text-[9px] text-data-placeholder uppercase">Base Rate</p>
                             </div>
                           </div>
 
@@ -340,8 +340,8 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                           <div className="pt-2 border-t border-[#27272a]/50 space-y-2">
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-xs text-zinc-500 uppercase">Player Count</p>
-                                <p className="text-[10px] text-zinc-600">
+                                <p className="text-xs text-white uppercase">Player Count</p>
+                                <p className="text-[10px] text-data-placeholder">
                                   {includedPlayers} included • Max {maxPlayers}
                                 </p>
                               </div>
@@ -349,12 +349,11 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                                 <div className="flex items-center gap-3">
                                   <Button
                                     size="sm"
-                                    variant="outline"
                                     onClick={() => handleUpdatePlayerCount(slot.id, currentPlayerCount - 1, maxPlayers)}
                                     disabled={updatingPlayerCount || currentPlayerCount <= 1}
-                                    className="h-8 w-8 p-0 border-[#27272a] text-zinc-400 hover:text-white disabled:opacity-30"
+                                    className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-black disabled:opacity-30"
                                   >
-                                    <Minus className="h-3 w-3" />
+                                    <Minus className="h-3 w-3 bg-primary hover:bg-primary-hover text-black font-black" />
                                   </Button>
                                   <span className="text-lg font-black text-white w-8 text-center">
                                     {currentPlayerCount}
@@ -420,11 +419,11 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                       <div key={item.id} className="flex justify-between items-center p-3 bg-[#121212] border border-[#27272a] rounded-lg">
                         <div>
                           <p className="text-sm font-bold text-white">{item.item_name}</p>
-                          <p className="text-xs text-zinc-600">Qty: {item.quantity} × ₹{Number(item.unit_price)}</p>
+                          <p className="text-xs text-data-placeholder">Qty: {item.quantity} × ₹{Number(item.unit_price)}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-black text-white">₹{Number(item.line_total).toLocaleString('en-IN')}</p>
-                          <p className="text-[9px] text-zinc-600 uppercase">{item.status}</p>
+                          <p className="text-[9px] text-data-placeholder uppercase">{item.status}</p>
                         </div>
                       </div>
                     ))}
@@ -454,7 +453,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                     <span>TOTAL AMOUNT</span>
                     <span className="text-primary">₹{Number(booking.total_amount).toLocaleString('en-IN')}</span>
                   </div>
-                  <div className="flex justify-between text-xs text-zinc-600">
+                  <div className="flex justify-between text-xs text-data-placeholder">
                     <span>Payment Status</span>
                     <span className={booking.payment_status === 'paid' ? 'text-green-500' : 'text-amber-500'}>
                       {booking.payment_status?.toUpperCase()}
@@ -501,8 +500,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
 
                 <Button
                   onClick={onClose}
-                  variant="outline"
-                  className="ml-auto border-[#27272a] text-zinc-400 hover:text-white font-bold uppercase text-xs h-11 px-6"
+                  className="ml-auto bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-11 px-6"
                 >
                   Close
                 </Button>
@@ -545,7 +543,6 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                         <div className="flex items-center gap-2">
                           <Button
                             size="sm"
-                            variant="outline"
                             onClick={() => {
                               const qty = (selectedFoodItems[item.id] || 0);
                               if (qty > 0) {
@@ -553,9 +550,9 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                               }
                             }}
                             disabled={(selectedFoodItems[item.id] || 0) === 0}
-                            className="h-8 w-8 p-0 border-[#27272a]"
+                            className="h-8 w-8 p-0 bg-primary hover:bg-primary-hover text-black"
                           >
-                            <Minus className="h-3 w-3" />
+                            <Minus className="h-3 w-3 " />
                           </Button>
                           <span className="text-sm font-black text-white w-8 text-center">
                             {selectedFoodItems[item.id] || 0}

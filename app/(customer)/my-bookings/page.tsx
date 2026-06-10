@@ -67,7 +67,7 @@ function MyBookingsPageContent() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="search-phone" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Phone className="h-3 w-3 text-zinc-600"/> MOBILE NUMBER
+                <Phone className="h-3 w-3 text-zinc-600" /> MOBILE NUMBER
               </Label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -128,11 +128,10 @@ function MyBookingsPageContent() {
                   <div className="space-y-2 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-black text-primary font-mono">{booking.booking_number}</span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
-                        booking.status === 'confirmed' ? 'bg-green-500/10 text-green-500 border border-green-500/30' :
-                        booking.status === 'completed' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/30' :
-                        'bg-zinc-800 text-zinc-500 border border-zinc-700'
-                      }`}>
+                      <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${booking.status === 'confirmed' ? 'bg-green-500/10 text-green-500 border border-green-500/30' :
+                          booking.status === 'completed' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/30' :
+                            'bg-zinc-800 text-zinc-500 border border-zinc-700'
+                        }`}>
                         {booking.status}
                       </span>
                     </div>
@@ -164,8 +163,7 @@ function MyBookingsPageContent() {
                       e.stopPropagation();
                       setSelectedBooking(booking);
                     }}
-                    variant="outline"
-                    className="border-primary text-primary hover:bg-primary/10 font-bold uppercase text-xs h-10 px-4"
+                    className="border-primary bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-10 px-4"
                   >
                     View Details
                   </Button>

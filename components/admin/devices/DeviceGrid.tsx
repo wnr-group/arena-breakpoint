@@ -39,7 +39,7 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
                 <img
                   src={device.image_url}
                   alt="Hardware Cover"
-                  className="w-full h-full object-contain p-2 transition-transform duration-500 group-hover:scale-105"
+                  className="w-full h-full object-cover p-2 transition-transform duration-500 group-hover:scale-105"
                 />
               ) : (
                 <div className="flex flex-col items-center text-zinc-800 gap-1.5">
@@ -82,8 +82,7 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
                 </div>
               </div>
             </div>
-
-            {/* 3. 💡 HOVER ACTION OVERLAY PANEL — Seamlessly slides out from bottom exclusively on card hover */}
+            
             <div className="mt-auto h-0 opacity-0 group-hover:h-14 group-hover:opacity-100 transition-all duration-300 ease-out bg-[#0e0e0e]/60 border-t border-[#27272a]/30 flex items-center justify-end gap-2 px-4 overflow-hidden w-full">
               <Button
                 variant="ghost"
@@ -93,7 +92,7 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
               >
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
-              
+
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button

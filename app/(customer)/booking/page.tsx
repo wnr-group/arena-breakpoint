@@ -6,7 +6,7 @@ import { useAppDispatch } from "@/lib/redux/hooks";
 import { setDeviceType, setPricing } from "@/lib/redux/slices/bookingSlice";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader2, Users } from "lucide-react";
+import { Loader2, Users, Sparkles } from "lucide-react";
 import { getDeviceTypesWithAvailability } from "./actions";
 
 export default function GamingStationPage() {
@@ -38,11 +38,11 @@ export default function GamingStationPage() {
       extraPlayerCharge: Number(deviceType.extra_player_charge)
     }));
 
-    dispatch(setPricing({ 
-      subtotal: hourlyRate, 
-      subscriptionDiscount: 0, 
-      promoDiscount: 0, 
-      total: hourlyRate 
+    dispatch(setPricing({
+      subtotal: hourlyRate,
+      subscriptionDiscount: 0,
+      promoDiscount: 0,
+      total: hourlyRate
     }));
     router.push("/booking/slots-v2");
   };
@@ -66,24 +66,23 @@ export default function GamingStationPage() {
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-900 pb-4">
         <div className="flex gap-1.5 overflow-x-auto scrollbar-none">
           {["All Devices", "Console", "PC", "Snooker"].map((tag) => (
-            <button 
-              key={tag} 
-              onClick={() => setActiveFilter(tag)} 
-              className={`px-4 py-2 text-[11px] font-black uppercase border rounded-md transition-all ${
-                activeFilter === tag ? "bg-primary text-black border-transparent" : "bg-[#111] border-zinc-800 text-zinc-400"
-              }`}
+            <button
+              key={tag}
+              onClick={() => setActiveFilter(tag)}
+              className={`px-4 py-2 text-[11px] font-black uppercase border rounded-md transition-all ${activeFilter === tag ? "bg-primary text-black border-transparent" : "bg-[#111] border-zinc-800 text-zinc-400"
+                }`}
             >
               {tag}
             </button>
           ))}
         </div>
-        <Button onClick={() => router.push("/")} variant="outline" className="border-zinc-800 text-[11px] font-black uppercase h-9 px-4 text-zinc-400">
+        <Button onClick={() => router.push("/")} className="bg-primary hover:bg-primary-hover text-black font-black text-[11px] uppercase h-9 px-4 ">
           ← BACK TO HOME
         </Button>
       </div>
 
       {/* DEVICE TYPES GRID CONTAINER */}
-      <div className="max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-7">
+      <div className="max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
         {deviceTypes
           .filter(type => {
             if (activeFilter === "Console") return type.name === "ps5";
@@ -95,22 +94,24 @@ export default function GamingStationPage() {
             const isAvail = deviceType.available_devices_count > 0;
             return (
               <Card key={deviceType.id} className="bg-[#111] border border-zinc-900 overflow-hidden flex flex-col justify-between rounded-xl shadow-lg group">
-                <div className="h-52 w-full relative overflow-hidden border-b border-zinc-900/60 bg-zinc-950">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <h3 className="text-3xl font-black text-white/10 uppercase">{deviceType.display_name}</h3>
-                  </div>
-         
-                  {isAvail ? (
-                    <span className="absolute top-4 right-4 bg-black/90 backdrop-blur-md border border-green-500/30 text-green-400 text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md shadow-2xl flex items-center gap-1.5 z-30">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                      {deviceType.available_devices_count} AVAILABLE
-                    </span>
+
+                <div className="relative w-full aspect-video overflow-hidden bg-zinc-950 border-b border-zinc-900">
+                  {deviceType.image_url ? (
+                    <img
+                      src={deviceType.image_url}
+                      alt={deviceType.display_name}
+                      className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                    />
                   ) : (
-                    <span className="absolute top-4 right-4 bg-black/95 backdrop-blur-md border border-red-500/30 text-red-500 text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md shadow-2xl flex items-center gap-1.5 z-30">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                      FULLY BOOKED
-                    </span>
+                    <div className="w-full h-full flex items-center justify-center text-zinc-800">
+                      <Sparkles className="h-8 w-8 opacity-20" />
+                    </div>
                   )}
+
+                  <span className={`absolute top-2 right-2 md:top-4 md:right-4 backdrop-blur-md border text-[8px] md:text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-md shadow-2xl z-30 ${isAvail ? "bg-black/90 border-green-500/30 text-green-400" : "bg-black/95 border-red-500/30 text-red-500"
+                    }`}>
+                    {isAvail ? `${deviceType.available_devices_count} AVAILABLE` : "FULLY BOOKED"}
+                  </span>
                 </div>
 
                 <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
@@ -138,8 +139,8 @@ export default function GamingStationPage() {
 
                   <div className="pt-2">
                     {isAvail ? (
-                      <Button 
-                        onClick={() => handleSelectAndProceed(deviceType)} 
+                      <Button
+                        onClick={() => handleSelectAndProceed(deviceType)}
                         className="w-full text-xs font-black uppercase py-5 bg-primary hover:bg-primary-hover text-black rounded-lg transition-all active:scale-[0.99]"
                       >
                         SELECT {deviceType.display_name.toUpperCase()}

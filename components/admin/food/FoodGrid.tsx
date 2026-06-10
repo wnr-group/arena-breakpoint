@@ -107,7 +107,7 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
                   </h3>
                   
                   <span className={`text-[10px] font-extrabold uppercase tracking-wide transition-colors mt-0.5 flex-shrink-0 ${
-                    isCurrentlyAvailable ? "text-primary" : "text-zinc-600"
+                    isCurrentlyAvailable ? "text-primary" : "text-red-500"
                   }`}>
                     {isCurrentlyAvailable ? "Available" : "Not Available"}
                   </span>

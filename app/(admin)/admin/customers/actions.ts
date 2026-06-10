@@ -7,6 +7,7 @@ interface DBCustomer {
   name: string;
   phone: string;
   email: string | null;
+  date_of_birth: string;
   created_at: string;
 }
 
@@ -26,7 +27,7 @@ interface DBSubscriptionPlan {
 export async function getLiveCustomerRegistryAction() {
   const { data: customersData, error: customerError } = await supabaseAdmin
     .from("customers")
-    .select("id, name, phone, email, created_at")
+    .select("id, name, phone, email, date_of_birth,created_at")
     .order("name", { ascending: true });
 
   if (customerError) {
@@ -60,10 +61,10 @@ export async function getLiveCustomerRegistryAction() {
       (purchase: DBSubscriptionPurchase) => purchase.customer_id === customer.id
     );
     const sortedPurchases = customerPurchases.sort(
-      (a: DBSubscriptionPurchase, b: DBSubscriptionPurchase) => 
+      (a: DBSubscriptionPurchase, b: DBSubscriptionPurchase) =>
         new Date(b.expires_at).getTime() - new Date(a.expires_at).getTime()
     );
-    
+
     const latestPurchase = sortedPurchases[0] || null;
 
     let matchedPlanName: string | null = null;
@@ -87,6 +88,7 @@ export async function getLiveCustomerRegistryAction() {
       name: customer.name,
       phone: customer.phone,
       email: customer.email,
+      date_of_birth: customer.date_of_birth,
       created_at: customer.created_at,
       subscription_name: matchedPlanName,
       subscription_status: computedStatus,

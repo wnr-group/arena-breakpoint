@@ -19,6 +19,7 @@
 
   /* Animated Gradient for backgrounds */
   --gradient-animated: linear-gradient(270deg, #FFC107, #FF8F00, #FFAB00, #FFD54F);
+
 }
 
 @theme inline {
@@ -51,7 +52,9 @@
 
     /* Animated Gradient for backgrounds */
     --gradient-animated: linear-gradient(270deg, #FFC107, #FF8F00, #FFAB00, #FFD54F);
+
   }
+
 }
 
 body {
@@ -63,6 +66,7 @@ body {
 
 /* Custom Global Dark Scrollbar Styles */
 @layer base {
+
   /* For Chrome, Safari, Edge, and Opera */
   ::-webkit-scrollbar {
     width: 10px;
@@ -71,20 +75,20 @@ body {
 
   /* The background track area of the scrollbar slot */
   ::-webkit-scrollbar-track {
-    background: #0a0a0a; 
-    border-left: 1px solid #27272a; 
+    background: #0a0a0a;
+    border-left: 1px solid #27272a;
   }
 
   /* The actual draggable scrollbar handle/thumb */
   ::-webkit-scrollbar-thumb {
     background: #27272a;
-    border-radius: 9999px; 
+    border-radius: 9999px;
     border: 2px solid #0a0a0a;
   }
 
   /* Changes color subtly when an operator hovers over the track */
   ::-webkit-scrollbar-thumb:hover {
-    background: #3f3f46; 
+    background: #3f3f46;
   }
 
   /* Standard support properties for Firefox */
@@ -92,13 +96,16 @@ body {
     scrollbar-width: thin;
     scrollbar-color: #27272a #0a0a0a;
   }
+
+
 }
 
 .rdp {
   --rdp-cell-size: 32px !important;
   --rdp-accent-color: var(--primary) !important;
-  --rdp-background-color: #1a1a1a !important;
-  margin: 0 !important;
+  --rdp-background-color: #0a0a0a !important;
+  --rdp-selected-color: #000000 !important;
+  --rdp-hover-color: rgba(255, 193, 7, 0.15);
 }
 
 .rdp-months {
@@ -124,6 +131,10 @@ body {
   border-radius: 8px !important;
   height: 32px !important;
   width: 32px !important;
+}
+
+.rdp-day_disabled {
+  opacity: 0.3;
 }
 
 .rdp-day_selected,
@@ -154,8 +165,11 @@ body {
   width: 24px !important;
 }
 
+
+
 /* 🎨 GRADIENT UTILITY CLASSES */
 @layer utilities {
+
   /* Gradient Backgrounds */
   .bg-gradient-primary {
     background: var(--gradient-primary);
@@ -253,6 +267,17 @@ body {
     z-index: -1;
     animation: gradient-shift 8s ease infinite;
   }
+
+  /* Table values */
+  .text-data-visible {
+    color: var(--foreground);
+  }
+
+  .text-data-placeholder {
+    color: var(--text-muted, #a1a1aa);
+    /* Visible grey */
+    font-style: italic;
+  }
 }
 
 /* Gradient Animation Keyframes */
@@ -260,9 +285,11 @@ body {
   0% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
+
   100% {
     background-position: 0% 50%;
   }

@@ -86,7 +86,7 @@ export default function RetrieveBookingPage() {
           <form onSubmit={handleSearch} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="phone-search" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Phone className="h-3 w-3 text-zinc-600"/> MOBILE NUMBER
+                <Phone className="h-3 w-3 text-zinc-600" /> MOBILE NUMBER
               </Label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -177,8 +177,8 @@ export default function RetrieveBookingPage() {
                       e.stopPropagation();
                       setSelectedBooking(booking);
                     }}
-                    variant="outline"
-                    className="border-primary text-primary hover:bg-primary/10 font-bold uppercase text-xs h-10 px-4"
+
+                    className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-10 px-4"
                   >
                     View Details
                   </Button>
@@ -204,11 +204,10 @@ export default function RetrieveBookingPage() {
                     <div className="flex items-center gap-2 mt-1">
                       {getStatusBadge(selectedBooking.status)}
                       <span className="text-xs text-zinc-600">•</span>
-                      <span className={`text-xs font-bold uppercase ${
-                        selectedBooking.payment_status === 'paid' ? 'text-green-500' :
-                        selectedBooking.payment_status === 'pending' ? 'text-yellow-500' :
-                        'text-zinc-500'
-                      }`}>
+                      <span className={`text-xs font-bold uppercase ${selectedBooking.payment_status === 'paid' ? 'text-green-500' :
+                          selectedBooking.payment_status === 'pending' ? 'text-yellow-500' :
+                            'text-zinc-500'
+                        }`}>
                         {selectedBooking.payment_status}
                       </span>
                     </div>
@@ -241,38 +240,42 @@ export default function RetrieveBookingPage() {
                 <User className="h-3.5 w-3.5" />
                 Customer Information
               </h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between py-2 border-b border-zinc-900">
-                  <span className="text-zinc-500">Name:</span>
+              <div className="space-y-4 text-sm">
+                <div className="flex items-center justify-between  border-b border-zinc-900">
+                  <span className="text-zinc-500">Customer:</span>
                   <span className="text-white font-bold">{selectedBooking.customer_name}</span>
                 </div>
-                <div className="flex items-center justify-between py-2 border-b border-zinc-900">
+                <div className="flex items-center justify-between border-b border-zinc-900">
                   <span className="text-zinc-500">Phone:</span>
-                  <span className="text-white font-bold">{selectedBooking.customer_phone}</span>
+                  <span className="text-primary font-bold">{selectedBooking.customer_phone}</span>
                 </div>
                 {selectedBooking.customer_email && (
-                  <div className="flex items-center justify-between py-2">
+                  <div className="flex items-center justify-between ">
                     <span className="text-zinc-500">Email:</span>
                     <span className="text-white font-bold truncate ml-2">{selectedBooking.customer_email}</span>
                   </div>
                 )}
+                <div className="flex items-center justify-between border-b border-zinc-900">
+                  <span className="text-zinc-500">DOB:</span>
+                  <span className="text-white font-bold">{selectedBooking.customer_dob}</span>
+                </div>
               </div>
             </Card>
 
             {/* Device Slots */}
             {selectedBooking.booking_device_slots?.length > 0 && (
-              <Card className="bg-[#111] border border-zinc-900 p-5 shadow-lg rounded-xl">
+              <Card className="bg-[#111] border border-zinc-900 p-2 shadow-lg rounded-xl">
                 <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <Calendar className="h-3.5 w-3.5" />
                   Device Slots
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {selectedBooking.booking_device_slots.map((slot: any, idx: number) => (
                     <div key={idx} className="bg-zinc-950 p-4 rounded-xl border border-zinc-900">
-                      <div className="space-y-2 text-sm">
+                      <div className="space-y-5 text-sm">
                         <div className="flex items-center justify-between">
-                          <span className="text-zinc-500">Device:</span>
-                          <span className="text-white font-black">{slot.device_type} #{slot.device_station_number}</span>
+                          <span className="text-zinc-500 whitespace-no-wrap">Device:</span>
+                          <span className="text-white font-black text-right break-words leading-tight">{slot.device_type} <span className="text-primary text-[13.5px]">#{slot.device_station_number}</span></span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-zinc-500">Date:</span>
@@ -338,7 +341,7 @@ export default function RetrieveBookingPage() {
             <div className="space-y-2">
               {(selectedBooking.status === 'confirmed' || selectedBooking.status === 'checked_in') && (
                 <Button
-                  onClick={() => router.push(`/food?bookingId=${selectedBooking.id}&bookingNumber=${selectedBooking.booking_number}&phone=${selectedBooking.customer_phone}&name=${selectedBooking.customer_name}`)}
+                  onClick={() => router.push(`/food?bookingId=${selectedBooking.id}&bookingNumber=${selectedBooking.booking_number}&phone=${selectedBooking.customer_phone}&name=${selectedBooking.customer_name}&date_of_birth=${selectedBooking.customer_dob || ''}`)}
                   className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-2"
                 >
                   <UtensilsCrossed className="h-4 w-4" />
@@ -348,14 +351,14 @@ export default function RetrieveBookingPage() {
               <Button
                 onClick={() => router.push("/booking")}
                 variant="outline"
-                className="w-full border-2 border-primary text-primary hover:bg-primary/10 font-black uppercase text-xs h-11 rounded-xl"
+                className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-11 rounded-xl"
               >
                 BOOK ANOTHER SLOT
               </Button>
               <Button
                 onClick={() => setSelectedBooking(null)}
                 variant="ghost"
-                className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-xs h-10 rounded-xl"
+                className="w-full border border-zinc-800 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-xs h-10 rounded-xl"
               >
                 BACK TO SEARCH
               </Button>

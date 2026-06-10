@@ -389,7 +389,7 @@ export default function AdminBookingsPage() {
                               <p className="text-sm font-black text-primary font-mono">
                                 {isSingleBooking ? firstBooking.booking_number : `${group.count} Bookings`}
                               </p>
-                              <p className="text-[10px] text-zinc-600 mt-0.5">
+                              <p className="text-[11px] text-data-visible mt-0.5">
                                 {new Date(firstBooking.created_at).toLocaleDateString()}
                               </p>
                             </div>
@@ -398,8 +398,8 @@ export default function AdminBookingsPage() {
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-2">
                             <div>
-                              <p className="text-sm font-bold text-white">{group.customerName}</p>
-                              <p className="text-xs text-zinc-500 font-mono">{group.phone}</p>
+                              <p className="text-sm font-bold text-data-visible">{group.customerName}</p>
+                              <p className="text-xs text-data-placeholder font-mono">{group.phone}</p>
                             </div>
                             {!isSingleBooking && (
                               <span className="bg-gradient-primary text-black text-[8px] font-black px-2 py-0.5 rounded-full">
@@ -417,39 +417,39 @@ export default function AdminBookingsPage() {
                         <td className="py-4 px-4">
                           {isSingleBooking ? (
                             <>
-                              <p className="text-sm font-bold text-white">
+                              <p className="text-sm font-bold text-data-visible">
                                 {firstSlot?.device_type || "N/A"}
                               </p>
-                              <p className="text-xs text-zinc-500">
+                              <p className="text-xs text-data-placeholder">
                                 Station #{firstSlot?.device_station_number || "N/A"}
                               </p>
                             </>
                           ) : (
-                            <p className="text-xs text-zinc-500 italic">Multiple devices</p>
+                            <p className="text-xs text-data-placeholder">Multiple devices</p>
                           )}
                         </td>
                         <td className="py-4 px-4">
                           {isSingleBooking ? (
                             <>
-                              <p className="text-sm font-bold text-white">
+                              <p className="text-sm font-bold text-data-visible">
                                 {firstSlot?.slot_date ? new Date(firstSlot.slot_date).toLocaleDateString() : "N/A"}
                               </p>
-                              <p className="text-xs text-zinc-500">
+                              <p className="text-xs text-data-placeholder">
                                 {firstSlot?.slot_start_time || "N/A"} - {firstSlot?.slot_end_time || "N/A"}
                               </p>
                             </>
                           ) : (
-                            <p className="text-xs text-zinc-500 italic">Multiple slots</p>
+                            <p className="text-xs text-data-placeholder italic">Multiple slots</p>
                           )}
                         </td>
                         <td className="py-4 px-4">
-                          <p className="text-sm font-black text-white">₹{group.totalAmount.toLocaleString('en-IN')}</p>
+                          <p className="text-sm font-black text-date-visible">₹{group.totalAmount.toLocaleString('en-IN')}</p>
                           <div className="flex flex-col gap-0.5 mt-1">
-                            <p className="text-[10px] text-zinc-600">
+                            <p className="text-[10.5px] text-data-placeholder">
                               Games: ₹{group.totalDevice.toLocaleString('en-IN')}
                             </p>
                             {group.totalFood > 0 && (
-                              <p className="text-[10px] text-zinc-600">
+                              <p className="text-[10.5px] text-data-placeholder">
                                 Food: ₹{group.totalFood.toLocaleString('en-IN')}
                               </p>
                             )}
@@ -528,37 +528,37 @@ export default function AdminBookingsPage() {
                           <tr key={booking.id} className="bg-[#0a0a0a] hover:bg-[#121212] transition-colors border-l-4 border-l-primary/30">
                             <td className="py-3 px-4 pl-12">
                               <p className="text-sm font-black text-primary font-mono">{booking.booking_number}</p>
-                              <p className="text-[10px] text-zinc-600 mt-0.5">
+                              <p className="text-[10px] text-data-placeholder mt-0.5">
                                 Booking #{index + 1}
                               </p>
                             </td>
                             <td className="py-3 px-4">
-                              <p className="text-xs text-zinc-500">Same customer</p>
+                              <p className="text-xs text-data-placeholder">Same customer</p>
                             </td>
                             <td className="py-3 px-4">
-                              <p className="text-sm font-bold text-white">
+                              <p className="text-sm font-bold text-date-visible">
                                 {deviceSlot?.device_type || "N/A"}
                               </p>
-                              <p className="text-xs text-zinc-500">
+                              <p className="text-xs text-data-placeholder">
                                 Station #{deviceSlot?.device_station_number || "N/A"}
                               </p>
                             </td>
                             <td className="py-3 px-4">
-                              <p className="text-sm font-bold text-white">
+                              <p className="text-sm font-bold text-date-visible">
                                 {deviceSlot?.slot_date ? new Date(deviceSlot.slot_date).toLocaleDateString() : "N/A"}
                               </p>
-                              <p className="text-xs text-zinc-500">
+                              <p className="text-xs text-data-placeholder">
                                 {deviceSlot?.slot_start_time || "N/A"} - {deviceSlot?.slot_end_time || "N/A"}
                               </p>
                             </td>
                             <td className="py-3 px-4">
-                              <p className="text-sm font-black text-white">₹{Number(booking.total_amount).toLocaleString('en-IN')}</p>
+                              <p className="text-sm font-black text-data-visible">₹{Number(booking.total_amount).toLocaleString('en-IN')}</p>
                               <div className="flex flex-col gap-0.5 mt-1">
-                                <p className="text-[10px] text-zinc-600">
+                                <p className="text-[10.5px] text-data-placeholder">
                                   Games: ₹{Number(booking.device_subtotal || 0).toLocaleString('en-IN')}
                                 </p>
                                 {booking.food_subtotal > 0 && (
-                                  <p className="text-[10px] text-zinc-600">
+                                  <p className="text-[10.5px] text-data-placeholder">
                                     Food: ₹{Number(booking.food_subtotal).toLocaleString('en-IN')}
                                   </p>
                                 )}

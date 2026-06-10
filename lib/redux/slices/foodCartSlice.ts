@@ -15,6 +15,7 @@ interface FoodCartState {
   bookingNumber: string | null;
   customerPhone: string | null;
   customerName: string | null;
+  customerDob: string | null;
 }
 
 const initialState: FoodCartState = {
@@ -23,6 +24,7 @@ const initialState: FoodCartState = {
   bookingNumber: null,
   customerPhone: null,
   customerName: null,
+  customerDob: null
 };
 
 const foodCartSlice = createSlice({
@@ -97,12 +99,14 @@ const foodCartSlice = createSlice({
         bookingNumber: string;
         customerPhone: string;
         customerName: string;
+        customerDob: string;
       }>
     ) => {
       state.bookingId = action.payload.bookingId;
       state.bookingNumber = action.payload.bookingNumber;
       state.customerPhone = action.payload.customerPhone;
       state.customerName = action.payload.customerName;
+      state.customerDob = action.payload.customerDob;
     },
 
     clearBookingContext: (state) => {
@@ -110,6 +114,7 @@ const foodCartSlice = createSlice({
       state.bookingNumber = null;
       state.customerPhone = null;
       state.customerName = null;
+      state.customerDob = null;
     },
 
     clearCart: (state) => {
@@ -118,6 +123,7 @@ const foodCartSlice = createSlice({
       state.bookingNumber = null;
       state.customerPhone = null;
       state.customerName = null;
+      state.customerDob = null;
     },
   },
 });

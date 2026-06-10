@@ -241,20 +241,18 @@ export default function AdminDashboardPage() {
           <div className="space-y-2">
             <Button
               onClick={() => router.push("/admin/bookings")}
-              variant="outline"
               size="sm"
-              className="w-full justify-start text-xs border-[#27272a] text-zinc-400 hover:text-white"
+              className="bg-primary hover:bg-primary-hover text-black font-black w-full justify-center "
             >
-              <Eye className="h-3 w-3 mr-2" />
+              <Eye className="h-4 w-4 mr-2" />
               View All Bookings
             </Button>
             <Button
               onClick={() => router.push("/admin/reports")}
-              variant="outline"
               size="sm"
-              className="w-full justify-start text-xs border-[#27272a] text-zinc-400 hover:text-white"
+              className="w-full justify-center bg-primary hover:bg-primary-hover text-black font-black"
             >
-              <TrendingUp className="h-3 w-3 mr-2" />
+              <TrendingUp className="h-4 w-4 mr-2" />
               View Reports
             </Button>
           </div>
