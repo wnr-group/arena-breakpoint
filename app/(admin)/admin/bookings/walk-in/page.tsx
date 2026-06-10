@@ -28,6 +28,7 @@ import {
 } from "@/app/(customer)/booking/actions";
 import { checkCustomerExists } from "@/app/(customer)/booking/actions";
 import { createWalkInBooking } from "../actions";
+import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
 
 const staticDaylightSchedulesMatrix = [
   { id: "s1", label: "10:00 AM - 11:00 AM", start: "10:00 AM", end: "11:00 AM", tier: "Morning Slots" },
@@ -115,7 +116,9 @@ export default function WalkInBookingPage() {
   const handleCustomerPhoneLookup = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!customerPhone.trim() || customerPhone.length < 10) {
+    // Validate phone number: exactly 10 digits
+    const phoneDigits = customerPhone.trim();
+    if (!phoneDigits || !/^\d{10}$/.test(phoneDigits)) {
       toast.error("Invalid Entry", { description: "Please enter a valid 10-digit mobile number." });
       return;
     }
@@ -126,7 +129,10 @@ export default function WalkInBookingPage() {
     if (result.exists && result.customer) {
       setCustomerName(result.customer.name);
       setCustomerEmail(result.customer.email || "");
-      setCustomerDob(result.customer.date_of_birth);
+      // Convert DOB from database format (YYYY-MM-DD) to display format (DD-MM-YYYY)
+      if (result.customer.date_of_birth) {
+        setCustomerDob(formatDateForDisplay(result.customer.date_of_birth));
+      }
       toast.success("Profile Authenticated", { description: `Welcome back, ${result.customer.name}! Adjust players if required on final step.` });
       setStep(4);
     } else {
@@ -158,16 +164,29 @@ export default function WalkInBookingPage() {
     const baseRate = Number(selectedDeviceType?.regular_hourly_rate) || 0;
     const total = baseRate + extraPlayerCharge;
 
-    const formatForDB = (dateStr: string) => {
-      const [d, m, y] = dateStr.split('-');
-      return `${y}-${m}-${d}`;
-    };
+    // Validate DOB
+    if (!isValidDateDDMMYYYY(customerDob)) {
+      toast.error("Invalid Date of Birth", {
+        description: "Please enter a valid date in DD-MM-YYYY format"
+      });
+      setSubmitting(false);
+      return;
+    }
+
+    const formattedDob = formatDateForDB(customerDob);
+    if (!formattedDob) {
+      toast.error("Invalid Date of Birth", {
+        description: "Please check the date format"
+      });
+      setSubmitting(false);
+      return;
+    }
 
     const result = await createWalkInBooking({
       customerName: customerName.trim(),
       customerPhone: customerPhone.trim(),
       customerEmail: customerEmail.trim() || null,
-      customerDob: formatForDB(customerDob),
+      customerDob: formattedDob,
       deviceTypeId: selectedDeviceType.id,
       deviceTypeName: selectedDeviceType.display_name,
       selectedDate: selectedDate.toISOString().split("T")[0],
@@ -198,15 +217,8 @@ export default function WalkInBookingPage() {
   const totalAmount = baseRate + extraPlayerCharge;
 
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value.replace(/[^0-9]/g, "");
-
-    // 2. Apply auto-formatting (DD-MM-YYYY)
-    if (val.length > 4) {
-      val = `${val.slice(0, 2)}-${val.slice(2, 4)}-${val.slice(4, 8)}`;
-    } else if (val.length > 2) {
-      val = `${val.slice(0, 2)}-${val.slice(2)}`;
-    }
-    setCustomerDob(val);
+    const formatted = handleDobInput(e.target.value);
+    setCustomerDob(formatted);
   };
 
   return (

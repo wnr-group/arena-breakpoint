@@ -341,7 +341,7 @@ export default function RetrieveBookingPage() {
             <div className="space-y-2">
               {(selectedBooking.status === 'confirmed' || selectedBooking.status === 'checked_in') && (
                 <Button
-                  onClick={() => router.push(`/food?bookingId=${selectedBooking.id}&bookingNumber=${selectedBooking.booking_number}&phone=${selectedBooking.customer_phone}&name=${selectedBooking.customer_name}`)}
+                  onClick={() => router.push(`/food?bookingId=${selectedBooking.id}&bookingNumber=${selectedBooking.booking_number}&phone=${selectedBooking.customer_phone}&name=${selectedBooking.customer_name}&date_of_birth=${selectedBooking.customer_dob || ''}`)}
                   className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-2"
                 >
                   <UtensilsCrossed className="h-4 w-4" />

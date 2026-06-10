@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { checkCustomerExists, confirmBooking } from "../actions";
 import { QRCodeSVG } from "qrcode.react";
 import { generateDurationOptions } from "@/lib/utils/timeSlots";
+import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
 
 type Step = "phone" | "details" | "summary" | "success";
 
@@ -44,24 +45,9 @@ export default function CustomerDetailsPage() {
     return duration?.label || (selectedDuration ? `${selectedDuration} mins` : "--");
   }, [selectedDuration, allDurations]);
 
-  const formatFromDB = (dateStr: string) => {
-    const [y, m, d] = dateStr.split('-');
-    return `${d}-${m}-${y}`;
-  };
-
-  const formatForDB = (dateStr: string) => {
-    const [d, m, y] = dateStr.split('-');
-    return `${y}-${m}-${d}`;
-  };
-
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value.replace(/[^0-9]/g, "");
-    if (val.length > 4) {
-      val = `${val.slice(0, 2)}-${val.slice(2, 4)}-${val.slice(4, 8)}`;
-    } else if (val.length > 2) {
-      val = `${val.slice(0, 2)}-${val.slice(2)}`;
-    }
-    setCustomerDob(val);
+    const formatted = handleDobInput(e.target.value);
+    setCustomerDob(formatted);
   };
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
@@ -88,7 +74,10 @@ export default function CustomerDetailsPage() {
       setExistingCustomerData(result.customer);
       setCustomerName(result.customer.name);
       setCustomerEmail(result.customer.email || "");
-      setCustomerDob(formatFromDB(result.customer.date_of_birth));
+      // Convert DOB from DB format (YYYY-MM-DD) to display format (DD-MM-YYYY)
+      if (result.customer.date_of_birth) {
+        setCustomerDob(formatDateForDisplay(result.customer.date_of_birth));
+      }
 
       dispatch(setCustomerDetails({
         phone: mobileNumber,
@@ -116,11 +105,28 @@ export default function CustomerDetailsPage() {
       return;
     }
 
+    // Validate DOB
+    if (!customerDob.trim()) {
+      toast.error("Required Field Missing", { description: "Please provide your date of birth." });
+      return;
+    }
+
+    if (!isValidDateDDMMYYYY(customerDob)) {
+      toast.error("Invalid Date", { description: "Please enter a valid date in DD-MM-YYYY format." });
+      return;
+    }
+
+    const formattedDob = formatDateForDB(customerDob);
+    if (!formattedDob) {
+      toast.error("Invalid Date", { description: "Please check the date format." });
+      return;
+    }
+
     dispatch(setCustomerDetails({
       phone: mobileNumber,
       name: customerName,
       email: customerEmail,
-      date_of_birth: customerDob,
+      date_of_birth: formattedDob,
     }));
 
     toast.success("Details Saved", { description: "Review your booking summary." });
@@ -130,11 +136,19 @@ export default function CustomerDetailsPage() {
   const handleConfirmBooking = async () => {
     setIsSubmitting(true);
 
+    // Format DOB for database
+    let dobForDB = "";
+    if (customerDob) {
+      dobForDB = formatDateForDB(customerDob);
+    } else if (existingCustomerData?.date_of_birth) {
+      dobForDB = existingCustomerData.date_of_birth;
+    }
+
     const result = await confirmBooking({
       phone: mobileNumber,
       name: customerName || existingCustomerData?.name,
       email: customerEmail || existingCustomerData?.email || "",
-      date_of_birth: formatForDB(customerDob) || existingCustomerData?.date_of_birth,
+      date_of_birth: dobForDB,
       deviceTypeId: deviceTypeId!,
       deviceTypeName: deviceTypeName!,
       selectedDate: selectedDate!,
@@ -433,9 +447,6 @@ export default function CustomerDetailsPage() {
             <Button onClick={() => router.push(`/booking/${bookingId}/food`)} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-2">
               <UtensilsCrossed className="h-4 w-4" />
               ORDER FOOD & DRINKS
-            </Button>
-            <Button onClick={handleNewBooking} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-11 rounded-xl">
-              BOOK ANOTHER SLOT
             </Button>
             <Button onClick={() => router.push(`/my-bookings?phone=${mobileNumber}`)} variant="ghost" className="w-full border-2 border-primary text-zinc-300 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
               VIEW MY BOOKINGS

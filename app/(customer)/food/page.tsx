@@ -130,16 +130,16 @@ function FoodMenuPageContent() {
       <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 select-none">
         <span>Home</span>
         <ChevronRight className="h-3 w-3 text-zinc-700" />
-        <span className="text-primary">Food Menu</span>
+        <span className="text-primary">Respawn Refuel</span>
       </div>
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-900 pb-6">
         <div className="space-y-1">
-          <h1 className="text-3xl font-black uppercase tracking-tight text-white">
-            Break Point Arena – Food Menu
+          <h1 className="text-3xl font-black uppercase tracking-tight bg-gradient-to-r from-primary via-yellow-300 to-primary bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(255,193,7,0.3)]">
+            Respawn Refuel ⚡
           </h1>
           <p className="text-xs text-zinc-400 font-medium">
-            Fuel your gaming session with premium snacks, meals, and beverages crafted for high-performance competitors.
+            Recharge between matches with premium snacks, meals, and beverages crafted for champions.
           </p>
         </div>
 
@@ -159,9 +159,9 @@ function FoodMenuPageContent() {
         <div className="flex gap-2 overflow-x-auto w-full xl:w-auto scrollbar-none py-0.5">
           <button
             onClick={() => setActiveCategory("all")}
-            className={`px-5 py-2.5 text-[10px] font-black uppercase border rounded-lg transition-all duration-200 whitespace-nowrap tracking-wider ${activeCategory === "all"
-                ? "bg-primary text-black border-transparent shadow-[0_4px_12px_rgba(255,193,7,0.15)]"
-                : "bg-zinc-900/40 border-zinc-800/60 text-zinc-400 hover:text-white hover:border-zinc-700"
+            className={`px-5 py-2.5 text-[10px] font-black uppercase border rounded-lg transition-all duration-300 whitespace-nowrap tracking-wider ${activeCategory === "all"
+                ? "bg-gradient-to-r from-primary via-yellow-400 to-primary text-black border-transparent shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
+                : "bg-zinc-900/40 border-zinc-800/60 text-zinc-400 hover:text-white hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:via-yellow-400/10 hover:to-primary/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
               }`}
           >
             All Items
@@ -170,9 +170,9 @@ function FoodMenuPageContent() {
             <button
               key={category}
               onClick={() => setActiveCategory(category)}
-              className={`px-5 py-2.5 text-[10px] font-black uppercase border rounded-lg transition-all duration-200 whitespace-nowrap tracking-wider ${activeCategory === category
-                  ? "bg-primary text-black border-transparent shadow-[0_4px_12px_rgba(255,193,7,0.15)]"
-                  : "bg-zinc-900/40 border-zinc-800/60 text-zinc-400 hover:text-white hover:border-zinc-700"
+              className={`px-5 py-2.5 text-[10px] font-black uppercase border rounded-lg transition-all duration-300 whitespace-nowrap tracking-wider ${activeCategory === category
+                  ? "bg-gradient-to-r from-primary via-yellow-400 to-primary text-black border-transparent shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
+                  : "bg-zinc-900/40 border-zinc-800/60 text-zinc-400 hover:text-white hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:via-yellow-400/10 hover:to-primary/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
                 }`}
             >
               {category}

@@ -239,12 +239,12 @@ export default function FlexibleSlotBookingPage() {
           </div>
 
           {/* Info Banner */}
-          <Card className="bg-blue-500/5 border-blue-500/20 p-4">
+          <Card className="bg-gradient-to-r from-primary/5 via-yellow-400/5 to-primary/5 border-primary/20 p-4">
             <div className="flex gap-3">
-              <AlertCircle className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <p className="text-sm font-bold text-blue-300">Flexible Booking</p>
-                <p className="text-xs text-blue-400/80">Book from 30 minutes to 5 hours. Choose your preferred start time and duration.</p>
+                <p className="text-sm font-bold bg-gradient-to-r from-primary via-yellow-300 to-primary bg-clip-text text-transparent">Flexible Booking</p>
+                <p className="text-xs text-zinc-400">Book from 30 minutes to 5 hours. Choose your preferred start time and duration.</p>
               </div>
             </div>
           </Card>
@@ -299,7 +299,7 @@ export default function FlexibleSlotBookingPage() {
                       type="button"
                       onClick={() => playerCount > 1 && dispatch(setPlayerCount(playerCount - 1))}
                       disabled={playerCount <= 1}
-                      className="w-7 h-7 rounded-md bg-zinc-900 border border-zinc-800 text-white disabled:opacity-30 flex items-center justify-center"
+                      className="w-7 h-7 rounded-md bg-zinc-900 border border-zinc-800 text-white disabled:opacity-30 flex items-center justify-center hover:border-primary/50 hover:bg-primary/10 transition-all duration-300"
                     >
                       <Minus className="h-3 w-3" />
                     </button>
@@ -314,7 +314,7 @@ export default function FlexibleSlotBookingPage() {
                         }
                       }}
                       disabled={playerCount >= maxPlayers}
-                      className="w-7 h-7 rounded-md bg-primary text-black flex items-center justify-center font-bold"
+                      className="w-7 h-7 rounded-md bg-gradient-to-r from-primary to-yellow-400 text-black flex items-center justify-center font-bold hover:shadow-[0_0_15px_rgba(255,193,7,0.5)] disabled:opacity-30 transition-all duration-300"
                     >
                       <Plus className="h-3 w-3 stroke-[3]" />
                     </button>
@@ -365,9 +365,9 @@ export default function FlexibleSlotBookingPage() {
                         setSelectedDuration(duration.value);
                         dispatch(setDuration(duration.value))
                       }}
-                      className={`w-full p-3 border text-left rounded-xl transition-all ${isSelected
-                          ? "bg-primary border-transparent text-black"
-                          : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-zinc-700"
+                      className={`w-full p-3 border text-left rounded-xl transition-all duration-300 ${isSelected
+                          ? "bg-gradient-to-r from-primary via-yellow-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
+                          : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
                         }`}
                     >
                       <div className="flex justify-between items-center">
@@ -406,11 +406,11 @@ export default function FlexibleSlotBookingPage() {
                         key={time}
                         disabled={!isAvailable}
                         onClick={() => setSelectedStartTime(time)}
-                        className={`w-full p-3 border text-left rounded-xl transition-all text-sm font-bold ${!isAvailable
+                        className={`w-full p-3 border text-left rounded-xl transition-all duration-300 text-sm font-bold ${!isAvailable
                             ? "bg-zinc-950/20 border-zinc-950 text-zinc-800 cursor-not-allowed"
                             : isSelected
-                              ? "bg-primary border-transparent text-black"
-                              : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-zinc-700"
+                              ? "bg-gradient-to-r from-primary via-yellow-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
+                              : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
                           }`}
                       >
                         {time}
@@ -464,7 +464,7 @@ export default function FlexibleSlotBookingPage() {
                   <button
                     onClick={() => playerCount > 1 && dispatch(setPlayerCount(playerCount - 1))}
                     disabled={playerCount <= 1}
-                    className="w-7 h-7 rounded-md bg-zinc-900 border border-zinc-800 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-800 transition-all flex items-center justify-center"
+                    className="w-7 h-7 rounded-md bg-zinc-900 border border-zinc-800 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:border-primary/50 hover:bg-primary/10 transition-all duration-300 flex items-center justify-center"
                   >
                     <Minus className="h-3 w-3" />
                   </button>
@@ -478,7 +478,7 @@ export default function FlexibleSlotBookingPage() {
                       }
                     }}
                     disabled={playerCount >= maxPlayers}
-                    className="w-7 h-7 rounded-md bg-primary border border-transparent text-black disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary-hover transition-all flex items-center justify-center font-bold"
+                    className="w-7 h-7 rounded-md bg-gradient-to-r from-primary to-yellow-400 border border-transparent text-black disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-[0_0_15px_rgba(255,193,7,0.5)] transition-all duration-300 flex items-center justify-center font-bold"
                   >
                     <Plus className="h-3 w-3 stroke-[3]" />
                   </button>

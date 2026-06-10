@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
+import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
 
 type Step = "cart" | "phone" | "details" | "success";
 
@@ -73,23 +74,8 @@ export default function FoodCheckoutPage() {
 
 
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value.replace(/[^0-9]/g, "");
-    if (val.length > 4) {
-      val = `${val.slice(0, 2)}-${val.slice(2, 4)}-${val.slice(4, 8)}`;
-    } else if (val.length > 2) {
-      val = `${val.slice(0, 2)}-${val.slice(2)}`;
-    }
-    setCustomerDob(val);
-  };
-
-  const formatFromDB = (dateStr: string) => {
-    const [y, m, d] = dateStr.split('-');
-    return `${d}-${m}-${y}`;
-  };
-
-  const formatForDB = (dateStr: string) => {
-    const [d, m, y] = dateStr.split('-');
-    return `${y}-${m}-${d}`;
+    const formatted = handleDobInput(e.target.value);
+    setCustomerDob(formatted);
   };
 
   const cartTotal = useMemo(() => {
@@ -103,7 +89,16 @@ export default function FoodCheckoutPage() {
 
   const handleProceedToCheckout = () => {
     if (bookingContext.bookingId) {
-      submitOrderPayload(bookingContext.customerPhone || phone, bookingContext.customerName || name, null, formatForDB(bookingContext.customerDob || customerDob));
+      // Get DOB from booking context or current form
+      const dobValue = bookingContext.customerDob || customerDob;
+      const formattedDob = dobValue ? formatDateForDB(dobValue) : "";
+
+      submitOrderPayload(
+        bookingContext.customerPhone || phone,
+        bookingContext.customerName || name,
+        null,
+        formattedDob
+      );
     } else {
       setStep("phone");
     }
@@ -123,10 +118,14 @@ export default function FoodCheckoutPage() {
     if (result.exists && result.customer) {
       setName(result.customer.name);
       setEmail(result.customer.email || "");
-      setCustomerDob(formatFromDB(result.customer.date_of_birth));
+      // Handle DOB safely - convert from DB format if exists
+      const dobFromDB = result.customer.date_of_birth;
+      if (dobFromDB) {
+        setCustomerDob(formatDateForDisplay(dobFromDB));
+      }
       toast.success("Welcome back!", { description: `Hey ${result.customer.name}! Profile authenticated successfully.` });
 
-      await submitOrderPayload(phone, result.customer.name, result.customer.email || null, result.customer.date_of_birth);
+      await submitOrderPayload(phone, result.customer.name, result.customer.email || null, dobFromDB || "");
     } else {
       toast.info("New Profile", { description: "Please complete registration to place your order." });
       setStep("details");
@@ -140,7 +139,25 @@ export default function FoodCheckoutPage() {
       toast.error("Required Field Missing", { description: "Name configuration is necessary." });
       return;
     }
-    await submitOrderPayload(phone, name, email.trim() || null, formatForDB(customerDob));
+
+    // Validate DOB
+    if (!customerDob.trim()) {
+      toast.error("Required Field Missing", { description: "Please provide your date of birth." });
+      return;
+    }
+
+    if (!isValidDateDDMMYYYY(customerDob)) {
+      toast.error("Invalid Date", { description: "Please enter a valid date in DD-MM-YYYY format." });
+      return;
+    }
+
+    const formattedDob = formatDateForDB(customerDob);
+    if (!formattedDob) {
+      toast.error("Invalid Date", { description: "Please check the date format." });
+      return;
+    }
+
+    await submitOrderPayload(phone, name, email.trim() || null, formattedDob);
   };
 
   const submitOrderPayload = async (targetPhone: string, targetName: string, targetEmail: string | null, dob: string) => {
@@ -231,7 +248,7 @@ export default function FoodCheckoutPage() {
         <div className="flex flex-col gap-1 select-none">
           <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-zinc-500">
             <span>Home</span><ChevronRight className="h-2.5 w-2.5 text-zinc-700" />
-            <span>Food Menu</span><ChevronRight className="h-2.5 w-2.5 text-zinc-700" />
+            <span>Respawn Refuel</span><ChevronRight className="h-2.5 w-2.5 text-zinc-700" />
             <span className="text-primary">Cart</span>
           </div>
           <h1 className="text-3xl font-black uppercase text-white tracking-tight mt-2">
