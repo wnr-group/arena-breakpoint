@@ -10,8 +10,8 @@ CREATE TABLE public.customers (
   phone VARCHAR(15) UNIQUE NOT NULL,
   email VARCHAR(100),
 
-  -- Active subscription reference
-  active_subscription_id UUID REFERENCES public.subscription_purchases(id) ON DELETE SET NULL,
+  -- Active subscription reference (will be updated to use new 'subscriptions' table later)
+  active_subscription_id UUID,
 
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
@@ -61,11 +61,11 @@ ALTER TABLE public.bookings
 CREATE INDEX idx_bookings_customer_id ON public.bookings(customer_id)
   WHERE customer_id IS NOT NULL;
 
--- Update subscription_purchases to reference customers
-ALTER TABLE public.subscription_purchases
+-- Update subscription_purchases_legacy to reference customers
+ALTER TABLE public.subscription_purchases_legacy
   ADD COLUMN customer_id UUID REFERENCES public.customers(id) ON DELETE SET NULL;
 
-CREATE INDEX idx_subscription_purchases_customer_id ON public.subscription_purchases(customer_id)
+CREATE INDEX idx_subscription_purchases_legacy_customer_id ON public.subscription_purchases_legacy(customer_id)
   WHERE customer_id IS NOT NULL;
 
 -- ================================================
@@ -125,7 +125,7 @@ BEGIN
     sp.device_discount_percentage,
     sp.food_discount_percentage,
     sp.expires_at
-  FROM public.subscription_purchases sp
+  FROM public.subscription_purchases_legacy_legacy sp
   JOIN public.subscriptions s ON s.id = sp.subscription_id
   WHERE sp.customer_id = p_customer_id
     AND sp.is_active = true
@@ -143,7 +143,7 @@ DECLARE
 BEGIN
   -- Find the most recent active subscription
   SELECT id INTO v_active_subscription_id
-  FROM public.subscription_purchases
+  FROM public.subscription_purchases_legacy
   WHERE customer_id = p_customer_id
     AND is_active = true
     AND expires_at > NOW()
