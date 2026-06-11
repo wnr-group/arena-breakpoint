@@ -1,8 +1,11 @@
 "use client";
 
-import { Search, Bell, Grid, Menu } from "lucide-react";
+import { Search, Bell, Grid, Menu, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface TopbarProps {
   onToggleSidebar?: () => void;
@@ -10,6 +13,32 @@ interface TopbarProps {
 }
 
 export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        toast.error('Logout Failed', {
+          description: 'An error occurred while signing out',
+        });
+        return;
+      }
+
+      toast.success('Logged Out', {
+        description: 'You have been signed out successfully',
+      });
+
+      router.push('/admin/login');
+      router.refresh();
+    } catch (error) {
+      toast.error('Logout Failed', {
+        description: 'An unexpected error occurred',
+      });
+    }
+  };
+
   return (
     <header className="h-[72px] flex-shrink-0 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-[#27272a] flex items-center justify-between px-4 md:px-8 animate-in slide-in-from-top-full duration-500 z-40">
       <div className="flex items-center gap-3 flex-1 max-w-md md:max-w-xl pr-2">
@@ -51,6 +80,19 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
             <Grid className="h-5 w-5" />
           </button>
         </div>
+
+        <div className="h-8 w-px bg-[#27272a]"></div>
+
+        {/* Logout Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleLogout}
+          className="text-zinc-400 hover:text-primary hover:bg-[#1a1a1a] transition-all duration-300 h-9 w-9"
+          title="Logout"
+        >
+          <LogOut className="h-5 w-5" />
+        </Button>
 
         <div className="h-8 w-px bg-[#27272a]"></div>
 

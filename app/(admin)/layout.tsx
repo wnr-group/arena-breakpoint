@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Sidebar } from "@/components/admin/layout/SideBar";
 import { Topbar } from "@/components/admin/layout/TopBar";
+import { SessionMonitor } from "@/components/admin/auth/SessionMonitor";
 import { Toaster } from "sonner";
 
 export default function AdminLayout({
@@ -14,6 +15,8 @@ export default function AdminLayout({
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] overflow-hidden font-sans">
+      {/* Session Monitor for auto-redirect on expiry */}
+      <SessionMonitor />
 
       <Toaster 
         theme="dark" 
