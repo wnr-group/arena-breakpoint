@@ -378,6 +378,7 @@ export async function createWalkInBooking(payload: {
   extraPlayerCharge: number;
   subtotal: number;
   total: number;
+  durationMinutes: number;
 }) {
   try {
     // Convert time format from "10:00 AM" to "10:00:00"
@@ -486,7 +487,7 @@ export async function createWalkInBooking(payload: {
 
     // Step 5: Create device slot
     const extraPlayersCount = Math.max(0, payload.playerCount - payload.includedPlayers);
-    const extraPlayersTotal = extraPlayersCount * payload.extraPlayerCharge;
+    const extraPlayersTotal = extraPlayersCount * payload.extraPlayerCharge * (payload.durationMinutes / 60);
 
     const { error: slotError } = await supabaseAdmin
       .from("booking_device_slots")
@@ -498,7 +499,7 @@ export async function createWalkInBooking(payload: {
         slot_date: payload.selectedDate,
         slot_start_time: startTime,
         slot_end_time: endTime,
-        duration_hours: 1,
+        duration_hours: payload.durationMinutes / 60,
         hourly_rate: payload.hourlyRate,
         slot_total: payload.total,
         player_count: payload.playerCount,
