@@ -15,7 +15,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "type-check": "tsc --noEmit",
-    "prepare": "husky || true"
+    "prepare": "husky || true",
+    "seed:admin": "tsx scripts/seed-admin.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "3.3.4",
@@ -64,6 +65,7 @@
     "lint-staged": "15.2.2",
     "prettier": "3.2.5",
     "tailwindcss": "4.3.0",
+    "tsx": "^4.22.4",
     "typescript": "5.3.3"
   },
   "lint-staged": {

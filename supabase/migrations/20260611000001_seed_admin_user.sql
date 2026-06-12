@@ -7,65 +7,16 @@
 -- Session timeout: 12 hours
 -- ================================================
 
--- Insert admin user into auth.users
--- Note: Supabase uses pgcrypto for password hashing
-INSERT INTO auth.users (
-  id,
-  instance_id,
-  email,
-  encrypted_password,
-  email_confirmed_at,
-  raw_app_meta_data,
-  raw_user_meta_data,
-  created_at,
-  updated_at,
-  role,
-  aud,
-  confirmation_token,
-  recovery_token
-)
-VALUES (
-  gen_random_uuid(),
-  '00000000-0000-0000-0000-000000000000',
-  'admin@breakpointarena.com',
-  -- Password: Admin@123 (hashed with crypt function)
-  crypt('Admin@123', gen_salt('bf')),
-  NOW(),
-  '{"provider":"email","providers":["email"],"role":"admin"}',
-  '{"full_name":"Arena Admin","role":"admin"}',
-  NOW(),
-  NOW(),
-  'authenticated',
-  'authenticated',
-  '',
-  ''
-)
-ON CONFLICT (email) DO NOTHING;
-
--- Create identities entry for the admin user
-INSERT INTO auth.identities (
-  id,
-  user_id,
-  identity_data,
-  provider,
-  last_sign_in_at,
-  created_at,
-  updated_at
-)
-SELECT
-  gen_random_uuid(),
-  id,
-  jsonb_build_object(
-    'sub', id::text,
-    'email', 'admin@breakpointarena.com'
-  ),
-  'email',
-  NOW(),
-  NOW(),
-  NOW()
-FROM auth.users
-WHERE email = 'admin@breakpointarena.com'
-ON CONFLICT (provider, id) DO NOTHING;
+-- NOTE: Direct INSERT into auth.users doesn't work reliably with Supabase Auth.
+-- Instead, use the seed script after migrations:
+--
+-- Run: npm run seed:admin
+-- Or: npx tsx scripts/seed-admin.ts
+--
+-- The script uses Supabase Admin API to properly create the user
+-- with email confirmation and correct password hashing.
+--
+-- This migration file is kept for documentation purposes.
 
 -- Update Supabase Auth configuration for 12-hour session timeout
 -- This sets the JWT expiry to 43200 seconds (12 hours)
