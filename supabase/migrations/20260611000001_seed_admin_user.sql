@@ -39,5 +39,3 @@
 -- double_confirm_changes = true
 -- enable_confirmations = false
 -- ================================================
-
-COMMENT ON TABLE auth.users IS 'Supabase Auth users table with seeded admin user (admin@breakpointarena.com)';
