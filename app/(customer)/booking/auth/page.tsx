@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import { setCustomerDetails, resetBooking, clearSlotTimer } from "@/lib/redux/slices/bookingSlice";
+import { setCustomerDetails, setSubscription, setPricing, resetBooking, clearSlotTimer } from "@/lib/redux/slices/bookingSlice";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -86,7 +86,34 @@ export default function CustomerDetailsPage() {
         date_of_birth: result.customer.date_of_birth
       }));
 
-      toast.success("Welcome back!", { description: `Hey ${result.customer.name}! We found your profile.` });
+      // Set subscription if customer has active subscription
+      if (result.subscription) {
+        dispatch(setSubscription({
+          id: result.subscription.id,
+          planName: result.subscription.plan_name,
+          discountPercentage: result.subscription.discount_percentage,
+          endDate: result.subscription.end_date
+        }));
+
+        // Calculate and apply subscription discount
+        const discountAmount = (subtotal * result.subscription.discount_percentage) / 100;
+        const newTotal = subtotal - discountAmount;
+
+        dispatch(setPricing({
+          subtotal,
+          subscriptionDiscount: discountAmount,
+          promoDiscount: 0,
+          total: newTotal
+        }));
+
+        toast.success("Welcome back!", {
+          description: `Hey ${result.customer.name}! Your ${result.subscription.plan_name} is active (${result.subscription.discount_percentage}% off)`
+        });
+      } else {
+        dispatch(setSubscription(null));
+        toast.success("Welcome back!", { description: `Hey ${result.customer.name}! We found your profile.` });
+      }
+
       setStep("summary");
     } else {
       // New customer, ask for details
@@ -378,11 +405,48 @@ export default function CustomerDetailsPage() {
             </div>
           </div>
 
+          {/* Active Subscription (if any) */}
+          {bookingState.activeSubscriptionId && (
+            <div className="bg-gradient-to-r from-primary/10 via-yellow-500/10 to-primary/10 p-4 rounded-xl border border-primary/30 space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center">
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-primary uppercase tracking-wider">{bookingState.subscriptionPlanName} Active</h4>
+                  <p className="text-[10px] text-zinc-400">You're getting {bookingState.subscriptionDiscountPercentage}% off on this booking!</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Pricing Details */}
           <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3">
             <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Price Breakdown</h4>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-zinc-500">Base Rate:</span> <span className="text-white">₹{hourlyRate}</span></div>
+              <div className="flex justify-between"><span className="text-zinc-500">Device Booking:</span> <span className="text-white">₹{subtotal.toFixed(2)}</span></div>
+
+              {bookingState.subscriptionDiscount > 0 && (
+                <div className="flex justify-between text-green-500">
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Subscription Discount ({bookingState.subscriptionDiscountPercentage}%):
+                  </span>
+                  <span className="font-bold">-₹{bookingState.subscriptionDiscount.toFixed(2)}</span>
+                </div>
+              )}
+
+              {bookingState.promoDiscount > 0 && (
+                <div className="flex justify-between text-primary">
+                  <span>Promo Discount:</span>
+                  <span className="font-bold">-₹{bookingState.promoDiscount.toFixed(2)}</span>
+                </div>
+              )}
+
+              <div className="border-t border-zinc-800 pt-2 flex justify-between font-black text-base">
+                <span className="text-white">Total Amount:</span>
+                <span className="text-primary text-lg">₹{total.toFixed(2)}</span>
+              </div>
             </div>
           </div>
           <div className="space-y-2">

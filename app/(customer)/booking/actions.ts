@@ -374,21 +374,53 @@ export async function checkCustomerExists(phone: string) {
   try {
     const { data, error } = await supabaseAdmin
       .from("customers")
-      .select("id, name, phone, email, date_of_birth")
+      .select("id, name, phone, email, date_of_birth, active_subscription_id")
       .eq("phone", phone)
       .single();
 
     if (error) {
       if (error.code === "PGRST116") {
         // No rows returned - customer doesn't exist
-        return { success: true, exists: false, customer: null };
+        return { success: true, exists: false, customer: null, subscription: null };
       }
       throw error;
     }
 
-    return { success: true, exists: true, customer: data };
+    // Check if customer has active subscription
+    let activeSubscription = null;
+    if (data.active_subscription_id) {
+      const { data: subData, error: subError } = await supabaseAdmin
+        .from("subscriptions")
+        .select(`
+          id,
+          start_date,
+          end_date,
+          status,
+          subscription_plan:subscription_plans(
+            id,
+            name,
+            discount_percentage,
+            duration_months
+          )
+        `)
+        .eq("id", data.active_subscription_id)
+        .eq("status", "active")
+        .gte("end_date", new Date().toISOString().split('T')[0])
+        .single();
+
+      if (!subError && subData) {
+        activeSubscription = {
+          id: subData.id,
+          plan_name: subData.subscription_plan?.name,
+          discount_percentage: subData.subscription_plan?.discount_percentage,
+          end_date: subData.end_date,
+        };
+      }
+    }
+
+    return { success: true, exists: true, customer: data, subscription: activeSubscription };
   } catch (err: any) {
-    return { success: false, error: err.message, exists: false, customer: null };
+    return { success: false, error: err.message, exists: false, customer: null, subscription: null };
   }
 }
 
