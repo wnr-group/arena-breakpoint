@@ -25,14 +25,19 @@ function LoginForm() {
     setIsLoading(true)
 
     try {
+      console.log('Attempting login with:', { email, passwordLength: password.length })
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
+      console.log('Login response:', { data: !!data, error })
+
       if (error) {
+        console.error('Login error:', error)
         toast.error('Login Failed', {
-          description: 'Invalid email or password',
+          description: error.message || 'Invalid email or password',
         })
         return
       }
