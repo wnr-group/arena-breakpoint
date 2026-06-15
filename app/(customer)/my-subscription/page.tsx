@@ -44,7 +44,7 @@ export default function MySubscriptionPage() {
   // Loading State
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center text-yellow-500">
+      <main className="min-h-screen bg-[#0d0a14] flex flex-col items-center justify-center text-amber-500">
         <Loader2 className="w-12 h-12 animate-spin mb-4" />
         <p className="text-neutral-400 font-medium">Loading your arena pass...</p>
       </main>
@@ -72,13 +72,13 @@ export default function MySubscriptionPage() {
 
   return (
     <main
-      className="min-h-screen bg-black text-white font-sans relative overflow-hidden"
+      className="min-h-screen bg-[#0d0a14] text-white font-sans relative overflow-hidden"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
     >
       {/* Animated background */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-black to-black pointer-events-none" />
-      <div className="absolute top-20 left-1/4 w-[600px] h-[600px] bg-gradient-to-r from-primary/10 to-yellow-500/10 rounded-full blur-[150px] animate-pulse pointer-events-none" />
-      <div className="absolute bottom-20 right-1/4 w-[500px] h-[500px] bg-gradient-to-l from-amber-500/10 to-primary/10 rounded-full blur-[150px] animate-pulse pointer-events-none" style={{ animationDelay: '1.5s' }} />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-[#0d0a14] to-[#0d0a14] pointer-events-none" />
+      <div className="absolute top-20 left-1/4 w-[600px] h-[600px] bg-gradient-to-r from-primary/10 to-amber-500/10 rounded-full blur-[150px] animate-pulse pointer-events-none" />
+      <div className="absolute bottom-20 right-1/4 w-[500px] h-[500px] bg-gradient-to-l from-orange-600/10 to-primary/10 rounded-full blur-[150px] animate-pulse pointer-events-none" style={{ animationDelay: '1.5s' }} />
 
       <div className="max-w-300 mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Breadcrumb */}
@@ -89,7 +89,7 @@ export default function MySubscriptionPage() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
           <div className="max-w-2xl">
-            <h1 className="text-3xl md:text-[42px] font-black tracking-tight leading-tight mb-3 text-transparent bg-gradient-to-r from-white via-yellow-100 to-white bg-clip-text">
+            <h1 className="text-3xl md:text-[42px] font-black tracking-tight leading-tight mb-3 text-transparent bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text">
               Your Subscription
             </h1>
             <p className="text-zinc-400 text-sm md:text-base leading-relaxed">
@@ -101,7 +101,7 @@ export default function MySubscriptionPage() {
             <button className="flex-1 md:flex-none bg-transparent border-2 border-primary hover:bg-primary/10 text-primary font-black py-3 px-6 rounded-xl transition-all text-sm uppercase tracking-wider hover:shadow-[0_0_20px_rgba(255,193,7,0.3)]">
               Renew Now
             </button>
-            <button className="flex-1 md:flex-none bg-gradient-to-r from-primary via-yellow-400 to-primary text-black font-black py-3 px-6 rounded-xl transition-all text-sm shadow-[0_0_20px_rgba(255,193,7,0.3)] hover:shadow-[0_0_40px_rgba(255,193,7,0.5)] hover:scale-[1.02] uppercase tracking-wider">
+            <button className="flex-1 md:flex-none bg-gradient-to-r from-primary via-amber-400 to-primary text-black font-black py-3 px-6 rounded-xl transition-all text-sm shadow-[0_0_20px_rgba(255,193,7,0.3)] hover:shadow-[0_0_40px_rgba(255,193,7,0.5)] hover:scale-[1.02] uppercase tracking-wider">
               Book Slot
             </button>
           </div>
@@ -115,9 +115,9 @@ export default function MySubscriptionPage() {
             
             {subscription ? (
               /* DYNAMIC ACTIVE SUBSCRIPTION CARD */
-              <div className="bg-gradient-to-br from-zinc-900 via-[#131313] to-zinc-900 border border-primary/30 rounded-xl p-6 md:p-8 relative overflow-hidden group animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+              <div className="bg-gradient-to-br from-zinc-900 via-[#131313] to-zinc-900 border border-primary/30 rounded-xl p-6 md:p-8 relative overflow-hidden group animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200 glow-box-strong">
                 {/* Animated gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-yellow-400/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-amber-400/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                 {/* Scan line */}
                 <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse" />
@@ -128,7 +128,7 @@ export default function MySubscriptionPage() {
                     <h3 className="text-primary text-xs font-black tracking-[0.2em] uppercase mb-2 drop-shadow-[0_0_10px_rgba(255,193,7,0.3)]">
                       Elite Membership
                     </h3>
-                    <h2 className="text-2xl md:text-3xl font-black text-transparent bg-gradient-to-r from-white via-yellow-100 to-white bg-clip-text">
+                    <h2 className="text-2xl md:text-3xl font-black text-transparent bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text">
                       {subscription.plan.name}
                     </h2>
                   </div>
@@ -149,7 +149,7 @@ export default function MySubscriptionPage() {
                       </div>
                       <div className="text-white font-black text-lg">
                         Valid until {formatDate(subscription.end_date)}{' '}
-                        <span className="text-transparent bg-gradient-to-r from-primary to-yellow-300 bg-clip-text text-sm ml-1">
+                        <span className="text-transparent bg-gradient-to-r from-primary to-amber-300 bg-clip-text text-sm ml-1">
                           ({daysRemaining} days remaining)
                         </span>
                       </div>
@@ -159,7 +159,7 @@ export default function MySubscriptionPage() {
                   {/* Bar with gaming effect */}
                   <div className="w-full bg-zinc-900 rounded-full h-3 overflow-hidden border border-zinc-800 shadow-inner">
                     <div
-                      className="bg-gradient-to-r from-primary via-yellow-400 to-primary h-3 rounded-full transition-all duration-1000 ease-out relative overflow-hidden"
+                      className="bg-gradient-to-r from-primary via-amber-400 to-primary h-3 rounded-full transition-all duration-1000 ease-out relative overflow-hidden"
                       style={{ width: `${progressPercentage}%` }}
                     >
                       {/* Animated shimmer */}
@@ -170,22 +170,22 @@ export default function MySubscriptionPage() {
 
                 {/* Perks Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
-                  <div className="bg-gradient-to-br from-zinc-950 to-zinc-900 border border-primary/20 rounded-xl p-4 flex items-center group/card hover:border-primary/40 hover:shadow-[0_0_20px_rgba(255,193,7,0.1)] transition-all duration-300">
-                    <div className="bg-gradient-to-br from-primary/20 to-yellow-500/20 p-3 rounded-lg mr-4 shadow-[0_0_15px_rgba(255,193,7,0.2)]">
+                  <div className="bg-gradient-to-br from-zinc-950 to-zinc-900 border border-primary/20 rounded-xl p-4 flex items-center group/card hover:border-primary/40 hover:shadow-[0_0_20px_rgba(255,193,7,0.1)] transition-all duration-300 glow-box-hover">
+                    <div className="bg-gradient-to-br from-primary/20 to-amber-500/20 p-3 rounded-lg mr-4 shadow-[0_0_15px_rgba(255,193,7,0.2)]">
                       <Percent className="w-5 h-5 text-primary drop-shadow-[0_0_8px_rgba(255,193,7,0.5)]" />
                     </div>
                     <div>
                       <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1">
                         Loyalty Discount
                       </div>
-                      <div className="text-transparent bg-gradient-to-r from-primary via-yellow-300 to-primary bg-clip-text font-black text-lg drop-shadow-[0_0_10px_rgba(255,193,7,0.3)]">
+                      <div className="text-transparent bg-gradient-to-r from-primary via-amber-300 to-primary bg-clip-text font-black text-lg drop-shadow-[0_0_10px_rgba(255,193,7,0.3)]">
                         {subscription.plan.discount_percentage}% OFF
                       </div>
                     </div>
                   </div>
-                  <div className="bg-[#1a1a1a] border border-neutral-800 rounded-xl p-4 flex items-center">
-                    <div className="bg-yellow-500/10 p-3 rounded-sm mr-4">
-                      <Gamepad2 className="w-5 h-5 text-yellow-500" />
+                  <div className="bg-[#1a1a1a] border border-neutral-800 rounded-xl p-4 flex items-center glow-box-hover">
+                    <div className="bg-amber-500/10 p-3 rounded-sm mr-4">
+                      <Gamepad2 className="w-5 h-5 text-amber-500" />
                     </div>
                     <div>
                       <div className="text-neutral-400 text-xs font-semibold mb-0.5">Arena Pass</div>
@@ -196,7 +196,7 @@ export default function MySubscriptionPage() {
               </div>
             ) : (
               /* EMPTY STATE: If user has no active subscription */
-              <div className="bg-[#111111] border border-neutral-800 rounded-md p-10 text-center flex flex-col items-center">
+              <div className="bg-[#111111] border border-neutral-800 rounded-md p-10 text-center flex flex-col items-center glow-box-hover">
                 <div className="w-16 h-16 bg-neutral-900 rounded-full flex items-center justify-center mb-4">
                   <AlertCircle className="w-8 h-8 text-neutral-500" />
                 </div>
@@ -206,7 +206,7 @@ export default function MySubscriptionPage() {
                 </p>
                 <button 
                   onClick={() => router.push('/customer/subscription')}
-                  className="bg-[#FFD700] hover:bg-[#F2C900] text-black font-bold py-3 px-8 rounded-lg transition-colors text-sm"
+                  className="bg-[#A855F7] hover:bg-[#9333EA] text-black font-bold py-3 px-8 rounded-lg transition-colors text-sm"
                 >
                   Browse Plans
                 </button>
@@ -218,9 +218,9 @@ export default function MySubscriptionPage() {
               <h3 className="text-sm font-bold text-white mb-4">Your Savings So Far</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {/* Total Bookings */}
-                <div className="bg-[#111111] border border-neutral-800 rounded-sm p-6 flex items-center">
-                  <div className="w-14 h-14 rounded-full border border-yellow-500/20 bg-yellow-500/5 flex items-center justify-center mr-5">
-                    <Ticket className="w-6 h-6 text-yellow-500" />
+                <div className="bg-[#111111] border border-neutral-800 rounded-sm p-6 flex items-center glow-box-hover">
+                  <div className="w-14 h-14 rounded-full border border-amber-500/20 bg-amber-500/5 flex items-center justify-center mr-5">
+                    <Ticket className="w-6 h-6 text-amber-500" />
                   </div>
                   <div>
                     <div className="text-neutral-400 text-xs font-semibold mb-1">
@@ -231,9 +231,9 @@ export default function MySubscriptionPage() {
                 </div>
 
                 {/* Total Saved */}
-                <div className="bg-[#111111] border border-neutral-800 rounded-md p-6 flex items-center">
-                  <div className="w-14 h-14 rounded-full border border-yellow-500/20 bg-yellow-500/5 flex items-center justify-center mr-5">
-                    <Wallet className="w-6 h-6 text-yellow-500" />
+                <div className="bg-[#111111] border border-neutral-800 rounded-md p-6 flex items-center glow-box-hover">
+                  <div className="w-14 h-14 rounded-full border border-amber-500/20 bg-amber-500/5 flex items-center justify-center mr-5">
+                    <Wallet className="w-6 h-6 text-amber-500" />
                   </div>
                   <div>
                     <div className="text-neutral-400 text-xs font-semibold mb-1">Total Saved</div>
@@ -270,44 +270,44 @@ export default function MySubscriptionPage() {
             </div>
 
             {/* Recent History Card */}
-            <div className="bg-[#111111] border border-neutral-800 rounded-md p-6">
+            <div className="bg-[#111111] border border-neutral-800 rounded-md p-6 glow-box-hover">
               <h3 className="text-sm font-bold text-white mb-6">Recent History</h3>
 
               <div className="space-y-6 mb-6">
                 {/* History Item 1 */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <Gamepad2 className="w-5 h-5 text-yellow-500 mr-4" />
+                    <Gamepad2 className="w-5 h-5 text-amber-500 mr-4" />
                     <div>
                       <div className="text-white font-bold text-sm">3hr PS5 Solo</div>
                       <div className="text-neutral-500 text-xs mt-0.5">May 26, 2026</div>
                     </div>
                   </div>
-                  <div className="text-yellow-500 font-bold text-sm">- ₹150</div>
+                  <div className="text-amber-500 font-bold text-sm">- ₹150</div>
                 </div>
 
                 {/* History Item 2 */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <Monitor className="w-5 h-5 text-yellow-500 mr-4" />
+                    <Monitor className="w-5 h-5 text-amber-500 mr-4" />
                     <div>
                       <div className="text-white font-bold text-sm">3hr PC Arena</div>
                       <div className="text-neutral-500 text-xs mt-0.5">May 25, 2026</div>
                     </div>
                   </div>
-                  <div className="text-yellow-500 font-bold text-sm">- ₹150</div>
+                  <div className="text-amber-500 font-bold text-sm">- ₹150</div>
                 </div>
 
                 {/* History Item 3 */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <Gamepad2 className="w-5 h-5 text-yellow-500 mr-4" />
+                    <Gamepad2 className="w-5 h-5 text-amber-500 mr-4" />
                     <div>
                       <div className="text-white font-bold text-sm">3hr PS5 Solo</div>
                       <div className="text-neutral-500 text-xs mt-0.5">May 18, 2026</div>
                     </div>
                   </div>
-                  <div className="text-yellow-500 font-bold text-sm">- ₹150</div>
+                  <div className="text-amber-500 font-bold text-sm">- ₹150</div>
                 </div>
               </div>
 
@@ -326,10 +326,10 @@ export default function MySubscriptionPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {/* Expiring Soon State */}
-            <div className="bg-[#15120a] border border-yellow-900/30 rounded-md p-5 flex items-center justify-between">
+            <div className="bg-[#15120a] border border-purple-900/30 rounded-md p-5 flex items-center justify-between glow-box-hover">
               <div className="flex items-center">
-                <div className="bg-yellow-500/10 p-2.5 rounded-lg mr-4">
-                  <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                <div className="bg-amber-500/10 p-2.5 rounded-lg mr-4">
+                  <AlertTriangle className="w-5 h-5 text-orange-600" />
                 </div>
                 <div>
                   <div className="text-neutral-200 font-bold text-sm mb-0.5">
@@ -338,7 +338,7 @@ export default function MySubscriptionPage() {
                   <div className="text-neutral-500 text-xs">Renews on June 07</div>
                 </div>
               </div>
-              <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
+              <div className="bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
                 2 Days Left
               </div>
             </div>

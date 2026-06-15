@@ -1,92 +1,169 @@
-"use client";
+"use client"; 
 
-import React, { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { Gamepad2, Menu, X, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation'; 
 
-export function Navbar() {
+const navLinks = [
+  { label: "Home", path: "/" },
+  { label: "Subscriptions", path: "/subscription" },
+  { label: "Retrieve Booking", path: "/retrieve" },
+  { label: "FOOD MENU", path: "/food" }
+];
+
+// Framer Motion variants
+const mobileMenuVariants: Variants = {
+  hidden: { opacity: 0, y: -20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { 
+      duration: 0.3, 
+      ease: "easeOut" as const,
+      staggerChildren: 0.1 
+    }
+  },
+  exit: { 
+    opacity: 0, 
+    y: -20,
+    transition: { duration: 0.2, ease: "easeIn" as const }
+  }
+};
+
+const linkItemVariants: Variants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.3 } }
+};
+
+export default function Navbar() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  
+  // Get the current route path
   const pathname = usePathname();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <header className="bg-[#0c0c0c] border-b border-zinc-900 px-4 sm:px-8 py-5 flex items-center justify-between sticky top-0 z-40 transition-all">
+    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
+      scrolled ? "bg-[#0a0a0a]/80 backdrop-blur-md py-4 shadow-xl" : "bg-transparent py-6"
+    }`}>
       
-      {/* BRAND SITE NAME LOGO */}
-      <Link href="/" className="text-white font-black text-xl tracking-tight uppercase select-none transition-transform active:scale-97">
-        BREAK POINT <span className="text-primary">ARENA</span>
-      </Link>
-      
-      {/* DESKTOP ROUTING LINKS ROW */}
-      <nav className="hidden md:flex items-center gap-6 text-xs font-black uppercase tracking-widest text-zinc-400">
-        <Link 
-          href="/" 
-          className={pathname === "/" ? "text-primary border-b-2 border-primary pb-1" : "hover:text-white transition-colors"}
-        >
-          Home
-        </Link>
-        <Link 
-          href="/subscription" 
-          className={pathname === "/subscriptions" ? "text-primary border-b-2 border-primary pb-1" : "hover:text-white transition-colors"}
-        >
-          Subscriptions
-        </Link>
-        <Link 
-          href="/retrieve" 
-          className={pathname === "/retrieve" ? "text-primary border-b-2 border-primary pb-1" : "hover:text-white transition-colors"}
-        >
-          Retrieve Booking
-        </Link>
+      {/* Main Bar */}
+      <div className="flex items-center justify-between px-6 md:px-12">
         
-        {/* Action CTAs */}
-        <Link href="/food">
-          <button className="bg-primary hover:bg-primary-hover text-black font-black text-[10px] tracking-wider rounded-md px-4 py-2.5 transition-all active:scale-95 ml-4">
-            FOOD MENU
-          </button>
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2 cursor-pointer group">
+          <Gamepad2 className="w-8 h-8 text-[var(--primary)] group-hover:scale-110 transition-transform duration-300" />
+          <span className="text-2xl font-bold text-white tracking-wide uppercase">Breakpoint Arena</span>
         </Link>
-        <Link href="/booking">
-          <button className="bg-primary hover:bg-primary-hover text-black font-black text-[10px] tracking-wider rounded-md px-4 py-2.5 transition-all active:scale-95">
-            BOOK SLOT
-          </button>
-        </Link>
-      </nav>
 
-      {/* MOBILE HAMBURGER TOGGLE BUTTON */}
-      <button 
-        onClick={() => setMobileMenuOpen(true)} 
-        className="md:hidden p-2 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-all active:scale-95"
-      >
-        <Menu className="h-5 w-5" />
-      </button>
-
-      {/* MOBILE EXPANDED MENU DRAWER OVERLAY */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 bg-[#060606]/98 z-50 flex flex-col justify-center items-center p-6 animate-in fade-in zoom-in-95 duration-200">
-          <button 
-            onClick={() => setMobileMenuOpen(false)} 
-            className="absolute top-5 right-5 p-2.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-white transition-transform active:scale-90"
-          >
-            <X className="h-5 w-5" />
-          </button>
-
-          <div className="flex flex-col items-center gap-6 text-base font-black uppercase tracking-widest w-full max-w-xs text-zinc-400">
-            <Link href="/" onClick={() => setMobileMenuOpen(false)} className={pathname === "/" ? "text-primary" : "hover:text-white"}>Home</Link>
-            <Link href="/subscription" onClick={() => setMobileMenuOpen(false)} className={pathname === "/subscriptions" ? "text-primary" : "hover:text-white"}>Subscriptions</Link>
-            <Link href="/retrieve" onClick={() => setMobileMenuOpen(false)} className={pathname === "/retrieve" ? "text-primary" : "hover:text-white"}>Retrieve Booking</Link>
-
-            <Link href="/food" className="w-full" onClick={() => setMobileMenuOpen(false)}>
-              <button className="w-full bg-primary text-black font-black py-4 rounded-xl text-xs tracking-widest shadow-md transition-transform active:scale-97 mt-4">
-                FOOD MENU
-              </button>
-            </Link>
-            <Link href="/booking" className="w-full" onClick={() => setMobileMenuOpen(false)}>
-              <button className="w-full bg-primary text-black font-black py-4 rounded-xl text-xs tracking-widest shadow-md transition-transform active:scale-97">
-                BOOK SLOT
-              </button>
-            </Link>
-          </div>
+        {/* Desktop Links */}
+        <div className="hidden lg:flex items-center gap-10">
+          {navLinks.map((link) => {
+            const isActive = pathname === link.path; // Check if active
+            
+            return (
+              <Link 
+                key={link.label} 
+                href={link.path}
+                className="group cursor-pointer relative py-2"
+              >
+                <span className={`text-sm font-medium transition-colors duration-300 uppercase tracking-widest ${
+                  isActive ? "text-white" : "text-gray-300 group-hover:text-white"
+                }`}>
+                  {link.label}
+                </span>
+                {/* Underline: stays full width if active */}
+                <span className={`absolute bottom-0 left-0 h-[2px] bg-[var(--primary)] transition-all duration-300 ${
+                  isActive ? "w-full" : "w-0 group-hover:w-full"
+                }`}></span>
+              </Link>
+            );
+          })}
         </div>
-      )}
-    </header>
+
+        {/* CTA & Mobile Toggle */}
+        <div className="flex items-center gap-4">
+          <Link 
+            href="/booking"
+            className="hidden lg:inline-block px-6 py-2.5 border-gradient-animated cursor-pointer font-bold text-xs tracking-widest uppercase hover:bg-[var(--primary)] hover:text-black transition-all duration-300 text-center"
+          >
+            Book Slot
+          </Link>
+          
+          <button 
+            className="lg:hidden text-white hover:text-[var(--primary)] transition-colors p-2 z-50"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle Menu"
+          >
+            {isMobileMenuOpen ? <X className="w-8 h-8" /> : <Menu className="w-8 h-8" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Menu Full-Screen Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            variants={mobileMenuVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="fixed top-0 left-0 w-full h-screen bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-8 gap-8 lg:hidden z-40"
+          >
+             <div className="flex flex-col items-center gap-6 w-full max-w-sm mt-10">
+              {navLinks.map((link) => {
+                const isActive = pathname === link.path; // Check if active
+
+                return (
+                  <motion.div 
+                    variants={linkItemVariants}
+                    key={link.label} 
+                    className="w-full"
+                  >
+                    <Link
+                      href={link.path}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="w-full flex items-center justify-center cursor-pointer group py-2"
+                    >
+                      <span className={`text-md md:text-sm font-bold transition-all duration-300 uppercase tracking-widest text-center flex items-center gap-3 ${
+                        isActive ? "text-white scale-105" : "text-gray-400 group-hover:text-white group-hover:scale-105"
+                      }`}>
+                        {link.label}
+                        {/* Arrow: stays visible if active */}
+                        <ArrowRight className={`w-6 h-6 text-[var(--primary)] transition-all duration-300 ${
+                          isActive ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0"
+                        }`} />
+                      </span>
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </div>
+            
+             {/* Mobile CTA Button */}
+             <motion.div variants={linkItemVariants} className="w-full max-w-xs mt-8">
+             <Link 
+                href="/booking"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block w-full py-4 bg-gradient-primary text-black text-center font-extrabold text-sm tracking-widest uppercase rounded hover:scale-105 transition-transform duration-300 shadow-[0_0_20px_rgba(255,193,7,0.3)]"
+              >
+                Book Slot
+              </Link>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </nav>
   );
-}
+};

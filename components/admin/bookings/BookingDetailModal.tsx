@@ -433,32 +433,114 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                 )}
               </Card>
 
-              {/* Payment Summary */}
-              <Card className="bg-[#0a0a0a] border-[#27272a] p-5 space-y-4">
-                <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider border-b border-[#27272a] pb-2">
+              {/* Payment Summary - Detailed Breakdown */}
+              <Card className="bg-gradient-to-br from-[#0a0a0a] via-zinc-950 to-[#0a0a0a] border-2 border-primary/30 p-5 shadow-[0_0_30px_rgba(255,193,7,0.2)]">
+                <h3 className="text-xs font-black text-primary uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
                   Payment Summary
                 </h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between text-zinc-400">
-                    <span>Device Booking</span>
-                    <span className="text-white font-bold">₹{Number(booking.device_subtotal).toLocaleString('en-IN')}</span>
-                  </div>
-                  {booking.food_subtotal > 0 && (
-                    <div className="flex justify-between text-zinc-400">
-                      <span>Food & Beverages</span>
-                      <span className="text-white font-bold">₹{Number(booking.food_subtotal).toLocaleString('en-IN')}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between font-black text-white pt-2 border-t border-[#27272a] text-lg">
-                    <span>TOTAL AMOUNT</span>
-                    <span className="text-primary">₹{Number(booking.total_amount).toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between text-xs text-data-placeholder">
-                    <span>Payment Status</span>
-                    <span className={booking.payment_status === 'paid' ? 'text-green-500' : 'text-amber-500'}>
-                      {booking.payment_status?.toUpperCase()}
-                    </span>
-                  </div>
+                <div className="space-y-3 text-sm">
+                  {(() => {
+                    // Calculate device charges with duration
+                    const deviceSlot = booking.booking_device_slots?.[0];
+                    const durationHours = deviceSlot?.duration_hours || 1;
+                    const hourlyRate = deviceSlot?.hourly_rate || 0;
+                    const deviceCharges = hourlyRate * durationHours;
+
+                    // Calculate extra player charges
+                    const extraPlayersTotal = booking.booking_device_slots?.reduce(
+                      (sum: number, slot: any) => sum + (Number(slot.extra_players_total) || 0),
+                      0
+                    ) || 0;
+
+                    // Calculate subtotal
+                    const calculatedSubtotal = Number(booking.device_subtotal) + Number(booking.food_subtotal);
+
+                    // Calculate total
+                    const calculatedTotal = calculatedSubtotal -
+                      Number(booking.subscription_discount || 0) -
+                      Number(booking.promo_discount || 0);
+
+                    return (
+                      <>
+                        <div className="flex items-center justify-between py-2 border-b border-zinc-800">
+                          <span className="text-zinc-400 font-medium">
+                            Device Booking ({durationHours}h × ₹{hourlyRate}):
+                          </span>
+                          <span className="text-white font-bold">₹{deviceCharges.toFixed(2)}</span>
+                        </div>
+
+                        {extraPlayersTotal > 0 && (
+                          <div className="flex items-center justify-between py-2 border-b border-zinc-800">
+                            <span className="text-zinc-400 font-medium">Extra Players:</span>
+                            <span className="text-white font-bold">₹{extraPlayersTotal.toFixed(2)}</span>
+                          </div>
+                        )}
+
+                        {booking.food_subtotal > 0 && (
+                          <div className="flex items-center justify-between py-2 border-b border-zinc-800">
+                            <span className="text-zinc-400 font-medium">Food & Beverages:</span>
+                            <span className="text-white font-bold">₹{Number(booking.food_subtotal).toFixed(2)}</span>
+                          </div>
+                        )}
+
+                        {booking.booking_food_items && booking.booking_food_items.length > 0 && (
+                          <div className="ml-4 space-y-2 py-2 border-b border-zinc-800">
+                            {booking.booking_food_items.map((item: any) => (
+                              <div key={item.id} className="flex items-center justify-between text-xs">
+                                <span className="text-zinc-500">
+                                  {item.item_name} x{item.quantity}
+                                </span>
+                                <span className="text-zinc-400">₹{item.line_total}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between py-2 border-b border-zinc-800">
+                          <span className="text-zinc-300 font-bold">Subtotal:</span>
+                          <span className="text-white font-black">₹{calculatedSubtotal.toFixed(2)}</span>
+                        </div>
+
+                        {booking.subscription_discount > 0 && (
+                          <div className="flex items-center justify-between py-2 border-b border-zinc-800 text-green-500">
+                            <span className="font-medium flex items-center gap-1">
+                              <CheckCircle2 className="h-3 w-3" />
+                              Subscription Discount:
+                            </span>
+                            <span className="font-bold">-₹{Number(booking.subscription_discount).toFixed(2)}</span>
+                          </div>
+                        )}
+
+                        {booking.promo_discount > 0 && (
+                          <div className="flex items-center justify-between py-2 border-b border-zinc-800 text-primary">
+                            <span className="font-medium">Promo Discount:</span>
+                            <span className="font-bold">-₹{Number(booking.promo_discount).toFixed(2)}</span>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between pt-4 border-t-2 border-primary/20">
+                          <span className="text-white font-black text-base uppercase">Total Amount:</span>
+                          <span className="text-2xl font-black bg-gradient-to-r from-primary via-amber-300 to-primary bg-clip-text text-transparent">
+                            ₹{calculatedTotal.toFixed(2)}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs pt-2">
+                          <span className="text-zinc-500 uppercase font-bold">Payment Status</span>
+                          <span className={`font-black uppercase px-3 py-1 rounded-full ${
+                            booking.payment_status === 'paid'
+                              ? 'bg-green-500/20 text-green-400 border border-green-500/40'
+                              : booking.payment_status === 'pending'
+                              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                              : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
+                          }`}>
+                            {booking.payment_status}
+                          </span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </Card>
 

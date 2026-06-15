@@ -3,14 +3,15 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import { setCustomerDetails, resetBooking, clearSlotTimer } from "@/lib/redux/slices/bookingSlice";
+import { setCustomerDetails, setSubscription, setPricing, resetBooking, clearSlotTimer, setPromoCode } from "@/lib/redux/slices/bookingSlice";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ShieldCheck, Phone, Loader2, ChevronRight, User, Mail, CheckCircle2, QrCode, Cake, UtensilsCrossed } from "lucide-react";
+import { ShieldCheck, Phone, Loader2, ChevronRight, User, Mail, CheckCircle2, QrCode, Cake, UtensilsCrossed, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { checkCustomerExists, confirmBooking } from "../actions";
+import { validatePromoCode, calculatePromoDiscount } from "../promo-actions";
 import { QRCodeSVG } from "qrcode.react";
 import { generateDurationOptions } from "@/lib/utils/timeSlots";
 import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
@@ -34,6 +35,8 @@ export default function CustomerDetailsPage() {
   const [mounted, setMounted] = useState(false);
   const [bookingNumber, setBookingNumber] = useState<string>("");
   const [bookingId, setBookingId] = useState<string>("");
+  const [promoCode, setPromoCodeInput] = useState("");
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   const allDurations = useMemo(() => generateDurationOptions(), []);
 
   useEffect(() => {
@@ -86,7 +89,34 @@ export default function CustomerDetailsPage() {
         date_of_birth: result.customer.date_of_birth
       }));
 
-      toast.success("Welcome back!", { description: `Hey ${result.customer.name}! We found your profile.` });
+      // Set subscription if customer has active subscription
+      if (result.subscription) {
+        dispatch(setSubscription({
+          id: result.subscription.id,
+          planName: result.subscription.plan_name,
+          discountPercentage: result.subscription.discount_percentage,
+          endDate: result.subscription.end_date
+        }));
+
+        // Calculate and apply subscription discount
+        const discountAmount = (subtotal * result.subscription.discount_percentage) / 100;
+        const newTotal = subtotal - discountAmount;
+
+        dispatch(setPricing({
+          subtotal,
+          subscriptionDiscount: discountAmount,
+          promoDiscount: 0,
+          total: newTotal
+        }));
+
+        toast.success("Welcome back!", {
+          description: `Hey ${result.customer.name}! Your ${result.subscription.plan_name} is active (${result.subscription.discount_percentage}% off)`
+        });
+      } else {
+        dispatch(setSubscription(null));
+        toast.success("Welcome back!", { description: `Hey ${result.customer.name}! We found your profile.` });
+      }
+
       setStep("summary");
     } else {
       // New customer, ask for details
@@ -133,6 +163,102 @@ export default function CustomerDetailsPage() {
     setStep("summary");
   };
 
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) {
+      toast.error("Please enter a promo code");
+      return;
+    }
+
+    setIsApplyingPromo(true);
+    const result = await validatePromoCode(promoCode);
+
+    if (result.success && result.promo) {
+      // Calculate discountable amount (device + extra players, NOT food)
+      let durationInHours = 0;
+      if (selectedDuration && selectedDuration > 0) {
+        durationInHours = selectedDuration / 60;
+      } else if (slotStartTime && slotEndTime) {
+        const parseTime = (timeStr: string) => {
+          const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+          if (!match) return 0;
+          let [, hours, minutes, period] = match;
+          let hour = parseInt(hours);
+          if (period.toUpperCase() === "PM" && hour !== 12) hour += 12;
+          if (period.toUpperCase() === "AM" && hour === 12) hour = 0;
+          return hour * 60 + parseInt(minutes);
+        };
+        const startMins = parseTime(slotStartTime);
+        const endMins = parseTime(slotEndTime);
+        durationInHours = (endMins - startMins) / 60;
+      }
+
+      const deviceCharges = (hourlyRate || 0) * durationInHours;
+      const extraPlayerCharges = (playerCount - includedPlayers) * extraPlayerCharge;
+      const discountableAmount = deviceCharges + extraPlayerCharges; // NOT food
+
+      const discount = await calculatePromoDiscount(
+        discountableAmount,
+        result.promo.discount_type,
+        result.promo.discount_value
+      );
+
+      const addonsTotal = addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
+      const calculatedSubtotal = deviceCharges + extraPlayerCharges + addonsTotal;
+      const calculatedTotal = calculatedSubtotal - bookingState.subscriptionDiscount - discount;
+
+      dispatch(setPricing({
+        subtotal: calculatedSubtotal,
+        subscriptionDiscount: bookingState.subscriptionDiscount,
+        promoDiscount: discount,
+        total: calculatedTotal,
+      }));
+      dispatch(setPromoCode(result.promo.code));
+      toast.success("Promo code applied!", {
+        description: `You saved ₹${discount.toFixed(2)} with code ${result.promo.code}`
+      });
+    } else {
+      toast.error(result.error || "Invalid promo code");
+    }
+    setIsApplyingPromo(false);
+  };
+
+  const handleRemovePromo = () => {
+    // Recalculate without promo
+    let durationInHours = 0;
+    if (selectedDuration && selectedDuration > 0) {
+      durationInHours = selectedDuration / 60;
+    } else if (slotStartTime && slotEndTime) {
+      const parseTime = (timeStr: string) => {
+        const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (!match) return 0;
+        let [, hours, minutes, period] = match;
+        let hour = parseInt(hours);
+        if (period.toUpperCase() === "PM" && hour !== 12) hour += 12;
+        if (period.toUpperCase() === "AM" && hour === 12) hour = 0;
+        return hour * 60 + parseInt(minutes);
+      };
+      const startMins = parseTime(slotStartTime);
+      const endMins = parseTime(slotEndTime);
+      durationInHours = (endMins - startMins) / 60;
+    }
+
+    const deviceCharges = (hourlyRate || 0) * durationInHours;
+    const extraPlayerCharges = (playerCount - includedPlayers) * extraPlayerCharge;
+    const addonsTotal = addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
+    const calculatedSubtotal = deviceCharges + extraPlayerCharges + addonsTotal;
+    const calculatedTotal = calculatedSubtotal - bookingState.subscriptionDiscount;
+
+    dispatch(setPricing({
+      subtotal: calculatedSubtotal,
+      subscriptionDiscount: bookingState.subscriptionDiscount,
+      promoDiscount: 0,
+      total: calculatedTotal,
+    }));
+    dispatch(setPromoCode(null));
+    setPromoCodeInput("");
+    toast.info("Promo code removed");
+  };
+
   const handleConfirmBooking = async () => {
     setIsSubmitting(true);
 
@@ -155,19 +281,22 @@ export default function CustomerDetailsPage() {
       selectedSlot: selectedSlot!,
       slotStartTime: slotStartTime!,
       slotEndTime: slotEndTime!,
+      selectedDuration: selectedDuration!,
       hourlyRate: hourlyRate!,
       addons: addons,
       subtotal: subtotal,
       total: total,
       playerCount: playerCount,
       includedPlayers: includedPlayers,
-      extraPlayerCharge: extraPlayerCharge
+      extraPlayerCharge: extraPlayerCharge,
+      subscriptionDiscount: bookingState.subscriptionDiscount,
+      promoDiscount: bookingState.promoDiscount,
+      promoCode: bookingState.promoCode
     });
 
     if (result.success) {
       setBookingNumber(result.bookingNumber || "");
       setBookingId(result.bookingId || "");
-      console.log("DEBUG: Booking Duration in Store:", selectedDuration);
       toast.success("Booking Confirmed!", { description: "Your slot has been reserved successfully." });
       dispatch(clearSlotTimer()); // Clear timer and booking state after successful confirmation
       setStep("success");
@@ -199,7 +328,7 @@ export default function CustomerDetailsPage() {
           <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-bold text-[9px] flex items-center justify-center border border-zinc-800">3</div><span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Payment</span></div>
         </div>
 
-        <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6">
+        <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6 glow-box-hover">
 
           {/* Card Header Content Panels */}
           <div className="border-b border-zinc-900 pb-4 space-y-1">
@@ -208,7 +337,7 @@ export default function CustomerDetailsPage() {
           </div>
 
           {/* Live Active Hold Summary Strip */}
-          <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900 grid grid-cols-2 gap-2 text-xs">
+          <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-900 grid grid-cols-2 gap-2 text-xs glow-box-hover">
             <div className="space-y-0.5"><span className="text-[8px] font-black text-zinc-500 uppercase block">Selected Setup</span><span className="text-white font-black text-left break-words leading-tight max-w-[200px] block uppercase">{deviceTypeName || "PLAYSTATION 5"}</span></div>
             <div className="space-y-0.5 text-right"><span className="text-[8px] font-black text-zinc-500 uppercase block">Reserved Slot</span><span className="text-primary text-[12px] text-right font-black">{selectedSlot || "Pending Hold"}</span></div>
           </div>
@@ -236,7 +365,7 @@ export default function CustomerDetailsPage() {
 
             {/* Action Call buttons */}
             <div className="pt-4 space-y-2">
-              <Button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 shadow-xl transition-all active:scale-[0.99]">
+              <Button variant="gradient" type="submit" disabled={isSubmitting} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 shadow-xl transition-all active:scale-[0.99]">
                 {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "CONTINUE"} <ChevronRight className="h-4 w-4 stroke-[3]" />
               </Button>
 
@@ -268,7 +397,7 @@ export default function CustomerDetailsPage() {
           <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-bold text-[9px] flex items-center justify-center border border-zinc-800">3</div><span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Payment</span></div>
         </div>
 
-        <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6">
+        <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6 glow-box-hover">
           <div className="border-b border-zinc-900 pb-4 space-y-1">
             <h3 className="text-lg font-black uppercase text-white tracking-tight">NEW CUSTOMER REGISTRATION</h3>
             <p className="text-xs text-zinc-500 font-medium">Please provide your details to create your profile.</p>
@@ -325,7 +454,7 @@ export default function CustomerDetailsPage() {
             </div>
 
             <div className="pt-4 space-y-2">
-              <Button type="submit" className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
+              <Button variant="gradient" type="submit" className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
                 CONTINUE TO SUMMARY <ChevronRight className="h-4 w-4 stroke-[3]" />
               </Button>
               <Button type="button" onClick={() => setStep("phone")} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
@@ -350,14 +479,14 @@ export default function CustomerDetailsPage() {
           <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">3</div><span className="text-[8px] font-black uppercase text-primary tracking-wider">Payment</span></div>
         </div>
 
-        <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6">
+        <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6 glow-box-hover">
           <div className="border-b border-zinc-900 pb-4 space-y-1">
             <h3 className="text-lg font-black uppercase text-white tracking-tight">BOOKING SUMMARY</h3>
             <p className="text-xs text-zinc-500 font-medium">Review your booking details before confirmation.</p>
           </div>
 
           {/* Customer Information */}
-          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3">
+          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 glow-box-hover">
             <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Customer Information</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-zinc-500">Customer:</span> <span className="text-white font-bold">{customerName || existingCustomerData?.name}</span></div>
@@ -368,7 +497,7 @@ export default function CustomerDetailsPage() {
           </div>
 
           {/* Booking Details */}
-          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3">
+          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 glow-box-hover">
             <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Booking Details</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-zinc-500">Device:</span> <span className="text-white font-bold text-right">{deviceTypeName}</span></div>
@@ -378,15 +507,154 @@ export default function CustomerDetailsPage() {
             </div>
           </div>
 
-          {/* Pricing Details */}
+          {/* Active Subscription (if any) */}
+          {bookingState.activeSubscriptionId && (
+            <div className="bg-gradient-to-r from-primary/10 via-amber-500/10 to-primary/10 p-4 rounded-xl border border-primary/30 space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center">
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-primary uppercase tracking-wider">{bookingState.subscriptionPlanName} Active</h4>
+                  <p className="text-[10px] text-zinc-400">You're getting {bookingState.subscriptionDiscountPercentage}% off on this booking!</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Promo Code Section */}
           <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3">
+            <div className="flex items-center gap-2">
+              <Tag className="h-4 w-4 text-zinc-500" />
+              <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">
+                Have a Promo Code?
+              </h4>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Enter promo code"
+                value={promoCode}
+                onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
+                className="bg-[#0a0a0a] border-zinc-800 text-white uppercase font-mono text-sm"
+                disabled={isApplyingPromo || bookingState.promoCode !== null}
+              />
+              {bookingState.promoCode ? (
+                <Button
+                  onClick={handleRemovePromo}
+                  variant="outline"
+                  className="text-red-400 border-red-500/30 hover:bg-red-950/20 px-4"
+                  disabled={isApplyingPromo}
+                >
+                  Remove
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleApplyPromo}
+                  disabled={!promoCode.trim() || isApplyingPromo}
+                  variant="gradient"
+                  className="px-6"
+                >
+                  {isApplyingPromo ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Apply'}
+                </Button>
+              )}
+            </div>
+            {bookingState.promoCode && (
+              <div className="flex items-center gap-1.5 text-xs text-green-400 bg-green-950/30 px-3 py-2 rounded-lg border border-green-500/20">
+                <CheckCircle2 className="h-3 w-3" />
+                <span className="font-bold">Code "{bookingState.promoCode}" applied successfully!</span>
+              </div>
+            )}
+          </div>
+
+          {/* Pricing Details */}
+          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 glow-box-strong">
             <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Price Breakdown</h4>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-zinc-500">Base Rate:</span> <span className="text-white">₹{hourlyRate}</span></div>
+              {(() => {
+                // Calculate duration - fallback to calculating from times if selectedDuration is missing
+                let durationInHours = 0;
+
+                if (selectedDuration && selectedDuration > 0) {
+                  durationInHours = selectedDuration / 60;
+                } else if (slotStartTime && slotEndTime) {
+                  // Fallback: calculate from start/end times
+                  const parseTime = (timeStr: string) => {
+                    const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+                    if (!match) return 0;
+                    let [, hours, minutes, period] = match;
+                    let hour = parseInt(hours);
+                    if (period.toUpperCase() === "PM" && hour !== 12) hour += 12;
+                    if (period.toUpperCase() === "AM" && hour === 12) hour = 0;
+                    return hour * 60 + parseInt(minutes);
+                  };
+                  const startMins = parseTime(slotStartTime);
+                  const endMins = parseTime(slotEndTime);
+                  durationInHours = (endMins - startMins) / 60;
+                }
+
+                const deviceCharges = hourlyRate! * durationInHours;
+                const extraPlayerCharges = (playerCount - includedPlayers) * extraPlayerCharge;
+                const addonsTotal = addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
+                const calculatedSubtotal = deviceCharges + extraPlayerCharges + addonsTotal;
+                const calculatedTotal = calculatedSubtotal - bookingState.subscriptionDiscount - bookingState.promoDiscount;
+
+                return (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">Device Booking ({durationInHours}h × ₹{hourlyRate}):</span>
+                      <span className="text-white">₹{deviceCharges.toFixed(2)}</span>
+                    </div>
+
+                    {playerCount > includedPlayers && (
+                      <div className="flex justify-between">
+                        <span className="text-zinc-500">Extra Players ({playerCount - includedPlayers} × ₹{extraPlayerCharge}):</span>
+                        <span className="text-white">₹{extraPlayerCharges.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {addons.length > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-zinc-500">Add-ons:</span>
+                        <span className="text-white">₹{addonsTotal.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between border-t border-zinc-800 pt-2">
+                      <span className="text-zinc-400 font-bold">Subtotal:</span>
+                      <span className="text-white font-bold">₹{calculatedSubtotal.toFixed(2)}</span>
+                    </div>
+
+                    {bookingState.subscriptionDiscount > 0 && (
+                      <div className="flex justify-between text-green-500">
+                        <span className="flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Subscription Discount ({bookingState.subscriptionDiscountPercentage}%):
+                        </span>
+                        <span className="font-bold">-₹{bookingState.subscriptionDiscount.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {bookingState.promoDiscount > 0 && (
+                      <div className="flex justify-between text-primary">
+                        <span className="flex items-center gap-1">
+                          <Tag className="h-3 w-3" />
+                          Promo Discount ({bookingState.promoCode}):
+                        </span>
+                        <span className="font-bold">-₹{bookingState.promoDiscount.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    <div className="border-t border-zinc-800 pt-2 flex justify-between font-black text-base">
+                      <span className="text-white">Total Amount:</span>
+                      <span className="text-primary text-lg">₹{calculatedTotal.toFixed(2)}</span>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
           <div className="space-y-2">
-            <Button onClick={handleConfirmBooking} disabled={isSubmitting} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
+            <Button variant="gradient" onClick={handleConfirmBooking} disabled={isSubmitting} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "CONFIRM BOOKING"} <CheckCircle2 className="h-4 w-4" />
             </Button>
             <Button type="button" onClick={() => customerExists ? setStep("phone") : setStep("details")} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
@@ -402,7 +670,7 @@ export default function CustomerDetailsPage() {
   if (step === "success") {
     return (
       <div className="w-full max-w-2xl mx-auto py-4 px-2 animate-in fade-in duration-500">
-        <Card className="bg-[#111] border border-green-500/20 p-8 shadow-2xl rounded-2xl space-y-6">
+        <Card className="bg-[#111] border border-green-500/20 p-8 shadow-2xl rounded-2xl space-y-6 glow-box-strong">
           {/* Success Header */}
           <div className="text-center space-y-4">
             <div className="flex justify-center">
@@ -417,7 +685,7 @@ export default function CustomerDetailsPage() {
           </div>
 
           {/* QR Code Section */}
-          <div className="bg-zinc-950 p-6 rounded-xl border border-zinc-900 space-y-4">
+          <div className="bg-zinc-950 p-6 rounded-xl border border-zinc-900 space-y-4 glow-box-strong">
             <div className="flex items-center justify-center gap-2 text-xs font-black text-zinc-500 uppercase tracking-wider">
               <QrCode className="h-4 w-4" />
               <span>Booking QR Code</span>
@@ -431,7 +699,7 @@ export default function CustomerDetailsPage() {
             </div>
           </div>
 
-          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 text-sm">
+          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 text-sm glow-box-hover">
             <h4 className="text-[10px] font-black text-zinc-500 uppercase">Booking Details</h4>
             <div className="flex justify-between"><span className="text-zinc-500">Customer:</span> <span className="text-white font-bold">{customerName || existingCustomerData?.name}</span></div>
             <div className="flex justify-between"><span className="text-zinc-500">Phone:</span> <span className="text-primary font-bold">+91 {mobileNumber}</span></div>
@@ -439,12 +707,19 @@ export default function CustomerDetailsPage() {
             <div className="flex justify-between"><span className="text-zinc-500">Date:</span> <span className="text-white font-bold">{selectedDate ? new Date(selectedDate).toLocaleDateString() : "--"}</span></div>
             <div className="flex justify-between"><span className="text-zinc-500">Time:</span> <span className="text-primary font-bold">{selectedSlot}</span></div>
             <div className="flex justify-between"><span className="text-zinc-500">Duration:</span> <span className="text-white font-bold">{selectedDurationLabel}</span></div>
+            <div className="flex justify-between"><span className="text-zinc-500">Players:</span> <span className="text-white font-bold">{playerCount}</span></div>
+            {playerCount > includedPlayers && (
+              <div className="flex justify-between text-xs"><span className="text-zinc-600">Extra Players:</span> <span className="text-zinc-400">+₹{((playerCount - includedPlayers) * extraPlayerCharge).toFixed(2)}</span></div>
+            )}
+            {bookingState.subscriptionDiscount > 0 && (
+              <div className="flex justify-between text-xs text-green-500"><span>Subscription Discount ({bookingState.subscriptionDiscountPercentage}%):</span> <span>-₹{bookingState.subscriptionDiscount.toFixed(2)}</span></div>
+            )}
             <div className="flex justify-between border-t border-zinc-800 pt-2 font-black"><span className="text-zinc-500">Amount Paid:</span> <span className="text-white">₹{total}</span></div>
           </div>
 
           {/* Action Buttons */}
           <div className="space-y-2 pt-2">
-            <Button onClick={() => router.push(`/booking/${bookingId}/food`)} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-2">
+            <Button variant="gradient" onClick={() => router.push(`/booking/${bookingId}/food`)} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-2">
               <UtensilsCrossed className="h-4 w-4" />
               ORDER FOOD & DRINKS
             </Button>

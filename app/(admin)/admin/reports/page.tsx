@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import {
   DollarSign, TrendingUp, ShoppingBag, Gamepad2,
-  Download, Loader2, UtensilsCrossed, BarChart3, CalendarDays
+  Download, Loader2, UtensilsCrossed, BarChart3, CalendarDays, Receipt
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -19,9 +19,11 @@ import {
 } from "./actions";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
+import { ExpensesTab } from "@/components/admin/reports/ExpensesTab";
+import { ProfitTab } from "@/components/admin/reports/ProfitTab";
 
 export default function AdminReportsPage() {
-  const [activeTab, setActiveTab] = useState<"overview" | "food" | "device" | "revenue">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "food" | "device" | "revenue" | "expenses" | "profit">("overview");
   const [loading, setLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -159,9 +161,11 @@ export default function AdminReportsPage() {
 
   const tabs = [
     { id: "overview", label: "Overview", icon: BarChart3 },
+    { id: "profit", label: "Profit & Loss", icon: TrendingUp },
     { id: "food", label: "Food Reports", icon: UtensilsCrossed },
     { id: "device", label: "Device Reports", icon: Gamepad2 },
-    { id: "revenue", label: "Revenue Reports", icon: DollarSign }
+    { id: "revenue", label: "Revenue Reports", icon: DollarSign },
+    { id: "expenses", label: "Expenses", icon: Receipt }
   ];
 
   return (
@@ -409,18 +413,18 @@ export default function AdminReportsPage() {
                   </div>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20 p-5">
+                <Card className="bg-gradient-to-br from-amber-500/10 to-orange-600/5 border-amber-500/20 p-5">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-xs font-black uppercase text-purple-500/70 mb-1">
+                      <p className="text-xs font-black uppercase text-amber-500/70 mb-1">
                         Total Bookings
                       </p>
                       <h3 className="text-2xl font-black text-white">
                         {overviewData.totalBookings}
                       </h3>
                     </div>
-                    <div className="p-2 bg-purple-500/10 rounded-lg">
-                      <CalendarDays className="h-5 w-5 text-purple-500" />
+                    <div className="p-2 bg-amber-500/10 rounded-lg">
+                      <CalendarDays className="h-5 w-5 text-amber-500" />
                     </div>
                   </div>
                 </Card>
@@ -856,6 +860,16 @@ export default function AdminReportsPage() {
                 </div>
               </Card>
             </div>
+          )}
+
+          {/* Profit & Loss Tab */}
+          {activeTab === "profit" && (
+            <ProfitTab dateFrom={dateFrom} dateTo={dateTo} />
+          )}
+
+          {/* Expenses Tab */}
+          {activeTab === "expenses" && (
+            <ExpensesTab dateFrom={dateFrom} dateTo={dateTo} />
           )}
         </>
       )}

@@ -69,9 +69,10 @@ export default function AdminPromoCodeDashboard() {
           <h1 className="text-2xl font-black uppercase tracking-tight">Promo Code Management</h1>
           <p className="text-xs text-zinc-500 font-medium mt-0.5">Configure and monitor structural discount campaigns across the arena platform stores.</p>
         </div>
-        <Button 
-          onClick={() => setIsAddOpen(true)} 
-          className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-black uppercase text-xs h-11 px-5 rounded-lg tracking-wider flex items-center gap-2 shadow-lg transition-transform active:scale-[0.98]"
+        <Button
+          onClick={() => setIsAddOpen(true)}
+          variant="gradient"
+          className="font-black uppercase text-xs h-11 px-5 rounded-lg tracking-wider flex items-center gap-2"
         >
           <Plus className="h-4 w-4 stroke-[3]" /> Create Promo Code
         </Button>
@@ -91,7 +92,7 @@ export default function AdminPromoCodeDashboard() {
         </div>
       ) : loading ? (
         <div className="h-48 w-full flex items-center justify-center border border-zinc-900 rounded-xl bg-[#111]">
-          <Loader2 className="h-6 w-6 text-[#FFC107] animate-spin" />
+          <Loader2 className="h-6 w-6 text-primary animate-spin" />
         </div>
       ) : (
         <PromoCodeTable

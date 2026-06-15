@@ -47,7 +47,7 @@ export default function RetrieveBookingPage() {
       checked_in: { bg: 'bg-blue-500/10', text: 'text-blue-500', border: 'border-blue-500/30' },
       completed: { bg: 'bg-zinc-800', text: 'text-zinc-400', border: 'border-zinc-700' },
       cancelled: { bg: 'bg-red-500/10', text: 'text-red-500', border: 'border-red-500/30' },
-      locked: { bg: 'bg-yellow-500/10', text: 'text-yellow-500', border: 'border-yellow-500/30' },
+      locked: { bg: 'bg-amber-500/10', text: 'text-amber-500', border: 'border-amber-500/30' },
     };
 
     const config = statusConfig[status] || statusConfig.confirmed;
@@ -60,7 +60,7 @@ export default function RetrieveBookingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white py-8 px-4">
+    <div className="min-h-screen bg-[#0d0a14] text-white py-8 px-4">
       <div className="max-w-4xl mx-auto space-y-6">
 
         {/* Header */}
@@ -132,7 +132,7 @@ export default function RetrieveBookingPage() {
                       <span className="text-xs text-zinc-600">•</span>
                       <span className={`text-xs font-bold uppercase ${
                         booking.payment_status === 'paid' ? 'text-green-500' :
-                        booking.payment_status === 'pending' ? 'text-yellow-500' :
+                        booking.payment_status === 'pending' ? 'text-amber-500' :
                         'text-zinc-500'
                       }`}>
                         {booking.payment_status}

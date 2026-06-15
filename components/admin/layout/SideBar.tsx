@@ -5,15 +5,17 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Calendar, Monitor, Utensils, Tag,
   PartyPopper, CreditCard, BarChart2, Settings, LogOut, ChevronLeft,
-  User2Icon
+  User2Icon, Crown, Clock
 } from "lucide-react";
 
 const navItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Bookings", href: "/admin/bookings", icon: Calendar },
+  { name: "Timeline", href: "/admin/timeline", icon: Clock },
   { name: "Devices", href: "/admin/devices", icon: Monitor },
   { name: "Food", href: "/admin/food", icon: Utensils },
   { name: "Customers", href: "/admin/customers", icon: User2Icon },
+  { name: "Subscription", href: "/admin/subscription", icon: Crown },
   { name: "Promo Codes", href: "/admin/promo-code", icon: Tag },
   { name: "Happy Hours", href: "/admin/happy-hours", icon: PartyPopper },
   { name: "Billing", href: "/admin/billing", icon: CreditCard },

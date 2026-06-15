@@ -77,7 +77,7 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
     }
   }, [router])
 
-  const defaultPlanId = plans.find(p => p.isPopular)?.id || plans[0]?.id || ''
+  const defaultPlanId = plans[0]?.id || ''
   const [activeCard, setActiveCard] = useState<number | string>(defaultPlanId)
 
   if (plans.length === 0) {
@@ -94,8 +94,8 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
     >
       {/* Animated gradient orbs */}
-      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-r from-primary/20 via-yellow-400/20 to-amber-500/20 rounded-full blur-[120px] pointer-events-none z-0 animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-gradient-to-l from-amber-500/15 via-yellow-500/15 to-primary/15 rounded-full blur-[100px] pointer-events-none z-0 animate-pulse" style={{ animationDelay: '1s' }} />
+      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-r from-primary/20 via-amber-400/20 to-amber-500/20 rounded-full blur-[120px] pointer-events-none z-0 animate-pulse" />
+      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-gradient-to-l from-amber-500/15 via-amber-400/15 to-primary/15 rounded-full blur-[100px] pointer-events-none z-0 animate-pulse" style={{ animationDelay: '1s' }} />
 
       <div className="max-w-300 mx-auto relative z-10 w-full">
         <div className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-12 pt-8 px-[5vw] md:px-8 hide-scrollbar items-stretch justify-start">
@@ -114,7 +114,7 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
               >
                 {/* Animated gradient border effect */}
                 {isActive && (
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary via-yellow-400 to-primary opacity-20 blur-xl animate-pulse pointer-events-none" />
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary via-amber-400 to-primary opacity-20 blur-xl animate-pulse pointer-events-none" />
                 )}
 
                 {/* Scan line animation */}
@@ -128,7 +128,7 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
                   <div
                     className={`absolute -top-3.5 left-1/2 transform -translate-x-1/2 px-4 py-1.5 text-[10px] font-black rounded-full uppercase tracking-widest transition-all duration-300 ${
                       isActive
-                        ? 'bg-gradient-to-r from-primary via-yellow-400 to-primary text-black shadow-[0_0_20px_rgba(255,193,7,0.6)] animate-glow'
+                        ? 'bg-gradient-to-r from-primary via-amber-400 to-primary text-black shadow-[0_0_20px_rgba(255,193,7,0.6)] animate-glow'
                         : 'bg-zinc-900 text-primary border border-primary/30'
                     }`}
                   >
@@ -141,13 +141,13 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
                     {plan.category}
                   </span>
                   <h3 className={`text-xl md:text-2xl font-black mb-3 tracking-tight transition-all duration-300 ${
-                    isActive ? 'text-transparent bg-gradient-to-r from-white via-yellow-100 to-white bg-clip-text' : 'text-white'
+                    isActive ? 'text-transparent bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text' : 'text-white'
                   }`}>
                     {plan.title}
                   </h3>
                   <div className="flex items-baseline">
                     <span className={`text-3xl md:text-4xl font-black tracking-tighter transition-all duration-300 ${
-                      isActive ? 'text-transparent bg-gradient-to-r from-primary via-yellow-300 to-primary bg-clip-text' : 'text-white'
+                      isActive ? 'text-transparent bg-gradient-to-r from-primary via-amber-300 to-primary bg-clip-text' : 'text-white'
                     }`}>
                       ₹{plan.price}
                     </span>
@@ -183,7 +183,7 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
                   }}
                   className={`relative w-full py-3.5 rounded-xl font-black text-sm uppercase tracking-wider transition-all duration-300 mt-auto overflow-hidden group/btn ${
                     isActive
-                      ? 'bg-gradient-to-r from-primary via-yellow-400 to-primary text-black hover:shadow-[0_0_30px_rgba(255,193,7,0.5)] hover:scale-[1.02]'
+                      ? 'bg-gradient-to-r from-primary via-amber-400 to-primary text-black hover:shadow-[0_0_30px_rgba(255,193,7,0.5)] hover:scale-[1.02]'
                       : 'bg-transparent border-2 border-zinc-800 text-zinc-400 hover:border-primary hover:text-primary hover:shadow-[0_0_20px_rgba(255,193,7,0.2)]'
                   }`}
                 >

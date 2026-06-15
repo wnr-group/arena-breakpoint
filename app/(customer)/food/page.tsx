@@ -118,7 +118,7 @@ function FoodMenuPageContent() {
 
   if (loading) {
     return (
-      <div className="h-[60vh] w-full flex items-center justify-center bg-black">
+      <div className="h-[60vh] w-full flex items-center justify-center bg-[#0d0a14]">
         <Loader2 className="h-7 w-7 text-primary animate-spin" />
       </div>
     );
@@ -135,7 +135,7 @@ function FoodMenuPageContent() {
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-900 pb-6">
         <div className="space-y-1">
-          <h1 className="text-3xl font-black uppercase tracking-tight bg-gradient-to-r from-primary via-yellow-300 to-primary bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(255,193,7,0.3)]">
+          <h1 className="text-3xl font-black uppercase tracking-tight bg-gradient-to-r from-primary via-amber-300 to-primary bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(255,193,7,0.3)]">
             Respawn Refuel ⚡
           </h1>
           <p className="text-xs text-zinc-400 font-medium">
@@ -144,7 +144,7 @@ function FoodMenuPageContent() {
         </div>
 
         {bookingNumber && (
-          <div className="bg-[#111] border border-zinc-800/80 px-4 py-2 rounded-xl flex items-center gap-3 shadow-inner">
+          <div className="bg-[#111] border border-zinc-800/80 px-4 py-2 rounded-xl flex items-center gap-3 shadow-inner glow-box-hover">
             <div>
               <p className="text-[9px] text-zinc-600 uppercase font-black tracking-widest">Active Hub Track</p>
               <p className="text-xs font-black text-primary font-mono tracking-wide">{bookingNumber}</p>
@@ -160,8 +160,8 @@ function FoodMenuPageContent() {
           <button
             onClick={() => setActiveCategory("all")}
             className={`px-5 py-2.5 text-[10px] font-black uppercase border rounded-lg transition-all duration-300 whitespace-nowrap tracking-wider ${activeCategory === "all"
-                ? "bg-gradient-to-r from-primary via-yellow-400 to-primary text-black border-transparent shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
-                : "bg-zinc-900/40 border-zinc-800/60 text-zinc-400 hover:text-white hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:via-yellow-400/10 hover:to-primary/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
+                ? "bg-gradient-to-r from-primary via-amber-400 to-primary text-black border-transparent shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
+                : "bg-zinc-900/40 border-zinc-800/60 text-zinc-400 hover:text-white hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:via-amber-400/10 hover:to-primary/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
               }`}
           >
             All Items
@@ -171,8 +171,8 @@ function FoodMenuPageContent() {
               key={category}
               onClick={() => setActiveCategory(category)}
               className={`px-5 py-2.5 text-[10px] font-black uppercase border rounded-lg transition-all duration-300 whitespace-nowrap tracking-wider ${activeCategory === category
-                  ? "bg-gradient-to-r from-primary via-yellow-400 to-primary text-black border-transparent shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
-                  : "bg-zinc-900/40 border-zinc-800/60 text-zinc-400 hover:text-white hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:via-yellow-400/10 hover:to-primary/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
+                  ? "bg-gradient-to-r from-primary via-amber-400 to-primary text-black border-transparent shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
+                  : "bg-zinc-900/40 border-zinc-800/60 text-zinc-400 hover:text-white hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:via-amber-400/10 hover:to-primary/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
                 }`}
             >
               {category}
@@ -193,7 +193,7 @@ function FoodMenuPageContent() {
 
       {/* Menu Categories Grid Loop Output */}
       {Object.keys(groupedItems).length === 0 ? (
-        <Card className="bg-[#111]/40 border-zinc-900 p-16 rounded-2xl shadow-xl">
+        <Card className="bg-[#111]/40 border-zinc-900 p-16 rounded-2xl shadow-xl glow-box-hover">
           <div className="text-center space-y-3 max-w-sm mx-auto">
             <div className="h-12 w-12 rounded-2xl bg-zinc-950 border border-zinc-800 text-zinc-700 flex items-center justify-center mx-auto">
               <UtensilsCrossed className="h-5 w-5" />
@@ -221,7 +221,7 @@ function FoodMenuPageContent() {
                   return (
                     <Card
                       key={item.id}
-                      className="bg-[#111] border border-zinc-900/90 overflow-hidden group hover:border-zinc-800/80 transition-all duration-300 flex flex-col rounded-xl relative shadow-lg"
+                      className="bg-[#111] border border-zinc-900/90 overflow-hidden group hover:border-zinc-800/80 transition-all duration-300 flex flex-col rounded-xl relative shadow-lg glow-box-hover"
                     >
                       <div className="h-48 w-full overflow-hidden relative bg-zinc-950 flex-shrink-0 border-b border-zinc-900/60">
                         {item.image_url ? (
@@ -331,8 +331,9 @@ function FoodMenuPageContent() {
                 </span>
               </div>
               <Button
+                variant="gradient"
                 onClick={() => router.push("/food/checkout")}
-                className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-11 px-5 rounded-xl flex items-center gap-2 shadow-[0_4px_15px_rgba(255,193,7,0.25)] active:scale-[0.98] transition-all"
+                className="text-black font-black uppercase text-xs h-11 px-5 rounded-xl flex items-center gap-2 shadow-[0_4px_15px_rgba(255,193,7,0.25)] active:scale-[0.98] transition-all"
               >
                 <ShoppingCart className="h-6 w-4 stroke-[3]" />  Your Cart
               </Button>
@@ -346,7 +347,7 @@ function FoodMenuPageContent() {
 
 export default function FoodMenuPage() {
   return (
-    <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-black"><Loader2 className="h-6 w-6 text-primary animate-spin" /></div>}>
+    <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-[#0d0a14]"><Loader2 className="h-6 w-6 text-primary animate-spin" /></div>}>
       <FoodMenuPageContent />
     </Suspense>
   );

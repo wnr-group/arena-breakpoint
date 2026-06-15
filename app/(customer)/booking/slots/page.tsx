@@ -130,7 +130,7 @@ export default function SlotBookingPage() {
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
 
-            <Button disabled={!selectedSlotNode} onClick={handleRegisterTransactionLock} className="w-full bg-primary text-black font-black uppercase text-xs py-5 rounded-xl flex items-center justify-center gap-1 mt-4">Continue <ChevronRight className="h-4 w-4 stroke-[3]" /></Button>
+            <Button variant="gradient" disabled={!selectedSlotNode} onClick={handleRegisterTransactionLock} className="w-full text-black font-black uppercase text-xs py-5 rounded-xl flex items-center justify-center gap-1 mt-4">Continue <ChevronRight className="h-4 w-4 stroke-[3]" /></Button>
           </div>
 
           {/* WIDESCREEN DESKTOP CONSTANT INLINE CONTAINERS MAPS */}
@@ -159,7 +159,7 @@ export default function SlotBookingPage() {
                                   {availability.available} LEFT
                                 </span>
                               )}
-                              {slot.peak && !isBooked && <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-sm ${isSelected ? "bg-black/10 text-black" : "bg-amber-500/10 text-amber-400"}`}>PEAK</span>}
+                              {slot.peak && !isBooked && <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-sm ${isSelected ? "bg-black/10 text-black" : "bg-orange-600/10 text-amber-400"}`}>PEAK</span>}
                             </div>
                           </button>
                         );
@@ -226,7 +226,7 @@ export default function SlotBookingPage() {
               )}
               <div className="flex justify-between items-baseline pt-3 border-t border-zinc-900 text-white font-black"><span className="text-xs uppercase">Total Payable</span><span className="text-2xl text-primary">₹ {aggregatedPayableTotal}.00</span></div>
             </div>
-            <Button disabled={submittingLock || !selectedSlotNode} onClick={handleRegisterTransactionLock} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase py-5 text-xs rounded-xl flex items-center justify-center gap-1">Continue <ChevronRight className="h-4 w-4 stroke-[3]" /></Button>
+            <Button variant="gradient" disabled={submittingLock || !selectedSlotNode} onClick={handleRegisterTransactionLock} className="w-full text-black font-black uppercase py-5 text-xs rounded-xl flex items-center justify-center gap-1">Continue <ChevronRight className="h-4 w-4 stroke-[3]" /></Button>
           </Card>
         </div>
       </div>
@@ -311,7 +311,7 @@ export default function SlotBookingPage() {
                 <div className="flex justify-between"><span>Extra Players ({extraPlayersCount})</span><span className="text-primary font-bold">₹ {extraPlayersCharge}.00</span></div>
               )}
               <div className="flex justify-between font-black text-white border-t border-zinc-900 pt-2"><span>Total Payable</span><span className="text-primary">₹ {aggregatedPayableTotal}</span></div>
-              <Button onClick={() => { setMobileSummaryDrawerOpen(false); handleRegisterTransactionLock(); }} className="w-full bg-primary text-black font-black uppercase py-4 rounded-xl text-xs mt-2">Confirm & Hold Slot</Button>
+              <Button variant="gradient" onClick={() => { setMobileSummaryDrawerOpen(false); handleRegisterTransactionLock(); }} className="w-full text-black font-black uppercase py-4 rounded-xl text-xs mt-2">Confirm & Hold Slot</Button>
             </div>
           </div>
         </div>

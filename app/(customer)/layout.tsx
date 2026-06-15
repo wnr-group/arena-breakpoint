@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { Timer, ShieldAlert } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/lib/redux/hooks";
 import { resetBooking } from "@/lib/redux/slices/bookingSlice";
-import { Navbar } from "@/components/customer/layout/NavBar";
-import { Footer } from "@/components/customer/layout/Footer";
 import { toast } from "sonner";
+import Navbar from "@/components/customer/layout/NavBar";
+import Footer from "@/components/customer/layout/Footer";
+import AnimatedBackground from "@/components/customer/layout/AnimatedBackground";
+
 
 export default function CustomerRouteGroupLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -51,8 +53,10 @@ export default function CustomerRouteGroupLayout({ children }: { children: React
   }, [slotLockExpiry, mounted, dispatch, router]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#060606] relative">
-      
+    <div className="min-h-screen flex flex-col bg-[#0d0a14] relative">
+      {/* Animated purple background blobs */}
+      <AnimatedBackground />
+
       {/* 10-Minute Hold HUD Alert Banner */}
       {mounted && timeLeftStr && (
         <div className="w-full bg-[#E53e3e] text-white text-[11px] font-black tracking-widest uppercase py-2.5 text-center flex items-center justify-center gap-2 sticky top-0 z-50 shadow-xl select-none">
@@ -64,7 +68,7 @@ export default function CustomerRouteGroupLayout({ children }: { children: React
       {/* REUSABLE COMPONENT INJECTIONS */}
       <Navbar />
 
-      <main className="flex-1 w-full max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col">
+      <main className="flex-1 w-full max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col mt-10 relative z-10">
         {children}
       </main>
 

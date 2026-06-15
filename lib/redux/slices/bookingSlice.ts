@@ -42,6 +42,12 @@ export interface BookingState {
   email: string | null
   date_of_birth: string | null
 
+  // Subscription info
+  activeSubscriptionId: string | null
+  subscriptionPlanName: string | null
+  subscriptionDiscountPercentage: number
+  subscriptionEndDate: string | null
+
   // Booking state
   bookingId: string | null
   slotLockExpiry: number | null
@@ -72,6 +78,10 @@ const initialState: BookingState = {
   name: null,
   email: null,
   date_of_birth: null,
+  activeSubscriptionId: null,
+  subscriptionPlanName: null,
+  subscriptionDiscountPercentage: 0,
+  subscriptionEndDate: null,
   bookingId: null,
   slotLockExpiry: null,
 }
@@ -173,6 +183,25 @@ export const bookingSlice = createSlice({
       state.date_of_birth = action.payload.date_of_birth
     },
 
+    setSubscription: (state, action: PayloadAction<{
+      id: string
+      planName: string
+      discountPercentage: number
+      endDate: string
+    } | null>) => {
+      if (action.payload) {
+        state.activeSubscriptionId = action.payload.id
+        state.subscriptionPlanName = action.payload.planName
+        state.subscriptionDiscountPercentage = action.payload.discountPercentage
+        state.subscriptionEndDate = action.payload.endDate
+      } else {
+        state.activeSubscriptionId = null
+        state.subscriptionPlanName = null
+        state.subscriptionDiscountPercentage = 0
+        state.subscriptionEndDate = null
+      }
+    },
+
     setBookingId: (state, action: PayloadAction<string>) => {
       state.bookingId = action.payload
     },
@@ -203,6 +232,7 @@ export const {
   setPricing,
   setPromoCode,
   setCustomerDetails,
+  setSubscription,
   setBookingId,
   setSlotLockExpiry,
   setDuration,

@@ -101,14 +101,14 @@ export default function FoodOrderPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+      <div className="min-h-screen bg-[#0d0a14] flex items-center justify-center">
         <Loader2 className="h-8 w-8 text-primary animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white pb-24">
+    <div className="min-h-screen bg-[#0d0a14] text-white pb-24">
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
 
         {/* Header */}
@@ -144,7 +144,7 @@ export default function FoodOrderPage() {
             const isAvailable = item.status === 'available';
 
             return (
-              <Card key={item.id} className={`bg-[#111] border overflow-hidden ${isAvailable ? 'border-zinc-900 hover:border-primary/50' : 'border-zinc-900/50 opacity-60'} transition-all`}>
+              <Card key={item.id} className={`bg-[#111] border overflow-hidden ${isAvailable ? 'border-zinc-900 hover:border-primary/50' : 'border-zinc-900/50 opacity-60'} transition-all glow-box-hover`}>
                 {/* Image */}
                 {item.image_url && (
                   <div className="h-40 w-full bg-zinc-950 overflow-hidden">

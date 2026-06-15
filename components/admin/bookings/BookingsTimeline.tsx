@@ -41,7 +41,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
   }, []);
 
   // Generate 48 time slots (24 hours × 2 for 30-min intervals)
-  const timeSlots = [];
+  const timeSlots: string[] = [];
   for (let hour = 0; hour < 24; hour++) {
     for (let minute of [0, 30]) {
       const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
@@ -132,21 +132,27 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
   }, [currentTimePosition, selectedDate]);
 
   return (
-    <Card className="bg-[#121212] border-[#27272a] overflow-hidden">
+    <Card className="bg-gradient-to-br from-[#111] via-zinc-950 to-[#111] border-2 border-primary/30 overflow-hidden shadow-[0_0_40px_rgba(255,193,7,0.2)] relative">
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent animate-shimmer pointer-events-none" />
+
       {/* Header */}
-      <div className="p-4 border-b border-[#27272a] flex items-center justify-between">
+      <div className="p-4 border-b border-primary/20 flex items-center justify-between relative z-10">
         <div className="flex items-center gap-4">
-          <h3 className="text-sm font-black text-white uppercase tracking-wider">Timeline View</h3>
+          <h3 className="text-sm font-black text-primary uppercase tracking-wider flex items-center gap-2">
+            <div className="w-1 h-4 bg-gradient-to-b from-primary to-amber-500 rounded-full" />
+            Timeline View
+          </h3>
           <div className="flex items-center gap-2">
             <Button
               size="sm"
               variant="ghost"
               onClick={handlePrevDay}
-              className="h-8 w-8 p-0 text-zinc-400 hover:text-white"
+              className="h-8 w-8 p-0 text-zinc-400 hover:text-primary hover:bg-primary/10 transition-all"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <div className="flex items-center gap-2 bg-[#1a1a1a] border border-zinc-800 rounded-lg px-3 py-1.5">
+            <div className="flex items-center gap-2 bg-gradient-to-r from-primary/20 via-amber-500/10 to-primary/20 border border-primary/30 rounded-lg px-3 py-1.5 shadow-[0_0_10px_rgba(255,193,7,0.1)]">
               <Calendar className="h-3 w-3 text-primary" />
               <span className="text-sm font-bold text-white">
                 {selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
@@ -156,7 +162,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
               size="sm"
               variant="ghost"
               onClick={handleNextDay}
-              className="h-8 w-8 p-0 text-zinc-400 hover:text-white"
+              className="h-8 w-8 p-0 text-zinc-400 hover:text-primary hover:bg-primary/10 transition-all"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -164,7 +170,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
           <Button
             size="sm"
             onClick={handleToday}
-            className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-[10px] h-7 px-3"
+            className="bg-gradient-to-r from-primary via-amber-400 to-primary hover:shadow-[0_0_20px_rgba(255,193,7,0.4)] text-black font-black uppercase text-[10px] h-7 px-3 transition-all"
           >
             Today
           </Button>
@@ -183,9 +189,9 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
         >
           <div className="min-w-max">
             {/* Hour labels */}
-            <div className="sticky top-0 z-10 bg-[#0a0a0a] border-b border-[#27272a] flex">
-              <div className="w-40 flex-shrink-0 border-r border-[#27272a] p-3">
-                <span className="text-[10px] font-black text-zinc-500 uppercase">Device</span>
+            <div className="sticky top-0 z-10 bg-gradient-to-b from-zinc-950 to-black border-b border-primary/20 flex">
+              <div className="w-40 flex-shrink-0 border-r border-primary/20 p-3">
+                <span className="text-[10px] font-black text-primary uppercase">Device</span>
               </div>
               <div className="flex flex-1" style={{ minWidth: '4800px' }}>
                 {timeSlots.map((time, index) => {
@@ -193,7 +199,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
                   return (
                     <div
                       key={time}
-                      className={`flex-1 border-r border-[#27272a] p-2 ${isHourStart ? 'bg-[#0a0a0a]' : 'bg-[#121212]'}`}
+                      className={`flex-1 border-r border-zinc-800/50 p-2 ${isHourStart ? 'bg-primary/5' : 'bg-transparent'}`}
                     >
                       {isHourStart && (
                         <div className="text-[9px] font-black text-zinc-400 uppercase">
@@ -214,9 +220,9 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
               </div>
             ) : (
               deviceKeys.map((deviceKey) => (
-                <div key={deviceKey} className="flex border-b border-[#27272a] hover:bg-[#1a1a1a] transition-colors relative group">
+                <div key={deviceKey} className="flex border-b border-zinc-800/50 hover:bg-primary/5 transition-colors relative group">
                   {/* Device label */}
-                  <div className="w-40 flex-shrink-0 border-r border-[#27272a] p-3 flex items-center sticky left-0 bg-[#121212] z-10 group-hover:bg-[#1a1a1a]">
+                  <div className="w-40 flex-shrink-0 border-r border-zinc-800/50 p-3 flex items-center sticky left-0 bg-gradient-to-r from-zinc-950 to-black z-10 group-hover:from-primary/10 group-hover:to-amber-500/5">
                     <div>
                       <p className="text-xs font-black text-white">{deviceKey.split(' #')[0]}</p>
                       <p className="text-[10px] text-zinc-500">Station #{deviceKey.split('#')[1]}</p>

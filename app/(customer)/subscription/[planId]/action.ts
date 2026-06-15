@@ -3,60 +3,81 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 interface ActivatePlanParams {
-  customerId: string
+  phone: string
+  name: string
+  email?: string
+  date_of_birth?: string
   planId: string
   paymentId: string
 }
+
 export async function activateSubscriptionPlan({
-  customerId,
+  phone,
+  name,
+  email,
+  date_of_birth,
   planId,
   paymentId,
 }: ActivatePlanParams) {
   try {
-    if (!customerId || !planId || !paymentId) {
+    if (!phone || !name || !planId || !paymentId) {
       return {
         success: false,
-        message: 'Missing required fields: customerId, planId, or paymentId',
+        message: 'Missing required fields: phone, name, planId, or paymentId',
       }
     }
 
-    // First, check if customer exists, if not create a test customer
+    // Check if customer exists by phone
     const { data: existingCustomer } = await supabaseAdmin
       .from('customers')
       .select('id')
-      .eq('id', customerId)
+      .eq('phone', phone)
       .single()
 
-    let actualCustomerId = customerId
+    let customerId: string
 
-    if (!existingCustomer) {
-      // Create a test customer for demo purposes
+    if (existingCustomer) {
+      // Customer exists
+      customerId = existingCustomer.id
+
+      // Update customer info if provided
+      await supabaseAdmin
+        .from('customers')
+        .update({
+          name,
+          email: email || null,
+          date_of_birth: date_of_birth || null,
+        })
+        .eq('id', customerId)
+    } else {
+      // Create new customer
       const { data: newCustomer, error: customerError } = await supabaseAdmin
         .from('customers')
         .insert([
           {
-            id: customerId,
-            name: 'Test Customer',
-            phone: '9999999999',
-            email: 'test@example.com',
+            name,
+            phone,
+            email: email || null,
+            date_of_birth: date_of_birth || null,
           },
         ])
         .select('id')
         .single()
 
-      if (customerError) {
+      if (customerError || !newCustomer) {
         return {
           success: false,
-          message: `Failed to create customer: ${customerError.message}`,
+          message: `Failed to create customer: ${customerError?.message || 'Unknown error'}`,
         }
       }
 
-      actualCustomerId = newCustomer?.id || customerId
+      customerId = newCustomer.id
     }
 
+    // Get plan details
     const { data: plan, error: planError } = await supabaseAdmin
       .from('subscription_plans')
-      .select('duration_months, price, discount_percentage')
+      .select('duration_months, price, discount_percentage, name')
       .eq('id', planId)
       .single()
 
@@ -64,58 +85,64 @@ export async function activateSubscriptionPlan({
       return { success: false, message: 'Invalid subscription plan.' }
     }
 
+    // Calculate dates
     const startDate = new Date()
     const endDate = new Date(startDate)
+    endDate.setMonth(endDate.getMonth() + (plan.duration_months || 1))
 
-    if (plan.duration_months) {
-      endDate.setMonth(endDate.getMonth() + plan.duration_months)
+    // Create subscription record
+    const { data: subscription, error: insertError } = await supabaseAdmin
+      .from('subscriptions')
+      .insert([
+        {
+          customer_id: customerId,
+          subscription_plan_id: planId,
+          start_date: startDate.toISOString().split('T')[0],
+          end_date: endDate.toISOString().split('T')[0],
+          payment_id: paymentId,
+          amount_paid: plan.price,
+          status: 'active',
+        },
+      ])
+      .select('id')
+      .single()
+
+    if (insertError || !subscription) {
+      return {
+        success: false,
+        message: `Failed to create subscription: ${insertError?.message || 'Unknown error'}`,
+      }
     }
 
-    const discountMultiplier = (100 - (plan.discount_percentage || 0)) / 100
-    const amountPaid = plan.price * discountMultiplier
-
-    const { error: insertError } = await supabaseAdmin.from('subscriptions').insert([
-      {
-        customer_id: actualCustomerId,
-        subscription_plan_id: planId,
-        start_date: startDate.toISOString().split('T')[0],
-        end_date: endDate.toISOString().split('T')[0],
-        payment_id: paymentId,
-        amount_paid: amountPaid,
-        status: 'active',
-      },
-    ])
-
-    if (insertError) {
-      throw new Error(`Failed to create subscription record: ${insertError.message}`)
-    }
-
+    // Update customer's active_subscription_id
     const { error: updateError } = await supabaseAdmin
       .from('customers')
-      .update({ active_subscription_id: planId })
-      .eq('id', actualCustomerId)
+      .update({ active_subscription_id: subscription.id })
+      .eq('id', customerId)
 
     if (updateError) {
       console.error(
-        'Critical: Subscription created, but failed to update customer status:',
+        'Warning: Subscription created, but failed to update customer active_subscription_id:',
         updateError
       )
     }
 
-    revalidatePath('/customer/subscription')
-    revalidatePath('/customer/my-subscription')
+    revalidatePath('/subscription')
+    revalidatePath('/my-subscription')
 
     return {
       success: true,
-      message: 'Subscription activated successfully!',
+      message: `${plan.name} activated successfully!`,
       data: {
         customerId,
+        subscriptionId: subscription.id,
         planId,
         status: 'active',
         validUntil: endDate.toISOString().split('T')[0],
       },
     }
   } catch (error: any) {
+    console.error('Activation error:', error)
     return {
       success: false,
       data: null,

@@ -53,7 +53,7 @@ function MyBookingsPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white py-8 px-4">
+    <div className="min-h-screen bg-[#0d0a14] text-white py-8 px-4">
       <div className="max-w-4xl mx-auto space-y-6">
 
         {/* Header */}
@@ -63,7 +63,7 @@ function MyBookingsPageContent() {
         </div>
 
         {/* Search Card */}
-        <Card className="bg-[#111] border border-zinc-900 p-6 shadow-xl rounded-2xl">
+        <Card className="bg-[#111] border border-zinc-900 p-6 shadow-xl rounded-2xl glow-box-hover">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="search-phone" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -121,7 +121,7 @@ function MyBookingsPageContent() {
             {bookings.map((booking) => (
               <Card
                 key={booking.id}
-                className="bg-[#111] border border-zinc-900 p-5 shadow-lg rounded-xl hover:border-primary/50 transition-all cursor-pointer"
+                className="bg-[#111] border border-zinc-900 p-5 shadow-lg rounded-xl hover:border-primary/50 transition-all cursor-pointer glow-box-hover"
                 onClick={() => setSelectedBooking(booking)}
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -182,7 +182,7 @@ function MyBookingsPageContent() {
       {/* Booking Details Modal */}
       {selectedBooking && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl max-w-md w-full space-y-6 max-h-[90vh] overflow-y-auto">
+          <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl max-w-md w-full space-y-6 max-h-[90vh] overflow-y-auto glow-box-hover">
 
             {/* Header */}
             <div className="flex items-center justify-between border-b border-zinc-900 pb-4">
@@ -201,7 +201,7 @@ function MyBookingsPageContent() {
             </div>
 
             {/* QR Code */}
-            <div className="bg-zinc-950 p-6 rounded-xl border border-zinc-900 space-y-4">
+            <div className="bg-zinc-950 p-6 rounded-xl border border-zinc-900 space-y-4 glow-box-strong">
               <div className="flex items-center justify-center gap-2 text-xs font-black text-zinc-500 uppercase tracking-wider">
                 <QrCode className="h-4 w-4" />
                 <span>Booking QR Code</span>
@@ -212,7 +212,7 @@ function MyBookingsPageContent() {
             </div>
 
             {/* Customer Info */}
-            <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-2">
+            <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-2 glow-box-hover">
               <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Customer Information</h4>
               <div className="flex justify-between text-sm"><span className="text-zinc-500">Name:</span> <span className="text-white font-bold">{selectedBooking.customer_name}</span></div>
               <div className="flex justify-between text-sm"><span className="text-zinc-500">Phone:</span> <span className="text-white font-bold">{selectedBooking.customer_phone}</span></div>
@@ -220,7 +220,7 @@ function MyBookingsPageContent() {
 
             {/* Device Slots */}
             {selectedBooking.booking_device_slots?.length > 0 && (
-              <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-2">
+              <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-2 glow-box-hover">
                 <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Device Slots</h4>
                 {selectedBooking.booking_device_slots.map((slot: any, idx: number) => (
                   <div key={idx} className="text-sm space-y-1 border-b border-zinc-900 pb-2 last:border-0">
@@ -234,7 +234,7 @@ function MyBookingsPageContent() {
 
             {/* Food Items */}
             {selectedBooking.booking_food_items?.length > 0 && (
-              <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-2">
+              <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-2 glow-box-hover">
                 <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Food & Add-ons</h4>
                 {selectedBooking.booking_food_items.map((item: any, idx: number) => (
                   <div key={idx} className="flex justify-between text-sm">
@@ -246,8 +246,8 @@ function MyBookingsPageContent() {
             )}
 
             {/* Payment Info */}
-            <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-2">
-              <div className="flex justify-between text-sm"><span className="text-zinc-500">Payment Status:</span> <span className={`font-bold uppercase ${selectedBooking.payment_status === 'paid' ? 'text-green-500' : 'text-yellow-500'}`}>{selectedBooking.payment_status}</span></div>
+            <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-2 glow-box-strong">
+              <div className="flex justify-between text-sm"><span className="text-zinc-500">Payment Status:</span> <span className={`font-bold uppercase ${selectedBooking.payment_status === 'paid' ? 'text-green-500' : 'text-amber-500'}`}>{selectedBooking.payment_status}</span></div>
               <div className="flex justify-between text-sm border-t border-zinc-800 pt-2"><span className="text-zinc-500">Total Amount:</span> <span className="text-white font-black text-lg">₹{selectedBooking.total_amount}</span></div>
             </div>
 
