@@ -171,7 +171,14 @@ export default function SubscriptionActivatedPage() {
               </button>
 
               <button
-                onClick={() => router.push('/my-subscription')}
+                onClick={() => {
+                  const phone = typeof window !== 'undefined' ? localStorage.getItem('customerPhone') : null
+                  if (phone) {
+                    router.push(`/my-subscription?phone=${phone}`)
+                  } else {
+                    router.push('/my-subscription')
+                  }
+                }}
                 className="w-full bg-transparent border border-neutral-700 hover:border-amber-500 text-white font-bold text-[15px] py-4 rounded-xl flex items-center justify-center transition-all hover:text-amber-500"
               >
                 <FileText className="w-5 h-5 mr-2" />

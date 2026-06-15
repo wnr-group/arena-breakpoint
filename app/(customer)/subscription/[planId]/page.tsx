@@ -138,6 +138,9 @@ export default function PlanDetailsPage() {
         toast.success('Plan Activated!', {
           description: 'Your subscription has been activated successfully.'
         })
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('customerPhone', mobileNumber)
+        }
         router.push(`/subscription/${params.planId}/success`)
       } else {
         toast.error('Activation Failed', {
