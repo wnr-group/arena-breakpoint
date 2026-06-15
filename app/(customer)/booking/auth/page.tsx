@@ -161,7 +161,8 @@ export default function CustomerDetailsPage() {
       total: total,
       playerCount: playerCount,
       includedPlayers: includedPlayers,
-      extraPlayerCharge: extraPlayerCharge
+      extraPlayerCharge: extraPlayerCharge,
+      durationMinutes: selectedDuration || 60
     });
 
     if (result.success) {

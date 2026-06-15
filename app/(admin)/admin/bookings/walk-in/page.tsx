@@ -36,7 +36,8 @@ import {
   generateDurationOptions,
   calculateEndTime,
   getMaxDurationForStartTime,
-  calculatePrice
+  calculatePrice,
+  isTimeSlotWithinRange
 } from "@/lib/utils/timeSlots";
 
 export default function WalkInBookingPage() {
@@ -437,7 +438,7 @@ export default function WalkInBookingPage() {
                   <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
                     {availableStartTimesForDate.map((time) => {
                       const isAvailable = availableStartTimes.has(time);
-                      const isSelected = selectedStartTime === time;
+                      const isSelected = selectedStartTime ? isTimeSlotWithinRange(time, selectedStartTime, selectedDuration) : false;
                       return (
                         <button
                           key={time}
@@ -450,7 +451,7 @@ export default function WalkInBookingPage() {
                               : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
                             }`}
                         >
-                          {time}
+                          {time} - {calculateEndTime(time, 30)}
                         </button>
                       );
                     })}

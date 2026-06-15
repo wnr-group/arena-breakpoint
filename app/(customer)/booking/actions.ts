@@ -474,6 +474,7 @@ export async function confirmBooking(payload: {
   playerCount: number;
   includedPlayers: number;
   extraPlayerCharge: number;
+  durationMinutes?: number;
 }) {
   try {
     // Step 1: Get or create customer
@@ -561,7 +562,7 @@ export async function confirmBooking(payload: {
         slot_date: payload.selectedDate,
         slot_start_time: formattedStartTime,
         slot_end_time: formatTime(slotEndTime),
-        duration_hours: 1.0, // Assuming 1 hour slots
+        duration_hours: payload.durationMinutes ? payload.durationMinutes / 60 : 1.0,
         hourly_rate: payload.hourlyRate,
         slot_total: payload.subtotal,
         device_type: payload.deviceTypeName,
@@ -679,7 +680,7 @@ export async function checkFlexibleAvailability(
 
     console.log(`[Availability ${requestId}] Found ${bookings?.length || 0} bookings for this device type on ${dateString}`);
     if (bookings && bookings.length > 0) {
-      console.log(`[Availability ${requestId}] Sample bookings:`, bookings.slice(0, 3).map(b =>
+      console.log(`[Availability ${requestId}] Sample bookings:`, bookings.slice(0, 3).map((b: any) =>
         `${b.slot_start_time}-${b.slot_end_time} (date: ${b.slot_date}, status: ${b.bookings.status})`
       ));
     }
@@ -751,7 +752,7 @@ export async function checkFlexibleAvailability(
       const requestEndMins = requestIsOvernight ? endMins - 24 * 60 : endMins;
 
       // Count how many devices are busy during this time range
-      const conflictCount = activeBookings.filter(booking => {
+      const conflictCount = activeBookings.filter((booking: any) => {
         return doTimeRangesOverlap(
           startMins,
           requestEndMins,
