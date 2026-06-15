@@ -16,8 +16,8 @@ const platforms = [
       </svg>
     ),
     features: ['4K HDR Gaming', 'DualSense Controllers', 'Access to PS+ Deluxe'],
-    accent: '#FFC107',
-    accentDark: '#FF8F00',
+    accent: '#A855F7',
+    accentDark: '#9333EA',
   },
   {
     brand: 'MICROSOFT PLATFORM',
@@ -81,8 +81,8 @@ const platforms = [
       </svg>
     ),
     features: ['RTX 4080 Graphics', '240Hz Monitor', 'Unlimited Game Library'],
-    accent: '#FFC107',
-    accentDark: '#FF8F00',
+    accent: '#A855F7',
+    accentDark: '#9333EA',
   },
 ]
 
@@ -102,7 +102,7 @@ export default function SubscriptionsCards() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4 py-16">
+    <div className="min-h-screen bg-[#0d0a14] flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-6xl">
         {/* Left Aligned Staggered Heading */}
         <div className="text-left mb-16 flex flex-col items-start">
@@ -114,7 +114,7 @@ export default function SubscriptionsCards() {
             transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             className="relative inline-block"
           >
-            <div className="absolute -top-6 left-0 w-32 h-32 bg-[#FFC107]/10 blur-3xl rounded-full pointer-events-none" />
+            <div className="absolute -top-6 left-0 w-32 h-32 bg-[#A855F7]/10 blur-3xl rounded-full pointer-events-none" />
             <h1
               className="relative text-4xl md:text-5xl font-black text-white"
              
@@ -130,7 +130,7 @@ export default function SubscriptionsCards() {
             viewport={{ once: true, margin: '-50px' }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
           >
-            <p className="text-[11px] tracking-[0.3em] uppercase font-bold text-amber-500 mt-3">
+            <p className="text-[11px] tracking-[0.3em] uppercase font-bold text-orange-600 mt-3">
               Premium performance for every platform. No hidden charges.
             </p>
           </motion.div>

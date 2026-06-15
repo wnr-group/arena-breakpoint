@@ -104,7 +104,7 @@ export default function HeroCarousel() {
   }, [page]); 
 
   return (
-    <div className="relative w-full h-screen bg-[#0a0a0a] overflow-hidden selection:bg-[var(--primary)] selection:text-black font-Oxanium">
+    <div className="relative w-full h-screen bg-[#0d0a14] overflow-hidden selection:bg-[var(--primary)] selection:text-black font-Oxanium">
       <Navbar />
 
       {/* Carousel Content */}
@@ -131,8 +131,8 @@ export default function HeroCarousel() {
             transition={{ duration: 10, ease: "linear" }}
           />
           
-          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0d0a14]/90 via-[#0d0a14]/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0d0a14]/60 via-transparent to-transparent" />
 
           {/* Slide Text Content */}
           <div className="absolute inset-0 flex items-center px-14 sm:px-20 md:px-40 pb-24 md:pb-0">
@@ -169,7 +169,7 @@ export default function HeroCarousel() {
                   <span className="text-5xl md:text-6xl font-black text-white leading-none">{slides[currentIndex].price}</span>
                   <span className="text-primary font-medium text-sm md:text-xl mb-1 md:mb-1.5">/monthly</span>
                 </div>
-                
+
                 <button className="w-full sm:w-fit mt-1 md:mt-2 bg-gradient-primary hover-gradient-shift glow-primary-hover text-black font-extrabold px-6 md:px-10 py-3 md:py-4 rounded-sm uppercase tracking-widest text-xs md:text-sm transition-all duration-300">
                   Order Your Game Server Now
                 </button>

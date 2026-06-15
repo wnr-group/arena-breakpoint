@@ -227,13 +227,13 @@ export default function FoodCheckoutPage() {
 
   if (cartItems.length === 0 && step !== "success") {
     return (
-      <div className="h-[60vh] flex items-center justify-center bg-black">
-        <Card className="bg-[#111] border-zinc-900 p-12 max-w-md mx-auto rounded-xl">
+      <div className="h-[60vh] flex items-center justify-center bg-[#0d0a14]">
+        <Card className="bg-[#111] border-zinc-900 p-12 max-w-md mx-auto rounded-xl glow-box-hover">
           <div className="text-center space-y-4">
             <ShoppingCart className="h-16 w-16 text-zinc-700 mx-auto" />
             <h2 className="text-xl font-black text-zinc-400 uppercase">Cart is Empty</h2>
             <p className="text-sm text-zinc-600">Add items to your cart to place an order</p>
-            <Button onClick={() => router.push("/food")} className="bg-primary hover:bg-primary-hover text-black font-black uppercase px-6 py-4 rounded-xl">
+            <Button variant="gradient" onClick={() => router.push("/food")} className="text-black font-black uppercase px-6 py-4 rounded-xl">
               Browse Menu
             </Button>
           </div>
@@ -259,7 +259,7 @@ export default function FoodCheckoutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-7 space-y-3.5">
             {cartItems.map((item) => (
-              <Card key={item.menu_item_id} className="bg-[#121214] border border-zinc-900 p-4 rounded-xl flex items-center justify-between gap-4 transition-all hover:border-zinc-800">
+              <Card key={item.menu_item_id} className="bg-[#121214] border border-zinc-900 p-4 rounded-xl flex items-center justify-between gap-4 transition-all hover:border-zinc-800 glow-box-hover">
                 <div className="flex items-center gap-4 min-w-0">
                   {item.image_url ? (
                     <div className="w-16 h-16 rounded-xl overflow-hidden bg-zinc-950 flex-shrink-0 border border-zinc-900/60">
@@ -296,7 +296,7 @@ export default function FoodCheckoutPage() {
           </div>
 
           <div className="lg:col-span-5">
-            <Card className="bg-[#121214] border border-zinc-900 p-6 space-y-5 rounded-2xl shadow-2xl">
+            <Card className="bg-[#121214] border border-zinc-900 p-6 space-y-5 rounded-2xl shadow-2xl glow-box-strong">
               <h3 className="text-sm font-black uppercase text-zinc-200 tracking-wider pb-2 border-b border-zinc-900/60">Order Summary</h3>
               <div className="space-y-3.5 text-xs text-zinc-400">
                 <div className="flex justify-between"><span>Subtotal</span><span className="text-zinc-200 font-mono font-bold">₹{cartTotal}</span></div>
@@ -314,7 +314,7 @@ export default function FoodCheckoutPage() {
                 </div>
               </div>
 
-              <Button onClick={handleProceedToCheckout} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl shadow-xl shadow-primary/5 tracking-wider active:scale-[0.99] transition-transform">
+              <Button variant="gradient" onClick={handleProceedToCheckout} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl shadow-xl shadow-primary/5 tracking-wider active:scale-[0.99] transition-transform">
                 Proceed to Checkout
               </Button>
             </Card>
@@ -335,7 +335,7 @@ export default function FoodCheckoutPage() {
           <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-bold text-[9px] flex items-center justify-center border border-zinc-800">3</div><span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Confirm</span></div>
         </div>
 
-        <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6">
+        <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6 glow-box-hover">
           <div className="border-b border-zinc-900 pb-4 space-y-3">
             <div className="flex items-center gap-2">
               <Button
@@ -373,7 +373,7 @@ export default function FoodCheckoutPage() {
             </div>
 
             <div className="pt-2 space-y-2">
-              <Button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 shadow-xl transition-all">
+              <Button variant="gradient" type="submit" disabled={isSubmitting} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 shadow-xl transition-all">
                 {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "CONTINUE"} <ChevronRight className="h-4 w-4 stroke-[3]" />
               </Button>
             </div>
@@ -390,7 +390,7 @@ export default function FoodCheckoutPage() {
   if (step === "details") {
     return (
       <div className="w-full max-w-xl mx-auto py-4 px-2 animate-in fade-in duration-300">
-        <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6">
+        <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6 glow-box-hover">
           <div className="border-b border-zinc-900 pb-4 space-y-1">
             <h3 className="text-lg font-black uppercase text-white tracking-tight">NEW CUSTOMER REGISTRATION</h3>
             <p className="text-xs text-zinc-500 font-medium">Please provide your credentials to map this checkout profile transaction.</p>
@@ -438,7 +438,7 @@ export default function FoodCheckoutPage() {
             </div>
 
             <div className="pt-4 space-y-2">
-              <Button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
+              <Button variant="gradient" type="submit" disabled={isSubmitting} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
                 {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "PLACE FOOD ORDER"} <ChevronRight className="h-4 w-4 stroke-[3]" />
               </Button>
             </div>
@@ -471,7 +471,7 @@ export default function FoodCheckoutPage() {
 
         <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch max-w-3xl">
 
-          <Card className="bg-[#111113] border border-zinc-900 p-6 md:col-span-2 flex flex-col justify-between min-h-[220px] relative overflow-hidden rounded-xl shadow-2xl">
+          <Card className="bg-[#111113] border border-zinc-900 p-6 md:col-span-2 flex flex-col justify-between min-h-[220px] relative overflow-hidden rounded-xl shadow-2xl glow-box-strong">
             <div className="w-full space-y-4">
               <div className="flex justify-between items-start w-full">
                 <div className="space-y-1">
@@ -504,7 +504,7 @@ export default function FoodCheckoutPage() {
             </div>
           </Card>
 
-          <Card className="bg-[#111113] border border-zinc-900 p-5 flex flex-col items-center justify-center text-center space-y-4 rounded-xl shadow-2xl group/qr">
+          <Card className="bg-[#111113] border border-zinc-900 p-5 flex flex-col items-center justify-center text-center space-y-4 rounded-xl shadow-2xl group/qr glow-box-hover">
             <div className="p-2 bg-gradient-to-b from-zinc-900 to-zinc-950 border-2 border-primary rounded-xl flex flex-col items-center justify-center shadow-[0_0_20px_rgba(255,193,7,0.1)] w-36 h-36 relative overflow-hidden group-hover/qr:shadow-[0_0_25px_rgba(255,193,7,0.2)] transition-all duration-300">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,193,7,0.08)_0%,transparent_70%)] pointer-events-none" />
               <div className="w-24 h-24 bg-white border border-zinc-800 rounded-lg flex items-center justify-center relative p-1.5">

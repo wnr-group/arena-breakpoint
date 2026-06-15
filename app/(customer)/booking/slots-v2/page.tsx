@@ -223,7 +223,7 @@ export default function FlexibleSlotBookingPage() {
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="flex-1 space-y-4 md:space-y-6">
           {/* Device Info */}
-          <div className="bg-[#111] border border-zinc-900 rounded-xl p-4 flex items-center justify-between shadow-md">
+          <div className="bg-[#111] border border-zinc-900 rounded-xl p-4 flex items-center justify-between shadow-md glow-box-hover">
             <div className="flex items-center gap-3 min-w-0">
               <div className="p-2.5 bg-zinc-950 border border-zinc-800 text-primary rounded-lg">
                 <Clock className="h-4 w-4" />
@@ -233,17 +233,17 @@ export default function FlexibleSlotBookingPage() {
                 <p className="text-zinc-500 text-[10px] font-bold mt-0.5">₹{hourlyRate || 0}/hour</p>
               </div>
             </div>
-            <Button onClick={() => router.push("/booking")} className="bg-primary hover:bg-primary-hover text-black font-black text-[10px]  uppercase h-7 px-3 ">
+            <Button variant="gradient" onClick={() => router.push("/booking")} className="text-black font-black text-[10px]  uppercase h-7 px-3 ">
               Change
             </Button>
           </div>
 
           {/* Info Banner */}
-          <Card className="bg-gradient-to-r from-primary/5 via-yellow-400/5 to-primary/5 border-primary/20 p-4">
+          <Card className="bg-gradient-to-r from-primary/5 via-amber-400/5 to-primary/5 border-primary/20 p-4 glow-box-hover">
             <div className="flex gap-3">
               <AlertCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <p className="text-sm font-bold bg-gradient-to-r from-primary via-yellow-300 to-primary bg-clip-text text-transparent">Flexible Booking</p>
+                <p className="text-sm font-bold bg-gradient-to-r from-primary via-amber-300 to-primary bg-clip-text text-transparent">Flexible Booking</p>
                 <p className="text-xs text-zinc-400">Book from 30 minutes to 5 hours. Choose your preferred start time and duration.</p>
               </div>
             </div>
@@ -251,7 +251,7 @@ export default function FlexibleSlotBookingPage() {
 
           {/* Mobile Flow Container */}
           <div className="space-y-4 md:hidden">
-            <div onClick={() => setMobileCalendarOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer">
+            <div onClick={() => setMobileCalendarOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer glow-box-hover">
               <div className="space-y-0.5">
                 <span className="text-[8px] font-black text-zinc-500 uppercase block">Select Date</span>
                 <span className="text-xs font-black text-white">{calendarDay ? calendarDay.toLocaleDateString() : "Choose Date"}</span>
@@ -259,7 +259,7 @@ export default function FlexibleSlotBookingPage() {
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
 
-            <div onClick={() => setMobileDurationOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer">
+            <div onClick={() => setMobileDurationOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer glow-box-hover">
               <div className="space-y-0.5">
                 <span className="text-[8px] font-black text-zinc-500 uppercase block">Duration</span>
                 <span className="text-xs font-black text-white">{selectedDurationLabel}</span>
@@ -267,7 +267,7 @@ export default function FlexibleSlotBookingPage() {
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
 
-            <div onClick={() => setMobileStartTimeOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer">
+            <div onClick={() => setMobileStartTimeOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer glow-box-hover">
               <div className="space-y-0.5">
                 <span className="text-[8px] font-black text-zinc-500 uppercase block">Start Time</span>
                 <span className="text-xs font-black text-primary">{selectedStartTime || "Choose Start Time"}</span>
@@ -278,7 +278,7 @@ export default function FlexibleSlotBookingPage() {
 
 
             {/* Inline Dynamic Mobile Summary Card Block */}
-            <Card className="bg-[#111] border border-zinc-900 p-5 space-y-4 shadow-xl rounded-xl">
+            <Card className="bg-[#111] border border-zinc-900 p-5 space-y-4 shadow-xl rounded-xl glow-box-strong">
               <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider border-b border-zinc-900/60 pb-2">Booking Summary</h3>
 
               <div className="space-y-2.5 text-xs text-zinc-400 border-b border-zinc-900/60 pb-3">
@@ -314,7 +314,7 @@ export default function FlexibleSlotBookingPage() {
                         }
                       }}
                       disabled={playerCount >= maxPlayers}
-                      className="w-7 h-7 rounded-md bg-gradient-to-r from-primary to-yellow-400 text-black flex items-center justify-center font-bold hover:shadow-[0_0_15px_rgba(255,193,7,0.5)] disabled:opacity-30 transition-all duration-300"
+                      className="w-7 h-7 rounded-md bg-gradient-to-r from-primary to-amber-400 text-black flex items-center justify-center font-bold hover:shadow-[0_0_15px_rgba(255,193,7,0.5)] disabled:opacity-30 transition-all duration-300"
                     >
                       <Plus className="h-3 w-3 stroke-[3]" />
                     </button>
@@ -335,7 +335,7 @@ export default function FlexibleSlotBookingPage() {
               </div>
             </Card>
 
-            <Button disabled={!canProceed || submittingLock} onClick={handleRegisterTransactionLock} className="w-full bg-primary text-black font-black uppercase text-xs py-5 rounded-xl flex items-center justify-center gap-1 mt-2 shadow-[0_4px_20px_rgba(255,193,7,0.2)]">
+            <Button variant="gradient" disabled={!canProceed || submittingLock} onClick={handleRegisterTransactionLock} className="w-full text-black font-black uppercase text-xs py-5 rounded-xl flex items-center justify-center gap-1 mt-2 shadow-[0_4px_20px_rgba(255,193,7,0.2)]">
               {submittingLock ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Confirm & Hold Slot <ChevronRight className="h-4 w-4 stroke-[3]" />
             </Button>
@@ -346,7 +346,7 @@ export default function FlexibleSlotBookingPage() {
             {/* Date Picker */}
             <div className="space-y-3">
               <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">📅 Select Date</h3>
-              <Card className="bg-[#111] border border-zinc-900 p-4 w-full flex justify-center rounded-2xl">
+              <Card className="bg-[#111] border border-zinc-900 p-4 w-full flex justify-center rounded-2xl glow-box-hover">
                 <Calendar mode="single" selected={calendarDay} onSelect={setCalendarDay} disabled={(day) => day < new Date(new Date().setHours(0, 0, 0, 0))} />
               </Card>
             </div>
@@ -366,8 +366,8 @@ export default function FlexibleSlotBookingPage() {
                         dispatch(setDuration(duration.value))
                       }}
                       className={`w-full p-3 border text-left rounded-xl transition-all duration-300 ${isSelected
-                          ? "bg-gradient-to-r from-primary via-yellow-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
-                          : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
+                          ? "bg-gradient-to-r from-primary via-amber-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
+                          : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-amber-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
                         }`}
                     >
                       <div className="flex justify-between items-center">
@@ -409,8 +409,8 @@ export default function FlexibleSlotBookingPage() {
                         className={`w-full p-3 border text-left rounded-xl transition-all duration-300 text-sm font-bold ${!isAvailable
                             ? "bg-zinc-950/20 border-zinc-950 text-zinc-800 cursor-not-allowed"
                             : isSelected
-                              ? "bg-gradient-to-r from-primary via-yellow-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
-                              : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
+                              ? "bg-gradient-to-r from-primary via-amber-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
+                              : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-amber-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
                           }`}
                       >
                         {time}
@@ -425,7 +425,7 @@ export default function FlexibleSlotBookingPage() {
 
         {/* Desktop Sidebar Summary */}
         <div className="hidden lg:block w-[360px] flex-shrink-0">
-          <Card className="bg-[#111] border border-zinc-900 p-6 text-white space-y-6 shadow-2xl rounded-2xl sticky top-24">
+          <Card className="bg-[#111] border border-zinc-900 p-6 text-white space-y-6 shadow-2xl rounded-2xl sticky top-24 glow-box-strong">
             <h3 className="text-sm font-black text-zinc-400 uppercase tracking-wider border-b border-zinc-900 pb-3">Booking Summary</h3>
 
             <div className="space-y-4 text-xs text-zinc-400 border-b border-zinc-900 pb-3">
@@ -478,7 +478,7 @@ export default function FlexibleSlotBookingPage() {
                       }
                     }}
                     disabled={playerCount >= maxPlayers}
-                    className="w-7 h-7 rounded-md bg-gradient-to-r from-primary to-yellow-400 border border-transparent text-black disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-[0_0_15px_rgba(255,193,7,0.5)] transition-all duration-300 flex items-center justify-center font-bold"
+                    className="w-7 h-7 rounded-md bg-gradient-to-r from-primary to-amber-400 border border-transparent text-black disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-[0_0_15px_rgba(255,193,7,0.5)] transition-all duration-300 flex items-center justify-center font-bold"
                   >
                     <Plus className="h-3 w-3 stroke-[3]" />
                   </button>
@@ -504,9 +504,10 @@ export default function FlexibleSlotBookingPage() {
             </div>
 
             <Button
+              variant="gradient"
               disabled={submittingLock || !canProceed}
               onClick={handleRegisterTransactionLock}
-              className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase py-5 text-xs rounded-xl flex items-center justify-center gap-1"
+              className="w-full text-black font-black uppercase py-5 text-xs rounded-xl flex items-center justify-center gap-1"
             >
               {submittingLock ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Confirm & Hold Slot <ChevronRight className="h-4 w-4 stroke-[3]" />

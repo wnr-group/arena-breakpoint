@@ -79,10 +79,48 @@ BEGIN
 END $$;
 
 
--- 3. SEED DATA FOR TABLE: promo_codes 
+-- 3. SEED DATA FOR TABLE: promo_codes
 INSERT INTO public.promo_codes (code, description, discount_type, discount_value, valid_from, valid_until, is_active)
-VALUES 
+VALUES
   ('ARENA20', 'Welcome Bonus Voucher providing an introductory 20% discount window across booking balances.', 'percentage', 20.00, CURRENT_DATE - INTERVAL '1 day', CURRENT_DATE + INTERVAL '30 days', true),
   ('ELITE500', 'Premium high-value absolute flat savings voucher deduction applied directly onto processing checkouts.', 'fixed', 500.00, CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE + INTERVAL '60 days', true),
   ('HIDDENOFF', 'Undercover administration test code disabled from operational customer execution pathways by default.', 'percentage', 50.00, CURRENT_DATE, CURRENT_DATE + INTERVAL '90 days', false)
 ON CONFLICT (code) DO NOTHING;
+
+-- ================================================
+-- 4. SAMPLE CUSTOMERS (For testing)
+-- ================================================
+
+INSERT INTO public.customers (name, phone, email, date_of_birth, created_at, updated_at) VALUES
+  ('Rahul Sharma', '9876543210', 'rahul.sharma@example.com', '1995-03-15', NOW(), NOW()),
+  ('Priya Patel', '9876543211', 'priya.patel@example.com', '1998-07-22', NOW(), NOW()),
+  ('Amit Kumar', '9876543212', 'amit.kumar@example.com', '1992-11-08', NOW(), NOW()),
+  ('Sneha Singh', '9876543213', 'sneha.singh@example.com', '2000-01-30', NOW(), NOW()),
+  ('Rohan Verma', '9876543214', 'rohan.verma@example.com', '1997-05-19', NOW(), NOW())
+ON CONFLICT (phone) DO NOTHING;
+
+-- Add subscriptions for some customers
+DO $$
+DECLARE
+  customer_id_1 UUID;
+  customer_id_2 UUID;
+  gold_plan_id UUID;
+  silver_plan_id UUID;
+BEGIN
+  SELECT id INTO customer_id_1 FROM public.customers WHERE phone = '9876543210' LIMIT 1;
+  SELECT id INTO customer_id_2 FROM public.customers WHERE phone = '9876543211' LIMIT 1;
+  SELECT id INTO gold_plan_id FROM public.subscription_plans WHERE name = 'Gold Membership' LIMIT 1;
+  SELECT id INTO silver_plan_id FROM public.subscription_plans WHERE name = 'Silver Membership' LIMIT 1;
+
+  IF customer_id_1 IS NOT NULL AND gold_plan_id IS NOT NULL THEN
+    INSERT INTO public.customer_subscriptions (customer_id, subscription_id, purchased_at, expires_at, is_active)
+    VALUES (customer_id_1, gold_plan_id, NOW() - INTERVAL '10 days', NOW() + INTERVAL '80 days', true)
+    ON CONFLICT DO NOTHING;
+  END IF;
+
+  IF customer_id_2 IS NOT NULL AND silver_plan_id IS NOT NULL THEN
+    INSERT INTO public.customer_subscriptions (customer_id, subscription_id, purchased_at, expires_at, is_active)
+    VALUES (customer_id_2, silver_plan_id, NOW() - INTERVAL '5 days', NOW() + INTERVAL '25 days', true)
+    ON CONFLICT DO NOTHING;
+  END IF;
+END $$;

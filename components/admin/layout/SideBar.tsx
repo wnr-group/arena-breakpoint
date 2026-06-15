@@ -5,12 +5,13 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Calendar, Monitor, Utensils, Tag,
   PartyPopper, CreditCard, BarChart2, Settings, LogOut, ChevronLeft,
-  User2Icon, Crown
+  User2Icon, Crown, Clock
 } from "lucide-react";
 
 const navItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Bookings", href: "/admin/bookings", icon: Calendar },
+  { name: "Timeline", href: "/admin/timeline", icon: Clock },
   { name: "Devices", href: "/admin/devices", icon: Monitor },
   { name: "Food", href: "/admin/food", icon: Utensils },
   { name: "Customers", href: "/admin/customers", icon: User2Icon },

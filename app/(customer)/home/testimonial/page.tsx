@@ -127,7 +127,7 @@ export default function Testimonials() {
       {/* Custom cursor */}
       {isHovering && (
         <motion.div
-          className="fixed top-0 left-0 w-16 h-16 bg-[#FFC107] rounded-full flex items-center justify-center pointer-events-none z-50 shadow-2xl hidden md:flex gap-2"
+          className="fixed top-0 left-0 w-16 h-16 bg-[#A855F7] rounded-full flex items-center justify-center pointer-events-none z-50 shadow-2xl hidden md:flex gap-2"
           animate={{ x: mousePosition.x - 32, y: mousePosition.y - 32 }}
           transition={{ type: "tween", ease: "backOut", duration: 0.08 }}
         >
@@ -151,8 +151,8 @@ export default function Testimonials() {
         >
           <div className="flex flex-col gap-4">
             <motion.div variants={fadeUp}>
-              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs font-semibold text-[#FFC107] tracking-[0.18em] uppercase">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FFC107] animate-pulse" />
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs font-semibold text-[#A855F7] tracking-[0.18em] uppercase">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#A855F7] animate-pulse" />
                 Customer Reviews
               </span>
             </motion.div>
@@ -168,7 +168,7 @@ export default function Testimonials() {
 
           <motion.div variants={fadeUp} className="flex items-center gap-1.5">
             {[...Array(5)].map((_, i) => (
-              <Star key={i} className="w-5 h-5 fill-[#FFC107] text-[#FFC107]" />
+              <Star key={i} className="w-5 h-5 fill-[#A855F7] text-[#A855F7]" />
             ))}
             <span className="ml-2 text-zinc-400 text-sm font-medium">Based on 2,400+ reviews</span>
           </motion.div>
@@ -203,19 +203,19 @@ export default function Testimonials() {
                 {/* Subtle top accent line */}
                 <div
                   className="absolute top-0 left-6 right-6 h-[1.5px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                  style={{ background: "linear-gradient(90deg, transparent, #FFC107, transparent)" }}
+                  style={{ background: "linear-gradient(90deg, transparent, #A855F7, transparent)" }}
                 />
 
                 {/* Quote icon */}
                 <div className="absolute top-5 right-5 opacity-[0.06]">
-                  <Quote className="w-14 h-14 text-[#FFC107] fill-[#FFC107]" />
+                  <Quote className="w-14 h-14 text-[#A855F7] fill-[#A855F7]" />
                 </div>
 
                 <div className="relative z-10">
                   {/* Stars */}
                   <div className="flex items-center gap-1 mb-4">
                     {[...Array(t.rating)].map((_, i) => (
-                      <Star key={i} className="w-3.5 h-3.5 fill-[#FFC107] text-[#FFC107]" />
+                      <Star key={i} className="w-3.5 h-3.5 fill-[#A855F7] text-[#A855F7]" />
                     ))}
                   </div>
 
@@ -231,7 +231,7 @@ export default function Testimonials() {
                     <img
                       src={t.avatar}
                       alt={t.name}
-                      className="w-9 h-9 rounded-full object-cover ring-2 ring-[#FFC107]/30"
+                      className="w-9 h-9 rounded-full object-cover ring-2 ring-[#A855F7]/30"
                       draggable="false"
                     />
                     <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#1c1c1c]" />
@@ -260,7 +260,7 @@ export default function Testimonials() {
               className="relative h-1.5 rounded-full transition-all duration-300 overflow-hidden"
               style={{
                 width: activeIndex === idx ? 28 : 8,
-                background: activeIndex === idx ? "#FFC107" : "rgba(255,255,255,0.15)",
+                background: activeIndex === idx ? "#A855F7" : "rgba(255,255,255,0.15)",
               }}
             />
           ))}

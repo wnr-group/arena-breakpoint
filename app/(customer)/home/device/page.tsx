@@ -71,7 +71,7 @@ export default function DevicePage() {
             transition={{ duration: 0.6 }}
             className="relative inline-block"
           >
-            <div className="absolute -top-8 left-0 w-24 h-24 bg-amber-500/15 blur-3xl rounded-full" />
+            <div className="absolute -top-8 left-0 w-24 h-24 bg-orange-600/15 blur-3xl rounded-full" />
             <h2
               className="relative text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white via-gray-200 to-gray-500 tracking-wide uppercase"
               style={{ fontFamily: "'Rajdhani', sans-serif" }}
@@ -84,8 +84,8 @@ export default function DevicePage() {
         {/* Data */}
         <div className="mt-2">
           {isLoadingData ? (
-            <div className="text-center py-24 bg-[#121212]/50 border border-[#27272a]/50 rounded-2xl text-[#a1a1aa] flex flex-col justify-center items-center gap-3 backdrop-blur-sm">
-              <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+            <div className="text-center py-24 bg-[#121212]/50 border border-[#27272a]/50 rounded-2xl text-[#a1a1aa] flex flex-col justify-center items-center gap-3 backdrop-blur-sm glow-box-hover">
+              <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
               <p className="font-medium tracking-wider uppercase text-sm">Initializing Stations...</p>
             </div>
           ) : devicesArray.length === 0 ? (

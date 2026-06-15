@@ -159,10 +159,10 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20 p-5">
+        <Card className="bg-gradient-to-br from-amber-500/10 to-orange-600/5 border-amber-500/20 p-5">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <p className="text-xs font-black uppercase text-purple-500/70 mb-1">
+              <p className="text-xs font-black uppercase text-amber-500/70 mb-1">
                 Available Devices
               </p>
               <h3 className="text-2xl font-black text-white mb-1">
@@ -172,8 +172,8 @@ export default function AdminDashboardPage() {
                 Ready to use
               </p>
             </div>
-            <div className="p-2 bg-purple-500/10 rounded-lg">
-              <Gamepad2 className="h-5 w-5 text-purple-500" />
+            <div className="p-2 bg-amber-500/10 rounded-lg">
+              <Gamepad2 className="h-5 w-5 text-amber-500" />
             </div>
           </div>
         </Card>

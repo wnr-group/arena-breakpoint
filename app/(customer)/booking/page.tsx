@@ -93,7 +93,7 @@ export default function GamingStationPage() {
           .map((deviceType) => {
             const isAvail = deviceType.available_devices_count > 0;
             return (
-              <Card key={deviceType.id} className="bg-[#111] border border-zinc-900 overflow-hidden flex flex-col justify-between rounded-xl shadow-lg group">
+              <Card key={deviceType.id} className="bg-[#111] border border-zinc-900 overflow-hidden flex flex-col justify-between rounded-xl shadow-lg group glow-box-hover">
 
                 <div className="relative w-full aspect-video overflow-hidden bg-zinc-950 border-b border-zinc-900">
                   {deviceType.image_url ? (
@@ -132,7 +132,7 @@ export default function GamingStationPage() {
                       </div>
                     </div>
 
-                    <p className="text-[11px] text-zinc-400 leading-relaxed line-clamp-2 font-medium bg-zinc-950/40 p-2 rounded border border-zinc-900/60">
+                    <p className="text-[11px] text-zinc-400 leading-relaxed line-clamp-2 font-medium bg-zinc-950/40 p-2 rounded border border-zinc-900/60 glow-box-hover">
                       {deviceType.description || "Premium gaming experience with top-tier equipment."}
                     </p>
                   </div>
@@ -141,7 +141,8 @@ export default function GamingStationPage() {
                     {isAvail ? (
                       <Button
                         onClick={() => handleSelectAndProceed(deviceType)}
-                        className="w-full text-xs font-black uppercase py-5 bg-primary hover:bg-primary-hover text-black rounded-lg transition-all active:scale-[0.99]"
+                        variant="gradient"
+                        className="w-full text-xs font-black uppercase py-5 rounded-lg transition-all active:scale-[0.99]"
                       >
                         SELECT {deviceType.display_name.toUpperCase()}
                       </Button>

@@ -54,7 +54,7 @@ export default function FoodCollection() {
             title: item.name,
             price: `₹${item.price}`,
             description: item.description || "A delicious choice from our menu.",
-            image: item.image_url || "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=600&auto=format&fit=crop",
+            image: item.image_url || "https://images.unsplash.com/photo-1561758033-d89a9ad46330?q=80&w=600&auto=format&fit=crop",
             categories: [item.category?.toLowerCase() || 'other', 'all'],
           }));
           setFoodItems(mappedData);
@@ -166,7 +166,7 @@ export default function FoodCollection() {
         {/* Data View Layer */}
         {isLoading ? (
           <div className="flex flex-col justify-center items-center py-24 gap-4 text-[#a1a1aa]">
-            <Loader2 className="h-10 w-10 animate-spin text-amber-500" />
+            <Loader2 className="h-10 w-10 animate-spin text-orange-600" />
             <p className="font-medium tracking-widest uppercase text-sm" style={{ fontFamily: "'Oxanium', sans-serif" }}>
               Loading Menu...
             </p>

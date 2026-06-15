@@ -2,6 +2,7 @@
 import { Food } from '@/app/(customer)/home/food/page'
 import { useInView, motion } from 'framer-motion'
 import { useRef } from 'react'
+import { useRouter } from 'next/navigation'
 
 export function FoodCard({
   food,
@@ -13,7 +14,12 @@ export function FoodCard({
   isFiltering: boolean
 }) {
   const ref = useRef(null)
+  const router = useRouter()
   const inView = useInView(ref, { once: true, margin: '-60px' })
+
+  const handleClick = () => {
+    router.push('/food')
+  }
 
   return (
     <motion.div
@@ -42,6 +48,7 @@ export function FoodCard({
         scale: 0,
         transition: { duration: 0.3, ease: [0.55, 0, 1, 0.45], delay: index * 0.03 },
       }}
+      onClick={handleClick}
       className="group relative rounded-xl overflow-hidden cursor-pointer flex flex-col sm:block bg-[#121212] sm:bg-transparent border border-white/5 sm:border-0 h-full sm:h-auto aspect-auto sm:aspect-[301/401]"
     >
       {/*  Image Layer */}
@@ -67,7 +74,7 @@ export function FoodCard({
       <div className="relative z-20 flex flex-col flex-grow p-3 sm:p-4 sm:absolute sm:bottom-0 sm:left-0 sm:right-0 sm:flex-none sm:block sm:transition-transform sm:duration-500 sm:ease-[cubic-bezier(.25,.46,.45,.94)] sm:group-hover:-translate-y-12">
         {/* Title */}
         <h4
-          className="text-white font-bold text-[13px] sm:text-base leading-snug sm:leading-tight mb-1 sm:mb-1 transition-colors duration-300 sm:group-hover:text-[#FFC107] line-clamp-1"
+          className="text-white font-bold text-[13px] sm:text-base leading-snug sm:leading-tight mb-1 sm:mb-1 transition-colors duration-300 sm:group-hover:text-primary line-clamp-1"
           style={{ fontFamily: "'Oxanium', sans-serif" }}
         >
           {food.title}
@@ -86,7 +93,12 @@ export function FoodCard({
           </span>
 
           {/* ADD Button  */}
-          <button className="sm:hidden px-4 py-1.5 rounded-md text-[10px] font-bold tracking-widest text-[#0a0a0a] shadow-lg active:scale-95 transition-transform bg-gradient-primary">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              handleClick()
+            }}
+            className="sm:hidden px-4 py-1.5 rounded-md text-[10px] font-bold tracking-widest text-[#0a0a0a] shadow-lg active:scale-95 transition-transform bg-gradient-primary">
             ADD
           </button>
         </div>
@@ -94,13 +106,18 @@ export function FoodCard({
 
       {/* Desktop Order Now Button */}
       <div className="hidden sm:block absolute bottom-4 left-4 right-4 z-20 translate-y-8 opacity-0 pointer-events-none group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-[cubic-bezier(.25,.46,.45,.94)]">
-        <button className="w-full py-2.5 rounded-lg text-[12px] font-bold uppercase tracking-widest text-[#0a0a0a] transition-transform duration-300 hover:brightness-110 active:scale-95 shadow-lg bg-gradient-primary">
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            handleClick()
+          }}
+          className="w-full py-2.5 rounded-lg text-[12px] font-bold uppercase tracking-widest text-[#0a0a0a] transition-transform duration-300 hover:brightness-110 active:scale-95 shadow-lg bg-gradient-primary">
           Order Now
         </button>
       </div>
 
       {/* Thick Hover Border Overlay */}
-      <div className="absolute inset-0 border-[4px] border-transparent group-hover:border-[#FFC107] rounded-xl z-50 pointer-events-none transition-colors duration-300" />
+      <div className="absolute inset-0 border-[4px] border-transparent group-hover:border-primary rounded-xl z-50 pointer-events-none transition-colors duration-300" />
     </motion.div>
   )
 }

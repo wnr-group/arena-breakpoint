@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
+import { PaymentStatusBadge } from "@/components/admin/bookings/PaymentStatusBadge";
 import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
-import { BookingsTimeline } from "@/components/admin/bookings/BookingsTimeline";
-import { getAllBookings, getBookingStats, checkInBooking, checkOutBooking, getTimelineBookings, type BookingFilters } from "./actions";
-import { Search, Filter, Calendar, DollarSign, Users, CheckCircle2, XCircle, Clock, Loader2, Eye, Receipt, Plus, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2 } from "lucide-react";
+import { CheckoutModal } from "@/components/admin/bookings/CheckoutModal";
+import { getAllBookings, getBookingStats, checkInBooking, checkOutBooking, type BookingFilters } from "./actions";
+import { Search, Filter, Calendar, DollarSign, Users, CheckCircle2, XCircle, Clock, Loader2, Eye, Receipt, Plus, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard } from "lucide-react";
 import { toast } from "sonner";
+import { useDebounce } from "@/lib/hooks/useDebounce";
 
 export default function AdminBookingsPage() {
   const router = useRouter();
@@ -18,36 +20,30 @@ export default function AdminBookingsPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300); // Debounce search by 300ms
   const [activeStatusFilter, setActiveStatusFilter] = useState("all");
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [openFoodModal, setOpenFoodModal] = useState(false);
+  const [checkoutBookingId, setCheckoutBookingId] = useState<string | null>(null);
+  const [openCheckoutModal, setOpenCheckoutModal] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [expandedCustomers, setExpandedCustomers] = useState<Set<string>>(new Set());
 
-  const [timelineDate, setTimelineDate] = useState(new Date());
-  const [timelineBookings, setTimelineBookings] = useState<any[]>([]);
-
+  // Initial load
   useEffect(() => {
     loadBookings();
     loadStats();
-    loadTimelineBookings();
   }, []);
 
+  // Auto-search when debounced query changes
   useEffect(() => {
-    loadTimelineBookings();
-  }, [timelineDate]);
-
-  const loadTimelineBookings = async () => {
-    setLoading(true);
-    const dateStr = timelineDate.toISOString().split('T')[0];
-    const result = await getTimelineBookings(dateStr);
-    if (result.success) {
-      setTimelineBookings(result.bookings);
-    } else {
-      toast.error("Failed to load timeline", { description: result.error });
+    if (debouncedSearch || debouncedSearch === "") {
+      loadBookings({
+        status: activeStatusFilter === "all" ? undefined : activeStatusFilter,
+        searchQuery: debouncedSearch || undefined
+      });
     }
-    setLoading(false);
-  };
+  }, [debouncedSearch, activeStatusFilter]);
 
   const loadBookings = async (filters?: BookingFilters) => {
     setLoading(true);
@@ -69,17 +65,7 @@ export default function AdminBookingsPage() {
 
   const handleFilterChange = (status: string) => {
     setActiveStatusFilter(status);
-    loadBookings({
-      status: status === "all" ? undefined : status,
-      searchQuery: searchQuery || undefined
-    });
-  };
-
-  const handleSearch = () => {
-    loadBookings({
-      status: activeStatusFilter === "all" ? undefined : activeStatusFilter,
-      searchQuery: searchQuery || undefined
-    });
+    // loadBookings will be triggered automatically by useEffect watching activeStatusFilter
   };
 
   const handleCheckIn = async (bookingId: string, bookingNumber: string) => {
@@ -268,14 +254,6 @@ export default function AdminBookingsPage() {
         </Card>
       </div>
 
-      {/* Timeline View - Always Visible */}
-      <BookingsTimeline
-        bookings={timelineBookings}
-        selectedDate={timelineDate}
-        onDateChange={setTimelineDate}
-        onBookingClick={setSelectedBooking}
-      />
-
       {/* Filters and Search */}
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
         <div className="flex gap-2 overflow-x-auto scrollbar-none w-full lg:w-auto">
@@ -301,20 +279,15 @@ export default function AdminBookingsPage() {
           <div className="relative flex-1 lg:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600" />
             <Input
-              placeholder="Search by name, phone, or booking number..."
+              placeholder="Search by name, phone, or booking number... (auto-search)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               className="pl-10 bg-[#121212] border-[#27272a] text-white h-10 text-sm"
             />
+            {loading && (
+              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary animate-spin" />
+            )}
           </div>
-          <Button
-            onClick={handleSearch}
-            className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-10 px-4"
-          >
-            <Search className="h-4 w-4 mr-1" />
-            Search
-          </Button>
         </div>
       </div>
 
@@ -353,6 +326,9 @@ export default function AdminBookingsPage() {
                     Amount
                   </th>
                   <th className="py-4 px-4 text-left text-[10px] text-zinc-500 font-black uppercase tracking-wider">
+                    Payment
+                  </th>
+                  <th className="py-4 px-4 text-left text-[10px] text-zinc-500 font-black uppercase tracking-wider">
                     Status
                   </th>
                   <th className="py-4 px-4 text-right text-[10px] text-zinc-500 font-black uppercase tracking-wider">
@@ -370,7 +346,10 @@ export default function AdminBookingsPage() {
                   return (
                     <Fragment key={`group-${group.phone}`}>
                       {/* Parent Row - Customer Summary */}
-                      <tr className="group hover:bg-[#1a1a1a] transition-colors">
+                      <tr
+                        className={`group hover:bg-[#1a1a1a] transition-colors ${!isSingleBooking ? 'cursor-pointer' : ''}`}
+                        onClick={() => !isSingleBooking && toggleCustomerExpansion(group.phone)}
+                      >
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-2">
                             {!isSingleBooking && (
@@ -444,31 +423,36 @@ export default function AdminBookingsPage() {
                         </td>
                         <td className="py-4 px-4">
                           <p className="text-sm font-black text-date-visible">₹{group.totalAmount.toLocaleString('en-IN')}</p>
-                          <div className="flex flex-col gap-0.5 mt-1">
-                            <p className="text-[10.5px] text-data-placeholder">
-                              Games: ₹{group.totalDevice.toLocaleString('en-IN')}
-                            </p>
-                            {group.totalFood > 0 && (
+                          {isSingleBooking && (
+                            <div className="flex flex-col gap-0.5 mt-1">
                               <p className="text-[10.5px] text-data-placeholder">
-                                Food: ₹{group.totalFood.toLocaleString('en-IN')}
+                                Games: ₹{group.totalDevice.toLocaleString('en-IN')}
                               </p>
-                            )}
-                          </div>
+                              {group.totalFood > 0 && (
+                                <p className="text-[10.5px] text-data-placeholder">
+                                  Food: ₹{group.totalFood.toLocaleString('en-IN')}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-4 px-4">
+                          {isSingleBooking ? (
+                            <PaymentStatusBadge status={firstBooking.payment_status || 'pending'} size="md" />
+                          ) : (
+                            <p className="text-xs text-data-placeholder italic">-</p>
+                          )}
                         </td>
                         <td className="py-4 px-4">
                           {isSingleBooking ? (
                             <BookingStatusBadge status={firstBooking.status} size="md" />
                           ) : (
-                            <div className="flex flex-wrap gap-1">
-                              {Array.from(new Set(group.bookings.map(b => b.status))).map(status => (
-                                <BookingStatusBadge key={status} status={status} size="sm" />
-                              ))}
-                            </div>
+                            <p className="text-xs text-data-placeholder italic">-</p>
                           )}
                         </td>
-                        <td className="py-4 px-4">
+                        <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
                           {isSingleBooking && (
-                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex justify-end gap-2">
                               {firstBooking.status === "confirmed" && (
                                 <Button
                                   size="sm"
@@ -494,18 +478,32 @@ export default function AdminBookingsPage() {
                                 </Button>
                               )}
                               {(firstBooking.status === "confirmed" || firstBooking.status === "checked_in") && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => {
-                                    setSelectedBooking(firstBooking);
-                                    setOpenFoodModal(true);
-                                  }}
-                                  className="h-8 w-8 p-0 text-primary hover:text-primary-hover hover:bg-primary/10"
-                                  title="Add Food"
-                                >
-                                  <UtensilsCrossed className="h-4 w-4" />
-                                </Button>
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setSelectedBooking(firstBooking);
+                                      setOpenFoodModal(true);
+                                    }}
+                                    className="h-8 w-8 p-0 text-primary hover:text-primary-hover hover:bg-primary/10"
+                                    title="Add Food"
+                                  >
+                                    <UtensilsCrossed className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setCheckoutBookingId(firstBooking.id);
+                                      setOpenCheckoutModal(true);
+                                    }}
+                                    className="h-8 w-8 p-0 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10"
+                                    title="Checkout & Billing"
+                                  >
+                                    <CreditCard className="h-4 w-4" />
+                                  </Button>
+                                </>
                               )}
                               <Button
                                 size="sm"
@@ -565,10 +563,13 @@ export default function AdminBookingsPage() {
                               </div>
                             </td>
                             <td className="py-3 px-4">
-                              <BookingStatusBadge status={booking.status} size="md" />
+                              <PaymentStatusBadge status={booking.payment_status || 'pending'} size="md" />
                             </td>
                             <td className="py-3 px-4">
-                              <div className="flex justify-end gap-2 opacity-0 hover:opacity-100 transition-opacity">
+                              <BookingStatusBadge status={booking.status} size="md" />
+                            </td>
+                            <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex justify-end gap-2">
                                 {booking.status === "confirmed" && (
                                   <Button
                                     size="sm"
@@ -594,18 +595,32 @@ export default function AdminBookingsPage() {
                                   </Button>
                                 )}
                                 {(booking.status === "confirmed" || booking.status === "checked_in") && (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => {
-                                      setSelectedBooking(booking);
-                                      setOpenFoodModal(true);
-                                    }}
-                                    className="h-8 w-8 p-0 text-primary hover:text-primary-hover hover:bg-primary/10"
-                                    title="Add Food"
-                                  >
-                                    <UtensilsCrossed className="h-4 w-4" />
-                                  </Button>
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => {
+                                        setSelectedBooking(booking);
+                                        setOpenFoodModal(true);
+                                      }}
+                                      className="h-8 w-8 p-0 text-primary hover:text-primary-hover hover:bg-primary/10"
+                                      title="Add Food"
+                                    >
+                                      <UtensilsCrossed className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => {
+                                        setCheckoutBookingId(booking.id);
+                                        setOpenCheckoutModal(true);
+                                      }}
+                                      className="h-8 w-8 p-0 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10"
+                                      title="Checkout & Billing"
+                                    >
+                                      <CreditCard className="h-4 w-4" />
+                                    </Button>
+                                  </>
                                 )}
                                 <Button
                                   size="sm"
@@ -641,9 +656,22 @@ export default function AdminBookingsPage() {
         onUpdate={() => {
           loadBookings();
           loadStats();
-          loadTimelineBookings();
         }}
         openFoodModalDirectly={openFoodModal}
+      />
+
+      {/* Checkout & Billing Modal */}
+      <CheckoutModal
+        bookingId={checkoutBookingId}
+        isOpen={openCheckoutModal}
+        onClose={() => {
+          setOpenCheckoutModal(false);
+          setCheckoutBookingId(null);
+        }}
+        onSuccess={() => {
+          loadBookings();
+          loadStats();
+        }}
       />
     </div>
   );

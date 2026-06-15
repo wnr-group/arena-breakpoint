@@ -399,3 +399,167 @@ export async function getDashboardSummary(filters?: ReportFilters) {
     return { success: false, error: err.message };
   }
 }
+
+// ============================================
+// EXPENSE MANAGEMENT ACTIONS
+// ============================================
+
+export interface Expense {
+  id: string;
+  date: string;
+  description: string;
+  amount: number;
+  created_at: string;
+  created_by: string | null;
+}
+
+export interface ExpenseFilters {
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export async function getExpenses(filters?: ExpenseFilters) {
+  try {
+    let query = supabaseAdmin
+      .from("expenses")
+      .select("*")
+      .order("date", { ascending: false });
+
+    if (filters?.dateFrom) {
+      query = query.gte("date", filters.dateFrom);
+    }
+    if (filters?.dateTo) {
+      query = query.lte("date", filters.dateTo);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    return { success: true, expenses: data };
+  } catch (error: any) {
+    return { success: false, error: error.message, expenses: [] };
+  }
+}
+
+export async function addExpense(expense: {
+  date: string;
+  description: string;
+  amount: number;
+  created_by?: string;
+}) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("expenses")
+      .insert({
+        date: expense.date,
+        description: expense.description,
+        amount: expense.amount,
+        created_by: expense.created_by || null,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return { success: true, expense: data };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateExpense(
+  id: string,
+  updates: {
+    date?: string;
+    description?: string;
+    amount?: number;
+  }
+) {
+  try {
+    const { data, error} = await supabaseAdmin
+      .from("expenses")
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return { success: true, expense: data };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteExpense(id: string) {
+  try {
+    const { error } = await supabaseAdmin
+      .from("expenses")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// ============================================
+// PROFIT & LOSS CALCULATIONS
+// ============================================
+
+export async function getProfitAndLoss(filters: { dateFrom: string; dateTo: string }) {
+  try {
+    // Get revenue from completed bookings using completed_at
+    const { data: completedBookings, error: revenueError } = await supabaseAdmin
+      .from("bookings")
+      .select("amount_paid, device_subtotal, food_subtotal")
+      .eq("status", "completed")
+      .gte("completed_at", filters.dateFrom)
+      .lte("completed_at", filters.dateTo);
+
+    if (revenueError) throw revenueError;
+
+    // Calculate revenue breakdown
+    const revenue = completedBookings?.reduce((sum, b) => sum + Number(b.amount_paid || 0), 0) || 0;
+    const deviceRevenue = completedBookings?.reduce((sum, b) => sum + Number(b.device_subtotal || 0), 0) || 0;
+    const foodRevenue = completedBookings?.reduce((sum, b) => sum + Number(b.food_subtotal || 0), 0) || 0;
+
+    // Get expenses
+    const { data: expenses, error: expensesError } = await supabaseAdmin
+      .from("expenses")
+      .select("amount, description")
+      .gte("date", filters.dateFrom)
+      .lte("date", filters.dateTo);
+
+    if (expensesError) throw expensesError;
+
+    const totalExpenses = expenses?.reduce((sum, e) => sum + Number(e.amount || 0), 0) || 0;
+
+    // Calculate profit
+    const profit = revenue - totalExpenses;
+    const profitMargin = revenue > 0 ? (profit / revenue) * 100 : 0;
+
+    return {
+      success: true,
+      data: {
+        revenue,
+        deviceRevenue,
+        foodRevenue,
+        totalExpenses,
+        profit,
+        profitMargin,
+        bookingCount: completedBookings?.length || 0,
+        expenseCount: expenses?.length || 0,
+      },
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

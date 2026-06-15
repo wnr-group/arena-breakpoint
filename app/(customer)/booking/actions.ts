@@ -499,6 +499,7 @@ export async function confirmBooking(payload: {
   selectedSlot: string;
   slotStartTime: string;
   slotEndTime: string;
+  selectedDuration: number;  // Duration in minutes
   hourlyRate: number;
   addons: AddonSelection[];
   subtotal: number;
@@ -506,6 +507,9 @@ export async function confirmBooking(payload: {
   playerCount: number;
   includedPlayers: number;
   extraPlayerCharge: number;
+  subscriptionDiscount?: number;
+  promoDiscount?: number;
+  promoCode?: string | null;
 }) {
   try {
     // Step 1: Get or create customer
@@ -525,8 +529,44 @@ export async function confirmBooking(payload: {
 
     if (bookingNumberError) throw bookingNumberError;
 
-    // Step 3: Create booking
-    const { data: booking, error: bookingError } = await supabaseAdmin
+    // Step 3: Calculate line item totals
+    // Calculate duration - fallback to calculating from times if selectedDuration is missing
+    let durationHours = 0;
+    if (payload.selectedDuration && payload.selectedDuration > 0) {
+      durationHours = payload.selectedDuration / 60;
+    } else {
+      // Fallback: calculate from start/end times
+      const parseTime = (timeStr: string) => {
+        const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (!match) return 0;
+        let [, hours, minutes, period] = match;
+        let hour = parseInt(hours);
+        if (period.toUpperCase() === "PM" && hour !== 12) hour += 12;
+        if (period.toUpperCase() === "AM" && hour === 12) hour = 0;
+        return hour * 60 + parseInt(minutes);
+      };
+      const startMins = parseTime(payload.slotStartTime);
+      const endMins = parseTime(payload.slotEndTime);
+      durationHours = (endMins - startMins) / 60;
+    }
+
+    const deviceCharges = payload.hourlyRate * durationHours;
+    const extraPlayersCount = Math.max(0, payload.playerCount - payload.includedPlayers);
+    const extraPlayersTotal = extraPlayersCount * payload.extraPlayerCharge;
+    const addonsTotal = payload.addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
+
+    // Calculate device subtotal (device + extra players, NOT food)
+    const deviceSubtotal = deviceCharges + extraPlayersTotal;
+
+    // Discounts apply ONLY to device + extra players (NOT food)
+    const subscriptionDiscount = payload.subscriptionDiscount || 0;
+    const promoDiscount = payload.promoDiscount || 0;
+
+    // Total = device subtotal + food - discounts
+    const totalAmount = deviceSubtotal + addonsTotal - subscriptionDiscount - promoDiscount;
+
+    // Step 4: Create booking
+    const { data: booking, error: bookingError} = await supabaseAdmin
       .from("bookings")
       .insert({
         booking_number: bookingNumber,
@@ -535,11 +575,14 @@ export async function confirmBooking(payload: {
         customer_name: payload.name,
         customer_email: payload.email || null,
         customer_dob: payload.date_of_birth,
-        device_subtotal: payload.subtotal,
-        food_subtotal: 0,
-        total_amount: payload.total,
-        status: "confirmed", // Skip payment, mark as confirmed
-        payment_status: "paid", // Mark as paid (mock)
+        device_subtotal: deviceSubtotal,
+        food_subtotal: addonsTotal,
+        subscription_discount: subscriptionDiscount,
+        promo_discount: promoDiscount,
+        total_amount: totalAmount,
+        amount_paid: totalAmount,  // Customer pays full amount upfront
+        status: "confirmed",
+        payment_status: "paid",
         locked_by: "customer"
       })
       .select("id")
@@ -547,7 +590,94 @@ export async function confirmBooking(payload: {
 
     if (bookingError) throw bookingError;
 
-    // Step 4: Create device slot
+    // Step 5: Create booking line items for audit trail and consistent display
+    const lineItems: any[] = [];
+    let displayOrder = 1;
+
+    // 5.1: Device charges line item
+    lineItems.push({
+      booking_id: booking.id,
+      item_type: 'device',
+      description: `Device Booking (${durationHours}h × ₹${payload.hourlyRate})`,
+      quantity: durationHours,
+      unit_price: payload.hourlyRate,
+      line_total: deviceCharges,
+      added_by: 'customer',
+      is_paid: true,
+      display_order: displayOrder++
+    });
+
+    // 5.2: Extra players line item (if applicable)
+    if (extraPlayersCount > 0) {
+      lineItems.push({
+        booking_id: booking.id,
+        item_type: 'extra_players',
+        description: `Extra Players (${extraPlayersCount} × ₹${payload.extraPlayerCharge})`,
+        quantity: extraPlayersCount,
+        unit_price: payload.extraPlayerCharge,
+        line_total: extraPlayersTotal,
+        added_by: 'customer',
+        is_paid: true,
+        display_order: displayOrder++
+      });
+    }
+
+    // 5.3: Add-ons/Food line items
+    for (const addon of payload.addons) {
+      lineItems.push({
+        booking_id: booking.id,
+        item_type: 'food',
+        description: addon.name,
+        quantity: addon.quantity,
+        unit_price: addon.price,
+        line_total: addon.price * addon.quantity,
+        added_by: 'customer',
+        is_paid: true,
+        display_order: displayOrder++
+      });
+    }
+
+    // 5.4: Subscription discount line item (if applicable)
+    if (subscriptionDiscount > 0) {
+      lineItems.push({
+        booking_id: booking.id,
+        item_type: 'subscription_discount',
+        description: 'Subscription Discount',
+        quantity: 1,
+        unit_price: -subscriptionDiscount,
+        line_total: -subscriptionDiscount,
+        added_by: 'customer',
+        is_paid: true,
+        display_order: displayOrder++
+      });
+    }
+
+    // 5.5: Promo discount line item (if applicable)
+    if (promoDiscount > 0) {
+      const promoDescription = payload.promoCode
+        ? `Promo Code Discount (${payload.promoCode})`
+        : 'Promo Code Discount';
+      lineItems.push({
+        booking_id: booking.id,
+        item_type: 'promo_discount',
+        description: promoDescription,
+        quantity: 1,
+        unit_price: -promoDiscount,
+        line_total: -promoDiscount,
+        added_by: 'customer',
+        is_paid: true,
+        display_order: displayOrder++
+      });
+    }
+
+    // Insert all line items
+    const { error: lineItemsError } = await supabaseAdmin
+      .from("booking_line_items")
+      .insert(lineItems);
+
+    if (lineItemsError) throw lineItemsError;
+
+    // Step 6: Create device slot
     const slotStartTime = payload.slotStartTime;
     const slotEndTime = payload.slotEndTime;
 
@@ -565,7 +695,7 @@ export async function confirmBooking(payload: {
       return `${hour.toString().padStart(2, '0')}:${minutes}:00`;
     };
 
-    // Step 4.5: Auto-assign an available device of the selected type
+    // Step 6.5: Auto-assign an available device of the selected type
     const formattedStartTime = formatTime(slotStartTime);
     const assignedDevice = await findAvailableDevice(
       payload.deviceTypeId,
@@ -574,16 +704,14 @@ export async function confirmBooking(payload: {
     );
 
     if (!assignedDevice) {
-      // Rollback booking if no device available
+      // Rollback booking and line items if no device available
+      await supabaseAdmin.from("booking_line_items").delete().eq("booking_id", booking.id);
       await supabaseAdmin.from("bookings").delete().eq("id", booking.id);
       return {
         success: false,
         error: "No devices available for this time slot. Please select another time."
       };
     }
-
-    const extraPlayersCount = Math.max(0, payload.playerCount - payload.includedPlayers);
-    const extraPlayersTotal = extraPlayersCount * payload.extraPlayerCharge;
 
     const { error: slotError } = await supabaseAdmin
       .from("booking_device_slots")
@@ -593,9 +721,9 @@ export async function confirmBooking(payload: {
         slot_date: payload.selectedDate,
         slot_start_time: formattedStartTime,
         slot_end_time: formatTime(slotEndTime),
-        duration_hours: 1.0, // Assuming 1 hour slots
+        duration_hours: durationHours,
         hourly_rate: payload.hourlyRate,
-        slot_total: payload.subtotal,
+        slot_total: deviceCharges,
         device_type: payload.deviceTypeName,
         device_station_number: assignedDevice.stationNumber,  // Auto-assigned station
         player_count: payload.playerCount,
@@ -606,7 +734,7 @@ export async function confirmBooking(payload: {
 
     if (slotError) throw slotError;
 
-    // Step 5: If there are add-ons, create them as food items
+    // Step 7: If there are add-ons, create them as food items (for backward compatibility)
     if (payload.addons.length > 0) {
       const foodItems = payload.addons.map((addon) => ({
         booking_id: booking.id,
