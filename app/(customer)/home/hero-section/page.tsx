@@ -8,7 +8,8 @@ import  Navbar  from '@/components/customer/layout/NavBar';
 
 interface SlideData {
   id: number;
-  image: string;
+  image?: string;
+  video?: string;
   title: string;
   subtitle: string;
   price: string;
@@ -17,27 +18,34 @@ interface SlideData {
 const slides: SlideData[] = [
   {
     id: 1,
-    image: "https://demo.bravisthemes.com/playhost/wp-content/uploads/2023/12/Slide3.webp",
-    title: "GALACTIC ODYSSEY",
-    subtitle: "Aute esse non magna elit dolore dolor sit est. Ea occaecat ea duis laborum reprehenderit id cillum tempor cupidatat qui nisi proident nostrud dolore.",
+    video: "/hero_video.mp4",
+    title: "WELCOME TO BREAKPOINT ARENA",
+    subtitle: "Experience the ultimate gaming destination with cutting-edge technology and unmatched performance.",
     price: "9.99"
   },
   {
     id: 2,
+    video: "/ps5_hero.mp4",
+    title: "PLAYSTATION 5 GAMING",
+    subtitle: "Immerse yourself in next-gen gaming with our PlayStation 5 stations. Experience lightning-fast loading and stunning visuals.",
+    price: "12.99"
+  },
+  {
+    id: 3,
     image: "https://demo.bravisthemes.com/playhost/wp-content/uploads/2023/12/Slide2.webp",
     title: "COSMIC WARFARE",
     subtitle: "Experience high-performance servers with ultra-low latency. Dominate the galaxy with uninterrupted gameplay and dedicated resources.",
     price: "14.99"
   },
   {
-    id: 3,
+    id: 4,
     image: "https://demo.bravisthemes.com/playhost/wp-content/uploads/2023/12/Slide4.webp",
     title: "NEBULA SURVIVAL",
     subtitle: "Build, explore, and survive in infinite procedurally generated universes. Our servers ensure your progress is always safe and fast.",
     price: "12.50"
   },
   {
-    id: 4,
+    id: 5,
     image: "https://demo.bravisthemes.com/playhost/wp-content/uploads/2023/12/Slide1.webp",
     title: "STARFLEET COMMAND",
     subtitle: "Lead your fleet to victory. Deploy custom mods effortlessly with our one-click installer and 24/7 priority customer support.",
@@ -98,8 +106,8 @@ export default function HeroCarousel() {
   useEffect(() => {
     const timer = setInterval(() => {
       paginate(1);
-    }, 7000);
-    
+    }, 10000);
+
     return () => clearInterval(timer);
   }, [page]); 
 
@@ -122,14 +130,28 @@ export default function HeroCarousel() {
           }}
           className="absolute inset-0 w-full h-full"
         >
-          {/* Zooming Background Image */}
-          <motion.div
-            className="absolute inset-0 w-full h-full bg-cover bg-center"
-            style={{ backgroundImage: `url(${slides[currentIndex].image})` }}
-            initial={{ scale: 1 }}
-            animate={{ scale: 1.15 }}
-            transition={{ duration: 10, ease: "linear" }}
-          />
+          {/* Zooming Background Image or Video */}
+          {slides[currentIndex].video ? (
+            <video
+              key={slides[currentIndex].video}
+              className="absolute inset-0 w-full h-full object-cover"
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="metadata"
+            >
+              <source src={slides[currentIndex].video} type="video/mp4" />
+            </video>
+          ) : (
+            <motion.div
+              className="absolute inset-0 w-full h-full bg-cover bg-center"
+              style={{ backgroundImage: `url(${slides[currentIndex].image})` }}
+              initial={{ scale: 1 }}
+              animate={{ scale: 1.15 }}
+              transition={{ duration: 10, ease: "linear" }}
+            />
+          )}
           
           <div className="absolute inset-0 bg-gradient-to-r from-[#0d0a14]/90 via-[#0d0a14]/50 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0d0a14]/60 via-transparent to-transparent" />

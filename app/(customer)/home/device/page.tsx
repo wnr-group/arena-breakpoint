@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Loader2 } from "lucide-react"
 import { StationCard } from '@/components/customer/home/device/StationCard'
 import { getDevices } from './action';
+import { SkeletonGrid } from '@/components/shared/SkeletonCard';
 
 export interface Station {
   id: number
@@ -23,6 +24,7 @@ export interface Station {
 export default function DevicePage() {
   const [devicesArray, setDevicesArray] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
 
   const fetchFreshDevices = async () => {
     setIsLoadingData(true);
@@ -40,23 +42,39 @@ export default function DevicePage() {
     fetchFreshDevices();
   }, []);
 
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      const handleTimeUpdate = () => {
+        if (video.currentTime >= 2) {
+          video.pause();
+        }
+      };
+
+      video.addEventListener('timeupdate', handleTimeUpdate);
+      return () => video.removeEventListener('timeupdate', handleTimeUpdate);
+    }
+  }, []);
+
   return (
     <section id="features" className="relative min-h-screen py-24 overflow-hidden">
 
-      {/* BG image — inline style z-index to avoid Tailwind v4 negative-z issues */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          zIndex: 0,
-          backgroundImage: "url('https://demo.bravisthemes.com/playhost/wp-content/uploads/2023/12/3.webp')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      />
+      {/* BG video — PS5 hero */}
+      <video
+        ref={videoRef}
+        autoPlay
+        muted
+        playsInline
+        preload="metadata"
+        poster="/ps5_hero_poster.jpg"
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ zIndex: 0 }}
+      >
+        <source src="/ps5_hero.mp4" type="video/mp4" />
+      </video>
 
       {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black/60" style={{ zIndex: 1 }} />
  
 
       {/* Content */}
@@ -84,10 +102,7 @@ export default function DevicePage() {
         {/* Data */}
         <div className="mt-2">
           {isLoadingData ? (
-            <div className="text-center py-24 bg-[#121212]/50 border border-[#27272a]/50 rounded-2xl text-[#a1a1aa] flex flex-col justify-center items-center gap-3 backdrop-blur-sm glow-box-hover">
-              <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
-              <p className="font-medium tracking-wider uppercase text-sm">Initializing Stations...</p>
-            </div>
+            <SkeletonGrid count={8} className="grid-cols-1 min-[581px]:grid-cols-2 min-[787px]:grid-cols-3 min-[932px]:grid-cols-4" />
           ) : devicesArray.length === 0 ? (
             <div className="text-center py-24 bg-[#121212]/50 border border-[#27272a]/50 rounded-2xl text-[#a1a1aa] backdrop-blur-sm">
               No stations are currently available.

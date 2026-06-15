@@ -69,18 +69,18 @@ export default function TimelinePage() {
       </div>
 
       {/* Date Navigation */}
-      <Card className="bg-[#121212] border-[#27272a] p-4">
+      <Card className="bg-[var(--surface)] border-[#27272a] p-4">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <Button
               onClick={goToPreviousDay}
               size="sm"
-              className="bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-800 h-9 px-3"
+              className="bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-white border border-[#27272a] h-9 px-3"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
 
-            <div className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg">
+            <div className="flex items-center gap-2 px-4 py-2 bg-[var(--surface)] border border-[#27272a] rounded-lg">
               <Calendar className="h-4 w-4 text-primary" />
               <span className="text-sm font-bold text-white">
                 {formatDate(timelineDate)}
@@ -90,7 +90,7 @@ export default function TimelinePage() {
             <Button
               onClick={goToNextDay}
               size="sm"
-              className="bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-800 h-9 px-3"
+              className="bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-white border border-[#27272a] h-9 px-3"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -100,7 +100,7 @@ export default function TimelinePage() {
             <Button
               onClick={goToToday}
               size="sm"
-              className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-9 px-4"
+              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-9 px-4"
             >
               Today
             </Button>

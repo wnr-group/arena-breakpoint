@@ -1,10 +1,11 @@
-"use client"; 
+"use client";
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Gamepad2, Menu, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation'; 
+import { usePathname } from 'next/navigation';
+import Image from 'next/image'; 
 
 const navLinks = [
   { label: "Home", path: "/" },
@@ -62,8 +63,15 @@ export default function Navbar() {
       <div className="flex items-center justify-between px-6 md:px-12">
         
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 cursor-pointer group">
-          <Gamepad2 className="w-8 h-8 text-[var(--primary)] group-hover:scale-110 transition-transform duration-300" />
+        <Link href="/" className="flex items-center gap-3 cursor-pointer group">
+          <Image
+            src="/bp_logo.jpeg"
+            alt="Breakpoint Arena Logo"
+            width={40}
+            height={40}
+            className="object-contain group-hover:scale-110 transition-transform duration-300 rounded-md"
+            priority
+          />
           <span className="text-2xl font-bold text-white tracking-wide uppercase">Breakpoint Arena</span>
         </Link>
 
@@ -94,9 +102,9 @@ export default function Navbar() {
 
         {/* CTA & Mobile Toggle */}
         <div className="flex items-center gap-4">
-          <Link 
+          <Link
             href="/booking"
-            className="hidden lg:inline-block px-6 py-2.5 border-gradient-animated cursor-pointer font-bold text-xs tracking-widest uppercase hover:bg-[var(--primary)] hover:text-black transition-all duration-300 text-center"
+            className="hidden lg:inline-block px-6 py-2.5 border-gradient-animated cursor-pointer font-bold text-xs tracking-widest uppercase hover:bg-[var(--primary)] text-black transition-all duration-300 text-center"
           >
             Book Slot
           </Link>

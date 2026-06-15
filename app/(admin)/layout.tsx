@@ -19,7 +19,7 @@ export default function AdminLayout({
 
   return (
     <NotificationProvider>
-      <div className="flex h-screen bg-[#0d0a14] overflow-hidden font-sans relative">
+      <div className="flex h-screen bg-[var(--background)] overflow-hidden font-sans relative">
       {/* Animated purple background - same as customer pages */}
       <AnimatedBackground />
 

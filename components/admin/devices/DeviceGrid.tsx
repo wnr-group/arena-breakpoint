@@ -31,10 +31,10 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
         return (
           <Card
             key={device.id}
-            className="bg-[#121212] border-[#27272a] hover:border-primary/50 hover:shadow-[0_0_20px_rgba(255,193,7,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden group relative animate-in zoom-in-95"
+            className="bg-[var(--surface)] border-[#27272a] hover:border-primary/50 hover:shadow-[0_0_20px_rgba(184,134,11,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden group relative animate-in zoom-in-95"
           >
             {/* 1. MEDIA CONTAINER FRAME */}
-            <div className="h-48 w-full bg-zinc-950 border-b border-[#27272a] flex items-center justify-center overflow-hidden relative">
+            <div className="h-48 w-full bg-[var(--background)] border-b border-[#27272a] flex items-center justify-center overflow-hidden relative">
               {device.image_url ? (
                 <img
                   src={device.image_url}
@@ -105,7 +105,7 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
                   </Button>
                 </AlertDialogTrigger>
 
-                <AlertDialogContent className="bg-[#121212] border border-[#27272a] text-white">
+                <AlertDialogContent className="bg-[var(--surface)] border border-[#27272a] text-white">
                   <AlertDialogHeader>
                     <AlertDialogTitle className="text-xl font-bold">Remove Terminal Record?</AlertDialogTitle>
                     <AlertDialogDescription className="text-[#a1a1aa] text-sm">
@@ -118,7 +118,7 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
                     </AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => onDelete(device.id)}
-                      className="bg-primary text-black hover:bg-primary/90 font-semibold"
+                      className="bg-gradient-primary text-[var(--button-text)] hover:bg-gradient-primary-hover font-semibold"
                     >
                       Confirm Delete
                     </AlertDialogAction>

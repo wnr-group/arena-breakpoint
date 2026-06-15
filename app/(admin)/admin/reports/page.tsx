@@ -182,7 +182,7 @@ export default function AdminReportsPage() {
         </div>
         <Button
           onClick={handleExport}
-          className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs"
+          className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs"
         >
           <Download className="h-4 w-4 mr-2" />
           Export Report
@@ -190,7 +190,7 @@ export default function AdminReportsPage() {
       </div>
 
       {/* Date Filters */}
-      <Card className="bg-[#121212] border-[#27272a] p-4 space-y-4">
+      <Card className="bg-[var(--surface)] border-[#27272a] p-4 space-y-4">
         {/* Quick Filter Buttons */}
         <div>
           <Label className="text-[10px] font-black uppercase text-zinc-600 mb-2 block">
@@ -200,42 +200,42 @@ export default function AdminReportsPage() {
             <Button
               size="sm"
               onClick={() => setQuickDateRange("today")}
-              className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-[10px] h-8 transition-all"
+              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
             >
               Today
             </Button>
             <Button
               size="sm"
               onClick={() => setQuickDateRange("7days")}
-              className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-[10px] h-8 transition-all"
+              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
             >
               Last 7 Days
             </Button>
             <Button
               size="sm"
               onClick={() => setQuickDateRange("30days")}
-              className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-[10px] h-8 transition-all"
+              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
             >
               Last 30 Days
             </Button>
             <Button
               size="sm"
               onClick={() => setQuickDateRange("month")}
-              className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-[10px] h-8 transition-all"
+              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
             >
               This Month
             </Button>
             <Button
               size="sm"
               onClick={() => setQuickDateRange("90days")}
-              className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-[10px] h-8 transition-all"
+              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
             >
               Last 90 Days
             </Button>
             <Button
               size="sm"
               onClick={() => setQuickDateRange("all")}
-              className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-[10px] h-8 transition-all"
+              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
             >
               All Time
             </Button>
@@ -255,13 +255,13 @@ export default function AdminReportsPage() {
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="w-full bg-[#0a0a0a] border border-zinc-900 h-12 rounded-xl px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary"
                   >
                     <span>{dateFrom ? format(new Date(dateFrom), "dd-MM-yyyy") : <span className="text-zinc-400">dd-mm-yyyy</span>}</span>
                     <CalendarDays className="h-4 w-4 text-primary" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-3 bg-[#0c0c0e] border border-zinc-800 rounded-xl shadow-2xl" align="start">
+                <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-zinc-800 rounded-xl shadow-2xl" align="start">
                   <Calendar
                     mode="single"
                     selected={dateFrom ? new Date(dateFrom) : undefined}
@@ -281,13 +281,13 @@ export default function AdminReportsPage() {
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="w-full bg-[#0a0a0a] border border-zinc-900 h-12 rounded-xl px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary"
                   >
                     <span>{dateTo ? format(new Date(dateTo), "dd-MM-yyyy") : <span className="text-zinc-400">dd-mm-yyyy</span>}</span>
                     <CalendarDays className="h-4 w-4 text-primary" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-3 bg-[#0c0c0e] border border-zinc-800 rounded-xl shadow-2xl" align="start">
+                <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-zinc-800 rounded-xl shadow-2xl" align="start">
                   <Calendar
                     mode="single"
                     selected={dateTo ? new Date(dateTo) : undefined}
@@ -301,14 +301,14 @@ export default function AdminReportsPage() {
 
           <Button
             onClick={handleApplyFilters}
-            className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-11 rounded-xl px-6"
+            className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-11 rounded-xl px-6"
           >
             Apply Range
           </Button>
 
           {/* Active Filter Display */}
           {/* {(dateFrom || dateTo) && (
-          <div className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#27272a] rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-[var(--background)] border border-[#27272a] rounded-lg">
             <div className="flex items-center gap-2 text-xs text-zinc-400">
               <Calendar className="h-3 w-3 text-primary" />
               <span className="font-bold">
@@ -324,7 +324,7 @@ export default function AdminReportsPage() {
               setDateTo("");
               handleApplyFilters();
             }}
-            className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-11 rounded-xl px-6"
+            className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-11 rounded-xl px-6"
           >
             Clear Filters
           </Button>
@@ -432,7 +432,7 @@ export default function AdminReportsPage() {
 
               {/* Additional Stats */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
+                <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-black uppercase text-zinc-500">
                       Food Orders
@@ -447,7 +447,7 @@ export default function AdminReportsPage() {
                   </p>
                 </Card>
 
-                <Card className="bg-[#121212] p-5 hover:border-primary border-1 hover:-translate-y-1">
+                <Card className="bg-[var(--surface)] p-5 hover:border-primary border-1 hover:-translate-y-1">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-black uppercase text-zinc-500">
                       Hours Booked
@@ -462,7 +462,7 @@ export default function AdminReportsPage() {
                   </p>
                 </Card>
 
-                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
+                <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-black uppercase text-zinc-500">
                       Avg Revenue
@@ -485,7 +485,7 @@ export default function AdminReportsPage() {
             <div className="space-y-6">
               {/* Food Summary */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
+                <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase text-zinc-500 mb-2">
                     Total Revenue
                   </p>
@@ -493,7 +493,7 @@ export default function AdminReportsPage() {
                     ₹{foodData.summary.totalRevenue.toLocaleString('en-IN')}
                   </h3>
                 </Card>
-                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
+                <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase text-zinc-500 mb-2">
                     Items Sold
                   </p>
@@ -501,7 +501,7 @@ export default function AdminReportsPage() {
                     {foodData.summary.totalItemsSold}
                   </h3>
                 </Card>
-                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
+                <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase text-zinc-500 mb-2">
                     Total Orders
                   </p>
@@ -509,7 +509,7 @@ export default function AdminReportsPage() {
                     {foodData.summary.totalOrders}
                   </h3>
                 </Card>
-                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
+                <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase text-zinc-500 mb-2">
                     Avg Order Value
                   </p>
@@ -520,7 +520,7 @@ export default function AdminReportsPage() {
               </div>
 
               {/* Category Breakdown */}
-              <Card className="bg-[#121212] border-[#27272a] p-6">
+              <Card className="bg-[var(--surface)] border-[#27272a] p-6">
                 <h3 className="text-sm font-black uppercase text-zinc-400 mb-4">
                   Category Breakdown
                 </h3>
@@ -528,7 +528,7 @@ export default function AdminReportsPage() {
                   {foodData.categoryBreakdown.map((category: any) => (
                     <div
                       key={category.category}
-                      className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#27272a] rounded-lg"
+                      className="flex items-center justify-between p-3 bg-[var(--background)] border border-[#27272a] rounded-lg"
                     >
                       <div>
                         <p className="text-sm font-bold text-white">
@@ -552,7 +552,7 @@ export default function AdminReportsPage() {
               </Card>
 
               {/* Top Items */}
-              <Card className="bg-[#121212] border-[#27272a] p-6">
+              <Card className="bg-[var(--surface)] border-[#27272a] p-6">
                 <h3 className="text-sm font-black uppercase text-zinc-400 mb-4">
                   Top Selling Items
                 </h3>
@@ -560,7 +560,7 @@ export default function AdminReportsPage() {
                   {foodData.topItems.map((item: any, idx: number) => (
                     <div
                       key={item.itemName}
-                      className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#27272a] rounded-lg"
+                      className="flex items-center justify-between p-3 bg-[var(--background)] border border-[#27272a] rounded-lg"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-black">
@@ -593,7 +593,7 @@ export default function AdminReportsPage() {
             <div className="space-y-6">
               {/* Device Summary */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
+                <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase text-zinc-500 mb-2">
                     Total Revenue
                   </p>
@@ -601,7 +601,7 @@ export default function AdminReportsPage() {
                     ₹{deviceData.summary.totalRevenue.toLocaleString('en-IN')}
                   </h3>
                 </Card>
-                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
+                <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase text-zinc-500 mb-2">
                     Total Bookings
                   </p>
@@ -609,7 +609,7 @@ export default function AdminReportsPage() {
                     {deviceData.summary.totalBookings}
                   </h3>
                 </Card>
-                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
+                <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase text-zinc-500 mb-2">
                     Hours Booked
                   </p>
@@ -617,7 +617,7 @@ export default function AdminReportsPage() {
                     {deviceData.summary.totalHours}
                   </h3>
                 </Card>
-                <Card className="bg-[#121212] hover:border-primary border-1 p-5 hover:-translate-y-1">
+                <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase text-zinc-500 mb-2">
                     Avg Revenue
                   </p>
@@ -628,7 +628,7 @@ export default function AdminReportsPage() {
               </div>
 
               {/* Device Type Breakdown */}
-              <Card className="bg-[#121212] border-[#27272a] p-6">
+              <Card className="bg-[var(--surface)] border-[#27272a] p-6">
                 <h3 className="text-sm font-black uppercase text-zinc-400 mb-4">
                   Device Type Performance
                 </h3>
@@ -636,7 +636,7 @@ export default function AdminReportsPage() {
                   {deviceData.deviceBreakdown.map((device: any) => (
                     <div
                       key={device.deviceType}
-                      className="p-4 bg-[#0a0a0a] border border-[#27272a] rounded-lg"
+                      className="p-4 bg-[var(--background)] border border-[#27272a] rounded-lg"
                     >
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="text-sm font-black text-white">
@@ -703,7 +703,7 @@ export default function AdminReportsPage() {
                   </div>
                 </Card>
 
-                <Card className="bg-[#121212] border-[#27272a] p-6 hover:-translate-y-1">
+                <Card className="bg-[var(--surface)] border-[#27272a] p-6 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase 0text-zinc-50 mb-2">
                     Payment Status
                   </p>
@@ -743,7 +743,7 @@ export default function AdminReportsPage() {
                   </div>
                 </Card>
 
-                <Card className="bg-[#121212] border-[#27272a] p-6 hover:-translate-y-1">
+                <Card className="bg-[var(--surface)] border-[#27272a] p-6 hover:-translate-y-1">
                   <p className="text-xs font-black uppercase text-white mb-2">
                     Revenue Split
                   </p>
@@ -781,7 +781,7 @@ export default function AdminReportsPage() {
               </div>
 
               {/* Booking Source Breakdown */}
-              <Card className="bg-[#121212] border-[#27272a] p-6">
+              <Card className="bg-[var(--surface)] border-[#27272a] p-6">
                 <h3 className="text-sm font-black uppercase text-zinc-400 mb-4">
                   Revenue by Source
                 </h3>
@@ -789,7 +789,7 @@ export default function AdminReportsPage() {
                   {revenueData.sourceBreakdown.map((source: any) => (
                     <div
                       key={source.source}
-                      className="p-4 bg-[#0a0a0a] border border-[#27272a] rounded-lg"
+                      className="p-4 bg-[var(--background)] border border-[#27272a] rounded-lg"
                     >
                       <p className="text-xs font-black uppercase text-white mb-2">
                         {source.source === "walk_in" ? "Walk-In" : "Online"}
@@ -806,7 +806,7 @@ export default function AdminReportsPage() {
               </Card>
 
               {/* Daily Revenue Chart */}
-              <Card className="bg-[#121212] border-[#27272a] p-6">
+              <Card className="bg-[var(--surface)] border-[#27272a] p-6">
                 <h3 className="text-sm font-black uppercase text-zinc-400 mb-4">
                   Daily Revenue Trend
                 </h3>

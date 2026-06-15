@@ -49,14 +49,14 @@ export function SubscriptionTable({ data = [], onEdit, onDelete }: SubscriptionT
   }
 
   return (
-    <div className="bg-[#121212] border border-[#27272a] rounded-xl overflow-hidden flex flex-col">
+    <div className="bg-[var(--surface)] border border-[#27272a] rounded-xl overflow-hidden flex flex-col">
       <div className="p-4 sm:p-5 flex items-center justify-between border-b border-[#27272a]">
         <h2 className="text-lg font-bold text-white">Subscription Plans</h2>
         <div className="flex gap-2">
-          <button className="p-2 bg-[#1a1a1a] border border-[#27272a] rounded-md text-[#a1a1aa] hover:text-white transition-colors">
+          <button className="p-2 bg-[var(--surface-hover)] border border-[#27272a] rounded-md text-[#a1a1aa] hover:text-white transition-colors">
             <Filter className="h-4 w-4" />
           </button>
-          <button className="p-2 bg-[#1a1a1a] border border-[#27272a] rounded-md text-[#a1a1aa] hover:text-white transition-colors">
+          <button className="p-2 bg-[var(--surface-hover)] border border-[#27272a] rounded-md text-[#a1a1aa] hover:text-white transition-colors">
             <Download className="h-4 w-4" />
           </button>
         </div>
@@ -64,7 +64,7 @@ export function SubscriptionTable({ data = [], onEdit, onDelete }: SubscriptionT
 
       <div className="overflow-x-auto min-h-75">
         <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-[#0a0a0a] text-[#a1a1aa] text-[10px] uppercase font-bold tracking-wider border-b border-[#27272a]">
+          <thead className="bg-[var(--background)] text-[#a1a1aa] text-[10px] uppercase font-bold tracking-wider border-b border-[#27272a]">
             <tr>
               <th className="px-6 py-4">Plan Name</th>
               <th className="px-6 py-4">Duration</th>
@@ -77,10 +77,10 @@ export function SubscriptionTable({ data = [], onEdit, onDelete }: SubscriptionT
           <tbody className="divide-y divide-[#27272a]">
             {paginatedData.length > 0 ? (
               paginatedData.map(row => (
-                <tr key={row.id} className="hover:bg-[#1a1a1a]/50 transition-colors">
+                <tr key={row.id} className="hover:bg-[var(--surface-hover)]/50 transition-colors">
                   {/* NAME & DESC */}
                   <td className="px-6 py-4">
-                    <div className="font-bold text-[#FFC107] text-sm tracking-wide">{row.name}</div>
+                    <div className="font-bold text-primary text-sm tracking-wide">{row.name}</div>
                     <div className="text-xs text-[#a1a1aa] mt-0.5 truncate max-w-50">
                       {row.description || 'No description'}
                     </div>
@@ -127,7 +127,7 @@ export function SubscriptionTable({ data = [], onEdit, onDelete }: SubscriptionT
                     <div className="flex justify-end gap-3">
                       <button
                         onClick={() => onEdit(row)}
-                        className="text-[#a1a1aa] hover:text-[#FFC107] transition-colors"
+                        className="text-[#a1a1aa] hover:text-primary transition-colors"
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
@@ -163,7 +163,7 @@ export function SubscriptionTable({ data = [], onEdit, onDelete }: SubscriptionT
           <button
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className="w-7 h-7 flex items-center justify-center rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#1a1a1a] hover:text-white"
+            className="w-7 h-7 flex items-center justify-center rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-white"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -180,7 +180,7 @@ export function SubscriptionTable({ data = [], onEdit, onDelete }: SubscriptionT
                 className={`w-7 h-7 flex items-center justify-center rounded-md transition-colors font-medium ${
                   currentPage === page
                     ? 'bg-[#27272a] text-white'
-                    : 'text-[#a1a1aa] hover:bg-[#1a1a1a] hover:text-white'
+                    : 'text-[#a1a1aa] hover:bg-[var(--surface-hover)] hover:text-white'
                 }`}
               >
                 {page}
@@ -191,7 +191,7 @@ export function SubscriptionTable({ data = [], onEdit, onDelete }: SubscriptionT
           <button
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages || data.length === 0}
-            className="w-7 h-7 flex items-center justify-center rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#1a1a1a] hover:text-white"
+            className="w-7 h-7 flex items-center justify-center rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-white"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

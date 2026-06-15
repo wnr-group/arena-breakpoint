@@ -124,7 +124,7 @@ export default function DevicesPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-8 bg-[#0a0a0a] min-h-screen text-white animate-in fade-in duration-700">
+    <div className="flex flex-col gap-6 p-8 bg-[var(--background)] min-h-screen text-white animate-in fade-in duration-700">
 
       {/* HEADER PANELS */}
       <div className="flex items-center justify-between mb-2">
@@ -147,7 +147,7 @@ export default function DevicesPage() {
           { title: "Alert", count: maintenanceDevices, label: "Under Maintenance", icon: Wrench },
           { title: "Offline", count: inactiveDevices, label: "Deactivated Stations", icon: MonitorPlay, color: "text-zinc-500" }
         ].map((stat) => (
-          <Card key={stat.title} className="bg-[#121212] border-[#27272a] hover:border-[#FFC107]/70 hover:-translate-y-1 transition-all duration-500 group">
+          <Card key={stat.title} className="bg-[var(--surface)] border-[#27272a] hover:border-[#FFC107]/70 hover:-translate-y-1 transition-all duration-500 group">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <stat.icon className="h-5 w-5 text-[#FFC107] group-hover:scale-110 transition-transform duration-500" />
               <span className="text-[10px] text-[#a1a1aa] uppercase tracking-wider">{stat.title}</span>
@@ -176,11 +176,11 @@ export default function DevicesPage() {
       {/* VIEW SELECTION ROUTER LAYER */}
       <div className="mt-2 animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both">
         {isLoadingData ? (
-          <div className="text-center py-12 bg-[#121212] border border-[#27272a] rounded-xl text-[#a1a1aa] flex justify-center items-center gap-2">
+          <div className="text-center py-12 bg-[var(--surface)] border border-[#27272a] rounded-xl text-[#a1a1aa] flex justify-center items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin text-[#FFC107]" /> Fetching device records...
           </div>
         ) : filteredDevices.length === 0 ? (
-          <div className="text-center py-12 bg-[#121212] border border-[#27272a] rounded-xl text-[#a1a1aa]">
+          <div className="text-center py-12 bg-[var(--surface)] border border-[#27272a] rounded-xl text-[#a1a1aa]">
             No terminal records match your active search constraints.
           </div>
         ) : viewMode === 'table' ? (

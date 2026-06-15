@@ -3,6 +3,8 @@ import { Food } from '@/app/(customer)/home/food/page'
 import { useInView, motion } from 'framer-motion'
 import { useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
+import { useReducedMotion } from '@/lib/hooks/useReducedMotion'
 
 export function FoodCard({
   food,
@@ -16,18 +18,17 @@ export function FoodCard({
   const ref = useRef(null)
   const router = useRouter()
   const inView = useInView(ref, { once: true, margin: '-60px' })
+  const prefersReducedMotion = useReducedMotion()
 
   const handleClick = () => {
     router.push('/food')
   }
 
-  return (
-    <motion.div
-      ref={ref}
-      layout
-      initial={isFiltering ? { opacity: 0, scale: 0, x: 0 } : { opacity: 0, x: 60, scale: 1 }}
-      animate={
-        isFiltering
+  const motionConfig = prefersReducedMotion
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
+    : {
+        initial: isFiltering ? { opacity: 0, scale: 0, x: 0 } : { opacity: 0, x: 60, scale: 1 },
+        animate: isFiltering
           ? {
               opacity: 1,
               scale: 1,
@@ -41,22 +42,32 @@ export function FoodCard({
                 scale: 1,
                 transition: { duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94], delay: index * 0.08 },
               }
-            : { opacity: 0, x: 60, scale: 1 }
+            : { opacity: 0, x: 60, scale: 1 },
+        exit: {
+          opacity: 0,
+          scale: 0,
+          transition: { duration: 0.3, ease: [0.55, 0, 1, 0.45], delay: index * 0.03 },
+        },
       }
-      exit={{
-        opacity: 0,
-        scale: 0,
-        transition: { duration: 0.3, ease: [0.55, 0, 1, 0.45], delay: index * 0.03 },
-      }}
+
+  return (
+    <motion.div
+      ref={ref}
+      layout
+      {...motionConfig}
       onClick={handleClick}
       className="group relative rounded-xl overflow-hidden cursor-pointer flex flex-col sm:block bg-[#121212] sm:bg-transparent border border-white/5 sm:border-0 h-full sm:h-auto aspect-auto sm:aspect-[301/401]"
     >
       {/*  Image Layer */}
       <div className="relative w-full aspect-square sm:aspect-auto sm:absolute sm:inset-0 sm:z-0 overflow-hidden">
-        <img
+        <Image
           src={food.image}
           alt={food.title}
-          className="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(.25,.46,.45,.94)] sm:group-hover:scale-110"
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 300px"
+          className="object-cover transition-transform duration-700 ease-[cubic-bezier(.25,.46,.45,.94)] sm:group-hover:scale-110"
+          loading="lazy"
+          quality={85}
         />
         <div className="hidden sm:block absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-500 z-10" />
       </div>

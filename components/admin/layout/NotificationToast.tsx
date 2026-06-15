@@ -28,7 +28,7 @@ function showNotificationToast(notification: Notification) {
   sonnerToast.custom(
     (t) => (
       <div
-        className="w-full bg-gradient-to-br from-[#111] via-zinc-950 to-[#111] border-2 border-primary/40 rounded-xl p-4 shadow-[0_0_40px_rgba(255,193,7,0.3)] cursor-pointer hover:border-primary/60 transition-all"
+        className="w-full bg-gradient-to-br from-[#111] via-zinc-950 to-[#111] border-2 border-primary/40 rounded-xl p-4 shadow-[0_0_40px_rgba(184,134,11,0.3)] cursor-pointer hover:border-primary/60 transition-all"
         onClick={() => {
           window.open(`/admin/bookings?id=${notification.bookingId}`, '_blank')
           sonnerToast.dismiss(t)

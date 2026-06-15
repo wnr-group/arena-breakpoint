@@ -35,7 +35,7 @@ export function EditSubscriptionModal({ plan, onFormSuccess, open, setOpen }: Ed
         setOpen(false)
         toast.success('Plan Updated', {
           description: 'Subscription plan modified successfully.',
-          icon: <CheckCircle2 className="h-5 w-5 text-[#FFC107]" />,
+          icon: <CheckCircle2 className="h-5 w-5 text-primary" />,
         })
         if (onFormSuccess) {
           await onFormSuccess()
@@ -51,11 +51,11 @@ export function EditSubscriptionModal({ plan, onFormSuccess, open, setOpen }: Ed
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="bg-[#121212] border-[#27272a] text-white max-w-2xl p-0 shadow-2xl sm:rounded-xl flex flex-col max-h-[95dvh] sm:max-h-[90dvh]">
+      <DialogContent className="bg-[var(--surface)] border-[#27272a] text-white max-w-2xl p-0 shadow-2xl sm:rounded-xl flex flex-col max-h-[95dvh] sm:max-h-[90dvh]">
         {/* Header */}
         <div className="p-4 sm:p-6 pb-2 sm:pb-4 flex justify-between items-start shrink-0">
           <div className="pr-6">
-            <DialogTitle className="text-xl font-bold text-[#FFC107]">
+            <DialogTitle className="text-xl font-bold text-primary">
               Edit Subscription Plan
             </DialogTitle>
             <p className="text-xs sm:text-sm text-[#a1a1aa] mt-1">
@@ -83,7 +83,7 @@ export function EditSubscriptionModal({ plan, onFormSuccess, open, setOpen }: Ed
                   name="name"
                   maxLength={50}
                   defaultValue={plan?.name}
-                  className="w-full h-11 rounded-lg border border-[#27272a] bg-[#0a0a0a] px-3 text-sm text-[#FFC107] font-bold focus:ring-1 focus:ring-[#FFC107] outline-none"
+                  className="w-full h-11 rounded-lg border border-[#27272a] bg-[var(--background)] px-3 text-sm text-primary font-bold focus:ring-1 focus:ring-[#FFC107] outline-none"
                   required
                 />
               </div>
@@ -100,7 +100,7 @@ export function EditSubscriptionModal({ plan, onFormSuccess, open, setOpen }: Ed
                     step="0.01"
                     min="1"
                     defaultValue={plan?.price}
-                    className="w-full h-11 rounded-lg border border-[#27272a] bg-[#0a0a0a] pl-10 pr-3 text-sm text-white focus:ring-1 focus:ring-[#FFC107] outline-none"
+                    className="w-full h-11 rounded-lg border border-[#27272a] bg-[var(--background)] pl-10 pr-3 text-sm text-white focus:ring-1 focus:ring-[#FFC107] outline-none"
                     required
                   />
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#a1a1aa]">
@@ -121,7 +121,7 @@ export function EditSubscriptionModal({ plan, onFormSuccess, open, setOpen }: Ed
                     min="1"
                     max="60"
                     defaultValue={plan?.duration_months}
-                    className="w-full h-11 rounded-lg border border-[#27272a] bg-[#0a0a0a] pl-10 pr-3 text-sm text-white focus:ring-1 focus:ring-[#FFC107] outline-none"
+                    className="w-full h-11 rounded-lg border border-[#27272a] bg-[var(--background)] pl-10 pr-3 text-sm text-white focus:ring-1 focus:ring-[#FFC107] outline-none"
                     required
                   />
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#a1a1aa]">
@@ -142,7 +142,7 @@ export function EditSubscriptionModal({ plan, onFormSuccess, open, setOpen }: Ed
                     min="0"
                     max="100"
                     defaultValue={plan?.discount_percentage}
-                    className="w-full h-11 rounded-lg border border-[#27272a] bg-[#0a0a0a] pl-10 pr-3 text-sm text-white focus:ring-1 focus:ring-[#FFC107] outline-none"
+                    className="w-full h-11 rounded-lg border border-[#27272a] bg-[var(--background)] pl-10 pr-3 text-sm text-white focus:ring-1 focus:ring-[#FFC107] outline-none"
                   />
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#a1a1aa]">
                     <Percent className="h-4 w-4" />
@@ -158,7 +158,7 @@ export function EditSubscriptionModal({ plan, onFormSuccess, open, setOpen }: Ed
                 <textarea
                   name="description"
                   defaultValue={plan?.description}
-                  className="w-full h-24 rounded-lg border border-[#27272a] bg-[#0a0a0a] p-3 text-sm text-white focus:ring-1 focus:ring-[#FFC107] outline-none resize-none"
+                  className="w-full h-24 rounded-lg border border-[#27272a] bg-[var(--background)] p-3 text-sm text-white focus:ring-1 focus:ring-[#FFC107] outline-none resize-none"
                   required
                   minLength={10}
                   maxLength={500}
@@ -168,13 +168,13 @@ export function EditSubscriptionModal({ plan, onFormSuccess, open, setOpen }: Ed
           </div>
 
           {/* Footer */}
-          <div className="p-4 sm:p-6 border-t border-[#27272a] bg-[#121212] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0 rounded-b-xl">
+          <div className="p-4 sm:p-6 border-t border-[#27272a] bg-[var(--surface)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0 rounded-b-xl">
             <div
               className="flex items-center gap-3 cursor-pointer w-full sm:w-auto"
               onClick={() => setIsActive(!isActive)}
             >
               <div
-                className={`w-10 h-5 rounded-full p-0.5 transition-colors duration-300 ease-in-out shrink-0 ${isActive ? 'bg-[#FFC107]' : 'bg-zinc-700'}`}
+                className={`w-10 h-5 rounded-full p-0.5 transition-colors duration-300 ease-in-out shrink-0 ${isActive ? 'bg-gradient-primary' : 'bg-zinc-700'}`}
               >
                 <div
                   className={`w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-300 ${isActive ? 'translate-x-5' : 'translate-x-0'}`}
@@ -187,14 +187,14 @@ export function EditSubscriptionModal({ plan, onFormSuccess, open, setOpen }: Ed
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-lg border border-[#27272a] text-white text-sm font-semibold hover:bg-[#1a1a1a] transition-colors"
+                className="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-lg border border-[#27272a] text-white text-sm font-semibold hover:bg-[var(--surface-hover)] transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isPending}
-                className="flex-1 sm:flex-none flex justify-center items-center px-4 sm:px-6 py-2.5 rounded-lg bg-[#FFC107] text-black text-sm font-bold hover:bg-[#ffcd38] transition-colors shadow-lg shadow-[#FFC107]/10 whitespace-nowrap disabled:opacity-70 disabled:cursor-not-allowed"
+                className="flex-1 sm:flex-none flex justify-center items-center px-4 sm:px-6 py-2.5 rounded-lg bg-gradient-primary text-black text-sm font-bold hover:bg-gradient-primary-hover transition-colors shadow-lg shadow-primary/10 whitespace-nowrap disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Changes'}
               </button>

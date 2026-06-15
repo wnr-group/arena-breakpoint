@@ -91,7 +91,7 @@ export default function AdminPromoCodeDashboard() {
           </Button>
         </div>
       ) : loading ? (
-        <div className="h-48 w-full flex items-center justify-center border border-zinc-900 rounded-xl bg-[#111]">
+        <div className="h-48 w-full flex items-center justify-center border border-zinc-900 rounded-xl bg-[var(--surface)]">
           <Loader2 className="h-6 w-6 text-primary animate-spin" />
         </div>
       ) : (

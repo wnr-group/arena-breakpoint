@@ -19,7 +19,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
   }
 
   return (
-    <div className="absolute right-0 top-12 w-96 bg-[#0a0a0a] border border-zinc-800 rounded-lg shadow-[0_0_40px_rgba(255,193,7,0.15)] z-50 overflow-hidden">
+    <div className="absolute right-0 top-12 w-96 bg-[var(--background)] border border-zinc-800 rounded-lg shadow-[0_0_40px_rgba(184,134,11,0.15)] z-50 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-zinc-800">
         <h3 className="text-sm font-black uppercase text-white">Notifications</h3>
@@ -53,7 +53,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
               <button
                 key={notification.id}
                 onClick={() => handleNotificationClick(notification.id, notification.bookingId)}
-                className={`w-full p-4 border-b border-zinc-800/50 hover:bg-[#1a1a1a] transition-colors text-left group ${
+                className={`w-full p-4 border-b border-zinc-800/50 hover:bg-[var(--surface-hover)] transition-colors text-left group ${
                   !notification.read ? 'bg-primary/5' : ''
                 }`}
               >

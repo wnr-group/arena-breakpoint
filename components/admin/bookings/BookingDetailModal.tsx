@@ -180,7 +180,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="bg-[#121212] border-[#27272a] text-white max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-[var(--surface)] border-[#27272a] text-white max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center justify-between">
               BOOKING DETAILS
@@ -195,7 +195,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
           ) : booking ? (
             <div className="space-y-6 mt-4">
               {/* QR Code and Booking Number */}
-              <Card className="bg-[#0a0a0a] border-[#27272a] p-6">
+              <Card className="bg-[var(--background)] border-[#27272a] p-6">
                 <div className="flex flex-col md:flex-row gap-6 items-center">
                   <div className="bg-white p-4 rounded-xl">
                     <QRCodeSVG value={booking.booking_number} size={140} level="H" />
@@ -233,7 +233,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Customer Information */}
-                <Card className="bg-[#0a0a0a] border-[#27272a] p-5 space-y-4">
+                <Card className="bg-[var(--background)] border-[#27272a] p-5 space-y-4">
                   <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider border-b border-[#27272a] pb-2">
                     Customer Information
                   </h3>
@@ -265,7 +265,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                 </Card>
 
                 {/* Device Slot Information */}
-                <Card className="bg-[#0a0a0a] border-[#27272a] p-5 space-y-4">
+                <Card className="bg-[var(--background)] border-[#27272a] p-5 space-y-4">
                   <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider border-b border-[#27272a] pb-2">
                     Device & Slot Details
                   </h3>
@@ -306,7 +306,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
 
               {/* Game Orders */}
               {booking.booking_device_slots && booking.booking_device_slots.length > 0 && (
-                <Card className="bg-[#0a0a0a] border-[#27272a] p-5 space-y-4">
+                <Card className="bg-[var(--background)] border-[#27272a] p-5 space-y-4">
                   <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider border-b border-[#27272a] pb-2 flex items-center gap-2">
                     <Gamepad2 className="h-4 w-4" />
                     Game Orders
@@ -321,7 +321,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                       const canEdit = booking.status !== "cancelled" && booking.status !== "completed";
 
                       return (
-                        <div key={slot.id} className="bg-[#121212] border border-[#27272a] rounded-lg p-4 space-y-3">
+                        <div key={slot.id} className="bg-[var(--surface)] border border-[#27272a] rounded-lg p-4 space-y-3">
                           {/* Game/Device Info */}
                           <div className="flex justify-between items-start">
                             <div>
@@ -396,7 +396,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
               )}
 
               {/* Food Items */}
-              <Card className="bg-[#0a0a0a] border-[#27272a] p-5 space-y-4">
+              <Card className="bg-[var(--background)] border-[#27272a] p-5 space-y-4">
                 <div className="flex justify-between items-center border-b border-[#27272a] pb-2">
                   <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider flex items-center gap-2">
                     <UtensilsCrossed className="h-4 w-4" />
@@ -416,7 +416,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                 {booking.booking_food_items && booking.booking_food_items.length > 0 ? (
                   <div className="space-y-2">
                     {booking.booking_food_items.map((item: any) => (
-                      <div key={item.id} className="flex justify-between items-center p-3 bg-[#121212] border border-[#27272a] rounded-lg">
+                      <div key={item.id} className="flex justify-between items-center p-3 bg-[var(--surface)] border border-[#27272a] rounded-lg">
                         <div>
                           <p className="text-sm font-bold text-white">{item.item_name}</p>
                           <p className="text-xs text-data-placeholder">Qty: {item.quantity} × ₹{Number(item.unit_price)}</p>
@@ -434,7 +434,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
               </Card>
 
               {/* Payment Summary - Detailed Breakdown */}
-              <Card className="bg-gradient-to-br from-[#0a0a0a] via-zinc-950 to-[#0a0a0a] border-2 border-primary/30 p-5 shadow-[0_0_30px_rgba(255,193,7,0.2)]">
+              <Card className="bg-gradient-to-br from-[#0a0a0a] via-zinc-950 to-[#0a0a0a] border-2 border-primary/30 p-5 shadow-[0_0_30px_rgba(184,134,11,0.2)]">
                 <h3 className="text-xs font-black text-primary uppercase tracking-wider mb-4 flex items-center gap-2">
                   <DollarSign className="h-4 w-4" />
                   Payment Summary
@@ -598,7 +598,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
 
       {/* Add Food Modal */}
       <Dialog open={addFoodModalOpen} onOpenChange={setAddFoodModalOpen}>
-        <DialogContent className="bg-[#121212] border-[#27272a] text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-[var(--surface)] border-[#27272a] text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-black uppercase tracking-tight">
               Add Food & Beverages
@@ -617,7 +617,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                   </h4>
                   <div className="space-y-2">
                     {categoryItems.map((item: any) => (
-                      <div key={item.id} className="flex justify-between items-center p-3 bg-[#0a0a0a] border border-[#27272a] rounded-lg">
+                      <div key={item.id} className="flex justify-between items-center p-3 bg-[var(--background)] border border-[#27272a] rounded-lg">
                         <div className="flex-1">
                           <p className="text-sm font-bold text-white">{item.name}</p>
                           <p className="text-xs text-zinc-500">₹{Number(item.price).toLocaleString('en-IN')}</p>
@@ -687,7 +687,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
 
       {/* Cancel Confirmation Dialog */}
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-        <AlertDialogContent className="bg-[#121212] border-[#27272a] text-white">
+        <AlertDialogContent className="bg-[var(--surface)] border-[#27272a] text-white">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-bold">Cancel Booking?</AlertDialogTitle>
             <AlertDialogDescription className="text-zinc-400">

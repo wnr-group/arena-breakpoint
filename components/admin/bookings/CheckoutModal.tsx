@@ -82,7 +82,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-zinc-950 border-2 border-zinc-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-[var(--background)] border-2 border-zinc-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
             <Receipt className="h-5 w-5 text-primary" />

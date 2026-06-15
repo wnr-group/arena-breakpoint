@@ -184,7 +184,7 @@ export default function AdminBookingsPage() {
         </div>
         <Button
           onClick={() => router.push("/admin/bookings/walk-in")}
-          className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-10 px-6"
+          className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-10 px-6"
         >
           <Plus className="h-4 w-4 mr-2" />
           Create Walk-In Booking
@@ -193,7 +193,7 @@ export default function AdminBookingsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="bg-[#121212] border-[#27272a] p-4">
+        <Card className="bg-[var(--surface)] border-[#27272a] p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-500/10 rounded-lg">
               <Receipt className="h-5 w-5 text-blue-500" />
@@ -205,7 +205,7 @@ export default function AdminBookingsPage() {
           </div>
         </Card>
 
-        <Card className="bg-[#121212] border-[#27272a] p-4">
+        <Card className="bg-[var(--surface)] border-[#27272a] p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-500/10 rounded-lg">
               <CheckCircle2 className="h-5 w-5 text-green-500" />
@@ -217,7 +217,7 @@ export default function AdminBookingsPage() {
           </div>
         </Card>
 
-        <Card className="bg-[#121212] border-[#27272a] p-4">
+        <Card className="bg-[var(--surface)] border-[#27272a] p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg">
               <DollarSign className="h-5 w-5 text-primary" />
@@ -229,7 +229,7 @@ export default function AdminBookingsPage() {
           </div>
         </Card>
 
-        <Card className="bg-[#121212] border-[#27272a] p-4">
+        <Card className="bg-[var(--surface)] border-[#27272a] p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-600/10 rounded-lg">
               <CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -241,7 +241,7 @@ export default function AdminBookingsPage() {
           </div>
         </Card>
 
-        <Card className="bg-[#121212] border-[#27272a] p-4">
+        <Card className="bg-[var(--surface)] border-[#27272a] p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-red-500/10 rounded-lg">
               <XCircle className="h-5 w-5 text-red-500" />
@@ -264,7 +264,7 @@ export default function AdminBookingsPage() {
               className={`px-4 py-2 text-[11px] font-black uppercase border rounded-lg transition-all whitespace-nowrap ${
                 activeStatusFilter === tab.id
                   ? "bg-primary text-black border-transparent"
-                  : "bg-[#121212] border-[#27272a] text-zinc-400 hover:border-zinc-700"
+                  : "bg-[var(--surface)] border-[#27272a] text-zinc-400 hover:border-zinc-700"
               }`}
             >
               {tab.label}
@@ -282,7 +282,7 @@ export default function AdminBookingsPage() {
               placeholder="Search by name, phone, or booking number... (auto-search)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-[#121212] border-[#27272a] text-white h-10 text-sm"
+              className="pl-10 bg-[var(--surface)] border-[#27272a] text-white h-10 text-sm"
             />
             {loading && (
               <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary animate-spin" />
@@ -297,7 +297,7 @@ export default function AdminBookingsPage() {
           <Loader2 className="h-8 w-8 text-primary animate-spin" />
         </div>
       ) : bookings.length === 0 ? (
-        <Card className="bg-[#121212] border-[#27272a] p-12">
+        <Card className="bg-[var(--surface)] border-[#27272a] p-12">
           <div className="text-center space-y-2">
             <Receipt className="h-12 w-12 text-zinc-700 mx-auto" />
             <h3 className="text-lg font-black text-zinc-600 uppercase">No Bookings Found</h3>
@@ -305,10 +305,10 @@ export default function AdminBookingsPage() {
           </div>
         </Card>
       ) : (
-        <Card className="bg-[#121212] border-[#27272a] overflow-hidden">
+        <Card className="bg-[var(--surface)] border-[#27272a] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-[#0a0a0a] border-b border-[#27272a]">
+              <thead className="bg-[var(--background)] border-b border-[#27272a]">
                 <tr>
                   <th className="py-4 px-4 text-left text-[10px] text-zinc-500 font-black uppercase tracking-wider">
                     Booking #
@@ -347,7 +347,7 @@ export default function AdminBookingsPage() {
                     <Fragment key={`group-${group.phone}`}>
                       {/* Parent Row - Customer Summary */}
                       <tr
-                        className={`group hover:bg-[#1a1a1a] transition-colors ${!isSingleBooking ? 'cursor-pointer' : ''}`}
+                        className={`group hover:bg-[var(--surface-hover)] transition-colors ${!isSingleBooking ? 'cursor-pointer' : ''}`}
                         onClick={() => !isSingleBooking && toggleCustomerExpansion(group.phone)}
                       >
                         <td className="py-4 px-4">
@@ -523,7 +523,7 @@ export default function AdminBookingsPage() {
                       {!isSingleBooking && isExpanded && group.bookings.map((booking, index) => {
                         const deviceSlot = booking.booking_device_slots?.[0];
                         return (
-                          <tr key={booking.id} className="bg-[#0a0a0a] hover:bg-[#121212] transition-colors border-l-4 border-l-primary/30">
+                          <tr key={booking.id} className="bg-[var(--background)] hover:bg-[var(--surface)] transition-colors border-l-4 border-l-primary/30">
                             <td className="py-3 px-4 pl-12">
                               <p className="text-sm font-black text-primary font-mono">{booking.booking_number}</p>
                               <p className="text-[10px] text-data-placeholder mt-0.5">

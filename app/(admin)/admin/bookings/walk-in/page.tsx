@@ -222,7 +222,7 @@ export default function WalkInBookingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-4 md:p-8">
+    <div className="min-h-screen bg-[var(--background)] text-white p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -238,7 +238,7 @@ export default function WalkInBookingPage() {
                   router.push("/admin/bookings");
                 }
               }}
-              className="bg-primary hover:bg-primary-hover text-black font-black"
+              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               {step > 1 ? "Back" : "Cancel"}
@@ -294,7 +294,7 @@ export default function WalkInBookingPage() {
                   return (
                     <Card
                       key={deviceType.id}
-                      className={`bg-[#111] border p-4 cursor-pointer transition-all ${isAvailable
+                      className={`bg-[var(--surface)] border p-4 cursor-pointer transition-all ${isAvailable
                         ? "border-zinc-900 hover:border-primary"
                         : "border-zinc-900 opacity-50 cursor-not-allowed"
                         }`}
@@ -339,7 +339,7 @@ export default function WalkInBookingPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Calendar */}
-              <Card className="bg-[#111] border border-zinc-900 p-4">
+              <Card className="bg-[var(--surface)] border border-zinc-900 p-4">
                 <h3 className="text-xs font-black text-zinc-500 uppercase mb-4">Select Date</h3>
                 <div className="flex justify-center">
                   <Calendar
@@ -352,7 +352,7 @@ export default function WalkInBookingPage() {
               </Card>
 
               {/* Time Slots */}
-              <Card className="bg-[#111] border border-zinc-900 p-4">
+              <Card className="bg-[var(--surface)] border border-zinc-900 p-4">
                 <h3 className="text-xs font-black text-zinc-500 uppercase mb-4">Select Time Slot</h3>
                 {loadingSlots ? (
                   <div className="flex items-center justify-center h-64">
@@ -377,8 +377,8 @@ export default function WalkInBookingPage() {
                                   disabled={isBooked}
                                   onClick={() => handleSelectSlot(slot)}
                                   className={`w-full p-3 border text-left flex justify-between items-center rounded-lg transition-all ${isBooked
-                                    ? "bg-zinc-950/20 border-zinc-950 text-zinc-800 line-through cursor-not-allowed"
-                                    : "bg-[#0a0a0a] border-zinc-900 text-zinc-300 hover:border-primary"
+                                    ? "bg-[var(--background)]/20 border-zinc-950 text-zinc-800 line-through cursor-not-allowed"
+                                    : "bg-[var(--background)] border-zinc-900 text-zinc-300 hover:border-primary"
                                     }`}
                                 >
                                   <span className="text-xs font-bold">{slot.label}</span>
@@ -406,7 +406,7 @@ export default function WalkInBookingPage() {
 
             {/* Phase 1: Primary Mobile Verification */}
             {!showFullRegistrationFields ? (
-              <Card className="bg-[#111] border border-zinc-900 p-6 space-y-6 rounded-2xl shadow-2xl animate-in fade-in duration-200">
+              <Card className="bg-[var(--surface)] border border-zinc-900 p-6 space-y-6 rounded-2xl shadow-2xl animate-in fade-in duration-200">
                 <div className="border-b border-zinc-900 pb-4 space-y-1">
                   <h3 className="text-lg font-black uppercase text-white tracking-tight">WALK-IN PROFILE IDENTIFICATION</h3>
                   <p className="text-xs text-zinc-500 font-medium">Verify the customer's mobile number to load profiles automatically.</p>
@@ -427,12 +427,12 @@ export default function WalkInBookingPage() {
                         placeholder="Enter 10-digit number"
                         value={customerPhone}
                         onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, ""))}
-                        className="bg-zinc-950 border-zinc-900 h-12 pl-12 text-sm text-white font-mono tracking-wider focus-visible:ring-primary rounded-xl"
+                        className="bg-[var(--background)] border-zinc-900 h-12 pl-12 text-sm text-white font-mono tracking-wider focus-visible:ring-primary rounded-xl"
                       />
                     </div>
                   </div>
 
-                  <Button type="submit" disabled={checkingProfile} className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 shadow-xl">
+                  <Button type="submit" disabled={checkingProfile} className="w-full bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 shadow-xl">
                     {checkingProfile ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "VERIFY CUSTOMER PROFILE"} <ChevronRight className="h-4 w-4 stroke-[3]" />
                   </Button>
                 </form>
@@ -443,13 +443,13 @@ export default function WalkInBookingPage() {
               </Card>
             ) : (
               /* Phase 2: Supplemental Registration Form (Triggered for new entries) */
-              <Card className="bg-[#111] border border-zinc-900 p-6 space-y-6 rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200">
+              <Card className="bg-[var(--surface)] border border-zinc-900 p-6 space-y-6 rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200">
                 <div className="border-b border-zinc-900 pb-4 space-y-1">
                   <h3 className="text-lg font-black uppercase text-white tracking-tight">WALK-IN ACCOUNT SIGNUP</h3>
                   <p className="text-xs text-zinc-500 font-medium">Please generate contact tokens to instantiate profile logs.</p>
                 </div>
 
-                <div className="bg-zinc-950 p-3.5 border border-zinc-900 rounded-xl flex items-center justify-between gap-4 text-xs select-none">
+                <div className="bg-[var(--background)] p-3.5 border border-zinc-900 rounded-xl flex items-center justify-between gap-4 text-xs select-none">
                   <div className="space-y-0.5">
                     <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest block">Customer Phone Number:</span>
                     <span className="text-primary font-mono font-black tracking-wider">+91 {customerPhone}</span>
@@ -475,7 +475,7 @@ export default function WalkInBookingPage() {
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="Enter customer's full name"
-                      className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl"
+                      className="bg-[var(--background)] border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl"
                     />
                   </div>
 
@@ -491,7 +491,7 @@ export default function WalkInBookingPage() {
                       maxLength={10}
                       value={customerDob}
                       onChange={handleDobChange}
-                      className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white font-mono tracking-wider focus-visible:ring-primary rounded-xl placeholder:text-zinc-700"
+                      className="bg-[var(--background)] border-zinc-900 h-12 text-sm text-white font-mono tracking-wider focus-visible:ring-primary rounded-xl placeholder:text-zinc-700"
                     />
                   </div>
 
@@ -505,12 +505,12 @@ export default function WalkInBookingPage() {
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
                       placeholder="customer@domain.com"
-                      className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl"
+                      className="bg-[var(--background)] border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl"
                     />
                   </div>
 
                   <div className="pt-4 space-y-2">
-                    <Button type="submit" className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1 shadow-lg">
+                    <Button type="submit" className="w-full bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1 shadow-lg">
                       PROCEED TO ORDER SUMMARY <ChevronRight className="h-4 w-4 stroke-[3]" />
                     </Button>
                   </div>
@@ -526,7 +526,7 @@ export default function WalkInBookingPage() {
           <div className="space-y-6 max-w-2xl mx-auto">
             <h2 className="text-xl font-black uppercase text-zinc-400">Confirm Booking</h2>
 
-            <Card className="bg-[#111] border border-zinc-900 p-6 space-y-6 rounded-2xl">
+            <Card className="bg-[var(--surface)] border border-zinc-900 p-6 space-y-6 rounded-2xl">
 
 
               {/* Summary Breakdown Fields Matrix */}
@@ -558,11 +558,11 @@ export default function WalkInBookingPage() {
                   <span className="text-primary font-bold">{selectedSlot.label}</span>
                 </div>
               </div>
-              <div className="bg-zinc-950/40 p-4 border border-zinc-900 rounded-xl space-y-3">
+              <div className="bg-[var(--background)]/40 p-4 border border-zinc-900 rounded-xl space-y-3">
                 <Label className="text-[10px] font-black uppercase text-zinc-400 tracking-wider block">
                   Assign Player Allocation Count
                 </Label>
-                <div className="flex items-center justify-between bg-zinc-950 border border-zinc-900/60 rounded-lg p-3">
+                <div className="flex items-center justify-between bg-[var(--background)] border border-zinc-900/60 rounded-lg p-3">
                   <p className="text-xs text-zinc-500 font-medium">
                     {selectedDeviceType.included_players} included • Max {selectedDeviceType.max_players}
                   </p>
@@ -586,7 +586,7 @@ export default function WalkInBookingPage() {
                         }
                       }}
                       disabled={playerCount >= selectedDeviceType.max_players}
-                      className="w-7 h-7 rounded-md bg-primary text-black flex items-center justify-center font-bold active:scale-95 transition-all"
+                      className="w-7 h-7 rounded-md bg-gradient-primary text-[var(--button-text)] flex items-center justify-center font-bold active:scale-95 transition-all"
                     >
                       <Plus className="h-3 w-3 stroke-[2.5]" />
                     </button>
@@ -594,7 +594,7 @@ export default function WalkInBookingPage() {
                 </div>
               </div>
 
-              <div className="space-y-2 text-sm border-t border-zinc-900 pt-4 bg-zinc-950/20 p-3 rounded-xl">
+              <div className="space-y-2 text-sm border-t border-zinc-900 pt-4 bg-[var(--background)]/20 p-3 rounded-xl">
                 <div className="flex justify-between">
                   <span className="text-zinc-500">Base Station Rate:</span>
                   <span className="text-white font-bold">₹{baseRate}.00</span>
@@ -614,14 +614,14 @@ export default function WalkInBookingPage() {
               <div className="flex gap-3 pt-4 border-t border-zinc-900/60">
                 <Button
                   onClick={() => setStep(3)}
-                  className="flex-1 border-zinc-800 bg-primary hover:bg-primary-hover text-black font-black h-12 rounded-xl text-xs uppercase"
+                  className="flex-1 border-zinc-800 bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black h-12 rounded-xl text-xs uppercase"
                 >
                   Back to Registration
                 </Button>
                 <Button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="flex-1 bg-primary hover:bg-primary-hover text-black font-black uppercase h-12 rounded-xl text-xs shadow-xl transition-all active:scale-[0.99]"
+                  className="flex-1 bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase h-12 rounded-xl text-xs shadow-xl transition-all active:scale-[0.99]"
                 >
                   {submitting ? (
                     <>

@@ -2,8 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { BookingStatusBadge } from "./BookingStatusBadge";
 
 interface TimelineBooking {
@@ -107,22 +105,6 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
 
   const currentTimePosition = getCurrentTimePosition();
 
-  const handlePrevDay = () => {
-    const prev = new Date(selectedDate);
-    prev.setDate(prev.getDate() - 1);
-    onDateChange(prev);
-  };
-
-  const handleNextDay = () => {
-    const next = new Date(selectedDate);
-    next.setDate(next.getDate() + 1);
-    onDateChange(next);
-  };
-
-  const handleToday = () => {
-    onDateChange(new Date());
-  };
-
   // Scroll to current time on mount (if today)
   useEffect(() => {
     if (currentTimePosition && scrollRef.current) {
@@ -132,49 +114,16 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
   }, [currentTimePosition, selectedDate]);
 
   return (
-    <Card className="bg-gradient-to-br from-[#111] via-zinc-950 to-[#111] border-2 border-primary/30 overflow-hidden shadow-[0_0_40px_rgba(255,193,7,0.2)] relative">
+    <Card className="bg-gradient-to-br from-[var(--background)] via-[var(--surface)] to-[var(--background)] border-2 border-primary/30 overflow-hidden glow-box-strong relative">
       {/* Animated gradient background */}
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent animate-shimmer pointer-events-none" />
 
       {/* Header */}
       <div className="p-4 border-b border-primary/20 flex items-center justify-between relative z-10">
-        <div className="flex items-center gap-4">
-          <h3 className="text-sm font-black text-primary uppercase tracking-wider flex items-center gap-2">
-            <div className="w-1 h-4 bg-gradient-to-b from-primary to-amber-500 rounded-full" />
-            Timeline View
-          </h3>
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={handlePrevDay}
-              className="h-8 w-8 p-0 text-zinc-400 hover:text-primary hover:bg-primary/10 transition-all"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <div className="flex items-center gap-2 bg-gradient-to-r from-primary/20 via-amber-500/10 to-primary/20 border border-primary/30 rounded-lg px-3 py-1.5 shadow-[0_0_10px_rgba(255,193,7,0.1)]">
-              <Calendar className="h-3 w-3 text-primary" />
-              <span className="text-sm font-bold text-white">
-                {selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-              </span>
-            </div>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={handleNextDay}
-              className="h-8 w-8 p-0 text-zinc-400 hover:text-primary hover:bg-primary/10 transition-all"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-          <Button
-            size="sm"
-            onClick={handleToday}
-            className="bg-gradient-to-r from-primary via-amber-400 to-primary hover:shadow-[0_0_20px_rgba(255,193,7,0.4)] text-black font-black uppercase text-[10px] h-7 px-3 transition-all"
-          >
-            Today
-          </Button>
-        </div>
+        <h3 className="text-sm font-black text-primary uppercase tracking-wider flex items-center gap-2">
+          <div className="w-1 h-4 bg-gradient-to-b from-primary to-primary rounded-full" />
+          Timeline View
+        </h3>
         <div className="text-xs text-zinc-500">
           {bookings.length} booking{bookings.length !== 1 ? 's' : ''} on this day
         </div>
@@ -189,7 +138,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
         >
           <div className="min-w-max">
             {/* Hour labels */}
-            <div className="sticky top-0 z-10 bg-gradient-to-b from-zinc-950 to-black border-b border-primary/20 flex">
+            <div className="sticky top-0 z-10 bg-gradient-to-b from-[var(--background)] to-[var(--surface)] border-b border-primary/20 flex">
               <div className="w-40 flex-shrink-0 border-r border-primary/20 p-3">
                 <span className="text-[10px] font-black text-primary uppercase">Device</span>
               </div>
@@ -222,7 +171,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
               deviceKeys.map((deviceKey) => (
                 <div key={deviceKey} className="flex border-b border-zinc-800/50 hover:bg-primary/5 transition-colors relative group">
                   {/* Device label */}
-                  <div className="w-40 flex-shrink-0 border-r border-zinc-800/50 p-3 flex items-center sticky left-0 bg-gradient-to-r from-zinc-950 to-black z-10 group-hover:from-primary/10 group-hover:to-amber-500/5">
+                  <div className="w-40 flex-shrink-0 border-r border-zinc-800/50 p-3 flex items-center sticky left-0 bg-gradient-to-r from-[var(--background)] to-[var(--surface)] z-10 group-hover:from-primary/10 group-hover:to-primary/5">
                     <div>
                       <p className="text-xs font-black text-white">{deviceKey.split(' #')[0]}</p>
                       <p className="text-[10px] text-zinc-500">Station #{deviceKey.split('#')[1]}</p>
@@ -291,7 +240,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
       </div>
 
       {/* Legend */}
-      <div className="p-3 border-t border-[#27272a] flex items-center gap-4 bg-[#0a0a0a]">
+      <div className="p-3 border-t border-[#27272a] flex items-center gap-4 bg-[var(--background)]">
         <span className="text-[10px] font-black text-zinc-500 uppercase">Status:</span>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">

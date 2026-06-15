@@ -24,9 +24,9 @@ interface DeviceTableProps {
 
 export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTableProps) {
   return (
-    <div className="border border-[#27272a] rounded-xl bg-[#121212] overflow-hidden">
+    <div className="border border-[#27272a] rounded-xl bg-[var(--surface)] overflow-hidden">
       <table className="w-full text-left text-sm">
-        <thead className="bg-[#0a0a0a] border-b border-[#27272a]">
+        <thead className="bg-[var(--background)] border-b border-[#27272a]">
           <tr>
             <th className="py-4 px-6 text-[10px] text-[#a1a1aa] font-semibold uppercase tracking-wider">Image</th>
             <th className="py-4 px-6 text-[10px] text-[#a1a1aa] font-semibold uppercase tracking-wider">Station #</th>
@@ -44,9 +44,9 @@ export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTabl
             const isAvailable = statusClean === "available";
 
             return (
-              <tr key={device.id} className="group hover:bg-[#1a1a1a] transition-all duration-300">
+              <tr key={device.id} className="group hover:bg-[var(--surface-hover)] transition-all duration-300">
                 <td className="py-3 px-6">
-                  <div className="h-10 w-14 bg-[#1a1a1a] border border-[#27272a] rounded overflow-hidden flex items-center justify-center">
+                  <div className="h-10 w-14 bg-[var(--surface-hover)] border border-[#27272a] rounded overflow-hidden flex items-center justify-center">
                     {device.image_url ? (
                       <img src={device.image_url} alt="Cover" className="w-full h-full object-cover p-1" />
                     ) : (
@@ -95,7 +95,7 @@ export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTabl
                         </Button>
                       </AlertDialogTrigger>
 
-                      <AlertDialogContent className="bg-[#121212] border border-[#27272a] text-white">
+                      <AlertDialogContent className="bg-[var(--surface)] border border-[#27272a] text-white">
                         <AlertDialogHeader>
                           <AlertDialogTitle className="text-xl font-bold">Remove Terminal Record?</AlertDialogTitle>
                           <AlertDialogDescription className="text-[#a1a1aa] text-sm">
@@ -108,7 +108,7 @@ export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTabl
                           </AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => onDelete(device.id)}
-                            className="bg-primary text-black font-semibold"
+                            className="bg-gradient-primary text-[var(--button-text)] font-semibold"
                           >
                             Confirm Delete
                           </AlertDialogAction>

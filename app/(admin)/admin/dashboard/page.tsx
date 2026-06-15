@@ -92,7 +92,7 @@ export default function AdminDashboardPage() {
           </div>
           <Button
             onClick={() => router.push("/admin/bookings/walk-in")}
-            className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-10 px-6"
+            className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-10 px-6"
           >
             <Plus className="h-4 w-4 mr-2" />
             New Walk-In
@@ -178,7 +178,7 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        <Card className="bg-[#121212] border-[#27272a] p-5">
+        <Card className="bg-[var(--surface)] border-[#27272a] p-5">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-xs font-black uppercase text-zinc-500 mb-1">
@@ -201,7 +201,7 @@ export default function AdminDashboardPage() {
 
       {/* Secondary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-[#121212] border-[#27272a] p-5">
+        <Card className="bg-[var(--surface)] border-[#27272a] p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-black uppercase text-zinc-500">
               Today's Food Orders
@@ -216,7 +216,7 @@ export default function AdminDashboardPage() {
           </p>
         </Card>
 
-        <Card className="bg-[#121212] border-[#27272a] p-5">
+        <Card className="bg-[var(--surface)] border-[#27272a] p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-black uppercase text-zinc-500">
               Peak Hour Today
@@ -231,7 +231,7 @@ export default function AdminDashboardPage() {
           </p>
         </Card>
 
-        <Card className="bg-[#121212] border-[#27272a] p-5">
+        <Card className="bg-[var(--surface)] border-[#27272a] p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-black uppercase text-zinc-500">
               Quick Actions
@@ -242,7 +242,7 @@ export default function AdminDashboardPage() {
             <Button
               onClick={() => router.push("/admin/bookings")}
               size="sm"
-              className="bg-primary hover:bg-primary-hover text-black font-black w-full justify-center "
+              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black w-full justify-center "
             >
               <Eye className="h-4 w-4 mr-2" />
               View All Bookings
@@ -250,7 +250,7 @@ export default function AdminDashboardPage() {
             <Button
               onClick={() => router.push("/admin/reports")}
               size="sm"
-              className="w-full justify-center bg-primary hover:bg-primary-hover text-black font-black"
+              className="w-full justify-center bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black"
             >
               <TrendingUp className="h-4 w-4 mr-2" />
               View Reports
@@ -261,7 +261,7 @@ export default function AdminDashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Today's Schedule */}
-        <Card className="bg-[#121212] border-[#27272a] p-6">
+        <Card className="bg-[var(--surface)] border-[#27272a] p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-black uppercase text-zinc-400">
               Today's Schedule
@@ -282,7 +282,7 @@ export default function AdminDashboardPage() {
               todaysSchedule.map((slot: any) => (
                 <div
                   key={slot.id}
-                  className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#27272a] rounded-lg"
+                  className="flex items-center justify-between p-3 bg-[var(--background)] border border-[#27272a] rounded-lg"
                 >
                   <div className="flex items-center gap-3 flex-1">
                     <div className="flex flex-col items-center justify-center w-16 h-16 bg-zinc-900 rounded-lg">
@@ -320,7 +320,7 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Recent Bookings */}
-        <Card className="bg-[#121212] border-[#27272a] p-6">
+        <Card className="bg-[var(--surface)] border-[#27272a] p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-black uppercase text-zinc-400">
               Recent Bookings
@@ -343,7 +343,7 @@ export default function AdminDashboardPage() {
                 return (
                   <div
                     key={booking.id}
-                    className="flex items-center justify-between p-3 bg-[#0a0a0a] border border-[#27272a] rounded-lg hover:border-zinc-700 transition-colors cursor-pointer"
+                    className="flex items-center justify-between p-3 bg-[var(--background)] border border-[#27272a] rounded-lg hover:border-zinc-700 transition-colors cursor-pointer"
                     onClick={() => router.push("/admin/bookings")}
                   >
                     <div className="flex-1">
@@ -384,12 +384,12 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* System Status */}
-      <Card className="bg-[#121212] border-[#27272a] p-6">
+      <Card className="bg-[var(--surface)] border-[#27272a] p-6">
         <h3 className="text-sm font-black uppercase text-zinc-400 mb-4">
           System Status
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="flex items-center gap-3 p-3 bg-[#0a0a0a] border border-[#27272a] rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-[var(--background)] border border-[#27272a] rounded-lg">
             <div className="p-2 bg-green-500/10 rounded-lg">
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             </div>
@@ -399,7 +399,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-3 bg-[#0a0a0a] border border-[#27272a] rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-[var(--background)] border border-[#27272a] rounded-lg">
             <div className="p-2 bg-green-500/10 rounded-lg">
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             </div>
@@ -409,7 +409,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-3 bg-[#0a0a0a] border border-[#27272a] rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-[var(--background)] border border-[#27272a] rounded-lg">
             <div className="p-2 bg-green-500/10 rounded-lg">
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             </div>
@@ -419,7 +419,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-3 bg-[#0a0a0a] border border-[#27272a] rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-[var(--background)] border border-[#27272a] rounded-lg">
             <div className="p-2 bg-green-500/10 rounded-lg">
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             </div>

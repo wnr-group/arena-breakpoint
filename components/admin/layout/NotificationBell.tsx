@@ -35,7 +35,7 @@ export function NotificationBell() {
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-zinc-400 hover:text-primary transition-colors duration-300 rounded-lg hover:bg-[#1a1a1a]"
+        className="relative p-2 text-zinc-400 hover:text-primary transition-colors duration-300 rounded-lg hover:bg-[var(--surface-hover)]"
         title="Notifications"
       >
         <Bell className="h-5 w-5" />

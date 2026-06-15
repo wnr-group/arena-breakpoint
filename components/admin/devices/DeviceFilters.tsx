@@ -53,7 +53,7 @@ export function DeviceFilters({
       </div>
 
       {/* Toolbar Controls */}
-      <div className="flex flex-wrap items-center gap-3 bg-[#121212] border border-[#27272a] rounded-xl p-2 transition-all duration-500 hover:border-[#3f3f46]">
+      <div className="flex flex-wrap items-center gap-3 bg-[var(--surface)] border border-[#27272a] rounded-xl p-2 transition-all duration-500 hover:border-[#3f3f46]">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#a1a1aa]" />
           <Input
@@ -71,11 +71,11 @@ export function DeviceFilters({
           onChange={(e) => setStatusFilter(e.target.value)}
           className="bg-transparent text-[#a1a1aa] hover:text-white text-sm border-none focus:ring-0 cursor-pointer outline-none px-2"
         >
-          <option value="All" className="bg-[#121212]">All Statuses</option>
-          <option value="available" className="bg-[#121212]">Available</option>
-          <option value="occupied" className="bg-[#121212]">Occupied</option>
-          <option value="maintenance" className="bg-[#121212]">Maintenance</option>
-          <option value="inactive" className="bg-[#121212]">Inactive</option>
+          <option value="All" className="bg-[var(--surface)]">All Statuses</option>
+          <option value="available" className="bg-[var(--surface)]">Available</option>
+          <option value="occupied" className="bg-[var(--surface)]">Occupied</option>
+          <option value="maintenance" className="bg-[var(--surface)]">Maintenance</option>
+          <option value="inactive" className="bg-[var(--surface)]">Inactive</option>
         </select>
 
         <div className="h-6 w-px bg-[#27272a]"></div>
@@ -87,14 +87,14 @@ export function DeviceFilters({
             setTypeTab("All Devices");
             setStatusFilter("All");
           }}
-          className="text-[#a1a1aa] text-sm hover:bg-[#1a1a1a]"
+          className="text-[#a1a1aa] text-sm hover:bg-[var(--surface-hover)]"
         >
           Reset
         </Button>
 
         <div className="h-6 w-px bg-[#27272a]"></div>
 
-        <div className="flex bg-[#0a0a0a] rounded-lg p-1 border border-[#27272a]">
+        <div className="flex bg-[var(--background)] rounded-lg p-1 border border-[#27272a]">
           <button
             onClick={() => setViewMode('table')}
             className={`p-1.5 rounded-md transition-all ${viewMode === 'table' ? 'bg-[#27272a] text-white' : 'text-[#a1a1aa]'}`}

@@ -15,7 +15,7 @@ interface PromoCodeTableProps {
 export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTableProps) {
   if (promos.length === 0) {
     return (
-      <div className="p-12 text-center border border-zinc-900 rounded-xl bg-[#111] space-y-4">
+      <div className="p-12 text-center border border-zinc-900 rounded-xl bg-[var(--surface)] space-y-4">
         <Tag className="h-12 w-12 text-zinc-700 mx-auto" />
         <div>
           <h3 className="text-sm font-bold text-zinc-500 mb-1">No Promo Codes Yet</h3>
@@ -24,7 +24,7 @@ export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTab
         {onAdd && (
           <Button
             onClick={onAdd}
-            className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs"
+            className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs"
           >
             Create First Promo Code
           </Button>
@@ -34,13 +34,13 @@ export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTab
   }
 
   return (
-    <Card className="bg-[#111] border-zinc-900 rounded-xl overflow-hidden shadow-2xl w-full overflow-x-auto">
-      <div className="p-4 bg-zinc-950/40 border-b border-zinc-900 font-black text-xs uppercase text-zinc-400 tracking-wider">
+    <Card className="bg-[var(--surface)] border-zinc-900 rounded-xl overflow-hidden shadow-2xl w-full overflow-x-auto">
+      <div className="p-4 bg-[var(--background)]/40 border-b border-zinc-900 font-black text-xs uppercase text-zinc-400 tracking-wider">
         Active Promo Code List
       </div>
       <table className="w-full text-left border-collapse text-xs table-fixed min-w-[800px]">
         <thead>
-          <tr className="border-b border-zinc-900 bg-zinc-950/20 text-zinc-500 font-black uppercase text-[11px] tracking-wider select-none">
+          <tr className="border-b border-zinc-900 bg-[var(--background)]/20 text-zinc-500 font-black uppercase text-[11px] tracking-wider select-none">
             <th className="p-4 w-[20%]">Code</th>
             <th className="p-4 w-[30%]">Description</th>
             <th className="p-4 w-[15%]">Discount</th>
@@ -51,7 +51,7 @@ export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTab
         </thead>
         <tbody className="divide-y divide-zinc-900/60 font-medium">
           {promos.map((row) => (
-            <tr key={row.id} className="group hover:bg-zinc-950/30 transition-colors">
+            <tr key={row.id} className="group hover:bg-[var(--background)]/30 transition-colors">
               <td className="p-4 font-black text-primary tracking-wide uppercase truncate">{row.code}</td>
               <td className="p-4 text-zinc-400 truncate">{row.description || "—"}</td>
               <td className="p-4 text-white font-bold whitespace-nowrap">
@@ -66,7 +66,7 @@ export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTab
                 {row.is_active ? (
                   <span className="bg-green-500/10 text-green-400 border border-green-500/20 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Live</span>
                 ) : (
-                  <span className="bg-zinc-950/80 text-red-400 border border-zinc-900 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Inactive</span>
+                  <span className="bg-[var(--background)]/80 text-red-400 border border-zinc-900 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Inactive</span>
                 )}
               </td>
               <td className="p-4 w-24 min-w-[96px] whitespace-nowrap">

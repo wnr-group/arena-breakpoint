@@ -136,7 +136,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
             placeholder="Search by name, phone, or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-zinc-950 border-zinc-800 text-white text-sm h-10"
+            className="pl-10 bg-[var(--background)] border-zinc-800 text-white text-sm h-10"
           />
           {searchQuery && (
             <button
@@ -164,8 +164,8 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 size="sm"
                 className={`text-xs font-black uppercase h-8 transition-all duration-300 ${
                   membershipFilter === filter.value
-                    ? "bg-gradient-to-r from-primary to-yellow-400 text-black shadow-[0_0_15px_rgba(255,193,7,0.4)]"
-                    : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-white border border-zinc-800"
+                    ? "bg-gradient-primary text-[var(--button-text)] glow-box"
+                    : "bg-[var(--surface)] text-zinc-400 hover:bg-[var(--surface-hover)] hover:text-white border border-[#27272a]"
                 }`}
               >
                 {filter.label}
@@ -188,7 +188,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
         <Card className="bg-[#0c0c0e]/40 border-zinc-900 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.6)] w-full overflow-x-auto p-1">
           <table className="w-full text-left border-collapse text-sm table-fixed min-w-[1200px]">
             <thead>
-              <tr className="border-b border-zinc-900 bg-zinc-950/20 text-zinc-500 font-black uppercase text-[11px] tracking-widest select-none">
+              <tr className="border-b border-zinc-900 bg-[var(--background)]/20 text-zinc-500 font-black uppercase text-[11px] tracking-widest select-none">
                 <th className="p-4 w-[20%]">
                   <button
                     onClick={() => handleSort("name")}
@@ -244,7 +244,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
             const isActive = row.subscription_status === "active";
 
             return (
-              <tr key={row.id} className="group hover:bg-zinc-950/40 transition-all duration-200 border-l-2 border-transparent hover:border-l-primary">
+              <tr key={row.id} className="group hover:bg-[var(--background)]/40 transition-all duration-200 border-l-2 border-transparent hover:border-l-primary">
 
                 {/* Customer Details Name Block */}
                 <td className="p-4 font-black tracking-wide flex items-center gap-3">
@@ -312,7 +312,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                       {row.subscription_name}
                     </span>
                   ) : (
-                    <span className="bg-zinc-950/80 text-red-400 border border-zinc-900 text-[9px] font-black px-2.5 py-1 rounded-lg uppercase">No Plan Active</span>
+                    <span className="bg-[var(--background)]/80 text-red-400 border border-zinc-900 text-[9px] font-black px-2.5 py-1 rounded-lg uppercase">No Plan Active</span>
                   )}
                 </td>
 

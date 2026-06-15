@@ -102,8 +102,25 @@ export default function SubscriptionsCards() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#0d0a14] flex items-center justify-center px-4 py-16">
-      <div className="w-full max-w-6xl">
+    <div className="min-h-screen relative bg-[#0d0a14] flex items-center justify-center px-4 py-16 overflow-hidden">
+      {/* Base gradient overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/5 via-[#0d0a14] to-[#0d0a14] pointer-events-none" />
+
+      {/* Animated golden blobs */}
+      <div
+        className="absolute top-20 left-1/4 w-[600px] h-[600px] bg-gradient-to-r from-amber-500/10 to-yellow-500/10 rounded-full blur-[100px] animate-pulse pointer-events-none"
+        style={{ willChange: 'opacity' }}
+      />
+      <div
+        className="absolute bottom-20 right-1/4 w-[500px] h-[500px] bg-gradient-to-l from-orange-600/10 to-amber-500/10 rounded-full blur-[100px] animate-pulse pointer-events-none"
+        style={{ animationDelay: '1.5s', willChange: 'opacity' }}
+      />
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-tr from-amber-500/5 via-transparent to-yellow-500/5 rounded-full blur-[120px] animate-pulse pointer-events-none"
+        style={{ animationDelay: '3s', willChange: 'opacity' }}
+      />
+
+      <div className="w-full max-w-6xl relative z-10">
         {/* Left Aligned Staggered Heading */}
         <div className="text-left mb-16 flex flex-col items-start">
           {/* Main Title  */}

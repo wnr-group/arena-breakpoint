@@ -83,7 +83,7 @@ export default function SubscriptionPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-8 bg-[#0a0a0a] min-h-screen text-white animate-in fade-in duration-700">
+    <div className="flex flex-col gap-6 p-4 sm:p-8 bg-[var(--background)] min-h-screen text-white animate-in fade-in duration-700">
       {/* HEADER PANEL */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
         <div className="space-y-1 animate-in slide-in-from-left-4 duration-500">
@@ -94,7 +94,7 @@ export default function SubscriptionPage() {
         </div>
         <Button
           onClick={() => setIsAddOpen(true)}
-          className="bg-[#FFC107] hover:bg-[#ffcd38] text-black font-semibold rounded-md px-6 transition-all duration-300 hover:scale-[1.02] shadow-[0_0_15px_rgba(255,193,7,0.15)]"
+          className="bg-gradient-primary hover:bg-gradient-primary-hover text-black font-semibold rounded-md px-6 transition-all duration-300 hover:scale-[1.02] shadow-[0_0_15px_rgba(184,134,11,0.15)]"
         >
           <PlusCircle className="mr-2 h-4 w-4" /> Add Subscription
         </Button>
@@ -103,7 +103,7 @@ export default function SubscriptionPage() {
       {/* MAIN TABLE AREA */}
       <div className="mt-2 animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-[#121212] border border-[#27272a] rounded-xl text-[#a1a1aa] gap-3">
+          <div className="flex flex-col items-center justify-center py-20 bg-[var(--surface)] border border-[#27272a] rounded-xl text-[#a1a1aa] gap-3">
             <Loader2 className="h-8 w-8 animate-spin text-[#FFC107]" />
             <p className="text-sm font-medium">Loading subscription data...</p>
           </div>
@@ -130,7 +130,7 @@ export default function SubscriptionPage() {
 
       {/* DELETE CONFIRMATION ALERT DIALOG */}
       <AlertDialog open={!!planToDelete} onOpenChange={open => !open && setPlanToDelete(null)}>
-        <AlertDialogContent className="bg-[#121212] border border-[#27272a] text-white">
+        <AlertDialogContent className="bg-[var(--surface)] border border-[#27272a] text-white">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-bold">
               Remove Subscription Plan?
@@ -153,7 +153,7 @@ export default function SubscriptionPage() {
                 confirmDelete()
               }}
               disabled={isPending}
-              className="bg-[#FFC107] text-black hover:bg-[#FFC107]/90 font-semibold flex items-center justify-center"
+              className="bg-gradient-primary text-black hover:bg-gradient-primary/90 font-semibold flex items-center justify-center"
             >
               {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               {isPending ? 'Deleting...' : 'Confirm Delete'}

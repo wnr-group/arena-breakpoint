@@ -116,7 +116,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
   return (
     <div className="space-y-6">
       {/* Summary Card */}
-      <Card className="bg-[#121212] border-[#27272a] p-6">
+      <Card className="bg-[var(--surface)] border-[#27272a] p-6">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs text-zinc-500 font-black uppercase mb-2">Total Expenses</p>
@@ -135,7 +135,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
 
       {/* Add Form */}
       {showAddForm && (
-        <Card className="bg-[#121212] border-primary/40 p-6">
+        <Card className="bg-[var(--surface)] border-primary/40 p-6">
           <h3 className="text-sm font-black uppercase text-white mb-4">Add New Expense</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -144,7 +144,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                 type="date"
                 value={formDate}
                 onChange={(e) => setFormDate(e.target.value)}
-                className="bg-[#0a0a0a] border-zinc-800 text-white"
+                className="bg-[var(--background)] border-zinc-800 text-white"
               />
             </div>
             <div>
@@ -153,7 +153,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                 placeholder="e.g., Electricity Bill"
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
-                className="bg-[#0a0a0a] border-zinc-800 text-white"
+                className="bg-[var(--background)] border-zinc-800 text-white"
               />
             </div>
             <div>
@@ -163,7 +163,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                 placeholder="0.00"
                 value={formAmount}
                 onChange={(e) => setFormAmount(e.target.value)}
-                className="bg-[#0a0a0a] border-zinc-800 text-white"
+                className="bg-[var(--background)] border-zinc-800 text-white"
               />
             </div>
           </div>
@@ -181,10 +181,10 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
       )}
 
       {/* Expenses Table */}
-      <Card className="bg-[#121212] border-[#27272a] overflow-hidden">
+      <Card className="bg-[var(--surface)] border-[#27272a] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-[#0a0a0a] border-b border-[#27272a]">
+            <thead className="bg-[var(--background)] border-b border-[#27272a]">
               <tr>
                 <th className="py-4 px-4 text-left text-[10px] text-zinc-500 font-black uppercase">Date</th>
                 <th className="py-4 px-4 text-left text-[10px] text-zinc-500 font-black uppercase">Description</th>
@@ -203,7 +203,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                 </tr>
               ) : (
                 expenses.map((expense) => (
-                  <tr key={expense.id} className="hover:bg-[#1a1a1a] transition-colors">
+                  <tr key={expense.id} className="hover:bg-[var(--surface-hover)] transition-colors">
                     {editingId === expense.id ? (
                       <>
                         <td className="py-3 px-4">
@@ -211,14 +211,14 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                             type="date"
                             value={formDate}
                             onChange={(e) => setFormDate(e.target.value)}
-                            className="bg-[#0a0a0a] border-zinc-800 text-white h-8 text-sm"
+                            className="bg-[var(--background)] border-zinc-800 text-white h-8 text-sm"
                           />
                         </td>
                         <td className="py-3 px-4">
                           <Input
                             value={formDescription}
                             onChange={(e) => setFormDescription(e.target.value)}
-                            className="bg-[#0a0a0a] border-zinc-800 text-white h-8 text-sm"
+                            className="bg-[var(--background)] border-zinc-800 text-white h-8 text-sm"
                           />
                         </td>
                         <td className="py-3 px-4">
@@ -226,7 +226,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                             type="number"
                             value={formAmount}
                             onChange={(e) => setFormAmount(e.target.value)}
-                            className="bg-[#0a0a0a] border-zinc-800 text-white h-8 text-sm text-right"
+                            className="bg-[var(--background)] border-zinc-800 text-white h-8 text-sm text-right"
                           />
                         </td>
                         <td className="py-3 px-4">

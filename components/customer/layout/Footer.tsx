@@ -21,7 +21,11 @@ export default function Footer() {
           <div className="md:col-span-2 lg:col-span-5 flex flex-col items-start">
             {/* Logo */}
             <div className="flex items-center gap-3 mb-6">
-              <Gamepad2 className="w-8 h-8 text-[#FFC107]" />
+              <img
+                src="/bp_logo.jpeg"
+                alt="Breakpoint Arena Logo"
+                className="w-10 h-10 object-contain rounded-md"
+              />
               <span className="text-2xl font-bold text-white tracking-wide" style={{ fontFamily: "'Oxanium', sans-serif" }}>
                 BREAKPOINT ARENA
               </span>

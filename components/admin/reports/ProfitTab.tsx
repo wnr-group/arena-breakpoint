@@ -110,9 +110,9 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
 
       {/* Revenue Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="bg-[#121212] border-[#27272a] p-6">
+        <Card className="bg-[var(--surface)] border-[#27272a] p-6">
           <h3 className="text-sm font-black uppercase text-white mb-4 flex items-center gap-2">
-            <div className="w-1 h-4 bg-gradient-to-b from-primary to-amber-500 rounded-full" />
+            <div className="w-1 h-4 bg-gradient-to-b from-primary to-primary rounded-full" />
             Revenue Breakdown
           </h3>
           <div className="space-y-4">
@@ -123,7 +123,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
               </div>
               <div className="h-2 bg-zinc-900 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-primary to-amber-500"
+                  className="h-full bg-gradient-to-r from-primary to-primary"
                   style={{ width: `${data.revenue > 0 ? (data.deviceRevenue / data.revenue) * 100 : 0}%` }}
                 />
               </div>
@@ -150,7 +150,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
         </Card>
 
         {/* Profit Chart Placeholder */}
-        <Card className="bg-[#121212] border-[#27272a] p-6">
+        <Card className="bg-[var(--surface)] border-[#27272a] p-6">
           <h3 className="text-sm font-black uppercase text-white mb-4 flex items-center gap-2">
             <div className="w-1 h-4 bg-gradient-to-b from-green-500 to-red-500 rounded-full" />
             Profit Overview

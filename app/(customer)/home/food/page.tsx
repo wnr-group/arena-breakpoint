@@ -5,6 +5,7 @@ import { motion, useInView, AnimatePresence, Variants } from 'framer-motion';
 import { Loader2 } from "lucide-react";
 import { FoodCard } from '@/components/customer/home/food/FoodCard';
 import { getMenuItems } from './action';
+import { SkeletonGrid } from '@/components/shared/SkeletonCard';
 
 export interface Food {
   id: number;
@@ -100,12 +101,19 @@ export default function FoodCollection() {
     <section
       className="relative py-24 overflow-hidden"
       style={{
-        backgroundImage: "url('https://images.unsplash.com/photo-1534423861386-85a16f5d13fd?q=80&w=2000&auto=format&fit=crop')",
+        backgroundImage: "url('/gamer_food.jpg')",
         backgroundSize: 'cover',
         backgroundAttachment: 'fixed',
         backgroundPosition: 'center',
       }}
     >
+      <style jsx>{`
+        @media (max-width: 768px) {
+          section {
+            background-attachment: scroll !important;
+          }
+        }
+      `}</style>
       <div
         className="absolute inset-0 z-0"
         style={{ background: 'linear-gradient(to bottom, #1E1F22 0%, rgba(30,31,34,0.88) 50%, #1E1F22 100%)' }}
@@ -165,12 +173,7 @@ export default function FoodCollection() {
 
         {/* Data View Layer */}
         {isLoading ? (
-          <div className="flex flex-col justify-center items-center py-24 gap-4 text-[#a1a1aa]">
-            <Loader2 className="h-10 w-10 animate-spin text-orange-600" />
-            <p className="font-medium tracking-widest uppercase text-sm" style={{ fontFamily: "'Oxanium', sans-serif" }}>
-              Loading Menu...
-            </p>
-          </div>
+          <SkeletonGrid count={8} />
         ) : foodItems.length === 0 ? (
           <div className="text-center py-24 bg-[#121212]/50 border border-[#27272a]/50 rounded-2xl text-[#a1a1aa] backdrop-blur-sm">
             No items currently available.

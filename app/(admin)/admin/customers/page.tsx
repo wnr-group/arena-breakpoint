@@ -36,7 +36,7 @@ export default function AdminCustomersDashboard() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-900 pb-5">
         <div>
           <h1 className="text-2xl font-black uppercase tracking-tight flex items-center gap-2">
-            <Users className="h-6 w-6 text-[#FFC107]" /> Customer Directory
+            <Users className="h-6 w-6 text-primary" /> Customer Directory
           </h1>
           <p className="text-xs text-zinc-500 font-medium mt-0.5">
             Monitor registered players, search demographics info, and verify subscription tracks.
@@ -57,8 +57,8 @@ export default function AdminCustomersDashboard() {
           </Button>
         </div>
       ) : loading ? (
-        <div className="h-48 w-full flex items-center justify-center border border-zinc-900 rounded-xl bg-[#111]">
-          <Loader2 className="h-6 w-6 text-[#FFC107] animate-spin" />
+        <div className="h-48 w-full flex items-center justify-center border border-zinc-900 rounded-xl bg-[var(--surface)]">
+          <Loader2 className="h-6 w-6 text-primary animate-spin" />
         </div>
       ) : (
         <CustomerTable customers={customers} />

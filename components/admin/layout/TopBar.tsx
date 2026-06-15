@@ -59,13 +59,13 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
   };
 
   return (
-    <header className="h-[72px] flex-shrink-0 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-[#27272a] flex items-center justify-between px-4 md:px-8 animate-in slide-in-from-top-full duration-500 z-40">
+    <header className="h-[72px] flex-shrink-0 bg-[var(--background)]/80 backdrop-blur-md border-b border-[#27272a] flex items-center justify-between px-4 md:px-8 animate-in slide-in-from-top-full duration-500 z-40">
       <div className="flex items-center gap-3 flex-1 max-w-md md:max-w-xl pr-2">
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={onOpenSidebar} 
-          className="text-white hover:bg-[#1a1a1a] md:hidden flex-shrink-0 h-9 w-9"
+          className="text-white hover:bg-[var(--surface-hover)] md:hidden flex-shrink-0 h-9 w-9"
           aria-label="Open navigation sidebar menu"
         >
           <Menu className="h-5 w-5" />
@@ -76,7 +76,7 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
           <Input
             type="text"
             placeholder="Search operations..."
-            className="bg-[#121212] border border-transparent pl-10 text-white placeholder:text-[#a1a1aa] focus-visible:ring-1 focus-visible:ring-primary/50 focus-visible:border-primary focus-visible:bg-[#1a1a1a] shadow-none text-sm w-full transition-all duration-300 rounded-full"
+            className="bg-[var(--surface)] border border-transparent pl-10 text-white placeholder:text-[#a1a1aa] focus-visible:ring-1 focus-visible:ring-primary/50 focus-visible:border-primary focus-visible:bg-[var(--surface-hover)] shadow-none text-sm w-full transition-all duration-300 rounded-full"
           />
         </div>
       </div>
@@ -104,7 +104,7 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
           variant="ghost"
           size="icon"
           onClick={handleLogout}
-          className="text-zinc-400 hover:text-primary hover:bg-[#1a1a1a] transition-all duration-300 h-9 w-9"
+          className="text-zinc-400 hover:text-primary hover:bg-[var(--surface-hover)] transition-all duration-300 h-9 w-9"
           title="Logout"
         >
           <LogOut className="h-5 w-5" />

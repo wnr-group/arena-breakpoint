@@ -69,10 +69,10 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
         return (
           <Card
             key={item.id}
-            className="bg-[#121212] border-[#27272a] hover:border-primary/50 hover:shadow-[0_0_20px_rgba(255,193,7,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden group relative"
+            className="bg-[var(--surface)] border-[#27272a] hover:border-primary/50 hover:shadow-[0_0_20px_rgba(184,134,11,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden group relative"
           >
             {/* 1. MEDIA HEADER ASSET FRAME */}
-            <div className="h-48 w-full bg-zinc-950 border-b border-[#27272a] flex items-center justify-center overflow-hidden relative">
+            <div className="h-48 w-full bg-[var(--background)] border-b border-[#27272a] flex items-center justify-center overflow-hidden relative">
               {item.image_url ? (
                 <img
                   src={item.image_url}
@@ -142,7 +142,7 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
 
               {/* Category Pill Badge fixed securely on the bottom-left area */}
               <div className="pt-1 flex justify-start items-center">
-                <span className="inline-flex items-center px-2 py-1 text-[9px] font-black text-primary bg-[#1a1a1a] border border-[#27272a] rounded-md uppercase tracking-wider select-none">
+                <span className="inline-flex items-center px-2 py-1 text-[9px] font-black text-primary bg-[var(--surface-hover)] border border-[#27272a] rounded-md uppercase tracking-wider select-none">
                   {item.category}
                 </span>
               </div>
@@ -171,7 +171,7 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
                   </Button>
                 </AlertDialogTrigger>
 
-                <AlertDialogContent className="bg-[#121212] border border-[#27272a] text-white">
+                <AlertDialogContent className="bg-[var(--surface)] border border-[#27272a] text-white">
                   <AlertDialogHeader>
                     <AlertDialogTitle className="text-xl font-bold">Remove Menu Item Record?</AlertDialogTitle>
                     <AlertDialogDescription className="text-[#a1a1aa] text-sm">
@@ -180,7 +180,7 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
                   </AlertDialogHeader>
                   <AlertDialogFooter className="mt-4">
                     <AlertDialogCancel className="bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800">Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => onDelete(item.id)} className="bg-primary text-black hover:bg-primary/90 font-semibold">
+                    <AlertDialogAction onClick={() => onDelete(item.id)} className="bg-gradient-primary text-[var(--button-text)] hover:bg-gradient-primary-hover font-semibold">
                       Confirm Delete
                     </AlertDialogAction>
                   </AlertDialogFooter>

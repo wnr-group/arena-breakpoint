@@ -13,17 +13,9 @@ export function StationCard({ station, motionProps }: { station: Station; motion
         hover:shadow-[0_0_24px_rgba(251,191,36,0.45)]
         transition-[border-color,box-shadow] duration-300"
     >
-      <div className="relative w-full h-full rounded-md overflow-hidden">
-        <p>{station.image}</p>
-        {/* Background Image */}
-        <img
-          src={station.image}
-          alt={station.name}
-          className="absolute inset-0 w-full h-full object-cover  transition-transform duration-700 ease-[cubic-bezier(.25,1,.5,1)] group-hover:scale-105"
-        />
-
-        {/* Gradient Overlay*/}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/10 transition-all duration-400 group-hover:from-black/98 group-hover:via-black/55" />
+      <div className="relative w-full h-full rounded-md overflow-hidden bg-white/5 backdrop-blur-sm border border-white/20">
+        {/* Transparent Background - video shows through */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent transition-all duration-400 group-hover:from-black/70 group-hover:via-black/30" />
 
         {/* Station Number  */}
         <div className="absolute top-3 left-3.5 z-10 font-bold text-[10px] tracking-widest text-white/60 uppercase">
@@ -103,9 +95,9 @@ export function StationCard({ station, motionProps }: { station: Station; motion
                 ? 'bg-amber-400 text-black hover:bg-amber-300 active:scale-95'
                 : 'bg-white/6 text-white/25 border border-white/10 cursor-not-allowed'
             }`}
-            style={{ fontFamily: "'Rajdhani', sans-serif" }}
+            style={{ fontFamily: "'Rajdhani', sans-serif", color: avail ? 'black' : undefined }}
           >
-            {avail ? 'Book Station' : 'Join Waitlist'}
+            {avail ? 'Book slot' : 'Join Waitlist'}
           </button>
         </div>
       </div>
