@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookingsTimeline } from "@/components/admin/bookings/BookingsTimeline";
+import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
 import { getTimelineBookings } from "@/app/(admin)/admin/bookings/actions";
 import { Calendar, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -12,6 +13,8 @@ export default function TimelinePage() {
   const [timelineDate, setTimelineDate] = useState(new Date());
   const [timelineBookings, setTimelineBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
+  const [openFoodModal, setOpenFoodModal] = useState(false);
 
   useEffect(() => {
     loadTimelineBookings();
@@ -118,8 +121,25 @@ export default function TimelinePage() {
           bookings={timelineBookings}
           selectedDate={timelineDate}
           onDateChange={setTimelineDate}
+          onBookingClick={(booking) => {
+            setSelectedBooking(booking);
+          }}
         />
       )}
+
+      {/* Booking Detail Modal */}
+      <BookingDetailModal
+        bookingId={selectedBooking?.id || null}
+        open={!!selectedBooking}
+        onClose={() => {
+          setSelectedBooking(null);
+          setOpenFoodModal(false);
+        }}
+        onUpdate={() => {
+          loadTimelineBookings();
+        }}
+        openFoodModalDirectly={openFoodModal}
+      />
     </div>
   );
 }
