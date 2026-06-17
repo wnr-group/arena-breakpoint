@@ -510,6 +510,7 @@ export async function confirmBooking(payload: {
   subscriptionDiscount?: number;
   promoDiscount?: number;
   promoCode?: string | null;
+  durationMinutes?: number;
 }) {
   try {
     // Step 1: Get or create customer
@@ -566,7 +567,7 @@ export async function confirmBooking(payload: {
     const totalAmount = deviceSubtotal + addonsTotal - subscriptionDiscount - promoDiscount;
 
     // Step 4: Create booking
-    const { data: booking, error: bookingError} = await supabaseAdmin
+    const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
       .insert({
         booking_number: bookingNumber,
@@ -721,7 +722,7 @@ export async function confirmBooking(payload: {
         slot_date: payload.selectedDate,
         slot_start_time: formattedStartTime,
         slot_end_time: formatTime(slotEndTime),
-        duration_hours: durationHours,
+        duration_hours: payload.durationMinutes ? payload.durationMinutes / 60 : 1.0,
         hourly_rate: payload.hourlyRate,
         slot_total: deviceCharges,
         device_type: payload.deviceTypeName,

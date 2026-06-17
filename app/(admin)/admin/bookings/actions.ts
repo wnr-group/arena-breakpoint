@@ -39,8 +39,6 @@ export async function getAllBookings(filters?: BookingFilters) {
         total_amount,
         device_subtotal,
         food_subtotal,
-        subscription_discount,
-        promo_discount,
         status,
         payment_status,
         created_at,
@@ -313,7 +311,7 @@ export async function addFoodToBooking(
 ) {
   try {
     // Calculate new food subtotal
-    const foodLineItems = items.map((item) => ({
+    const lineItems = items.map((item) => ({
       booking_id: bookingId,
       menu_item_id: item.menuItemId,
       item_name: item.itemName,
@@ -326,68 +324,30 @@ export async function addFoodToBooking(
 
     const { data: foodItems, error: foodError } = await supabaseAdmin
       .from("booking_food_items")
-      .insert(foodLineItems)
+      .insert(lineItems)
       .select();
 
     if (foodError) throw foodError;
 
     // Update booking food_subtotal and total_amount
-    const additionalAmount = foodLineItems.reduce((sum, item) => sum + item.line_total, 0);
+    const additionalAmount = lineItems.reduce((sum, item) => sum + item.line_total, 0);
 
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
-      .select("food_subtotal, device_subtotal, subscription_discount, promo_discount")
+      .select("food_subtotal, device_subtotal")
       .eq("id", bookingId)
       .single();
 
     if (bookingError) throw bookingError;
 
     const newFoodSubtotal = Number(booking.food_subtotal || 0) + additionalAmount;
-    const deviceSubtotal = Number(booking.device_subtotal || 0);
-    const subscriptionDiscount = Number(booking.subscription_discount || 0);
-    const promoDiscount = Number(booking.promo_discount || 0);
+    const newTotal = Number(booking.device_subtotal || 0) + newFoodSubtotal;
 
-    // Total = device + food - discounts (discounts don't apply to food)
-    const newTotal = deviceSubtotal + newFoodSubtotal - subscriptionDiscount - promoDiscount;
-
-    // Get current display_order for line items
-    const { data: existingLineItems } = await supabaseAdmin
-      .from("booking_line_items")
-      .select("display_order")
-      .eq("booking_id", bookingId)
-      .order("display_order", { ascending: false })
-      .limit(1);
-
-    const startingOrder = (existingLineItems?.[0]?.display_order || 0) + 1;
-
-    // Create line items for the food (for audit trail)
-    const bookingLineItems = items.map((item, index) => ({
-      booking_id: bookingId,
-      item_type: 'food',
-      description: item.itemName,
-      quantity: item.quantity,
-      unit_price: item.unitPrice,
-      line_total: item.unitPrice * item.quantity,
-      reference_id: item.menuItemId,
-      reference_type: 'menu_item',
-      added_by: 'admin',
-      is_paid: false, // Food added by admin is unpaid
-      display_order: startingOrder + index
-    }));
-
-    const { error: lineItemsError } = await supabaseAdmin
-      .from("booking_line_items")
-      .insert(bookingLineItems);
-
-    if (lineItemsError) throw lineItemsError;
-
-    // Update booking: set payment_status to 'pending' since there are unpaid items
     const { error: updateError } = await supabaseAdmin
       .from("bookings")
       .update({
         food_subtotal: newFoodSubtotal,
         total_amount: newTotal,
-        payment_status: 'pending', // Mark as pending since food is unpaid
         updated_at: new Date().toISOString()
       })
       .eq("id", bookingId);
@@ -418,6 +378,7 @@ export async function createWalkInBooking(payload: {
   extraPlayerCharge: number;
   subtotal: number;
   total: number;
+  durationMinutes: number;
 }) {
   try {
     // Convert time format from "10:00 AM" to "10:00:00"
@@ -526,7 +487,7 @@ export async function createWalkInBooking(payload: {
 
     // Step 5: Create device slot
     const extraPlayersCount = Math.max(0, payload.playerCount - payload.includedPlayers);
-    const extraPlayersTotal = extraPlayersCount * payload.extraPlayerCharge;
+    const extraPlayersTotal = extraPlayersCount * payload.extraPlayerCharge * (payload.durationMinutes / 60);
 
     const { error: slotError } = await supabaseAdmin
       .from("booking_device_slots")
@@ -538,7 +499,7 @@ export async function createWalkInBooking(payload: {
         slot_date: payload.selectedDate,
         slot_start_time: startTime,
         slot_end_time: endTime,
-        duration_hours: 1,
+        duration_hours: payload.durationMinutes / 60,
         hourly_rate: payload.hourlyRate,
         slot_total: payload.total,
         player_count: payload.playerCount,
@@ -683,139 +644,5 @@ export async function getTimelineBookings(date: string): Promise<{ success: bool
   }
 }
 
-export async function closeBooking(bookingId: string) {
-  try {
-    const { error } = await supabaseAdmin
-      .from("bookings")
-      .update({
-        status: "completed",
-        completed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", bookingId);
 
-    if (error) throw error;
 
-    return { success: true };
-  } catch (err: any) {
-    console.error("Close booking error:", err);
-    return { success: false, error: err.message };
-  }
-}
-
-export async function getBookingBillingDetails(bookingId: string) {
-  try {
-    const { data, error } = await supabaseAdmin
-      .from("bookings")
-      .select(`
-        id,
-        booking_number,
-        customer_name,
-        customer_phone,
-        total_amount,
-        amount_paid,
-        device_subtotal,
-        food_subtotal,
-        subscription_discount,
-        promo_discount,
-        payment_status,
-        status,
-        booking_device_slots(
-          id,
-          duration_hours,
-          hourly_rate,
-          player_count,
-          included_players,
-          extra_player_charge,
-          extra_players_total
-        ),
-        booking_food_items(
-          id,
-          item_name,
-          quantity,
-          unit_price,
-          line_total
-        )
-      `)
-      .eq("id", bookingId)
-      .single();
-
-    if (error) throw error;
-
-    // Fetch line items to check what's unpaid
-    const { data: lineItems, error: lineItemsError } = await supabaseAdmin
-      .from("booking_line_items")
-      .select("*")
-      .eq("booking_id", bookingId)
-      .order("display_order", { ascending: true });
-
-    if (lineItemsError) throw lineItemsError;
-
-    // Calculate unpaid amount
-    const unpaidItems = lineItems?.filter(item => !item.is_paid) || [];
-    const unpaidAmount = unpaidItems.reduce((sum, item) => sum + Number(item.line_total), 0);
-    const balanceDue = Number(data.total_amount) - Number(data.amount_paid || 0);
-
-    return {
-      success: true,
-      booking: {
-        ...data,
-        line_items: lineItems,
-        unpaid_items: unpaidItems,
-        unpaid_amount: unpaidAmount,
-        balance_due: balanceDue
-      }
-    };
-  } catch (err: any) {
-    console.error("Get billing details error:", err);
-    return { success: false, error: err.message, booking: null };
-  }
-}
-
-// ============================================
-// MARK PAYMENT AS PAID
-// ============================================
-
-export async function markBookingAsPaid(
-  bookingId: string,
-  paymentMethod: 'cash' | 'card' | 'upi'
-) {
-  try {
-    // Get booking total
-    const { data: booking, error: fetchError } = await supabaseAdmin
-      .from("bookings")
-      .select("total_amount, booking_number")
-      .eq("id", bookingId)
-      .single();
-
-    if (fetchError || !booking) throw new Error("Booking not found");
-
-    // Update booking payment status
-    const { error: updateError } = await supabaseAdmin
-      .from("bookings")
-      .update({
-        payment_status: "paid",
-        amount_paid: booking.total_amount,
-        payment_method: paymentMethod,
-      })
-      .eq("id", bookingId);
-
-    if (updateError) throw updateError;
-
-    // Mark all line items as paid
-    const { error: lineItemsError } = await supabaseAdmin
-      .from("booking_line_items")
-      .update({ is_paid: true })
-      .eq("booking_id", bookingId);
-
-    if (lineItemsError) console.error("Failed to update line items:", lineItemsError);
-
-    return {
-      success: true,
-      message: `Booking ${booking.booking_number} marked as paid`,
-    };
-  } catch (error: any) {
-    console.error("Error marking booking as paid:", error);
-    return { success: false, error: error.message };
-  }
-}

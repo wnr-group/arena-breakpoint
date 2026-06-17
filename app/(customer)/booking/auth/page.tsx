@@ -291,7 +291,8 @@ export default function CustomerDetailsPage() {
       extraPlayerCharge: extraPlayerCharge,
       subscriptionDiscount: bookingState.subscriptionDiscount,
       promoDiscount: bookingState.promoDiscount,
-      promoCode: bookingState.promoCode
+      promoCode: bookingState.promoCode,
+      durationMinutes: selectedDuration || 60
     });
 
     if (result.success) {

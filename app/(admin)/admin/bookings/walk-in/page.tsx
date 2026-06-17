@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,26 +19,26 @@ import {
   Mail,
   ShieldCheck,
   RefreshCw,
-  Cake
+  Cake,
+  Clock
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   getDeviceTypesWithAvailability,
-  checkAvailabilityByDeviceType
+  checkFlexibleAvailability,
+  checkCustomerExists
 } from "@/app/(customer)/booking/actions";
-import { checkCustomerExists } from "@/app/(customer)/booking/actions";
 import { createWalkInBooking } from "../actions";
 import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
-
-const staticDaylightSchedulesMatrix = [
-  { id: "s1", label: "10:00 AM - 11:00 AM", start: "10:00 AM", end: "11:00 AM", tier: "Morning Slots" },
-  { id: "s2", label: "11:00 AM - 12:00 PM", start: "11:00 AM", end: "12:00 PM", tier: "Morning Slots" },
-  { id: "s3", label: "01:30 PM - 02:30 PM", start: "01:30 PM", end: "02:30 PM", tier: "Afternoon Slots" },
-  { id: "s4", label: "02:30 PM - 03:30 PM", start: "02:30 PM", end: "03:30 PM", tier: "Afternoon Slots", peak: true },
-  { id: "s5", label: "04:30 PM - 05:30 PM", start: "04:30 PM", end: "05:30 PM", tier: "Afternoon Slots" },
-  { id: "s6", label: "07:00 PM - 08:00 PM", start: "07:00 PM", end: "08:00 PM", tier: "Evening R Night" },
-  { id: "s7", label: "08:30 PM - 09:30 PM", start: "08:30 PM", end: "09:30 PM", tier: "Evening R Night" }
-];
+import {
+  generateStartTimes,
+  filterPastTimeSlots,
+  generateDurationOptions,
+  calculateEndTime,
+  getMaxDurationForStartTime,
+  calculatePrice,
+  isTimeSlotWithinRange
+} from "@/lib/utils/timeSlots";
 
 export default function WalkInBookingPage() {
   const router = useRouter();
@@ -51,9 +51,9 @@ export default function WalkInBookingPage() {
 
   // Slot selection
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [selectedSlot, setSelectedSlot] = useState<typeof staticDaylightSchedulesMatrix[0] | null>(null);
-  const [disabledSlots, setDisabledSlots] = useState<string[]>([]);
-  const [slotAvailability, setSlotAvailability] = useState<Record<string, { available: number; total: number }>>({});
+  const [selectedStartTime, setSelectedStartTime] = useState<string | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<number>(60); // Default 1 hour in minutes
+  const [availableStartTimes, setAvailableStartTimes] = useState<Set<string>>(new Set());
   const [loadingSlots, setLoadingSlots] = useState(false);
 
   // Player count
@@ -70,6 +70,30 @@ export default function WalkInBookingPage() {
   // Submission
   const [submitting, setSubmitting] = useState(false);
 
+  const allStartTimes = useMemo(() => generateStartTimes(), []);
+  const allDurations = useMemo(() => generateDurationOptions(), []);
+
+  // Filter out past time slots for today
+  const availableStartTimesForDate = useMemo(() => {
+    if (!selectedDate) return allStartTimes;
+    return filterPastTimeSlots(allStartTimes, selectedDate);
+  }, [allStartTimes, selectedDate]);
+
+  const endTime = useMemo(() => {
+    if (!selectedStartTime) return null;
+    return calculateEndTime(selectedStartTime, selectedDuration);
+  }, [selectedStartTime, selectedDuration]);
+
+  const maxDurationForSelectedStartTime = useMemo(() => {
+    if (!selectedStartTime) return 300;
+    return getMaxDurationForStartTime(selectedStartTime);
+  }, [selectedStartTime]);
+
+  const filteredDurations = useMemo(() => {
+    if (!selectedStartTime) return allDurations;
+    return allDurations.filter(d => d.value <= maxDurationForSelectedStartTime);
+  }, [allDurations, maxDurationForSelectedStartTime, selectedStartTime]);
+
   useEffect(() => {
     loadDeviceTypes();
   }, []);
@@ -78,7 +102,14 @@ export default function WalkInBookingPage() {
     if (selectedDeviceType && selectedDate) {
       loadAvailability();
     }
-  }, [selectedDeviceType, selectedDate]);
+  }, [selectedDeviceType, selectedDate, selectedDuration]);
+
+  // Reset start time if it is no longer available when date/duration changes
+  useEffect(() => {
+    if (selectedStartTime && availableStartTimes.size > 0 && !availableStartTimes.has(selectedStartTime)) {
+      setSelectedStartTime(null);
+    }
+  }, [availableStartTimes, selectedStartTime]);
 
   const loadDeviceTypes = async () => {
     setLoadingDevices(true);
@@ -93,24 +124,26 @@ export default function WalkInBookingPage() {
     if (!selectedDeviceType || !selectedDate) return;
     setLoadingSlots(true);
     const dateString = selectedDate.toISOString().split("T")[0];
-    const result = await checkAvailabilityByDeviceType(dateString, selectedDeviceType.id);
-    if (result.success) {
-      setDisabledSlots(result.unavailableSlots || []);
-      setSlotAvailability(result.slotAvailability || {});
+
+    try {
+      const result = await checkFlexibleAvailability(dateString, selectedDeviceType.id, selectedDuration);
+      if (result.success && result.availableStartTimes) {
+        setAvailableStartTimes(new Set(result.availableStartTimes));
+      } else {
+        setAvailableStartTimes(new Set());
+      }
+    } catch (err) {
+      console.error("Error loading availability:", err);
+      setAvailableStartTimes(new Set());
+    } finally {
+      setLoadingSlots(false);
     }
-    setLoadingSlots(false);
   };
 
   const handleSelectDeviceType = (deviceType: any) => {
     setSelectedDeviceType(deviceType);
     setPlayerCount(deviceType.included_players || 1);
     setStep(2);
-  };
-
-  const handleSelectSlot = (slot: typeof staticDaylightSchedulesMatrix[0]) => {
-    setSelectedSlot(slot);
-    setStep(3);
-    setShowFullRegistrationFields(false);
   };
 
   const handleCustomerPhoneLookup = async (e: React.FormEvent) => {
@@ -152,16 +185,17 @@ export default function WalkInBookingPage() {
   };
 
   const handleSubmit = async () => {
-    if (!customerName.trim() || !customerPhone.trim()) {
-      toast.error("Please fill in customer name and phone number");
+    if (!customerName.trim() || !customerPhone.trim() || !selectedStartTime || !endTime) {
+      toast.error("Please fill in customer name, phone number, and choose a valid time slot");
       return;
     }
 
     setSubmitting(true);
 
     const extraPlayersCount = Math.max(0, playerCount - (selectedDeviceType?.included_players || 1));
-    const extraPlayerCharge = extraPlayersCount * (Number(selectedDeviceType?.extra_player_charge) || 0);
-    const baseRate = Number(selectedDeviceType?.regular_hourly_rate) || 0;
+    const durationHours = selectedDuration / 60;
+    const extraPlayerCharge = extraPlayersCount * (Number(selectedDeviceType?.extra_player_charge) || 0) * durationHours;
+    const baseRate = calculatePrice(Number(selectedDeviceType?.regular_hourly_rate) || 0, selectedDuration);
     const total = baseRate + extraPlayerCharge;
 
     // Validate DOB
@@ -190,15 +224,16 @@ export default function WalkInBookingPage() {
       deviceTypeId: selectedDeviceType.id,
       deviceTypeName: selectedDeviceType.display_name,
       selectedDate: selectedDate.toISOString().split("T")[0],
-      selectedSlot: selectedSlot!.label,
-      slotStartTime: selectedSlot!.start,
-      slotEndTime: selectedSlot!.end,
-      hourlyRate: baseRate,
+      selectedSlot: `${selectedStartTime} - ${endTime}`,
+      slotStartTime: selectedStartTime,
+      slotEndTime: endTime,
+      hourlyRate: Number(selectedDeviceType.regular_hourly_rate) || 0,
       playerCount,
       includedPlayers: selectedDeviceType.included_players,
       extraPlayerCharge: Number(selectedDeviceType.extra_player_charge),
       subtotal: baseRate,
-      total
+      total,
+      durationMinutes: selectedDuration
     });
 
     setSubmitting(false);
@@ -212,14 +247,20 @@ export default function WalkInBookingPage() {
   };
 
   const extraPlayersCount = Math.max(0, playerCount - (selectedDeviceType?.included_players || 1));
-  const extraPlayerCharge = extraPlayersCount * (Number(selectedDeviceType?.extra_player_charge) || 0);
-  const baseRate = Number(selectedDeviceType?.regular_hourly_rate) || 0;
+  const durationHours = selectedDuration / 60;
+  const extraPlayerCharge = extraPlayersCount * (Number(selectedDeviceType?.extra_player_charge) || 0) * durationHours;
+  const baseRate = calculatePrice(Number(selectedDeviceType?.regular_hourly_rate) || 0, selectedDuration);
   const totalAmount = baseRate + extraPlayerCharge;
 
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = handleDobInput(e.target.value);
     setCustomerDob(formatted);
   };
+
+  const selectedDurationLabel = useMemo(() => {
+    const duration = allDurations.find(d => d.value === selectedDuration);
+    return duration?.label || "";
+  }, [selectedDuration, allDurations]);
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-white p-4 md:p-8">
@@ -337,71 +378,105 @@ export default function WalkInBookingPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Calendar */}
-              <Card className="bg-[var(--surface)] border border-zinc-900 p-4">
-                <h3 className="text-xs font-black text-zinc-500 uppercase mb-4">Select Date</h3>
-                <div className="flex justify-center">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+              {/* Date Picker */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">📅 Select Date</h3>
+                <Card className="bg-[#111] border border-zinc-900 p-4 w-full flex justify-center rounded-2xl">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
                     onSelect={(date) => date && setSelectedDate(date)}
                     disabled={(day) => day < new Date(new Date().setHours(0, 0, 0, 0))}
                   />
-                </div>
-              </Card>
+                </Card>
+              </div>
 
-              {/* Time Slots */}
-              <Card className="bg-[var(--surface)] border border-zinc-900 p-4">
-                <h3 className="text-xs font-black text-zinc-500 uppercase mb-4">Select Time Slot</h3>
+              {/* Duration Selection */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">⏱️ Duration</h3>
+                <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
+                  {filteredDurations.map((duration) => {
+                    const isSelected = selectedDuration === duration.value;
+                    const price = calculatePrice(Number(selectedDeviceType.regular_hourly_rate) || 0, duration.value);
+                    return (
+                      <button
+                        key={duration.value}
+                        onClick={() => setSelectedDuration(duration.value)}
+                        className={`w-full p-3 border text-left rounded-xl transition-all duration-300 ${isSelected
+                          ? "bg-gradient-to-r from-primary via-yellow-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
+                          : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
+                          }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-bold">{duration.label}</span>
+                          <span className={`text-xs font-black ${isSelected ? "text-black" : "text-primary"}`}>
+                            ₹{price}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Start Time Selection */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">🕒 Start Time</h3>
                 {loadingSlots ? (
-                  <div className="flex items-center justify-center h-64">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <div className="h-96 flex flex-col items-center justify-center gap-2">
+                    <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                    <p className="text-xs text-zinc-500">Checking availability...</p>
+                  </div>
+                ) : availableStartTimesForDate.length === 0 ? (
+                  <div className="h-96 flex flex-col items-center justify-center gap-2 text-center px-4">
+                    <Clock className="h-8 w-8 text-zinc-700" />
+                    <p className="text-sm text-zinc-400 font-bold">No time slots available</p>
+                    <p className="text-xs text-zinc-600">Try selecting a different date or duration</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {["Morning Slots", "Afternoon Slots", "Evening R Night"].map((tier) => (
-                      <div key={tier} className="space-y-2">
-                        <p className="text-[9px] font-black uppercase text-zinc-600">
-                          {tier}
-                        </p>
-                        <div className="space-y-2">
-                          {staticDaylightSchedulesMatrix
-                            .filter((s) => s.tier === tier)
-                            .map((slot) => {
-                              const isBooked = disabledSlots.includes(slot.label);
-                              const availability = slotAvailability[slot.label];
-                              return (
-                                <button
-                                  key={slot.id}
-                                  disabled={isBooked}
-                                  onClick={() => handleSelectSlot(slot)}
-                                  className={`w-full p-3 border text-left flex justify-between items-center rounded-lg transition-all ${isBooked
-                                    ? "bg-[var(--background)]/20 border-zinc-950 text-zinc-800 line-through cursor-not-allowed"
-                                    : "bg-[var(--background)] border-zinc-900 text-zinc-300 hover:border-primary"
-                                    }`}
-                                >
-                                  <span className="text-xs font-bold">{slot.label}</span>
-                                  {availability && !isBooked && (
-                                    <span className="text-[8px] font-black px-1.5 py-0.5 rounded-sm bg-green-500/10 text-green-400">
-                                      {availability.available} LEFT
-                                    </span>
-                                  )}
-                                </button>
-                              );
-                            })}
-                        </div>
-                      </div>
-                    ))}
+                  <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
+                    {availableStartTimesForDate.map((time) => {
+                      const isAvailable = availableStartTimes.has(time);
+                      const isSelected = selectedStartTime ? isTimeSlotWithinRange(time, selectedStartTime, selectedDuration) : false;
+                      return (
+                        <button
+                          key={time}
+                          disabled={!isAvailable}
+                          onClick={() => setSelectedStartTime(time)}
+                          className={`w-full p-3 border text-left rounded-xl transition-all duration-300 text-sm font-bold ${!isAvailable
+                            ? "bg-zinc-950/20 border-zinc-950 text-zinc-800 cursor-not-allowed"
+                            : isSelected
+                              ? "bg-gradient-to-r from-primary via-yellow-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
+                              : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
+                            }`}
+                        >
+                          {time} - {calculateEndTime(time, 30)}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
-              </Card>
+              </div>
+            </div>
+
+            <div className="flex justify-end mt-8">
+              <Button
+                disabled={!selectedDate || !selectedStartTime || loadingSlots}
+                onClick={() => {
+                  setStep(3);
+                  setShowFullRegistrationFields(false);
+                }}
+                className="px-8 bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 shadow-xl transition-all active:scale-[0.99]"
+              >
+                Proceed to Customer Details <ChevronRight className="h-4 w-4 stroke-[3]" />
+              </Button>
             </div>
           </div>
         )}
 
         {/* Step 3: Progressive Customer Profile Form */}
-        {step === 3 && selectedDeviceType && selectedSlot && (
+        {step === 3 && selectedDeviceType && selectedStartTime && (
           <div className="space-y-6 max-w-xl mx-auto">
 
             {/* Phase 1: Primary Mobile Verification */}
@@ -522,7 +597,7 @@ export default function WalkInBookingPage() {
         )}
 
         {/* Step 4: Confirmation Summary Panel */}
-        {step === 4 && selectedDeviceType && selectedSlot && (
+        {step === 4 && selectedDeviceType && selectedStartTime && (
           <div className="space-y-6 max-w-2xl mx-auto">
             <h2 className="text-xl font-black uppercase text-zinc-400">Confirm Booking</h2>
 
@@ -555,7 +630,7 @@ export default function WalkInBookingPage() {
                 </div>
                 <div className="flex justify-between border-b border-zinc-900/60 pb-2">
                   <span className="text-zinc-500">Selected Time Window:</span>
-                  <span className="text-primary font-bold">{selectedSlot.label}</span>
+                  <span className="text-primary font-bold">{selectedStartTime} - {endTime} ({selectedDurationLabel})</span>
                 </div>
               </div>
               <div className="bg-[var(--background)]/40 p-4 border border-zinc-900 rounded-xl space-y-3">
@@ -602,12 +677,12 @@ export default function WalkInBookingPage() {
                 {extraPlayersCount > 0 && (
                   <div className="flex justify-between animate-in slide-in-from-top-2 duration-150">
                     <span className="text-zinc-500">Extra Player Charge Layer ({extraPlayersCount}):</span>
-                    <span className="text-primary font-bold">₹{extraPlayerCharge}.00</span>
+                    <span className="text-primary font-bold">₹{Math.round(extraPlayerCharge)}.00</span>
                   </div>
                 )}
                 <div className="flex justify-between items-baseline pt-3 border-t border-zinc-900 font-black text-lg">
                   <span className="text-white uppercase text-xs tracking-wider">Gross Total Amount:</span>
-                  <span className="text-primary text-2xl font-mono">₹{totalAmount}.00</span>
+                  <span className="text-primary text-2xl font-mono">₹{Math.round(totalAmount)}.00</span>
                 </div>
               </div>
 
