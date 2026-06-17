@@ -331,7 +331,7 @@ export default function CustomerDetailsPage() {
 
         <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6 glow-box-hover">
 
-          {/* Card Header Content Panels */}
+          {/* Card Header Content Panels **/}
           <div className="border-b border-zinc-900 pb-4 space-y-1">
             <h3 className="text-lg font-black uppercase text-white tracking-tight">CUSTOMER IDENTIFICATION</h3>
             <p className="text-xs text-zinc-500 font-medium">Enter your mobile number to continue with booking.</p>
