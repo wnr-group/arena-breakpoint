@@ -189,7 +189,9 @@ export async function createStandaloneFoodOrder(
     category: string;
     quantity: number;
     price: number;
-  }>
+  }>,
+  promoCode?: string | null,
+  promoDiscount?: number
 ) {
   try {
     // Get or create customer
@@ -217,6 +219,24 @@ export async function createStandaloneFoodOrder(
       0
     );
 
+    // Fetch promo code if provided
+    let promoCodeId = null;
+    let finalPromoDiscount = 0;
+    if (promoCode) {
+      const { data: promoData } = await supabaseAdmin
+        .from("promo_codes")
+        .select("id")
+        .ilike("code", promoCode.trim())
+        .single();
+      
+      if (promoData) {
+        promoCodeId = promoData.id;
+        finalPromoDiscount = promoDiscount || 0;
+      }
+    }
+
+    const finalTotal = Math.max(0, totalAmount - finalPromoDiscount);
+
     // Create food-only booking
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
@@ -229,7 +249,10 @@ export async function createStandaloneFoodOrder(
         customer_dob: date_of_birth,
         device_subtotal: 0,
         food_subtotal: totalAmount,
-        total_amount: totalAmount,
+        promo_discount: finalPromoDiscount,
+        promo_code_id: promoCodeId,
+        total_amount: finalTotal,
+        amount_paid: finalTotal,
         status: "confirmed",
         payment_status: "paid",
         locked_by: "customer",
@@ -257,6 +280,46 @@ export async function createStandaloneFoodOrder(
 
     if (foodError) throw foodError;
 
+    // Create line items for the booking audit trail
+    const lineItems: any[] = [];
+    let displayOrder = 1;
+
+    for (const item of items) {
+      lineItems.push({
+        booking_id: booking.id,
+        item_type: 'food',
+        description: item.name,
+        quantity: item.quantity,
+        unit_price: item.price,
+        line_total: item.price * item.quantity,
+        added_by: 'customer',
+        is_paid: true,
+        display_order: displayOrder++
+      });
+    }
+
+    if (finalPromoDiscount > 0) {
+      lineItems.push({
+        booking_id: booking.id,
+        item_type: 'promo_discount',
+        description: promoCode ? `Promo Code Discount (${promoCode})` : 'Promo Code Discount',
+        quantity: 1,
+        unit_price: -finalPromoDiscount,
+        line_total: -finalPromoDiscount,
+        added_by: 'customer',
+        is_paid: true,
+        display_order: displayOrder++
+      });
+    }
+
+    const { error: lineItemsError } = await supabaseAdmin
+      .from("booking_line_items")
+      .insert(lineItems);
+
+    if (lineItemsError) {
+      console.error("Failed to insert booking line items:", lineItemsError);
+    }
+
     // Update inventory
     for (const item of items) {
       const { error: inventoryError } = await supabaseAdmin.rpc(
@@ -276,7 +339,7 @@ export async function createStandaloneFoodOrder(
       success: true,
       bookingId: booking.id,
       bookingNumber: booking.booking_number,
-      totalAmount,
+      totalAmount: finalTotal,
     };
   } catch (err: any) {
     console.error("Create standalone food order error:", err);
