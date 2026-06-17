@@ -38,7 +38,7 @@ export async function getMenuItems(filters?: MenuItemFilters) {
     return { success: false, error: err.message, menuItems: [] };
   }
 }
-
+// validate menu items stock and availability before adding to cart
 export async function validateMenuItems(
   items: Array<{ menu_item_id: string; quantity: number }>
 ) {
