@@ -86,10 +86,16 @@ export default function AdminReportsPage() {
   const handleExport = () => {
     toast.success("Export feature coming soon!");
   };
+ 
+  const getLocalDateString = (date: Date): string => {
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+    return localDate.toISOString().split('T')[0];
+  };
 
   const setQuickDateRange = (preset: "today" | "7days" | "30days" | "month" | "90days" | "all") => {
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = getLocalDateString(today);
 
     switch (preset) {
       case "today":
@@ -99,25 +105,25 @@ export default function AdminReportsPage() {
       case "7days":
         const week = new Date(today);
         week.setDate(week.getDate() - 7);
-        setDateFrom(week.toISOString().split('T')[0]);
+        setDateFrom(getLocalDateString(week));
         setDateTo(todayStr);
         break;
       case "30days":
         const month = new Date(today);
         month.setDate(month.getDate() - 30);
-        setDateFrom(month.toISOString().split('T')[0]);
+        setDateFrom(getLocalDateString(month));
         setDateTo(todayStr);
         break;
       case "month":
         const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
         const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-        setDateFrom(firstDay.toISOString().split('T')[0]);
-        setDateTo(lastDay.toISOString().split('T')[0]);
+        setDateFrom(getLocalDateString(firstDay));
+        setDateTo(getLocalDateString(lastDay));
         break;
       case "90days":
         const quarter = new Date(today);
         quarter.setDate(quarter.getDate() - 90);
-        setDateFrom(quarter.toISOString().split('T')[0]);
+        setDateFrom(getLocalDateString(quarter));
         setDateTo(todayStr);
         break;
       case "all":
@@ -125,13 +131,11 @@ export default function AdminReportsPage() {
         setDateTo("");
         break;
     }
-    // Auto-apply after setting dates
-    setTimeout(() => handleApplyFilters(), 100);
   };
 
   const handleQuickDateFilter = (days: number | "today" | "month" | "all") => {
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = getLocalDateString(today);
 
     if (days === "today") {
       setDateFrom(todayStr);
@@ -139,24 +143,22 @@ export default function AdminReportsPage() {
     } else if (days === "month") {
       const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
       const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      setDateFrom(firstDay.toISOString().split('T')[0]);
-      setDateTo(lastDay.toISOString().split('T')[0]);
+      setDateFrom(getLocalDateString(firstDay));
+      setDateTo(getLocalDateString(lastDay));
     } else if (days === "all") {
       setDateFrom("");
       setDateTo("");
     } else {
       const fromDate = new Date();
       fromDate.setDate(fromDate.getDate() - days);
-      setDateFrom(fromDate.toISOString().split('T')[0]);
+      setDateFrom(getLocalDateString(fromDate));
       setDateTo(todayStr);
     }
   };
 
   // Auto-load when quick filter changes
   useEffect(() => {
-    if (dateFrom !== "" || dateTo !== "") {
-      loadData();
-    }
+    loadData();
   }, [dateFrom, dateTo]);
 
   const tabs = [
