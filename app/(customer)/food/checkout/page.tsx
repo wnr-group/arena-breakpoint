@@ -20,6 +20,7 @@ import {
   validateMenuItems
 } from "../actions";
 import { checkCustomerExists } from "../../booking/actions";
+import { validatePromoCode, calculatePromoDiscount } from "../../booking/promo-actions";
 import {
   Loader2,
   Trash2,
@@ -34,7 +35,7 @@ import {
   ShieldCheck,
   RefreshCw,
   Cake,
-  CheckCircle2, ArrowLeft
+  CheckCircle2, ArrowLeft, Tag
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
@@ -65,6 +66,12 @@ export default function FoodCheckoutPage() {
   const [orderNumber, setOrderNumber] = useState("");
   const [mounted, setMounted] = useState(false);
 
+  // Promo Code States
+  const [promoCode, setPromoCodeInput] = useState("");
+  const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
+  const [promoDiscount, setPromoDiscount] = useState<number>(0);
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+
   useEffect(() => {
     setMounted(true);
     if (bookingContext.customerPhone) setPhone(bookingContext.customerPhone);
@@ -82,10 +89,47 @@ export default function FoodCheckoutPage() {
     return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   }, [cartItems]);
 
+  const finalTotalAmount = useMemo(() => {
+    return Math.max(0, cartTotal - promoDiscount);
+  }, [cartTotal, promoDiscount]);
 
   const cartItemCount = useMemo(() => {
     return cartItems.reduce((sum, item) => sum + item.quantity, 0);
   }, [cartItems]);
+
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) {
+      toast.error("Please enter a promo code");
+      return;
+    }
+
+    setIsApplyingPromo(true);
+    const result = await validatePromoCode(promoCode);
+
+    if (result.success && result.promo) {
+      const discount = await calculatePromoDiscount(
+        cartTotal,
+        result.promo.discount_type,
+        result.promo.discount_value
+      );
+
+      setPromoDiscount(discount);
+      setAppliedPromoCode(result.promo.code);
+      toast.success("Promo code applied!", {
+        description: `You saved ₹${discount.toFixed(2)} with code ${result.promo.code}`
+      });
+    } else {
+      toast.error(result.error || "Invalid promo code");
+    }
+    setIsApplyingPromo(false);
+  };
+
+  const handleRemovePromo = () => {
+    setPromoDiscount(0);
+    setAppliedPromoCode(null);
+    setPromoCodeInput("");
+    toast.info("Promo code removed");
+  };
 
   const handleProceedToCheckout = () => {
     if (bookingContext.bookingId) {
@@ -200,7 +244,9 @@ export default function FoodCheckoutPage() {
           category: item.category,
           quantity: item.quantity,
           price: item.price,
-        }))
+        })),
+        appliedPromoCode,
+        promoDiscount
       );
     }
 
@@ -300,18 +346,57 @@ export default function FoodCheckoutPage() {
               <h3 className="text-sm font-black uppercase text-zinc-200 tracking-wider pb-2 border-b border-zinc-900/60">Order Summary</h3>
               <div className="space-y-3.5 text-xs text-zinc-400">
                 <div className="flex justify-between"><span>Subtotal</span><span className="text-zinc-200 font-mono font-bold">₹{cartTotal}</span></div>
-                <div className="flex justify-between items-baseline font-black text-white pt-4 border-t border-zinc-900">
+                {promoDiscount > 0 && (
+                  <div className="flex justify-between text-primary font-bold">
+                    <span className="flex items-center gap-1">
+                      <Tag className="h-3 w-3" />
+                      Promo Discount ({appliedPromoCode}):
+                    </span>
+                    <span className="font-mono">-₹{promoDiscount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-baseline font-black text-white pt-4 border-t border-t-zinc-900">
                   <span className="text-xs uppercase text-zinc-400 font-black">Total</span>
-                  <span className="text-2xl text-primary font-mono tracking-tight">₹{cartTotal}</span>
+                  <span className="text-2xl text-primary font-mono tracking-tight">₹{finalTotalAmount.toFixed(2)}</span>
                 </div>
               </div>
 
               <div className="space-y-1.5 pt-1">
                 <Label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest block">Promo Code</Label>
                 <div className="flex gap-2">
-                  <Input placeholder="Enter code" className="bg-zinc-950 border-zinc-900 h-10 text-xs text-zinc-500 rounded-xl" />
-                  <Button variant="outline" className="border-zinc-800 text-[10px] font-black bg-primary uppercase h-10 px-4 text-zinc-600 rounded-xl">Apply</Button>
+                  <Input
+                    placeholder="Enter code"
+                    value={promoCode}
+                    onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
+                    className="bg-zinc-950 border-zinc-900 h-10 text-xs text-white rounded-xl uppercase font-mono"
+                    disabled={isApplyingPromo || appliedPromoCode !== null}
+                  />
+                  {appliedPromoCode ? (
+                    <Button
+                      onClick={handleRemovePromo}
+                      variant="outline"
+                      className="border-red-500/30 text-red-400 hover:bg-red-950/20 text-[10px] font-black uppercase h-10 px-4 rounded-xl"
+                      disabled={isApplyingPromo}
+                    >
+                      Remove
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleApplyPromo}
+                      disabled={!promoCode.trim() || isApplyingPromo}
+                      variant="gradient"
+                      className="uppercase text-[10px] h-10 px-6 rounded-xl"
+                    >
+                      {isApplyingPromo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Apply"}
+                    </Button>
+                  )}
                 </div>
+                {appliedPromoCode && (
+                  <div className="flex items-center gap-1.5 text-xs text-green-400 bg-green-950/30 px-3 py-2 rounded-lg border border-green-500/20 mt-2">
+                    <CheckCircle2 className="h-3 w-3" />
+                    <span className="font-bold">Code "{appliedPromoCode}" applied successfully!</span>
+                  </div>
+                )}
               </div>
 
               <Button variant="gradient" onClick={handleProceedToCheckout} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl shadow-xl shadow-primary/5 tracking-wider active:scale-[0.99] transition-transform">
@@ -496,9 +581,18 @@ export default function FoodCheckoutPage() {
                   <span>Base Subtotal</span>
                   <span className="text-zinc-300 font-mono">₹{cartTotal}.00</span>
                 </div>
+                {promoDiscount > 0 && (
+                  <div className="flex justify-between text-primary font-bold">
+                    <span className="flex items-center gap-1">
+                      <Tag className="h-3 w-3" />
+                      Promo Discount ({appliedPromoCode}):
+                    </span>
+                    <span className="font-mono">-₹{promoDiscount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-baseline font-black text-white pt-2.5 border-t border-zinc-900/40 text-sm">
                   <span className="text-[10px] uppercase text-zinc-400 font-black tracking-wider">Amount Paid</span>
-                  <span className="text-base text-primary font-mono tracking-tight">₹{cartTotal}.00</span>
+                  <span className="text-base text-primary font-mono tracking-tight">₹{finalTotalAmount.toFixed(2)}</span>
                 </div>
               </div>
             </div>

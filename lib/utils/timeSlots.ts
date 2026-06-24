@@ -161,3 +161,27 @@ export function calculatePrice(hourlyRate: number, durationMinutes: number): num
   const hours = durationMinutes / 60;
   return Math.round(hourlyRate * hours);
 }
+
+/**
+ * Check if a time slot is within the selected range starting at `start` with a given duration in minutes
+ */
+export function isTimeSlotWithinRange(timeSlot: string, start: string, durationMinutes: number): boolean {
+  const start24 = formatTo24Hour(start);
+  const slot24 = formatTo24Hour(timeSlot);
+
+  const [startHour, startMinute] = start24.split(':').map(Number);
+  const [slotHour, slotMinute] = slot24.split(':').map(Number);
+
+  const startMins = startHour * 60 + startMinute;
+  const slotMins = slotHour * 60 + slotMinute;
+
+  const endMins = startMins + durationMinutes;
+
+  if (endMins <= 1440) {
+    return slotMins >= startMins && slotMins < endMins;
+  } else {
+    // Spans across midnight, highlight from start time to end of the day
+    return slotMins >= startMins;
+  }
+}
+

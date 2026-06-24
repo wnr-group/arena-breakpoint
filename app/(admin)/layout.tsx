@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/admin/layout/SideBar";
 import { Topbar } from "@/components/admin/layout/TopBar";
 import { SessionMonitor } from "@/components/admin/auth/SessionMonitor";
@@ -16,6 +17,8 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const pathname = usePathname();
+  const isLoginPage = pathname === "/admin/login";
 
   return (
     <NotificationProvider>
@@ -24,11 +27,11 @@ export default function AdminLayout({
       <AnimatedBackground />
 
       {/* Session Monitor for auto-redirect on expiry */}
-      <SessionMonitor />
+      {!isLoginPage && <SessionMonitor />}
 
       {/* Notification System */}
-      <AdminNotificationPolling />
-      <NotificationToastManager />
+      {!isLoginPage && <AdminNotificationPolling />}
+      {!isLoginPage && <NotificationToastManager />}
 
       <Toaster
         theme="dark"
@@ -43,17 +46,21 @@ export default function AdminLayout({
       />
 
       {/* 1. Left Sidebar (Dynamic Width Control) */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-        onClose={() => setSidebarOpen(false)}
-      />
+      {!isLoginPage && (
+        <Sidebar
+          isOpen={sidebarOpen}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
+          onClose={() => setSidebarOpen(false)}
+        />
+      )}
 
       {/* 2. Main Content Area */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative z-10">
 
         {/* Top Navigation - Receives toggle trigger hook */}
-        <Topbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} onOpenSidebar={() => setSidebarOpen(true)} />
+        {!isLoginPage && (
+          <Topbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} onOpenSidebar={() => setSidebarOpen(true)} />
+        )}
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto bg-transparent">

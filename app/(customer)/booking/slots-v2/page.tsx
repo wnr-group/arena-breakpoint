@@ -17,7 +17,8 @@ import {
   calculateEndTime,
   getMaxDurationForStartTime,
   calculatePrice,
-  isWithinBusinessHours
+  isWithinBusinessHours,
+  isTimeSlotWithinRange
 } from "@/lib/utils/timeSlots";
 
 export default function FlexibleSlotBookingPage() {
@@ -366,8 +367,8 @@ export default function FlexibleSlotBookingPage() {
                         dispatch(setDuration(duration.value))
                       }}
                       className={`w-full p-3 border text-left rounded-xl transition-all duration-300 ${isSelected
-                          ? "bg-gradient-to-r from-primary via-amber-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
-                          : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-amber-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
+                        ? "bg-gradient-to-r from-primary via-yellow-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
+                        : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
                         }`}
                     >
                       <div className="flex justify-between items-center">
@@ -400,20 +401,20 @@ export default function FlexibleSlotBookingPage() {
                 <div className="space-y-1.5 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-zinc-950">
                   {availableStartTimesForDate.map((time) => {
                     const isAvailable = isTimeAvailable(time);
-                    const isSelected = selectedStartTime === time;
+                    const isSelected = selectedStartTime ? isTimeSlotWithinRange(time, selectedStartTime, selectedDuration) : false;
                     return (
                       <button
                         key={time}
                         disabled={!isAvailable}
                         onClick={() => setSelectedStartTime(time)}
                         className={`w-full p-3 border text-left rounded-xl transition-all duration-300 text-sm font-bold ${!isAvailable
-                            ? "bg-zinc-950/20 border-zinc-950 text-zinc-800 cursor-not-allowed"
-                            : isSelected
-                              ? "bg-gradient-to-r from-primary via-amber-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
-                              : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-amber-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
+                          ? "bg-zinc-950/20 border-zinc-950 text-zinc-800 cursor-not-allowed"
+                          : isSelected
+                            ? "bg-gradient-to-r from-primary via-yellow-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
+                            : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
                           }`}
                       >
-                        {time}
+                        {time} - {calculateEndTime(time, 30)}
                       </button>
                     );
                   })}
@@ -585,7 +586,7 @@ export default function FlexibleSlotBookingPage() {
             <div className="grid grid-cols-2 gap-2 overflow-y-auto pr-1 pb-4 scrollbar-thin">
               {availableStartTimesForDate.map((time) => {
                 const isAvailable = isTimeAvailable(time);
-                const isSelected = selectedStartTime === time;
+                const isSelected = selectedStartTime ? isTimeSlotWithinRange(time, selectedStartTime, selectedDuration) : false;
                 return (
                   <button
                     key={time}
@@ -593,13 +594,13 @@ export default function FlexibleSlotBookingPage() {
                     disabled={!isAvailable}
                     onClick={() => { setSelectedStartTime(time); setMobileStartTimeOpen(false); }}
                     className={`p-3 text-center rounded-xl text-xs font-black uppercase transition-all tracking-wider border ${!isAvailable
-                        ? "bg-zinc-950/40 border-zinc-900/40 text-zinc-800 cursor-not-allowed line-through"
-                        : isSelected
-                          ? "bg-primary border-transparent text-black shadow-[0_0_15px_rgba(255,193,7,0.25)]"
-                          : "bg-zinc-900 border-zinc-800 text-zinc-300 active:border-zinc-700"
+                      ? "bg-zinc-950/40 border-zinc-900/40 text-zinc-800 cursor-not-allowed line-through"
+                      : isSelected
+                        ? "bg-primary border-transparent text-black shadow-[0_0_15px_rgba(255,193,7,0.25)]"
+                        : "bg-zinc-900 border-zinc-800 text-zinc-300 active:border-zinc-700"
                       }`}
                   >
-                    {time}
+                    {time} - {calculateEndTime(time, 30)}
                   </button>
                 );
               })}

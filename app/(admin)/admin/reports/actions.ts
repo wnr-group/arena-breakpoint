@@ -34,7 +34,7 @@ export async function getFoodReports(filters?: ReportFilters) {
       query = query.gte("created_at", filters.dateFrom);
     }
     if (filters?.dateTo) {
-      query = query.lte("created_at", filters.dateTo);
+      query = query.lte("created_at", `${filters.dateTo}T23:59:59.999Z`);
     }
 
     const { data, error } = await query.order("created_at", { ascending: false });
@@ -267,7 +267,7 @@ export async function getRevenueReports(filters?: ReportFilters) {
     let filteredData = data || [];
     if (filters?.dateFrom || filters?.dateTo) {
       filteredData = (data || []).filter((booking: any) => {
-        const slotDate = booking.booking_device_slots?.[0]?.slot_date;
+        const slotDate = booking.booking_device_slots?.[0]?.slot_date || booking.created_at.split('T')[0];
         if (!slotDate) return false;
 
         if (filters.dateFrom && slotDate < filters.dateFrom) return false;

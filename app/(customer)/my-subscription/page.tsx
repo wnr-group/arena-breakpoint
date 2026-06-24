@@ -1,36 +1,58 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { Percent, Gamepad2, Ticket, Wallet, Monitor, AlertTriangle, History, Loader2, AlertCircle } from 'lucide-react'
+import React, { useEffect, useState, Suspense } from 'react'
+import { Percent, Gamepad2, Ticket, Wallet, Monitor, AlertTriangle, History, Loader2, AlertCircle, Phone } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
-import { useRouter } from 'next/navigation'
-import { getMyActiveSubscription } from './action'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { getMyActiveSubscriptionByPhone } from './action'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
-
-export default function MySubscriptionPage() {
+function MySubscriptionPageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const phoneFromUrl = searchParams.get('phone')
+
+  const [phone, setPhone] = useState('')
   const [subscription, setSubscription] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [hasSearched, setHasSearched] = useState(false)
 
-  useEffect(() => {
-    const fetchSubscription = async () => {
-      try {
-        setIsLoading(true)
-        const mockCustomerId = "e9355243-1ce2-4543-a6f3-f2587da4e6ab" 
-        
-        const response = await getMyActiveSubscription(mockCustomerId)
-        if (response.success && response.data) {
-          setSubscription(response.data)
-        }
-      } catch (error) {
-        console.error('Error fetching subscription:', error)
-      } finally {
-        setIsLoading(false)
-      }
+  const fetchSubscription = async (targetPhone: string) => {
+    if (!targetPhone.trim() || targetPhone.length < 10) {
+      toast.error('Invalid Phone', { description: 'Please enter a valid 10-digit mobile number.' })
+      return
     }
 
-    fetchSubscription()
-  }, [])
+    try {
+      setIsLoading(true)
+      setHasSearched(true)
+      const response = await getMyActiveSubscriptionByPhone(targetPhone)
+      if (response.success && response.data) {
+        setSubscription(response.data)
+      } else {
+        setSubscription(null)
+      }
+    } catch (error) {
+      console.error('Error fetching subscription:', error)
+      setSubscription(null)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    const initialPhone = phoneFromUrl || (typeof window !== 'undefined' ? localStorage.getItem('customerPhone') : null)
+    if (initialPhone) {
+      setPhone(initialPhone)
+      fetchSubscription(initialPhone)
+    } else {
+      setIsLoading(false)
+    }
+  }, [phoneFromUrl])
 
   // Helper to format dates like "June 07"
   const formatDate = (dateString: string) => {
@@ -98,24 +120,101 @@ export default function MySubscriptionPage() {
             </p>
           </div>
           <div className="flex flex-row gap-3 md:gap-4 shrink-0">
-            <button className="flex-1 md:flex-none bg-transparent border-2 border-primary hover:bg-primary/10 text-primary font-black py-3 px-6 rounded-xl transition-all text-sm uppercase tracking-wider hover:shadow-[0_0_20px_rgba(255,193,7,0.3)]">
-              Renew Now
-            </button>
-            <button className="flex-1 md:flex-none bg-gradient-to-r from-primary via-amber-400 to-primary text-black font-black py-3 px-6 rounded-xl transition-all text-sm shadow-[0_0_20px_rgba(255,193,7,0.3)] hover:shadow-[0_0_40px_rgba(255,193,7,0.5)] hover:scale-[1.02] uppercase tracking-wider">
+            {subscription && (
+              <button className="flex-1 md:flex-none bg-transparent border-2 border-primary hover:bg-primary/10 text-primary font-black py-3 px-6 rounded-xl transition-all text-sm uppercase tracking-wider hover:shadow-[0_0_20px_rgba(255,193,7,0.3)]">
+                Renew Now
+              </button>
+            )}
+            <button
+              onClick={() => router.push('/booking')}
+              className="flex-1 md:flex-none bg-gradient-to-r from-primary via-amber-400 to-primary text-black font-black py-3 px-6 rounded-xl transition-all text-sm shadow-[0_0_20px_rgba(255,193,7,0.3)] hover:shadow-[0_0_40px_rgba(255,193,7,0.5)] hover:scale-[1.02] uppercase tracking-wider"
+            >
               Book Slot
             </button>
           </div>
         </div>
 
-        {/* Main Dashboard Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-          
-          {/* Left Column (Main Subscription & Savings) */}
-          <div className="lg:col-span-2 space-y-8">
+        {/* Search screen if not subscribed */}
+        {!subscription ? (
+          <div className="space-y-6 max-w-xl mx-auto">
+            {/* Search Card */}
+            <Card className="bg-[#111] border border-zinc-900 p-6 shadow-xl rounded-2xl glow-box-hover">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="search-phone" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Phone className="h-3 w-3 text-zinc-600" /> MOBILE NUMBER
+                  </Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-600 border-r border-zinc-900 pr-2">+91</span>
+                      <Input
+                        id="search-phone"
+                        type="tel"
+                        maxLength={10}
+                        placeholder="Enter 10-digit phone number"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                        onKeyDown={(e) => e.key === "Enter" && fetchSubscription(phone)}
+                        className="bg-zinc-950 border-zinc-900 h-12 pl-12 text-sm text-white focus-visible:ring-primary font-mono tracking-wide"
+                      />
+                    </div>
+                    <Button
+                      onClick={() => fetchSubscription(phone)}
+                      disabled={isLoading}
+                      className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 px-6 rounded-xl"
+                    >
+                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "SEARCH"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {hasSearched ? (
+              /* EMPTY STATE: If searched and user has no active subscription */
+              <div className="bg-[#111111] border border-neutral-800 rounded-md p-10 text-center flex flex-col items-center glow-box-hover animate-in fade-in duration-300">
+                <div className="w-16 h-16 bg-neutral-900 rounded-full flex items-center justify-center mb-4">
+                  <AlertCircle className="w-8 h-8 text-neutral-500" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">No Active Subscription</h3>
+                <p className="text-neutral-400 text-sm max-w-md mb-6">
+                  No active membership found for +91 {phone}. Subscribe to unlock elite benefits and arena discounts.
+                </p>
+                <button 
+                  onClick={() => router.push('/subscription')}
+                  className="bg-primary hover:bg-primary-hover text-black font-black uppercase py-3 px-8 rounded-lg transition-all text-sm"
+                >
+                  Browse Plans
+                </button>
+              </div>
+            ) : (
+              /* WELCOME STATE: Before searching */
+              <div className="bg-[#111111] border border-neutral-800 rounded-md p-10 text-center flex flex-col items-center glow-box-hover animate-in fade-in duration-300">
+                <div className="w-16 h-16 bg-neutral-900 rounded-full flex items-center justify-center mb-4">
+                  <Gamepad2 className="w-8 h-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">View Your Benefits</h3>
+                <p className="text-neutral-400 text-sm max-w-md mb-6">
+                  Enter your mobile number above to retrieve your active membership details and access elite arena rewards.
+                </p>
+                <button 
+                  onClick={() => router.push('/subscription')}
+                  className="bg-primary hover:bg-primary-hover text-black font-black uppercase py-3 px-8 rounded-lg transition-all text-sm"
+                >
+                  Browse Plans
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Main Dashboard Layout if subscribed */
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
             
-            {subscription ? (
-              /* DYNAMIC ACTIVE SUBSCRIPTION CARD */
-              <div className="bg-gradient-to-br from-zinc-900 via-[#131313] to-zinc-900 border border-primary/30 rounded-xl p-6 md:p-8 relative overflow-hidden group animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200 glow-box-strong">
+            {/* Left Column (Main Subscription & Savings) */}
+            <div className="lg:col-span-2 space-y-8">
+              
+              {/* DYNAMIC ACTIVE SUBSCRIPTION CARD */}
+              <div className="bg-gradient-to-br from-zinc-900 via-[#131313] to-zinc-900 border border-primary/30 rounded-xl p-6 md:p-8 relative overflow-hidden group glow-box-strong">
                 {/* Animated gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-amber-400/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
@@ -129,7 +228,7 @@ export default function MySubscriptionPage() {
                       Elite Membership
                     </h3>
                     <h2 className="text-2xl md:text-3xl font-black text-transparent bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text">
-                      {subscription.plan.name}
+                      {subscription.plan?.name || 'Unknown Plan'}
                     </h2>
                   </div>
                   <div className="bg-gradient-to-r from-green-900/30 to-green-950/30 border border-green-500/30 rounded-full px-4 py-2 flex items-center shadow-[0_0_20px_rgba(34,197,94,0.2)] backdrop-blur-sm">
@@ -179,7 +278,7 @@ export default function MySubscriptionPage() {
                         Loyalty Discount
                       </div>
                       <div className="text-transparent bg-gradient-to-r from-primary via-amber-300 to-primary bg-clip-text font-black text-lg drop-shadow-[0_0_10px_rgba(255,193,7,0.3)]">
-                        {subscription.plan.discount_percentage}% OFF
+                        {subscription.plan?.discount_percentage || 0}% OFF
                       </div>
                     </div>
                   </div>
@@ -194,131 +293,114 @@ export default function MySubscriptionPage() {
                   </div>
                 </div>
               </div>
-            ) : (
-              /* EMPTY STATE: If user has no active subscription */
-              <div className="bg-[#111111] border border-neutral-800 rounded-md p-10 text-center flex flex-col items-center glow-box-hover">
-                <div className="w-16 h-16 bg-neutral-900 rounded-full flex items-center justify-center mb-4">
-                  <AlertCircle className="w-8 h-8 text-neutral-500" />
-                </div>
-                <h3 className="text-xl font-bold text-white mb-2">No Active Subscription</h3>
-                <p className="text-neutral-400 text-sm max-w-md mb-6">
-                  You currently don't have an active membership. Subscribe to unlock elite benefits and arena discounts.
-                </p>
-                <button 
-                  onClick={() => router.push('/customer/subscription')}
-                  className="bg-[#A855F7] hover:bg-[#9333EA] text-black font-bold py-3 px-8 rounded-lg transition-colors text-sm"
-                >
-                  Browse Plans
-                </button>
-              </div>
-            )}
 
-            {/* Savings Section (Kept static for now, connect to a bookings API later) */}
-            <div>
-              <h3 className="text-sm font-bold text-white mb-4">Your Savings So Far</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                {/* Total Bookings */}
-                <div className="bg-[#111111] border border-neutral-800 rounded-sm p-6 flex items-center glow-box-hover">
-                  <div className="w-14 h-14 rounded-full border border-amber-500/20 bg-amber-500/5 flex items-center justify-center mr-5">
-                    <Ticket className="w-6 h-6 text-amber-500" />
-                  </div>
-                  <div>
-                    <div className="text-neutral-400 text-xs font-semibold mb-1">
-                      Total Bookings
+              {/* Savings Section (Kept static for now, connect to a bookings API later) */}
+              <div>
+                <h3 className="text-sm font-bold text-white mb-4">Your Savings So Far</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                  {/* Total Bookings */}
+                  <div className="bg-[#111111] border border-neutral-800 rounded-sm p-6 flex items-center glow-box-hover">
+                    <div className="w-14 h-14 rounded-full border border-amber-500/20 bg-amber-500/5 flex items-center justify-center mr-5">
+                      <Ticket className="w-6 h-6 text-amber-500" />
                     </div>
-                    <div className="text-white font-extrabold text-3xl">03</div>
+                    <div>
+                      <div className="text-neutral-400 text-xs font-semibold mb-1">
+                        Total Bookings
+                      </div>
+                      <div className="text-white font-extrabold text-3xl">03</div>
+                    </div>
+                  </div>
+
+                  {/* Total Saved */}
+                  <div className="bg-[#111111] border border-neutral-800 rounded-md p-6 flex items-center glow-box-hover">
+                    <div className="w-14 h-14 rounded-full border border-amber-500/20 bg-amber-500/5 flex items-center justify-center mr-5">
+                      <Wallet className="w-6 h-6 text-amber-500" />
+                    </div>
+                    <div>
+                      <div className="text-neutral-400 text-xs font-semibold mb-1">Total Saved</div>
+                      <div className="text-white font-extrabold text-3xl">₹180</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column (Promo & History) */}
+            <div className="lg:col-span-1 space-y-6 md:space-y-8">
+              {/* Promo Card */}
+              <div className="relative rounded-md overflow-hidden bg-[#111111] border border-neutral-800 flex flex-col justify-end p-6 min-h-55">
+                {/* Background Image Setup */}
+                <div className="absolute inset-0 z-0">
+                  <img
+                    className="w-full h-full object-cover opacity-30"
+                    alt="Gaming keyboard background"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFIKGeG2W9raLeDyuxdA9-PVKMcg3gGd30OuafHGO6cRvygZE1X1yb2QDWNvJMYIeuonRyPfymKfC69DyUaTfstYmffrR5GZR6zomB8a7o2dZn6pn_k-FJBA7lOD6wHKbh3uBhRSfZngbB2fq5-_XbFctoGCCoZdgmL9iQyXQ6cQEDm-tCNQSdiIlbRL4I6Z7lG8uvNQ4tnR_yDSF4sCCLZxiUR4GK80YjNc1I6hHuLGSx_TKeSVfzi1pZ23Q4htMWY6yGxtUHpQ"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-t from-[#111111] via-[#111111]/80 to-transparent" />
+                </div>
+
+                <div className="relative z-10">
+                  <h3 className="text-white font-bold mb-2">Feeling Hungry?</h3>
+                  <p className="text-neutral-400 text-sm leading-relaxed mb-5">
+                    Elite members get {subscription.plan?.discount_percentage || 15}% off on our Signature Gaming Menu.
+                  </p>
+                  <button className="w-full bg-[#1a1a1a] hover:bg-[#222] border border-neutral-700 text-white font-bold py-3 rounded-lg transition-colors text-sm">
+                    Browse Food Menu
+                  </button>
+                </div>
+              </div>
+
+              {/* Recent History Card */}
+              <div className="bg-[#111111] border border-neutral-800 rounded-md p-6 glow-box-hover">
+                <h3 className="text-sm font-bold text-white mb-6">Recent History</h3>
+
+                <div className="space-y-6 mb-6">
+                  {/* History Item 1 */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Gamepad2 className="w-5 h-5 text-amber-500 mr-4" />
+                      <div>
+                        <div className="text-white font-bold text-sm">3hr PS5 Solo</div>
+                        <div className="text-neutral-500 text-xs mt-0.5">May 26, 2026</div>
+                      </div>
+                    </div>
+                    <div className="text-amber-500 font-bold text-sm">- ₹150</div>
+                  </div>
+
+                  {/* History Item 2 */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Monitor className="w-5 h-5 text-amber-500 mr-4" />
+                      <div>
+                        <div className="text-white font-bold text-sm">3hr PC Arena</div>
+                        <div className="text-neutral-500 text-xs mt-0.5">May 25, 2026</div>
+                      </div>
+                    </div>
+                    <div className="text-amber-500 font-bold text-sm">- ₹150</div>
+                  </div>
+
+                  {/* History Item 3 */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Gamepad2 className="w-5 h-5 text-amber-500 mr-4" />
+                      <div>
+                        <div className="text-white font-bold text-sm">3hr PS5 Solo</div>
+                        <div className="text-neutral-500 text-xs mt-0.5">May 18, 2026</div>
+                      </div>
+                    </div>
+                    <div className="text-amber-500 font-bold text-sm">- ₹150</div>
                   </div>
                 </div>
 
-                {/* Total Saved */}
-                <div className="bg-[#111111] border border-neutral-800 rounded-md p-6 flex items-center glow-box-hover">
-                  <div className="w-14 h-14 rounded-full border border-amber-500/20 bg-amber-500/5 flex items-center justify-center mr-5">
-                    <Wallet className="w-6 h-6 text-amber-500" />
-                  </div>
-                  <div>
-                    <div className="text-neutral-400 text-xs font-semibold mb-1">Total Saved</div>
-                    <div className="text-white font-extrabold text-3xl">₹180</div>
-                  </div>
+                <div className="pt-4 border-t border-neutral-800/50 text-center">
+                  <button className="text-neutral-400 hover:text-white text-xs font-bold transition-colors">
+                    View All History
+                  </button>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Right Column (Promo & History) */}
-          <div className="lg:col-span-1 space-y-6 md:space-y-8">
-            {/* Promo Card */}
-            <div className="relative rounded-md overflow-hidden bg-[#111111] border border-neutral-800 flex flex-col justify-end p-6 min-h-55">
-              {/* Background Image Setup */}
-              <div className="absolute inset-0 z-0">
-                <img
-                  className="w-full h-full object-cover opacity-30"
-                  alt="Gaming keyboard background"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFIKGeG2W9raLeDyuxdA9-PVKMcg3gGd30OuafHGO6cRvygZE1X1yb2QDWNvJMYIeuonRyPfymKfC69DyUaTfstYmffrR5GZR6zomB8a7o2dZn6pn_k-FJBA7lOD6wHKbh3uBhRSfZngbB2fq5-_XbFctoGCCoZdgmL9iQyXQ6cQEDm-tCNQSdiIlbRL4I6Z7lG8uvNQ4tnR_yDSF4sCCLZxiUR4GK80YjNc1I6hHuLGSx_TKeSVfzi1pZ23Q4htMWY6yGxtUHpQ"
-                />
-                <div className="absolute inset-0 bg-linear-to-t from-[#111111] via-[#111111]/80 to-transparent" />
-              </div>
-
-              <div className="relative z-10">
-                <h3 className="text-white font-bold mb-2">Feeling Hungry?</h3>
-                <p className="text-neutral-400 text-sm leading-relaxed mb-5">
-                  Elite members get {subscription?.plan.discount_percentage || 15}% off on our Signature Gaming Menu.
-                </p>
-                <button className="w-full bg-[#1a1a1a] hover:bg-[#222] border border-neutral-700 text-white font-bold py-3 rounded-lg transition-colors text-sm">
-                  Browse Food Menu
-                </button>
-              </div>
-            </div>
-
-            {/* Recent History Card */}
-            <div className="bg-[#111111] border border-neutral-800 rounded-md p-6 glow-box-hover">
-              <h3 className="text-sm font-bold text-white mb-6">Recent History</h3>
-
-              <div className="space-y-6 mb-6">
-                {/* History Item 1 */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Gamepad2 className="w-5 h-5 text-amber-500 mr-4" />
-                    <div>
-                      <div className="text-white font-bold text-sm">3hr PS5 Solo</div>
-                      <div className="text-neutral-500 text-xs mt-0.5">May 26, 2026</div>
-                    </div>
-                  </div>
-                  <div className="text-amber-500 font-bold text-sm">- ₹150</div>
-                </div>
-
-                {/* History Item 2 */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Monitor className="w-5 h-5 text-amber-500 mr-4" />
-                    <div>
-                      <div className="text-white font-bold text-sm">3hr PC Arena</div>
-                      <div className="text-neutral-500 text-xs mt-0.5">May 25, 2026</div>
-                    </div>
-                  </div>
-                  <div className="text-amber-500 font-bold text-sm">- ₹150</div>
-                </div>
-
-                {/* History Item 3 */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Gamepad2 className="w-5 h-5 text-amber-500 mr-4" />
-                    <div>
-                      <div className="text-white font-bold text-sm">3hr PS5 Solo</div>
-                      <div className="text-neutral-500 text-xs mt-0.5">May 18, 2026</div>
-                    </div>
-                  </div>
-                  <div className="text-amber-500 font-bold text-sm">- ₹150</div>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-neutral-800/50 text-center">
-                <button className="text-neutral-400 hover:text-white text-xs font-bold transition-colors">
-                  View All History
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Status Reference Section */}
         <div className="mt-12 pt-8 border-t border-neutral-800/50">
@@ -365,4 +447,12 @@ export default function MySubscriptionPage() {
       </div>
     </main>
   )
+}
+
+export default function MySubscriptionPage() {
+  return (
+    <Suspense fallback={<div className="h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>}>
+      <MySubscriptionPageContent />
+    </Suspense>
+  );
 }
