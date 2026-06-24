@@ -232,8 +232,7 @@ export default function WalkInBookingPage() {
       includedPlayers: selectedDeviceType.included_players,
       extraPlayerCharge: Number(selectedDeviceType.extra_player_charge),
       subtotal: baseRate,
-      total,
-      durationMinutes: selectedDuration
+      total
     });
 
     setSubmitting(false);
