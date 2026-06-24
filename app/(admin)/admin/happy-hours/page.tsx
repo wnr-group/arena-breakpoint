@@ -77,7 +77,7 @@
 //         </div>
 //         <Button
 //           onClick={() => setIsAddOpen(true)}
-//           className="w-full md:w-auto bg-[#FFC107] hover:bg-[#ffcd38] text-black font-semibold rounded-md px-6 py-5 md:py-2 transition-all duration-300 shadow-[0_0_15px_rgba(255,193,7,0.15)]"
+//           className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-black font-semibold rounded-md px-6 py-5 md:py-2 transition-all duration-300 shadow-[0_0_15px_rgba(255,193,7,0.15)]"
 //         >
 //           <PlusCircle className="mr-2 h-5 w-5 md:h-4 md:w-4" /> Create Rule
 //         </Button>
@@ -85,19 +85,19 @@
 
 //       {/* SUMMARY CARDS - Grids adjust perfectly from 1 to 2 to 3 cols */}
 //       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-in slide-in-from-bottom-4 duration-700">
-//         <div className="bg-[#121212] border border-[#27272a] rounded-xl p-5 flex flex-col gap-2">
+//         <div className="bg-[var(--surface)] border border-[#27272a] rounded-xl p-5 flex flex-col gap-2">
 //           <div className="flex justify-between items-center w-full">
-//             <Timer className="text-[#FFC107] h-5 w-5" />
-//             <span className="text-xs font-semibold text-orange-400 bg-orange-400/10 px-2 py-1 rounded-md">Active Now</span>
+//             <Timer className="text-primary h-5 w-5" />
+//             <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded-md">Active Now</span>
 //           </div>
 //           <p className="text-[#a1a1aa] text-xs uppercase tracking-wider mt-2">Currently Running</p>
 //           <h2 className="text-xl font-bold text-white">Weekend Blitz</h2>
 //           <p className="text-[#a1a1aa] text-sm mt-1">Ends in 02h 45m</p>
 //         </div>
 
-//         <div className="bg-[#121212] border border-[#27272a] rounded-xl p-5 flex flex-col gap-2">
+//         <div className="bg-[var(--surface)] border border-[#27272a] rounded-xl p-5 flex flex-col gap-2">
 //           <div className="flex justify-between items-center w-full">
-//              <div className="text-[#FFC107] flex gap-1">
+//              <div className="text-primary flex gap-1">
 //                 <div className="h-4 w-3 border-2 border-current rounded-sm"></div>
 //                 <div className="h-5 w-4 border-2 border-current rounded-sm"></div>
 //              </div>
@@ -109,7 +109,7 @@
 //       </div>
 
 //       {/* MAIN TABLE AREA */}
-//       <div className="mt-2 animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both bg-[#121212] border border-[#27272a] rounded-xl p-4 md:p-6">
+//       <div className="mt-2 animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both bg-[var(--surface)] border border-[#27272a] rounded-xl p-4 md:p-6">
 //         <div className="flex justify-between items-center mb-6">
 //             <h2 className="text-base md:text-lg font-bold text-white">Active Rules Configuration</h2>
 //             <div className="flex gap-3 text-[#a1a1aa]">
@@ -120,7 +120,7 @@
         
 //         {isLoading ? (
 //           <div className="flex flex-col items-center justify-center py-20 text-[#a1a1aa] gap-3">
-//             <Loader2 className="h-8 w-8 animate-spin text-[#FFC107]" />
+//             <Loader2 className="h-8 w-8 animate-spin text-primary" />
 //             <p className="text-sm font-medium">Loading rules...</p>
 //           </div>
 //         ) : (
@@ -132,7 +132,7 @@
 //       {editingRule && <EditHappyHourModal rule={editingRule} open={!!editingRule} setOpen={val => !val && setEditingRule(null)} onFormSuccess={handleRefresh} />}
 
 //       <AlertDialog open={!!ruleToDelete} onOpenChange={open => !open && setRuleToDelete(null)}>
-//         <AlertDialogContent className="w-[90vw] max-w-[500px] bg-[#121212] border border-[#27272a] text-white rounded-xl">
+//         <AlertDialogContent className="w-[90vw] max-w-[500px] bg-[var(--surface)] border border-[#27272a] text-white rounded-xl">
 //           <AlertDialogHeader>
 //             <AlertDialogTitle className="text-lg md:text-xl font-bold">Remove Pricing Rule?</AlertDialogTitle>
 //             <AlertDialogDescription className="text-[#a1a1aa] text-sm">
@@ -143,7 +143,7 @@
 //             <AlertDialogCancel disabled={isPending} className="w-full sm:w-auto bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800">
 //               Cancel
 //             </AlertDialogCancel>
-//             <AlertDialogAction onClick={e => { e.preventDefault(); confirmDelete(); }} disabled={isPending} className="w-full sm:w-auto bg-[#FFC107] text-black hover:bg-[#FFC107]/90 font-semibold flex items-center justify-center">
+//             <AlertDialogAction onClick={e => { e.preventDefault(); confirmDelete(); }} disabled={isPending} className="w-full sm:w-auto bg-gradient-primary text-black hover:bg-gradient-primary/90 font-semibold flex items-center justify-center">
 //               {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 'Confirm Delete'}
 //             </AlertDialogAction>
 //           </AlertDialogFooter>
@@ -246,7 +246,7 @@ export default function HappyHoursPage() {
         </div>
         <Button
           onClick={() => setIsAddOpen(true)}
-          className="w-full md:w-auto bg-[#FFC107] hover:bg-[#ffcd38] text-black font-semibold rounded-md px-6 py-5 md:py-2 transition-all duration-300 shadow-[0_0_15px_rgba(255,193,7,0.15)]"
+          className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-black font-semibold rounded-md px-6 py-5 md:py-2 transition-all duration-300 shadow-[0_0_15px_rgba(255,193,7,0.15)]"
         >
           <PlusCircle className="mr-2 h-5 w-5 md:h-4 md:w-4" /> Create Rule
         </Button>
@@ -254,10 +254,10 @@ export default function HappyHoursPage() {
 
       {/* SUMMARY CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-in slide-in-from-bottom-4 duration-700">
-        <div className="bg-[#121212] border border-[#27272a] rounded-xl p-5 flex flex-col gap-2">
+        <div className="bg-[var(--surface)] border border-[#27272a] rounded-xl p-5 flex flex-col gap-2">
           <div className="flex justify-between items-center w-full">
-            <Timer className="text-[#FFC107] h-5 w-5" />
-            <span className="text-xs font-semibold text-orange-400 bg-orange-400/10 px-2 py-1 rounded-md">Active Now</span>
+            <Timer className="text-primary h-5 w-5" />
+            <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded-md">Active Now</span>
           </div>
           <p className="text-[#a1a1aa] text-xs uppercase tracking-wider mt-2">Currently Running</p>
           {/* You could make this dynamic by filtering the 'rules' array for status === 'LIVE' */}
@@ -267,9 +267,9 @@ export default function HappyHoursPage() {
           <p className="text-[#a1a1aa] text-sm mt-1">Status check complete</p>
         </div>
 
-        <div className="bg-[#121212] border border-[#27272a] rounded-xl p-5 flex flex-col gap-2">
+        <div className="bg-[var(--surface)] border border-[#27272a] rounded-xl p-5 flex flex-col gap-2">
           <div className="flex justify-between items-center w-full">
-             <div className="text-[#FFC107] flex gap-1">
+             <div className="text-primary flex gap-1">
                 <div className="h-4 w-3 border-2 border-current rounded-sm"></div>
                 <div className="h-5 w-4 border-2 border-current rounded-sm"></div>
              </div>
@@ -281,7 +281,7 @@ export default function HappyHoursPage() {
       </div>
 
       {/* MAIN TABLE AREA */}
-      <div className="mt-2 animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both bg-[#121212] border border-[#27272a] rounded-xl p-4 md:p-6">
+      <div className="mt-2 animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both bg-[var(--surface)] border border-[#27272a] rounded-xl p-4 md:p-6">
         <div className="flex justify-between items-center mb-6">
             <h2 className="text-base md:text-lg font-bold text-white">Active Rules Configuration</h2>
             <div className="flex gap-3 text-[#a1a1aa]">
@@ -292,7 +292,7 @@ export default function HappyHoursPage() {
         
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 text-[#a1a1aa] gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-[#FFC107]" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-sm font-medium">Loading rules from database...</p>
           </div>
         ) : (
@@ -304,7 +304,7 @@ export default function HappyHoursPage() {
       {editingRule && <EditHappyHourModal rule={editingRule} open={!!editingRule} setOpen={val => !val && setEditingRule(null)} onFormSuccess={handleRefresh} />}
 
       <AlertDialog open={!!ruleToDelete} onOpenChange={open => !open && setRuleToDelete(null)}>
-        <AlertDialogContent className="w-[90vw] max-w-[500px] bg-[#121212] border border-[#27272a] text-white rounded-xl">
+        <AlertDialogContent className="w-[90vw] max-w-[500px] bg-[var(--surface)] border border-[#27272a] text-white rounded-xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg md:text-xl font-bold">Remove Pricing Rule?</AlertDialogTitle>
             <AlertDialogDescription className="text-[#a1a1aa] text-sm">
@@ -315,7 +315,7 @@ export default function HappyHoursPage() {
             <AlertDialogCancel disabled={isPending} className="w-full sm:w-auto bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800">
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction onClick={e => { e.preventDefault(); confirmDelete(); }} disabled={isPending} className="w-full sm:w-auto bg-[#FFC107] text-black hover:bg-[#FFC107]/90 font-semibold flex items-center justify-center">
+            <AlertDialogAction onClick={e => { e.preventDefault(); confirmDelete(); }} disabled={isPending} className="w-full sm:w-auto bg-gradient-primary text-black hover:bg-gradient-primary/90 font-semibold flex items-center justify-center">
               {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 'Confirm Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -146,7 +146,7 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
     <Dialog open={open} onOpenChange={(val) => !isSubmitting && setOpen(val)}>
       <DialogContent className="bg-[#1e1e1e] border border-[#333] text-white w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto p-4 md:p-6 rounded-xl shadow-2xl">
         <DialogHeader className="mb-2 md:mb-4">
-          <DialogTitle className="text-[#FFC107] text-xl md:text-2xl font-bold">Edit Happy Hour</DialogTitle>
+          <DialogTitle className="text-primary text-xl md:text-2xl font-bold">Edit Happy Hour</DialogTitle>
           <DialogDescription className="text-[#a1a1aa] text-sm">
             Update the pricing rules and schedule for this promotion.
           </DialogDescription>
@@ -161,7 +161,7 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
               type="text" 
               name="promotionName"
               defaultValue={rule.name} 
-              className="w-full bg-[#121212] border border-[#333] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[#FFC107] transition-colors text-sm" 
+              className="w-full bg-[var(--surface)] border border-[#333] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[var(--primary)] transition-colors text-sm" 
               required 
             />
           </div>
@@ -177,8 +177,8 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
                   onClick={() => toggleDay(idx)} 
                   className={`flex-1 sm:flex-initial w-9 h-9 min-w-8 flex items-center justify-center rounded-lg text-xs md:text-sm font-medium transition-colors border ${
                     selectedDays.includes(idx) 
-                      ? 'border-[#FFC107] text-[#FFC107] bg-[#FFC107]/10' 
-                      : 'border-[#333] text-[#a1a1aa] bg-[#121212] hover:border-gray-500'
+                      ? 'border-[var(--primary)] text-primary bg-gradient-primary/10' 
+                      : 'border-[#333] text-[#a1a1aa] bg-[var(--surface)] hover:border-gray-500'
                   }`}
                 >
                   {day}
@@ -198,7 +198,7 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
                   defaultValue={rule.discount} 
                   min={0}
                   max={100}
-                  className="w-full bg-[#121212] border border-[#333] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[#FFC107] transition-colors text-sm" 
+                  className="w-full bg-[var(--surface)] border border-[#333] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[var(--primary)] transition-colors text-sm" 
                   required
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#a1a1aa] text-sm">%</span>
@@ -209,7 +209,7 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
               <label className="text-[10px] md:text-xs font-semibold text-[#a1a1aa] uppercase tracking-wider">Status</label>
               <select 
                 name="status"
-                className="w-full bg-[#121212] border border-[#333] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[#FFC107] appearance-none text-sm"
+                className="w-full bg-[var(--surface)] border border-[#333] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[var(--primary)] appearance-none text-sm"
                 required
                 defaultValue={rule.status || "SCHEDULED"}
               >
@@ -229,7 +229,7 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
                   type="time" 
                   name="startTime"
                   defaultValue={defaultStart}
-                  className="w-full bg-[#121212] border border-[#333] text-white rounded-lg px-3 py-3 focus:outline-none focus:border-[#FFC107] text-sm [&::-webkit-calendar-picker-indicator]:invert" 
+                  className="w-full bg-[var(--surface)] border border-[#333] text-white rounded-lg px-3 py-3 focus:outline-none focus:border-[var(--primary)] text-sm [&::-webkit-calendar-picker-indicator]:invert" 
                   required
                 />
                 <span className="text-[#a1a1aa] text-sm">to</span>
@@ -237,7 +237,7 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
                   type="time" 
                   name="endTime"
                   defaultValue={defaultEnd}
-                  className="w-full bg-[#121212] border border-[#333] text-white rounded-lg px-3 py-3 focus:outline-none focus:border-[#FFC107] text-sm [&::-webkit-calendar-picker-indicator]:invert" 
+                  className="w-full bg-[var(--surface)] border border-[#333] text-white rounded-lg px-3 py-3 focus:outline-none focus:border-[var(--primary)] text-sm [&::-webkit-calendar-picker-indicator]:invert" 
                   required
                 />
               </div>
@@ -247,7 +247,7 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
               <label className="text-[10px] md:text-xs font-semibold text-[#a1a1aa] uppercase tracking-wider">Applies To</label>
               <select 
                 name="device"
-                className="w-full bg-[#121212] border border-[#333] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[#FFC107] appearance-none text-sm"
+                className="w-full bg-[var(--surface)] border border-[#333] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[var(--primary)] appearance-none text-sm"
                 required
                 defaultValue={defaultDeviceId}
                 key={defaultDeviceId} // Adding key forces React to re-render the select default value once devices load
@@ -279,7 +279,7 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
             <Button 
               type="submit" 
               disabled={isSubmitting}
-              className="w-full md:w-auto bg-[#FFC107] text-black hover:bg-[#ffcd38] font-bold px-6 flex items-center justify-center"
+              className="w-full md:w-auto bg-gradient-primary text-black hover:bg-gradient-primary-hover font-bold px-6 flex items-center justify-center"
             >
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 'SAVE CHANGES'}
             </Button>

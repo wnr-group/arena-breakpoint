@@ -58,18 +58,18 @@ export function HappyHourTable({ data = [], onEdit, onDelete }: TableProps) {
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'LIVE':
-        return 'text-orange-400 border-orange-400/20 bg-orange-400/10'
+        return 'text-primary border-primary/20 bg-primary/10'
       case 'PAUSED':
         return 'text-gray-400 border-gray-600/50 bg-gray-800/50'
       case 'SCHEDULED':
-        return 'text-[#FFC107] border-[#FFC107]/20 bg-[#FFC107]/10'
+        return 'text-primary-hover border-primary-hover/20 bg-primary-hover/10'
       default:
         return 'text-gray-400 border-gray-600 bg-gray-800'
     }
   }
 
   return (
-    <div className="bg-[#121212] border border-[#27272a] rounded-xl overflow-hidden flex flex-col">
+    <div className="bg-[var(--surface)] border border-[#27272a] rounded-xl overflow-hidden flex flex-col">
       {/* RESPONSIVE SCROLLABLE TABLE */}
       <div className="overflow-x-auto min-h-75">
         <table className="w-full text-left text-sm whitespace-nowrap">
@@ -90,13 +90,13 @@ export function HappyHourTable({ data = [], onEdit, onDelete }: TableProps) {
                   {/* RULE NAME */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2 text-white font-medium">
-                      <div className={`h-1.5 w-1.5 rounded-full ${row.status === 'LIVE' ? 'bg-orange-400' : 'bg-gray-500'}`}></div>
+                      <div className={`h-1.5 w-1.5 rounded-full ${row.status === 'LIVE' ? 'bg-primary' : 'bg-gray-500'}`}></div>
                       {row.name}
                     </div>
                   </td>
 
                   {/* DISCOUNT */}
-                  <td className="px-6 py-4 text-[#FFC107] font-bold">
+                  <td className="px-6 py-4 text-primary font-bold">
                     {row.discount}% OFF
                   </td>
 
@@ -107,7 +107,7 @@ export function HappyHourTable({ data = [], onEdit, onDelete }: TableProps) {
                         <span className="bg-[#27272a] text-xs px-2 py-1 rounded-full text-white">PS</span>
                         <span className="bg-[#27272a] text-xs px-2 py-1 rounded-full text-white">PC</span>
                         <span className="bg-[#27272a] text-xs px-2 py-1 rounded-full text-white">XR</span>
-                        <span className="bg-[#FFC107]/20 text-[#FFC107] text-xs px-2 py-1 rounded-full border border-[#FFC107]/30">+12</span>
+                        <span className="bg-primary/20 text-primary text-xs px-2 py-1 rounded-full border border-primary/30">+12</span>
                       </div>
                     ) : (
                       row.devices
