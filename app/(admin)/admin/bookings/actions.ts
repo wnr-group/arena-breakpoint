@@ -752,8 +752,8 @@ export async function getBookingBillingDetails(bookingId: string) {
     if (lineItemsError) throw lineItemsError;
 
     // Calculate unpaid amount
-    const unpaidItems = lineItems?.filter(item => !item.is_paid) || [];
-    const unpaidAmount = unpaidItems.reduce((sum, item) => sum + Number(item.line_total), 0);
+    const unpaidItems = lineItems?.filter((item: any) => !item.is_paid) || [];
+    const unpaidAmount = unpaidItems.reduce((sum: number, item: any) => sum + Number(item.line_total), 0);
     const balanceDue = Number(data.total_amount) - Number(data.amount_paid || 0);
 
     return {

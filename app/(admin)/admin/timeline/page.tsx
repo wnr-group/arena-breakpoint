@@ -118,6 +118,7 @@ export default function TimelinePage() {
           bookings={timelineBookings}
           selectedDate={timelineDate}
           onDateChange={setTimelineDate}
+          onBookingClick={() => {}}
         />
       )}
     </div>

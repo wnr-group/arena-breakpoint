@@ -24,37 +24,48 @@ export function FoodCard({
     router.push('/food')
   }
 
-  const motionConfig = prefersReducedMotion
-    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
-    : {
-        initial: isFiltering ? { opacity: 0, scale: 0, x: 0 } : { opacity: 0, x: 60, scale: 1 },
-        animate: isFiltering
-          ? {
-              opacity: 1,
-              scale: 1,
-              x: 0,
-              transition: { duration: 0.4, ease: [0, 0.55, 0.45, 1], delay: index * 0.055 },
-            }
-          : inView
-            ? {
-                opacity: 1,
-                x: 0,
-                scale: 1,
-                transition: { duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94], delay: index * 0.08 },
-              }
-            : { opacity: 0, x: 60, scale: 1 },
-        exit: {
-          opacity: 0,
-          scale: 0,
-          transition: { duration: 0.3, ease: [0.55, 0, 1, 0.45], delay: index * 0.03 },
-        },
+  const getInitial = () => {
+    if (prefersReducedMotion) return { opacity: 0 }
+    return isFiltering ? { opacity: 0, scale: 0, x: 0 } : { opacity: 0, x: 60, scale: 1 }
+  }
+
+  const getAnimate = () => {
+    if (prefersReducedMotion) return { opacity: 1 }
+    if (isFiltering) {
+      return {
+        opacity: 1,
+        scale: 1,
+        x: 0,
+        transition: { duration: 0.4, ease: [0, 0.55, 0.45, 1] as const, delay: index * 0.055 },
       }
+    }
+    if (inView) {
+      return {
+        opacity: 1,
+        x: 0,
+        scale: 1,
+        transition: { duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] as const, delay: index * 0.08 },
+      }
+    }
+    return { opacity: 0, x: 60, scale: 1 }
+  }
+
+  const getExit = () => {
+    if (prefersReducedMotion) return { opacity: 0 }
+    return {
+      opacity: 0,
+      scale: 0,
+      transition: { duration: 0.3, ease: [0.55, 0, 1, 0.45] as const, delay: index * 0.03 },
+    }
+  }
 
   return (
     <motion.div
       ref={ref}
       layout
-      {...motionConfig}
+      initial={getInitial()}
+      animate={getAnimate()}
+      exit={getExit()}
       onClick={handleClick}
       className="group relative rounded-xl overflow-hidden cursor-pointer flex flex-col sm:block bg-[#121212] sm:bg-transparent border border-white/5 sm:border-0 h-full sm:h-auto aspect-auto sm:aspect-[301/401]"
     >

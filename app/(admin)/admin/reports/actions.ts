@@ -527,9 +527,9 @@ export async function getProfitAndLoss(filters: { dateFrom: string; dateTo: stri
     if (revenueError) throw revenueError;
 
     // Calculate revenue breakdown
-    const revenue = completedBookings?.reduce((sum, b) => sum + Number(b.amount_paid || 0), 0) || 0;
-    const deviceRevenue = completedBookings?.reduce((sum, b) => sum + Number(b.device_subtotal || 0), 0) || 0;
-    const foodRevenue = completedBookings?.reduce((sum, b) => sum + Number(b.food_subtotal || 0), 0) || 0;
+    const revenue = completedBookings?.reduce((sum: number, b: any) => sum + Number(b.amount_paid || 0), 0) || 0;
+    const deviceRevenue = completedBookings?.reduce((sum: number, b: any) => sum + Number(b.device_subtotal || 0), 0) || 0;
+    const foodRevenue = completedBookings?.reduce((sum: number, b: any) => sum + Number(b.food_subtotal || 0), 0) || 0;
 
     // Get expenses
     const { data: expenses, error: expensesError } = await supabaseAdmin
@@ -540,7 +540,7 @@ export async function getProfitAndLoss(filters: { dateFrom: string; dateTo: stri
 
     if (expensesError) throw expensesError;
 
-    const totalExpenses = expenses?.reduce((sum, e) => sum + Number(e.amount || 0), 0) || 0;
+    const totalExpenses = expenses?.reduce((sum: number, e: any) => sum + Number(e.amount || 0), 0) || 0;
 
     // Calculate profit
     const profit = revenue - totalExpenses;
