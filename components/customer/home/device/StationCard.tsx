@@ -9,8 +9,8 @@ export function StationCard({ station, motionProps }: { station: Station; motion
       {...motionProps}
       className="group relative rounded-md aspect-[4/3] min-[581px]:aspect-[3/4] cursor-pointer
         border-3 border-transparent
-        hover:border-amber-400
-        hover:shadow-[0_0_24px_rgba(251,191,36,0.45)]
+        hover:border-primary
+        hover:shadow-[0_0_24px_rgba(184,134,11,0.45)]
         transition-[border-color,box-shadow] duration-300"
     >
       <div className="relative w-full h-full rounded-md overflow-hidden bg-white/5 backdrop-blur-sm border border-white/20">
@@ -40,7 +40,7 @@ export function StationCard({ station, motionProps }: { station: Station; motion
         <div className="absolute bottom-0 left-0 right-0 z-10 px-3.5 pb-3.5 pt-5 min-[581px]:px-4 min-[581px]:pb-4 min-[581px]:pt-6 transition-transform duration-400 ease-[cubic-bezier(.25,1,.5,1)] group-hover:-translate-y-14">
           {/* Device Name */}
           <h3
-            className={`font-black uppercase tracking-wide leading-tight mb-1.5 text-base min-[581px]:text-lg ${avail ? 'text-amber-400' : 'text-white/70'}`}
+            className={`font-black uppercase tracking-wide leading-tight mb-1.5 text-base min-[581px]:text-lg ${avail ? 'text-primary' : 'text-white/70'}`}
             style={{ fontFamily: "'Rajdhani', sans-serif" }}
           >
             {station.name}
@@ -92,10 +92,10 @@ export function StationCard({ station, motionProps }: { station: Station; motion
             disabled={!avail}
             className={`w-full py-2.5 min-[581px]:py-3 rounded-xl font-black text-[12px] min-[581px]:text-[13px] tracking-widest uppercase transition-colors duration-200 ${
               avail
-                ? 'bg-amber-400 text-black hover:bg-amber-300 active:scale-95'
+                ? 'bg-gradient-primary text-[var(--button-text)] hover:bg-gradient-primary-hover active:scale-95'
                 : 'bg-white/6 text-white/25 border border-white/10 cursor-not-allowed'
             }`}
-            style={{ fontFamily: "'Rajdhani', sans-serif", color: avail ? 'black' : undefined }}
+            style={{ fontFamily: "'Rajdhani', sans-serif" }}
           >
             {avail ? 'Book slot' : 'Join Waitlist'}
           </button>

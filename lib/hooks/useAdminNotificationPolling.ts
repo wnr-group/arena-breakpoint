@@ -34,7 +34,7 @@ export function useAdminNotificationPolling() {
           lastBookingTimeRef.current = newBookings[0].created_at
 
           // Add notifications for each new booking
-          newBookings.reverse().forEach((booking) => {
+          newBookings.reverse().forEach((booking: any) => {
             addNotification({
               type: 'booking',
               title: 'New Booking',

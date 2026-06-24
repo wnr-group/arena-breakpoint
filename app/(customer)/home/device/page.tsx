@@ -73,8 +73,8 @@ export default function DevicePage() {
         <source src="/ps5_hero.mp4" type="video/mp4" />
       </video>
 
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/60" style={{ zIndex: 1 }} />
+      {/* Dark overlay with gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black/80" style={{ zIndex: 1 }} />
  
 
       {/* Content */}
