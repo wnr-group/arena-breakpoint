@@ -17,6 +17,7 @@ import { Breadcrumb } from '@/components/ui/breadcrumb'
 
 // Import your existing server action
 import { getSubscriptionPlanDetails } from '@/app/(admin)/admin/subscription/actions'
+import Link from 'next/link'
 
 export default function SubscriptionActivatedPage() {
   const router = useRouter()
@@ -165,10 +166,13 @@ export default function SubscriptionActivatedPage() {
             </p>
 
             <div className="mt-auto space-y-3">
-              <button className="w-full bg-[#A855F7] hover:bg-[#9333EA] text-black font-bold text-[15px] py-4 rounded-xl flex items-center justify-center transition-all shadow-[0_0_15px_rgba(255,193,7,0.2)] hover:scale-[1.02]">
+              <Link
+                href="/booking"
+                className="w-full bg-[#A855F7] uppercase hover:bg-[#9333EA] text-black font-bold text-[15px] py-4 rounded-xl flex items-center justify-center transition-all shadow-[0_0_15px_rgba(255,193,7,0.2)] hover:scale-[1.02]"
+              >
                 <Gamepad2 className="w-5 h-5 mr-2" />
-                Book Gaming Slot Now
-              </button>
+                Book Gaming Slot
+              </Link>
 
               <button
                 onClick={() => {
@@ -185,10 +189,10 @@ export default function SubscriptionActivatedPage() {
                 View Subscription Details
               </button>
 
-              <button className="w-full text-neutral-400 hover:text-white font-medium text-sm py-3 mt-2 flex items-center justify-center transition-colors">
+              <Link href="/food" className="w-full text-neutral-400 hover:text-white font-medium text-sm py-3 mt-2 flex items-center justify-center transition-colors">
                 <UtensilsCrossed className="w-4 h-4 mr-2" />
                 Browse Food Menu
-              </button>
+              </Link>
             </div>
           </div>
         </div>
