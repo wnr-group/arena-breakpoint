@@ -7,6 +7,7 @@ export async function getMenuItems() {
     const { data, error } = await supabaseAdmin
       .from("menu_items")
       .select("*")
+      .eq("status", "available")
       .order("created_at", { ascending: false });
 
     if (error) throw error;
