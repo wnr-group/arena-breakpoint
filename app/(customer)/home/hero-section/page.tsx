@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Gamepad2, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
-import  Navbar  from '@/components/customer/layout/NavBar';
+import Navbar from '@/components/customer/layout/NavBar';
 
 
 interface SlideData {
@@ -19,7 +19,7 @@ const slides: SlideData[] = [
   {
     id: 1,
     video: "/hero_video.mp4",
-    title: "WELCOME TO BREAKPOINT ARENA",
+    title: "WELCOME TO BREAK POINT ARENA",
     subtitle: "Experience the ultimate gaming destination with cutting-edge technology and unmatched performance.",
     price: "9.99"
   },
@@ -85,10 +85,10 @@ const staggerContainer: Variants = {
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 40 },
-  show: { 
-    opacity: 1, 
-    y: 0, 
-    transition: { duration: 0.8, ease: "easeOut" } 
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: "easeOut" }
   }
 };
 
@@ -109,7 +109,7 @@ export default function HeroCarousel() {
     }, 10000);
 
     return () => clearInterval(timer);
-  }, [page]); 
+  }, [page]);
 
   return (
     <div className="relative w-full h-screen bg-[#0d0a14] overflow-hidden selection:bg-[var(--primary)] selection:text-black font-Oxanium">
@@ -152,7 +152,7 @@ export default function HeroCarousel() {
               transition={{ duration: 10, ease: "linear" }}
             />
           )}
-          
+
           <div className="absolute inset-0 bg-gradient-to-r from-[#0d0a14]/90 via-[#0d0a14]/50 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0d0a14]/60 via-transparent to-transparent" />
 
@@ -169,7 +169,7 @@ export default function HeroCarousel() {
                 <span className="text-xs md:text-sm font-medium text-white tracking-wide">Servers Are Available</span>
               </motion.div>
 
-              <motion.h1 
+              <motion.h1
                 variants={fadeUp}
                 className="font-Oxanium text-4xl sm:text-5xl md:text-7xl tracking-wide bg-gradient-to-b from-white via-[#f0f0f0] to-[#a0a0a0] text-transparent bg-clip-text mb-4 leading-tight md:leading-none"
                 style={{ textShadow: "0 10px 30px rgba(0,0,0,0.5)" }}
@@ -177,7 +177,7 @@ export default function HeroCarousel() {
                 {slides[currentIndex].title}
               </motion.h1>
 
-              <motion.p 
+              <motion.p
                 variants={fadeUp}
                 className="font-Oxanium text-gray-300 text-sm sm:text-base md:text-lg leading-relaxed mb-6 md:mb-10 max-w-2xl font-light"
               >
@@ -203,7 +203,7 @@ export default function HeroCarousel() {
 
       {/* Navigation Arrows */}
       <div className="absolute top-1/2 -translate-y-1/2 left-2 md:left-4 z-40">
-        <button 
+        <button
           onClick={() => paginate(-1)}
           className="p-1 md:p-3 text-primary hover:scale-110 transition-all duration-300 rounded-full group"
         >
@@ -211,7 +211,7 @@ export default function HeroCarousel() {
         </button>
       </div>
       <div className="absolute top-1/2 -translate-y-1/2 right-2 md:right-4 z-40">
-        <button 
+        <button
           onClick={() => paginate(1)}
           className="p-1 md:p-3 text-primary hover:scale-110 transition-all duration-300 rounded-full group"
         >
@@ -222,7 +222,7 @@ export default function HeroCarousel() {
       {/* Bottom Controls */}
       <div className="absolute bottom-6 md:bottom-8 left-6 md:left-12 right-6 md:right-12 flex justify-center md:justify-end items-end z-40 pointer-events-none">
         <div className="flex items-baseline gap-2 font-mono bg-black/40 md:bg-transparent px-4 py-2 md:p-0 rounded-full backdrop-blur-sm md:backdrop-blur-none pointer-events-auto">
-          <motion.span 
+          <motion.span
             key={currentIndex}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

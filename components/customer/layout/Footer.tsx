@@ -7,15 +7,15 @@ export default function Footer() {
 
   return (
     <footer className="bg-[#121212] border-t border-white/5 pt-16 pb-8 overflow-hidden relative">
-      
+
       {/* Subtle background glow to match the dark theme */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-[#FFC107]/5 blur-[100px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
-        
+
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 mb-16">
-          
+
           {/* Column 1: Brand & Description */}
           {/* On tablet (md), takes full width (col-span-2). On desktop (lg), takes 5 out of 12 columns */}
           <div className="md:col-span-2 lg:col-span-5 flex flex-col items-start">
@@ -27,7 +27,7 @@ export default function Footer() {
                 className="w-10 h-10 object-contain rounded-md"
               />
               <span className="text-2xl font-bold text-white tracking-wide" style={{ fontFamily: "'Oxanium', sans-serif" }}>
-                BREAKPOINT ARENA
+                BREAK POINT ARENA
               </span>
             </div>
             {/* Description */}
@@ -83,7 +83,7 @@ export default function Footer() {
         {/* Center aligned on mobile, split left/right on tablet/desktop */}
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left text-sm text-[#a1a1aa]">
           <p>
-            &copy; {currentYear} <span className="text-[#FFC107] hover:underline cursor-pointer">Breakpoint Arena</span>. All rights reserved by <span className="text-[#FFC107] hover:underline cursor-pointer">Breakpoint Arena</span>
+            &copy; {currentYear} <span className="text-[#FFC107] hover:underline cursor-pointer">Break Point Arena</span>. All rights reserved by <span className="text-[#FFC107] hover:underline cursor-pointer">Break Point Arena</span>
           </p>
           <div className="flex flex-wrap justify-center gap-6">
             <a href="#" className="hover:text-white transition-colors duration-300">Terms & Conditions</a>

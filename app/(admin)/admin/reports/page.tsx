@@ -86,7 +86,7 @@ export default function AdminReportsPage() {
   const handleExport = () => {
     toast.success("Export feature coming soon!");
   };
- 
+
   const getLocalDateString = (date: Date): string => {
     const offset = date.getTimezoneOffset();
     const localDate = new Date(date.getTime() - (offset * 60 * 1000));
@@ -198,46 +198,46 @@ export default function AdminReportsPage() {
           <Label className="text-[10px] font-black uppercase text-zinc-600 mb-2 block">
             Quick Filters
           </Label>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-2">
             <Button
               size="sm"
               onClick={() => setQuickDateRange("today")}
-              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
+              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
             >
               Today
             </Button>
             <Button
               size="sm"
               onClick={() => setQuickDateRange("7days")}
-              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
+              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
             >
               Last 7 Days
             </Button>
             <Button
               size="sm"
               onClick={() => setQuickDateRange("30days")}
-              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
+              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
             >
               Last 30 Days
             </Button>
             <Button
               size="sm"
               onClick={() => setQuickDateRange("month")}
-              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
+              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
             >
               This Month
             </Button>
             <Button
               size="sm"
               onClick={() => setQuickDateRange("90days")}
-              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
+              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
             >
               Last 90 Days
             </Button>
             <Button
               size="sm"
               onClick={() => setQuickDateRange("all")}
-              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
+              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
             >
               All Time
             </Button>
@@ -245,9 +245,10 @@ export default function AdminReportsPage() {
         </div>
 
         {/* Custom Date Range */}
-        <div className="flex flex-col md:flex-row gap-4 items-end">
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex flex-col md:flex-row gap-4 items-end mt-2">
 
+          {/* Date Pickers Container: 2 columns on mobile */}
+          <div className="flex-1 grid grid-cols-2 gap-3 w-full">
             {/* FROM DATE POP-OVER */}
             <div className="space-y-2 w-full">
               <Label className="text-[10px] font-black ml-2 tracking-widest uppercase text-zinc-500 flex items-center gap-1.5">
@@ -257,10 +258,10 @@ export default function AdminReportsPage() {
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-3 sm:px-4 text-[10px] sm:text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary overflow-hidden"
                   >
-                    <span>{dateFrom ? format(new Date(dateFrom), "dd-MM-yyyy") : <span className="text-zinc-400">dd-mm-yyyy</span>}</span>
-                    <CalendarDays className="h-4 w-4 text-primary" />
+                    <span className="truncate mr-2">{dateFrom ? format(new Date(dateFrom), "dd-MM-yyyy") : <span className="text-zinc-400">dd-mm-yyyy</span>}</span>
+                    <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-zinc-800 rounded-xl shadow-2xl" align="start">
@@ -283,10 +284,10 @@ export default function AdminReportsPage() {
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-3 sm:px-4 text-[10px] sm:text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary overflow-hidden"
                   >
-                    <span>{dateTo ? format(new Date(dateTo), "dd-MM-yyyy") : <span className="text-zinc-400">dd-mm-yyyy</span>}</span>
-                    <CalendarDays className="h-4 w-4 text-primary" />
+                    <span className="truncate mr-2">{dateTo ? format(new Date(dateTo), "dd-MM-yyyy") : <span className="text-zinc-400">dd-mm-yyyy</span>}</span>
+                    <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-zinc-800 rounded-xl shadow-2xl" align="start">
@@ -301,38 +302,27 @@ export default function AdminReportsPage() {
             </div>
           </div>
 
-          <Button
-            onClick={handleApplyFilters}
-            className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-11 rounded-xl px-6"
-          >
-            Apply Range
-          </Button>
+          {/* Action Buttons Container: 2 columns on mobile, flex on desktop */}
+          <div className="grid grid-cols-2 gap-3 w-full md:w-auto md:flex md:gap-4">
+            <Button
+              onClick={handleApplyFilters}
+              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] sm:text-xs h-12 rounded-xl px-3 sm:px-6 transition-all"
+            >
+              Apply Range
+            </Button>
+            <Button
+              onClick={() => {
+                setDateFrom("");
+                setDateTo("");
+                handleApplyFilters();
+              }}
+              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] sm:text-xs h-12 rounded-xl px-3 sm:px-6 transition-all"
+            >
+              Clear Filters
+            </Button>
+          </div>
 
-          {/* Active Filter Display */}
-          {/* {(dateFrom || dateTo) && (
-          <div className="flex items-center justify-between p-3 bg-[var(--background)] border border-[#27272a] rounded-lg">
-            <div className="flex items-center gap-2 text-xs text-zinc-400">
-              <Calendar className="h-3 w-3 text-primary" />
-              <span className="font-bold">
-                Showing: {dateFrom ? new Date(dateFrom).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'All time'}
-                {' → '}
-                {dateTo ? new Date(dateTo).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Now'}
-              </span>
-            </div>
-            </div> )} */}
-          <Button
-            onClick={() => {
-              setDateFrom("");
-              setDateTo("");
-              handleApplyFilters();
-            }}
-            className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-11 rounded-xl px-6"
-          >
-            Clear Filters
-          </Button>
         </div>
-
-
       </Card>
 
       {/* Tabs */}
