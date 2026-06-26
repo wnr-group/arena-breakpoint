@@ -10,7 +10,7 @@ import Image from 'next/image';
 const navLinks = [
   { label: "Home", path: "/" },
   { label: "Subscriptions", path: "/subscription" },
-  { label: "Retrieve Booking", path: "/retrieve" },
+  { label: "My Bookings", path: "/retrieve" },
   { label: "FOOD MENU", path: "/food" }
 ];
 
@@ -71,7 +71,7 @@ export default function Navbar() {
             className="object-contain group-hover:scale-110 transition-transform duration-300 rounded-md"
             priority
           />
-          <span className="text-2xl font-bold text-white tracking-wide uppercase">Breakpoint Arena</span>
+          <span className="text-2xl font-bold text-white tracking-wide uppercase">Break point Arena</span>
         </Link>
 
         {/* Desktop Links */}
