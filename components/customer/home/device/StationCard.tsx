@@ -1,7 +1,13 @@
 import { Station } from '@/app/(customer)/home/device/page'
 import { motion } from 'framer-motion'
+import { useRouter } from 'next/navigation';
 export function StationCard({ station, motionProps }: { station: Station; motionProps: object }) {
   const avail = station.isAvailable
+
+  const router = useRouter()
+  const handleClick = () => {
+    router.push('/booking')
+  }
 
   return (
     // Outer wrapper: holds the hover border OUTSIDE overflow-hidden so it's never clipped
@@ -24,11 +30,10 @@ export function StationCard({ station, motionProps }: { station: Station; motion
 
         {/* Availability Badge */}
         <div
-          className={`absolute top-3 right-3.5 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[8px] min-[581px]:text-[9px] font-bold tracking-widest uppercase transition-transform duration-400 group-hover:-translate-y-1 ${
-            avail
-              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50'
-              : 'bg-red-500/20 text-red-300 border border-red-400/50'
-          }`}
+          className={`absolute top-3 right-3.5 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[8px] min-[581px]:text-[9px] font-bold tracking-widest uppercase transition-transform duration-400 group-hover:-translate-y-1 ${avail
+            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50'
+            : 'bg-red-500/20 text-red-300 border border-red-400/50'
+            }`}
         >
           <span
             className={`w-1.5 h-1.5 rounded-full shrink-0 ${avail ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`}
@@ -89,12 +94,15 @@ export function StationCard({ station, motionProps }: { station: Station; motion
         {/* Book Station Button */}
         <div className="absolute bottom-3.5 min-[581px]:bottom-4 left-3.5 min-[581px]:left-4 right-3.5 min-[581px]:right-4 z-20 translate-y-5 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-400 ease-[cubic-bezier(.25,1,.5,1)]">
           <button
+            onClick={(e) => {
+              e.stopPropagation()
+              handleClick()
+            }}
             disabled={!avail}
-            className={`w-full py-2.5 min-[581px]:py-3 rounded-xl font-black text-[12px] min-[581px]:text-[13px] tracking-widest uppercase transition-colors duration-200 ${
-              avail
-                ? 'bg-gradient-primary text-[var(--button-text)] hover:bg-gradient-primary-hover active:scale-95'
-                : 'bg-white/6 text-white/25 border border-white/10 cursor-not-allowed'
-            }`}
+            className={`w-full py-2.5 min-[581px]:py-3 rounded-xl font-black text-[12px] min-[581px]:text-[13px] tracking-widest uppercase transition-colors duration-200 ${avail
+              ? 'bg-gradient-primary text-[var(--button-text)] hover:bg-gradient-primary-hover active:scale-95'
+              : 'bg-white/6 text-white/25 border border-white/10 cursor-not-allowed'
+              }`}
             style={{ fontFamily: "'Rajdhani', sans-serif" }}
           >
             {avail ? 'Book slot' : 'Join Waitlist'}
