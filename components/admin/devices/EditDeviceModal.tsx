@@ -23,7 +23,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
   const [editType, setEditType] = useState(device.type || "PlayStation 5");
   const [editStation, setEditStation] = useState(device.station_number || "");
   const [editStatus, setEditStatus] = useState(device.status || "available");
-  const [hourlyRate, setHourlyRate] = useState(device.hourly_rate || "");
+  const [hourlyRate, setHourlyRate] = useState(device.device_type?.regular_hourly_rate || "");
   const [localFile, setLocalFile] = useState<File | null>(null);
 
   // Computes fallback path variables between historical bucket signatures or newly staged files
