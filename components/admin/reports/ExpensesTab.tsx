@@ -8,6 +8,17 @@ import { Label } from '@/components/ui/label'
 import { Trash2, Edit2, Plus, Save, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { getExpenses, addExpense, updateExpense, deleteExpense, type Expense } from '@/app/(admin)/admin/reports/actions'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface ExpensesTabProps {
   dateFrom: string
@@ -86,8 +97,6 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this expense?')) return
-
     const result = await deleteExpense(id)
     if (result.success) {
       toast.success('Expense deleted successfully')
@@ -263,14 +272,36 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                             >
                               <Edit2 className="h-3 w-3" />
                             </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => handleDelete(expense.id)}
-                              variant="ghost"
-                              className="h-7 w-7 p-0 text-red-400 hover:text-red-300"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0 text-red-400 hover:text-red-300"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent className="bg-[var(--surface)] border border-[#27272a] text-white">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="text-xl font-bold">Delete Expense Record?</AlertDialogTitle>
+                                  <AlertDialogDescription className="text-[#a1a1aa] text-sm">
+                                    Are you sure you want to delete the expense **"{expense.description}"**? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter className="mt-4">
+                                  <AlertDialogCancel className="bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800 hover:text-white">
+                                    Cancel
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDelete(expense.id)}
+                                    className="bg-gradient-primary text-[var(--button-text)] font-semibold"
+                                  >
+                                    Confirm Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                         </td>
                       </>
