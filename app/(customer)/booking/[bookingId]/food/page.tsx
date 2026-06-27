@@ -116,49 +116,38 @@ export default function FoodOrderPage() {
   // Order Confirmation View
   if (orderConfirmed) {
     return (
-      <div className="min-h-screen text-white pb-24">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-
+      <div className="w-full max-w-2xl mx-auto py-4 px-2 animate-in fade-in duration-500">
+        <Card className="bg-[#111] border border-green-500/20 p-8 shadow-2xl rounded-2xl space-y-6 glow-box-strong">
           {/* Success Header */}
-          <Card className="bg-[#111] border border-zinc-900 p-6 text-center space-y-4">
+          <div className="text-center space-y-4">
             <div className="flex justify-center">
-              <div className="bg-green-500/10 border border-green-500/30 rounded-full p-4">
-                <ShoppingCart className="h-10 w-10 text-green-500" />
+              <div className="w-20 h-20 rounded-full bg-green-500/10 border-2 border-green-500 flex items-center justify-center">
+                <UtensilsCrossed className="h-10 w-10 text-green-500" />
               </div>
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl font-black uppercase text-white tracking-tight">ORDER CONFIRMED!</h2>
+              <h3 className="text-2xl font-black uppercase text-white tracking-tight">ORDER CONFIRMED!</h3>
               <p className="text-sm text-zinc-400">Your food order has been successfully placed.</p>
             </div>
-          </Card>
+          </div>
 
           {/* Order Items */}
-          <Card className="bg-[#111] border border-zinc-900 p-6 space-y-4">
-            <h3 className="text-sm font-black text-zinc-500 uppercase tracking-wider">Order Items</h3>
-            <div className="space-y-3">
-              {confirmedItems.map((item, index) => (
-                <div key={index} className="flex justify-between items-center py-3 border-b border-zinc-900 last:border-0">
-                  <div className="flex-1">
-                    <p className="text-white font-bold text-sm">{item.item_name}</p>
-                    <p className="text-xs text-zinc-500">{item.item_category}</p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-zinc-400 text-sm">x{item.quantity}</span>
-                    <span className="text-primary font-black text-sm w-20 text-right">₹{item.line_total.toFixed(2)}</span>
-                  </div>
-                </div>
-              ))}
+          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 text-sm glow-box-hover">
+            <h4 className="text-[10px] font-black text-zinc-500 uppercase">Order Items</h4>
+            {confirmedItems.map((item, index) => (
+              <div key={index} className="flex justify-between">
+                <span className="text-zinc-500">{item.item_name} (x{item.quantity}):</span>
+                <span className="text-white font-bold">₹{item.line_total.toFixed(2)}</span>
+              </div>
+            ))}
+            <div className="flex justify-between border-t border-zinc-800 pt-2 font-black">
+              <span className="text-zinc-500">Total Amount:</span>
+              <span className="text-white">₹{confirmedItems.reduce((sum, item) => sum + item.line_total, 0).toFixed(2)}</span>
             </div>
-            <div className="flex justify-between items-center pt-4 border-t border-zinc-800">
-              <span className="text-zinc-400 font-bold uppercase text-sm">Total</span>
-              <span className="text-primary font-black text-xl">
-                ₹{confirmedItems.reduce((sum, item) => sum + item.line_total, 0).toFixed(2)}
-              </span>
-            </div>
-          </Card>
+          </div>
 
           {/* Action Buttons */}
-          <div className="space-y-2">
+          <div className="space-y-2 pt-2">
             <Button
               onClick={() => {
                 if (returnUrl) {
@@ -167,8 +156,10 @@ export default function FoodOrderPage() {
                   router.push(`/my-bookings/${bookingId}`);
                 }
               }}
-              className="w-full bg-gradient-primary text-[var(--button-text)] font-black uppercase text-sm h-12 rounded-xl"
+              variant="gradient"
+              className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-2"
             >
+              <ShoppingCart className="h-4 w-4" />
               VIEW BOOKING DETAILS
             </Button>
             <Button
@@ -177,14 +168,26 @@ export default function FoodOrderPage() {
                 setCart({});
                 setConfirmedItems([]);
               }}
-              variant="outline"
-              className="w-full border-zinc-800 text-zinc-300 hover:text-white font-bold uppercase text-xs h-11 rounded-xl"
+              variant="ghost"
+              className="w-full border-2 border-primary text-zinc-300 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl"
             >
               ORDER MORE ITEMS
             </Button>
+            <Button
+              onClick={() => router.push("/")}
+              variant="ghost"
+              className="w-full text-zinc-300 border border-zinc-800 hover:text-zinc-400 font-bold uppercase text-[11px] h-10 rounded-xl"
+            >
+              BACK TO HOME
+            </Button>
           </div>
 
-        </div>
+          {/* Footer Note */}
+          <div className="pt-2 flex gap-2 items-center text-[10px] text-zinc-600 justify-center border-t border-zinc-950">
+            <UtensilsCrossed className="h-3.5 w-3.5 text-zinc-700" />
+            <span>Your food order will be prepared and served at your station</span>
+          </div>
+        </Card>
       </div>
     );
   }
