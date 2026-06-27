@@ -35,10 +35,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           'inline-flex items-center justify-center rounded-xl text-sm font-bold transition-all duration-300 relative overflow-hidden group',
           'focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50',
           {
-            'bg-gradient-primary text-[var(--button-text)] font-black glow-primary hover:glow-primary-hover hover:scale-[1.02] before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:-translate-x-full hover:before:translate-x-full before:transition-transform before:duration-700': variant === 'default' || variant === 'gradient',
-            'border-2 border-zinc-800 bg-gradient-to-br from-zinc-900 to-zinc-950 hover:border-primary/50 hover:from-primary/10 hover:to-primary/20 text-zinc-300 hover:text-white backdrop-blur-sm shadow-[0_0_8px_rgba(0,0,0,0.5)] glow-box-hover': variant === 'outline',
-            'bg-gradient-to-br from-zinc-900/50 to-zinc-950/50 hover:from-primary/20 hover:to-primary/30 hover:text-white transition-all text-zinc-400 glow-box-hover': variant === 'ghost',
-            'text-primary hover:text-primary-hover font-bold underline-offset-4 hover:underline glow-box-hover': variant === 'link',
+            'bg-gradient-primary text-[var(--button-text)] font-black hover:glow-primary-hover hover:scale-[1.02] before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:-translate-x-full hover:before:translate-x-full before:transition-transform before:duration-700': variant === 'default' || variant === 'gradient',
+            'border-2 border-zinc-800 bg-gradient-to-br from-zinc-900 to-zinc-950 hover:border-primary/50 hover:from-primary/10 hover:to-primary/20 text-zinc-300 hover:text-white backdrop-blur-sm shadow-[0_0_8px_rgba(0,0,0,0.5)] hover:glow-box-hover': variant === 'outline',
+            'bg-gradient-to-br from-zinc-900/50 to-zinc-950/50 hover:from-primary/20 hover:to-primary/30 hover:text-white transition-all text-zinc-400 hover:glow-box-hover': variant === 'ghost',
+            'text-primary hover:text-primary-hover font-bold underline-offset-4 hover:underline hover:glow-box-hover': variant === 'link',
           },
           {
             'h-10 px-4 py-2': size === 'default',

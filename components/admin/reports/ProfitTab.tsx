@@ -45,12 +45,13 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
 
   if (!data) return null
 
-  const isProfit = data.profit >= 0
+  const isProfit = data.netProfit >= 0
+  const isOperationalProfit = data.operationalProfit >= 0
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Main Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Revenue */}
         <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/30 p-6">
           <div className="flex items-center gap-3 mb-3">
@@ -72,10 +73,10 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             <p className="text-xs font-black uppercase text-red-400">Expenses</p>
           </div>
           <p className="text-3xl font-black text-white">₹{data.totalExpenses.toLocaleString('en-IN')}</p>
-          <p className="text-xs text-zinc-500 mt-2">{data.expenseCount} expense(s)</p>
+          <p className="text-sm-enhanced text-secondary-content mt-2">{data.expenseCount} expense(s)</p>
         </Card>
 
-        {/* Profit */}
+        {/* Net Profit */}
         <Card className={`bg-gradient-to-br ${isProfit ? 'from-primary/10 to-amber-600/5 border-primary/30' : 'from-red-500/10 to-red-600/5 border-red-500/30'} p-6`}>
           <div className="flex items-center gap-3 mb-3">
             <div className={`w-10 h-10 rounded-lg ${isProfit ? 'bg-primary/20' : 'bg-red-500/20'} flex items-center justify-center`}>
@@ -85,26 +86,73 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
                 <TrendingDown className="h-5 w-5 text-red-400" />
               )}
             </div>
-            <p className={`text-xs font-black uppercase ${isProfit ? 'text-primary' : 'text-red-400'}`}>
-              {isProfit ? 'Profit' : 'Loss'}
+            <p className={`text-stat-label ${isProfit ? 'text-primary' : 'text-red-400'}`}>
+              Net {isProfit ? 'Profit' : 'Loss'}
             </p>
           </div>
           <p className={`text-3xl font-black ${isProfit ? 'text-primary' : 'text-red-400'}`}>
-            ₹{Math.abs(data.profit).toLocaleString('en-IN')}
+            ₹{Math.abs(data.netProfit).toLocaleString('en-IN')}
           </p>
-          <p className="text-xs text-zinc-500 mt-2">{isProfit ? 'Making money!' : 'In loss'}</p>
+          <p className="text-sm-enhanced text-secondary-content mt-2">After all expenses</p>
+        </Card>
+      </div>
+
+      {/* Expense Breakdown & Operational Profit */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* OpEx */}
+        <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/30 p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center">
+              <Receipt className="h-5 w-5 text-orange-400" />
+            </div>
+            <p className="text-stat-label text-orange-400">OpEx</p>
+          </div>
+          <p className="text-2xl font-black text-white">₹{data.opexExpenses.toLocaleString('en-IN')}</p>
+          <p className="text-sm-enhanced text-secondary-content mt-2">Operational expenses</p>
         </Card>
 
-        {/* Profit Margin */}
+        {/* CapEx */}
         <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/30 p-6">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-              <Percent className="h-5 w-5 text-blue-400" />
+              <Receipt className="h-5 w-5 text-blue-400" />
             </div>
-            <p className="text-xs font-black uppercase text-blue-400">Profit Margin</p>
+            <p className="text-stat-label text-blue-400">CapEx</p>
           </div>
-          <p className="text-3xl font-black text-white">{data.profitMargin.toFixed(1)}%</p>
-          <p className="text-xs text-zinc-500 mt-2">Profit per rupee earned</p>
+          <p className="text-2xl font-black text-white">₹{data.capexExpenses.toLocaleString('en-IN')}</p>
+          <p className="text-sm-enhanced text-secondary-content mt-2">Capital investments</p>
+        </Card>
+
+        {/* Operational Profit */}
+        <Card className={`bg-gradient-to-br ${isOperationalProfit ? 'from-green-500/10 to-green-600/5 border-green-500/30' : 'from-red-500/10 to-red-600/5 border-red-500/30'} p-6`}>
+          <div className="flex items-center gap-3 mb-3">
+            <div className={`w-10 h-10 rounded-lg ${isOperationalProfit ? 'bg-green-500/20' : 'bg-red-500/20'} flex items-center justify-center`}>
+              {isOperationalProfit ? (
+                <TrendingUp className="h-5 w-5 text-green-400" />
+              ) : (
+                <TrendingDown className="h-5 w-5 text-red-400" />
+              )}
+            </div>
+            <p className={`text-stat-label ${isOperationalProfit ? 'text-green-400' : 'text-red-400'}`}>
+              Op. Profit
+            </p>
+          </div>
+          <p className={`text-2xl font-black ${isOperationalProfit ? 'text-green-400' : 'text-red-400'}`}>
+            ₹{Math.abs(data.operationalProfit).toLocaleString('en-IN')}
+          </p>
+          <p className="text-sm-enhanced text-secondary-content mt-2">Revenue - OpEx</p>
+        </Card>
+
+        {/* Profit Margin */}
+        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/30 p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+              <Percent className="h-5 w-5 text-purple-400" />
+            </div>
+            <p className="text-stat-label text-purple-400">Margin</p>
+          </div>
+          <p className="text-2xl font-black text-white">{data.profitMargin.toFixed(1)}%</p>
+          <p className="text-sm-enhanced text-secondary-content mt-2">Net profit margin</p>
         </Card>
       </div>
 

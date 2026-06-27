@@ -25,8 +25,28 @@ import { ProfitTab } from "@/components/admin/reports/ProfitTab";
 export default function AdminReportsPage() {
   const [activeTab, setActiveTab] = useState<"overview" | "food" | "device" | "revenue" | "expenses" | "profit">("overview");
   const [loading, setLoading] = useState(true);
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+
+  // Initialize with current month dates
+  const getLocalDateString = (date: Date): string => {
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+    return localDate.toISOString().split('T')[0];
+  };
+
+  const initializeCurrentMonth = () => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    return {
+      from: getLocalDateString(firstDay),
+      to: getLocalDateString(lastDay)
+    };
+  };
+
+  const currentMonth = initializeCurrentMonth();
+  const [dateFrom, setDateFrom] = useState(currentMonth.from);
+  const [dateTo, setDateTo] = useState(currentMonth.to);
+  const [activeQuickFilter, setActiveQuickFilter] = useState<string>("month");
 
   // Overview data
   const [overviewData, setOverviewData] = useState<any>(null);
@@ -87,15 +107,11 @@ export default function AdminReportsPage() {
     toast.success("Export feature coming soon!");
   };
 
-  const getLocalDateString = (date: Date): string => {
-    const offset = date.getTimezoneOffset();
-    const localDate = new Date(date.getTime() - (offset * 60 * 1000));
-    return localDate.toISOString().split('T')[0];
-  };
-
   const setQuickDateRange = (preset: "today" | "7days" | "30days" | "month" | "90days" | "all") => {
     const today = new Date();
     const todayStr = getLocalDateString(today);
+
+    setActiveQuickFilter(preset);
 
     switch (preset) {
       case "today":
@@ -201,43 +217,73 @@ export default function AdminReportsPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-2">
             <Button
               size="sm"
+              variant="outline"
               onClick={() => setQuickDateRange("today")}
-              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
+              className={`w-full md:w-auto font-bold uppercase text-xs h-9 ${
+                activeQuickFilter === "today"
+                  ? "bg-primary text-white border-primary glow-box-hover scale-[1.02] hover:bg-primary hover:text-white hover:scale-[1.02]"
+                  : "text-primary"
+              }`}
             >
               Today
             </Button>
             <Button
               size="sm"
+              variant="outline"
               onClick={() => setQuickDateRange("7days")}
-              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
+              className={`w-full md:w-auto font-bold uppercase text-xs h-9 ${
+                activeQuickFilter === "7days"
+                  ? "bg-primary text-white border-primary glow-box-hover scale-[1.02] hover:bg-primary hover:text-white hover:scale-[1.02]"
+                  : "text-primary"
+              }`}
             >
               Last 7 Days
             </Button>
             <Button
               size="sm"
+              variant="outline"
               onClick={() => setQuickDateRange("30days")}
-              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
+              className={`w-full md:w-auto font-bold uppercase text-xs h-9 ${
+                activeQuickFilter === "30days"
+                  ? "bg-primary text-white border-primary glow-box-hover scale-[1.02] hover:bg-primary hover:text-white hover:scale-[1.02]"
+                  : "text-primary"
+              }`}
             >
               Last 30 Days
             </Button>
             <Button
               size="sm"
+              variant="outline"
               onClick={() => setQuickDateRange("month")}
-              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
+              className={`w-full md:w-auto font-bold uppercase text-xs h-9 ${
+                activeQuickFilter === "month"
+                  ? "bg-primary text-white border-primary glow-box-hover scale-[1.02] hover:bg-primary hover:text-white hover:scale-[1.02]"
+                  : "text-primary"
+              }`}
             >
               This Month
             </Button>
             <Button
               size="sm"
+              variant="outline"
               onClick={() => setQuickDateRange("90days")}
-              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
+              className={`w-full md:w-auto font-bold uppercase text-xs h-9 ${
+                activeQuickFilter === "90days"
+                  ? "bg-primary text-white border-primary glow-box-hover scale-[1.02] hover:bg-primary hover:text-white hover:scale-[1.02]"
+                  : "text-primary"
+              }`}
             >
               Last 90 Days
             </Button>
             <Button
               size="sm"
+              variant="outline"
               onClick={() => setQuickDateRange("all")}
-              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] h-8 transition-all"
+              className={`w-full md:w-auto font-bold uppercase text-xs h-9 ${
+                activeQuickFilter === "all"
+                  ? "bg-primary text-white border-primary glow-box-hover scale-[1.02] hover:bg-primary hover:text-white hover:scale-[1.02]"
+                  : "text-primary"
+              }`}
             >
               All Time
             </Button>
@@ -306,7 +352,7 @@ export default function AdminReportsPage() {
           <div className="grid grid-cols-2 gap-3 w-full md:w-auto md:flex md:gap-4">
             <Button
               onClick={handleApplyFilters}
-              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] sm:text-xs h-12 rounded-xl px-3 sm:px-6 transition-all"
+              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-11 rounded-xl px-6 transition-all"
             >
               Apply Range
             </Button>
@@ -316,7 +362,8 @@ export default function AdminReportsPage() {
                 setDateTo("");
                 handleApplyFilters();
               }}
-              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-[10px] sm:text-xs h-12 rounded-xl px-3 sm:px-6 transition-all"
+              variant="outline"
+              className="w-full md:w-auto font-bold uppercase text-xs h-11 rounded-xl px-6"
             >
               Clear Filters
             </Button>

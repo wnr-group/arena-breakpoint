@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Trash2, Edit2, Plus, Save, X } from 'lucide-react'
+import { Trash2, Edit2, Plus, Save, X, CalendarDays } from 'lucide-react'
 import { toast } from 'sonner'
 import { getExpenses, addExpense, updateExpense, deleteExpense, type Expense } from '@/app/(admin)/admin/reports/actions'
 import {
@@ -19,6 +19,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { format } from "date-fns"
 
 interface ExpensesTabProps {
   dateFrom: string
@@ -35,14 +38,16 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
   const [formDate, setFormDate] = useState('')
   const [formDescription, setFormDescription] = useState('')
   const [formAmount, setFormAmount] = useState('')
+  const [formCategory, setFormCategory] = useState<'operational' | 'capital'>('operational')
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'operational' | 'capital'>('all')
 
   useEffect(() => {
     loadExpenses()
-  }, [dateFrom, dateTo])
+  }, [dateFrom, dateTo, categoryFilter])
 
   const loadExpenses = async () => {
     setLoading(true)
-    const result = await getExpenses({ dateFrom, dateTo })
+    const result = await getExpenses({ dateFrom, dateTo, category: categoryFilter })
     if (result.success) {
       setExpenses(result.expenses)
     } else {
@@ -61,6 +66,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
       date: formDate,
       description: formDescription,
       amount: parseFloat(formAmount),
+      category: formCategory,
     })
 
     if (result.success) {
@@ -68,6 +74,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
       setFormDate('')
       setFormDescription('')
       setFormAmount('')
+      setFormCategory('operational')
       setShowAddForm(false)
       loadExpenses()
     } else {
@@ -85,6 +92,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
       date: formDate,
       description: formDescription,
       amount: parseFloat(formAmount),
+      category: formCategory,
     })
 
     if (result.success) {
@@ -111,6 +119,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
     setFormDate(expense.date)
     setFormDescription(expense.description)
     setFormAmount(expense.amount.toString())
+    setFormCategory(expense.category)
   }
 
   const cancelEdit = () => {
@@ -118,19 +127,59 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
     setFormDate('')
     setFormDescription('')
     setFormAmount('')
+    setFormCategory('operational')
   }
 
   const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
+  const opexTotal = expenses.filter(e => e.category === 'operational').reduce((sum, e) => sum + Number(e.amount), 0)
+  const capexTotal = expenses.filter(e => e.category === 'capital').reduce((sum, e) => sum + Number(e.amount), 0)
 
   return (
     <div className="space-y-6">
-      {/* Summary Card */}
-      <Card className="bg-[var(--surface)] border-[#27272a] p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-zinc-500 font-black uppercase mb-2">Total Expenses</p>
-            <p className="text-3xl font-black text-red-400">₹{totalExpenses.toLocaleString('en-IN')}</p>
-            <p className="text-xs text-zinc-600 mt-1">{expenses.length} expense(s)</p>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="bg-[var(--surface)] border-[#27272a] p-6">
+          <p className="text-label-enhanced text-muted-content mb-2">Total Expenses</p>
+          <p className="text-3xl font-black text-red-400">₹{totalExpenses.toLocaleString('en-IN')}</p>
+          <p className="text-sm-enhanced text-secondary-content mt-1">{expenses.length} expense(s)</p>
+        </Card>
+        <Card className="bg-[var(--surface)] border-[#27272a] p-6">
+          <p className="text-label-enhanced text-muted-content mb-2">OpEx (Operational)</p>
+          <p className="text-3xl font-black text-orange-400">₹{opexTotal.toLocaleString('en-IN')}</p>
+          <p className="text-sm-enhanced text-secondary-content mt-1">Day-to-day expenses</p>
+        </Card>
+        <Card className="bg-[var(--surface)] border-[#27272a] p-6">
+          <p className="text-label-enhanced text-muted-content mb-2">CapEx (Capital)</p>
+          <p className="text-3xl font-black text-blue-400">₹{capexTotal.toLocaleString('en-IN')}</p>
+          <p className="text-sm-enhanced text-secondary-content mt-1">Long-term investments</p>
+        </Card>
+      </div>
+
+      {/* Action Bar */}
+      <Card className="bg-[var(--surface)] border-[#27272a] p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setCategoryFilter('all')}
+              variant={categoryFilter === 'all' ? 'default' : 'outline'}
+              className={categoryFilter === 'all' ? 'bg-primary text-black' : ''}
+            >
+              All
+            </Button>
+            <Button
+              onClick={() => setCategoryFilter('operational')}
+              variant={categoryFilter === 'operational' ? 'default' : 'outline'}
+              className={categoryFilter === 'operational' ? 'bg-orange-500 text-white' : ''}
+            >
+              OpEx
+            </Button>
+            <Button
+              onClick={() => setCategoryFilter('capital')}
+              variant={categoryFilter === 'capital' ? 'default' : 'outline'}
+              className={categoryFilter === 'capital' ? 'bg-blue-500 text-white' : ''}
+            >
+              CapEx
+            </Button>
           </div>
           <Button
             onClick={() => setShowAddForm(!showAddForm)}
@@ -145,34 +194,58 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
       {/* Add Form */}
       {showAddForm && (
         <Card className="bg-[var(--surface)] border-primary/40 p-6">
-          <h3 className="text-sm font-black uppercase text-white mb-4">Add New Expense</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <h3 className="text-section-header mb-5">Add New Expense</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <Label className="text-xs text-zinc-500">Date</Label>
-              <Input
-                type="date"
-                value={formDate}
-                onChange={(e) => setFormDate(e.target.value)}
-                className="bg-[var(--background)] border-zinc-800 text-white"
-              />
+              <Label className="text-label-enhanced">Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="w-full mt-2 bg-[var(--background)] border border-zinc-800 h-10 rounded-md px-3 text-sm font-medium text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    <span className="truncate mr-2">{formDate ? format(new Date(formDate), "dd-MM-yyyy") : <span className="text-zinc-400">Select date</span>}</span>
+                    <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-zinc-800 rounded-xl shadow-2xl" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formDate ? new Date(formDate) : undefined}
+                    onSelect={(date) => date && setFormDate(format(date, 'yyyy-MM-dd'))}
+                    className="text-white"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div>
-              <Label className="text-xs text-zinc-500">Description</Label>
+              <Label className="text-label-enhanced">Category</Label>
+              <select
+                value={formCategory}
+                onChange={(e) => setFormCategory(e.target.value as 'operational' | 'capital')}
+                className="w-full mt-2 h-10 px-3 bg-[var(--background)] border border-zinc-800 text-white rounded-md"
+              >
+                <option value="operational">OpEx (Operational)</option>
+                <option value="capital">CapEx (Capital)</option>
+              </select>
+            </div>
+            <div>
+              <Label className="text-label-enhanced">Description</Label>
               <Input
                 placeholder="e.g., Electricity Bill"
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
-                className="bg-[var(--background)] border-zinc-800 text-white"
+                className="bg-[var(--background)] border-zinc-800 text-white mt-2"
               />
             </div>
             <div>
-              <Label className="text-xs text-zinc-500">Amount (₹)</Label>
+              <Label className="text-label-enhanced">Amount (₹)</Label>
               <Input
                 type="number"
                 placeholder="0.00"
                 value={formAmount}
                 onChange={(e) => setFormAmount(e.target.value)}
-                className="bg-[var(--background)] border-zinc-800 text-white"
+                className="bg-[var(--background)] border-zinc-800 text-white mt-2"
               />
             </div>
           </div>
@@ -195,20 +268,21 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
           <table className="w-full">
             <thead className="bg-[var(--background)] border-b border-[#27272a]">
               <tr>
-                <th className="py-4 px-4 text-left text-[10px] text-zinc-500 font-black uppercase">Date</th>
-                <th className="py-4 px-4 text-left text-[10px] text-zinc-500 font-black uppercase">Description</th>
-                <th className="py-4 px-4 text-right text-[10px] text-zinc-500 font-black uppercase">Amount</th>
-                <th className="py-4 px-4 text-right text-[10px] text-zinc-500 font-black uppercase">Actions</th>
+                <th className="py-4 px-4 text-left text-label-enhanced">Date</th>
+                <th className="py-4 px-4 text-left text-label-enhanced">Category</th>
+                <th className="py-4 px-4 text-left text-label-enhanced">Description</th>
+                <th className="py-4 px-4 text-right text-label-enhanced">Amount</th>
+                <th className="py-4 px-4 text-right text-label-enhanced">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#27272a]">
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="py-12 text-center text-zinc-600">Loading...</td>
+                  <td colSpan={5} className="py-12 text-center text-sm-enhanced">Loading...</td>
                 </tr>
               ) : expenses.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-12 text-center text-zinc-600">No expenses found</td>
+                  <td colSpan={5} className="py-12 text-center text-sm-enhanced">No expenses found</td>
                 </tr>
               ) : (
                 expenses.map((expense) => (
@@ -216,12 +290,35 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                     {editingId === expense.id ? (
                       <>
                         <td className="py-3 px-4">
-                          <Input
-                            type="date"
-                            value={formDate}
-                            onChange={(e) => setFormDate(e.target.value)}
-                            className="bg-[var(--background)] border-zinc-800 text-white h-8 text-sm"
-                          />
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button
+                                type="button"
+                                className="w-full bg-[var(--background)] border border-zinc-800 h-8 rounded-md px-2 text-sm font-medium text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                              >
+                                <span className="truncate mr-1 text-xs">{formDate ? format(new Date(formDate), "dd-MM-yyyy") : <span className="text-zinc-400">Select</span>}</span>
+                                <CalendarDays className="h-3 w-3 text-primary flex-shrink-0" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-zinc-800 rounded-xl shadow-2xl" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={formDate ? new Date(formDate) : undefined}
+                                onSelect={(date) => date && setFormDate(format(date, 'yyyy-MM-dd'))}
+                                className="text-white"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </td>
+                        <td className="py-3 px-4">
+                          <select
+                            value={formCategory}
+                            onChange={(e) => setFormCategory(e.target.value as 'operational' | 'capital')}
+                            className="h-8 px-2 bg-[var(--background)] border border-zinc-800 text-white rounded-md text-sm"
+                          >
+                            <option value="operational">OpEx</option>
+                            <option value="capital">CapEx</option>
+                          </select>
                         </td>
                         <td className="py-3 px-4">
                           <Input
@@ -255,11 +352,20 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                       </>
                     ) : (
                       <>
-                        <td className="py-3 px-4 text-sm text-zinc-300">
+                        <td className="py-3 px-4 text-sm-enhanced text-secondary-content">
                           {new Date(expense.date).toLocaleDateString()}
                         </td>
-                        <td className="py-3 px-4 text-sm text-white font-medium">{expense.description}</td>
-                        <td className="py-3 px-4 text-sm text-right font-black text-red-400">
+                        <td className="py-3 px-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                            expense.category === 'operational'
+                              ? 'bg-orange-500/20 text-orange-400 border border-orange-500/40'
+                              : 'bg-blue-500/20 text-blue-400 border border-blue-500/40'
+                          }`}>
+                            {expense.category === 'operational' ? 'OpEx' : 'CapEx'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-base text-white font-semibold">{expense.description}</td>
+                        <td className="py-3 px-4 text-base text-right font-black text-red-400">
                           ₹{Number(expense.amount).toLocaleString('en-IN')}
                         </td>
                         <td className="py-3 px-4">

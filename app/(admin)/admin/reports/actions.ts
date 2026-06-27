@@ -409,6 +409,7 @@ export interface Expense {
   date: string;
   description: string;
   amount: number;
+  category: 'operational' | 'capital';
   created_at: string;
   created_by: string | null;
 }
@@ -416,6 +417,7 @@ export interface Expense {
 export interface ExpenseFilters {
   dateFrom?: string;
   dateTo?: string;
+  category?: 'operational' | 'capital' | 'all';
 }
 
 export async function getExpenses(filters?: ExpenseFilters) {
@@ -430,6 +432,9 @@ export async function getExpenses(filters?: ExpenseFilters) {
     }
     if (filters?.dateTo) {
       query = query.lte("date", filters.dateTo);
+    }
+    if (filters?.category && filters.category !== 'all') {
+      query = query.eq("category", filters.category);
     }
 
     const { data, error } = await query;
@@ -446,6 +451,7 @@ export async function addExpense(expense: {
   date: string;
   description: string;
   amount: number;
+  category: 'operational' | 'capital';
   created_by?: string;
 }) {
   try {
@@ -455,6 +461,7 @@ export async function addExpense(expense: {
         date: expense.date,
         description: expense.description,
         amount: expense.amount,
+        category: expense.category,
         created_by: expense.created_by || null,
       })
       .select()
@@ -474,6 +481,7 @@ export async function updateExpense(
     date?: string;
     description?: string;
     amount?: number;
+    category?: 'operational' | 'capital';
   }
 ) {
   try {
@@ -526,25 +534,30 @@ export async function getProfitAndLoss(filters: { dateFrom: string; dateTo: stri
 
     if (revenueError) throw revenueError;
 
-    // Calculate revenue breakdown
-    const revenue = completedBookings?.reduce((sum: number, b: any) => sum + Number(b.amount_paid || 0), 0) || 0;
+    // Calculate revenue breakdown - use subtotals if amount_paid is 0
     const deviceRevenue = completedBookings?.reduce((sum: number, b: any) => sum + Number(b.device_subtotal || 0), 0) || 0;
     const foodRevenue = completedBookings?.reduce((sum: number, b: any) => sum + Number(b.food_subtotal || 0), 0) || 0;
+    const revenue = deviceRevenue + foodRevenue;
 
-    // Get expenses
+    // Get expenses with category breakdown
     const { data: expenses, error: expensesError } = await supabaseAdmin
       .from("expenses")
-      .select("amount, description")
+      .select("amount, description, category")
       .gte("date", filters.dateFrom)
       .lte("date", filters.dateTo);
 
     if (expensesError) throw expensesError;
 
     const totalExpenses = expenses?.reduce((sum: number, e: any) => sum + Number(e.amount || 0), 0) || 0;
+    const opexExpenses = expenses?.filter((e: any) => e.category === 'operational')
+      .reduce((sum: number, e: any) => sum + Number(e.amount || 0), 0) || 0;
+    const capexExpenses = expenses?.filter((e: any) => e.category === 'capital')
+      .reduce((sum: number, e: any) => sum + Number(e.amount || 0), 0) || 0;
 
-    // Calculate profit
-    const profit = revenue - totalExpenses;
-    const profitMargin = revenue > 0 ? (profit / revenue) * 100 : 0;
+    // Calculate profit (Revenue - OpEx only, as CapEx is not deducted from operational profit)
+    const operationalProfit = revenue - opexExpenses;
+    const netProfit = revenue - totalExpenses; // Including both OpEx and CapEx
+    const profitMargin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
 
     return {
       success: true,
@@ -553,7 +566,11 @@ export async function getProfitAndLoss(filters: { dateFrom: string; dateTo: stri
         deviceRevenue,
         foodRevenue,
         totalExpenses,
-        profit,
+        opexExpenses,
+        capexExpenses,
+        operationalProfit,
+        netProfit,
+        profit: netProfit, // For backward compatibility
         profitMargin,
         bookingCount: completedBookings?.length || 0,
         expenseCount: expenses?.length || 0,
