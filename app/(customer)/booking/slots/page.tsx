@@ -64,7 +64,8 @@ export default function SlotBookingPage() {
   const extraPlayersCount = Math.max(0, playerCount - includedPlayers);
   const extraPlayersCharge = extraPlayersCount * extraPlayerCharge;
   const baselineSubtotal = hourlyRate || 0;
-  const aggregatedPayableTotal = baselineSubtotal + extraPlayersCharge + additivesCostAggregated;
+  const deviceAndPlayersSubtotal = baselineSubtotal + extraPlayersCharge;
+  const aggregatedPayableTotal = deviceAndPlayersSubtotal + additivesCostAggregated;
 
   const handleRegisterTransactionLock = async () => {
     if (!calendarDay || !selectedSlotNode || !deviceTypeId) return;
@@ -74,14 +75,14 @@ export default function SlotBookingPage() {
     const res = await createSoftLockTransaction({
       deviceId: deviceTypeId!, deviceName: deviceTypeName || "Device Type", deviceType: "gaming", hourlyRate: baselineSubtotal,
       date: dateQueryString, slotLabel: selectedSlotNode.label, start: selectedSlotNode.start, end: selectedSlotNode.end,
-      addons, subtotal: baselineSubtotal, total: aggregatedPayableTotal
+      addons, subtotal: deviceAndPlayersSubtotal, total: aggregatedPayableTotal
     });
 
     if (res.success && res.bookingId && res.expiresAt) {
       dispatch(setSlot({ date: dateQueryString, slot: selectedSlotNode.label, startTime: selectedSlotNode.start, endTime: selectedSlotNode.end }));
       dispatch(setBookingId(res.bookingId));
       dispatch(setSlotLockExpiry(res.expiresAt));
-      dispatch(setPricing({ subtotal: baselineSubtotal, subscriptionDiscount: 0, promoDiscount: 0, total: aggregatedPayableTotal }));
+      dispatch(setPricing({ subtotal: deviceAndPlayersSubtotal, subscriptionDiscount: 0, promoDiscount: 0, total: aggregatedPayableTotal }));
       router.push("/booking/auth");
     } else {
       toast.error(res.error);

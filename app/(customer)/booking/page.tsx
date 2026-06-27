@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch } from "@/lib/redux/hooks";
-import { setDeviceType, setPricing } from "@/lib/redux/slices/bookingSlice";
+import { setDeviceType, setPricing, resetBooking } from "@/lib/redux/slices/bookingSlice";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Loader2, Users, Sparkles } from "lucide-react";
@@ -18,13 +18,16 @@ export default function GamingStationPage() {
   const [activeFilter, setActiveFilter] = useState("All Devices");
 
   useEffect(() => {
+    // Reset booking state when starting a new booking
+    dispatch(resetBooking());
+
     async function loadDeviceTypes() {
       const res = await getDeviceTypesWithAvailability();
       if (res.success) setDeviceTypes(res.deviceTypes);
       setLoading(false);
     }
     loadDeviceTypes();
-  }, []);
+  }, [dispatch]);
 
   const handleSelectAndProceed = (deviceType: any) => {
     const hourlyRate = Number(deviceType.regular_hourly_rate) || 0;
@@ -59,26 +62,27 @@ export default function GamingStationPage() {
     <div className="space-y-6 animate-in fade-in duration-200 pb-12">
       <div className="space-y-1">
         <p className="text-label text-muted-content">HOME › BOOK SLOT › <span className="text-primary">SELECT DEVICE</span></p>
-        <h2 className="text-xl font-black uppercase text-white tracking-tight">CHOOSE YOUR GAMING STATION</h2>
-        <p className="text-primary text-min font-black uppercase tracking-widest">• UPDATES LIVE: 24 ACTIVE PLAYERS MATCHING</p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <h2 className="text-xl font-black uppercase text-white tracking-tight">CHOOSE YOUR GAMING STATION</h2>
+          <Button onClick={() => router.push("/")} className="bg-gradient-primary text-[var(--button-text)] font-black text-[11px] uppercase h-9 px-4 w-full md:w-auto">
+            ← BACK TO HOME
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-900 pb-4">
-        <div className="flex gap-1.5 overflow-x-auto scrollbar-none">
+        <div className="flex gap-2 overflow-x-auto scrollbar-none">
           {["All Devices", "Console", "PC", "Snooker"].map((tag) => (
             <button
               key={tag}
               onClick={() => setActiveFilter(tag)}
-              className={`px-4 py-2 text-min font-black uppercase border rounded-md transition-all ${activeFilter === tag ? "bg-primary text-black border-transparent" : "bg-[#111] border-zinc-800 text-secondary-content"
+              className={`px-4 py-2.5 text-xs font-black uppercase border rounded-xl transition-all whitespace-nowrap ${activeFilter === tag ? "bg-gradient-primary text-[var(--button-text)] border-primary" : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700"
                 }`}
             >
               {tag}
             </button>
           ))}
         </div>
-        <Button onClick={() => router.push("/")} className="bg-primary hover:bg-primary-hover text-black font-black text-[11px] uppercase h-9 px-4 ">
-          ← BACK TO HOME
-        </Button>
       </div>
 
       {/* DEVICE TYPES GRID CONTAINER */}

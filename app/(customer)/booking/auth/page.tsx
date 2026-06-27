@@ -724,10 +724,16 @@ export default function CustomerDetailsPage() {
               <UtensilsCrossed className="h-4 w-4" />
               ORDER FOOD & DRINKS
             </Button>
-            <Button onClick={() => router.push(`/my-bookings?phone=${mobileNumber}`)} variant="ghost" className="w-full border-2 border-primary text-zinc-300 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
+            <Button onClick={() => {
+              dispatch(resetBooking());
+              router.push(`/my-bookings?phone=${mobileNumber}`);
+            }} variant="ghost" className="w-full border-2 border-primary text-zinc-300 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
               VIEW MY BOOKINGS
             </Button>
-            <Button onClick={() => router.push("/")} variant="ghost" className="w-full text-zinc-300 border border-zinc-800 hover:text-zinc-400 font-bold uppercase text-[11px] h-10 rounded-xl">
+            <Button onClick={() => {
+              dispatch(resetBooking());
+              router.push("/");
+            }} variant="ghost" className="w-full text-zinc-300 border border-zinc-800 hover:text-zinc-400 font-bold uppercase text-[11px] h-10 rounded-xl">
               BACK TO HOME
             </Button>
           </div>

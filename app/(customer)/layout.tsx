@@ -71,7 +71,7 @@ export default function CustomerRouteGroupLayout({ children }: { children: React
         {/* REUSABLE COMPONENT INJECTIONS */}
         <Navbar />
 
-        <main className="flex-1 w-full max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-8 flex flex-col mt-10 mb-8 relative z-10">
+        <main className="flex-1 w-full max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-8 flex flex-col mt-16 md:mt-10 mb-8 relative z-10">
           {children}
         </main>
 

@@ -58,24 +58,41 @@ export default function DevicePage() {
 
   return (
     <section id="features" className="relative min-h-screen py-24 overflow-hidden">
+      <style jsx>{`
+        @media (min-width: 769px) {
+          .video-container video {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+          }
+        }
+      `}</style>
 
-      {/* BG video — PS5 hero */}
-      <video
-        ref={videoRef}
-        autoPlay
-        muted
-        playsInline
-        preload="metadata"
-        poster="/ps5_hero_poster.jpg"
-        className="absolute inset-0 w-full h-full object-cover"
-        style={{ zIndex: 0 }}
-      >
-        <source src="/ps5_hero.mp4" type="video/mp4" />
-      </video>
+      {/* BG video — PS5 hero with parallax effect on desktop */}
+      <div className="video-container absolute inset-0" style={{ zIndex: 0 }}>
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          playsInline
+          preload="metadata"
+          poster="/ps5_hero_poster.jpg"
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source src="/ps5_hero.mp4" type="video/mp4" />
+        </video>
+      </div>
 
-      {/* Dark overlay with gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black/80" style={{ zIndex: 1 }} />
- 
+      {/* Gradient overlay - same as food section */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(to bottom, #1E1F22 0%, rgba(30,31,34,0.88) 50%, #1E1F22 100%)',
+          zIndex: 1
+        }}
+      />
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4" style={{ position: 'relative', zIndex: 10 }}>

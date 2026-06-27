@@ -20,7 +20,6 @@ function MyBookingsPageContent() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [selectedBooking, setSelectedBooking] = useState<any>(null);
 
   useEffect(() => {
     if (phoneFromUrl) {
@@ -86,7 +85,7 @@ function MyBookingsPageContent() {
                 <Button
                   onClick={handleSearch}
                   disabled={isLoading}
-                  className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 px-6 rounded-xl"
+                  className="bg-gradient-primary text-[var(--button-text)] font-black uppercase text-xs h-12 px-6 rounded-xl"
                 >
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "SEARCH"}
                 </Button>
@@ -122,7 +121,7 @@ function MyBookingsPageContent() {
               <Card
                 key={booking.id}
                 className="bg-[#111] border border-zinc-900 p-5 shadow-lg rounded-xl hover:border-primary/50 transition-all cursor-pointer glow-box-hover"
-                onClick={() => setSelectedBooking(booking)}
+                onClick={() => router.push(`/my-bookings/${booking.id}?phone=${phone}`)}
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="space-y-2 flex-1">
@@ -161,9 +160,9 @@ function MyBookingsPageContent() {
                   <Button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedBooking(booking);
+                      router.push(`/my-bookings/${booking.id}?phone=${phone}`);
                     }}
-                    className="border-primary bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-10 px-4"
+                    className="bg-gradient-primary text-[var(--button-text)] font-black uppercase text-xs h-10 px-4"
                   >
                     View Details
                   </Button>
@@ -174,104 +173,11 @@ function MyBookingsPageContent() {
         )}
 
         {/* Back Button */}
-        <Button onClick={() => router.push("/")} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-xs h-11 rounded-xl">
+        <Button onClick={() => router.push("/")} variant="outline" className="w-full font-bold uppercase text-xs h-11 rounded-xl">
           ← BACK TO HOME
         </Button>
       </div>
 
-      {/* Booking Details Modal */}
-      {selectedBooking && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl max-w-md w-full space-y-6 max-h-[90vh] overflow-y-auto glow-box-hover">
-
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-zinc-900 pb-4">
-              <div>
-                <h3 className="text-lg font-black uppercase text-white">Booking Details</h3>
-                <p className="text-xs text-zinc-500 font-mono mt-1">{selectedBooking.booking_number}</p>
-              </div>
-              <Button
-                onClick={() => setSelectedBooking(null)}
-                variant="ghost"
-                size="sm"
-                className="text-zinc-500 hover:text-white"
-              >
-                ✕
-              </Button>
-            </div>
-
-            {/* QR Code */}
-            <div className="bg-zinc-950 p-6 rounded-xl border border-zinc-900 space-y-4 glow-box-strong">
-              <div className="flex items-center justify-center gap-2 text-xs font-black text-zinc-500 uppercase tracking-wider">
-                <QrCode className="h-4 w-4" />
-                <span>Booking QR Code</span>
-              </div>
-              <div className="flex justify-center bg-white p-4 rounded-lg">
-                <QRCodeSVG value={selectedBooking.booking_number} size={160} level="H" />
-              </div>
-            </div>
-
-            {/* Customer Info */}
-            <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-2 glow-box-hover">
-              <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Customer Information</h4>
-              <div className="flex justify-between text-sm"><span className="text-zinc-500">Name:</span> <span className="text-white font-bold">{selectedBooking.customer_name}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-zinc-500">Phone:</span> <span className="text-white font-bold">{selectedBooking.customer_phone}</span></div>
-            </div>
-
-            {/* Device Slots */}
-            {selectedBooking.booking_device_slots?.length > 0 && (
-              <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-2 glow-box-hover">
-                <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Device Slots</h4>
-                {selectedBooking.booking_device_slots.map((slot: any, idx: number) => (
-                  <div key={idx} className="text-sm space-y-1 border-b border-zinc-900 pb-2 last:border-0">
-                    <div className="flex justify-between"><span className="text-zinc-500">Device:</span> <span className="text-white font-bold">{slot.device_type} #{slot.device_station_number}</span></div>
-                    <div className="flex justify-between"><span className="text-zinc-500">Date:</span> <span className="text-white">{new Date(slot.slot_date).toLocaleDateString()}</span></div>
-                    <div className="flex justify-between"><span className="text-zinc-500">Time:</span> <span className="text-primary font-bold">{slot.slot_start_time} - {slot.slot_end_time}</span></div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Food Items */}
-            {selectedBooking.booking_food_items?.length > 0 && (
-              <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-2 glow-box-hover">
-                <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Food & Add-ons</h4>
-                {selectedBooking.booking_food_items.map((item: any, idx: number) => (
-                  <div key={idx} className="flex justify-between text-sm">
-                    <span className="text-zinc-400">{item.item_name} (x{item.quantity})</span>
-                    <span className="text-white font-bold">₹{item.line_total}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Payment Info */}
-            <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-2 glow-box-strong">
-              <div className="flex justify-between text-sm"><span className="text-zinc-500">Payment Status:</span> <span className={`font-bold uppercase ${selectedBooking.payment_status === 'paid' ? 'text-green-500' : 'text-amber-500'}`}>{selectedBooking.payment_status}</span></div>
-              <div className="flex justify-between text-sm border-t border-zinc-800 pt-2"><span className="text-zinc-500">Total Amount:</span> <span className="text-white font-black text-lg">₹{selectedBooking.total_amount}</span></div>
-            </div>
-
-            {/* Action Buttons */}
-            {selectedBooking.status === 'confirmed' && (
-              <Button
-                onClick={() => router.push(`/booking/${selectedBooking.id}/food`)}
-                className="w-full bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-2"
-              >
-                <UtensilsCrossed className="h-4 w-4" />
-                ORDER FOOD & DRINKS
-              </Button>
-            )}
-
-            <Button
-              onClick={() => setSelectedBooking(null)}
-              variant="ghost"
-              className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-xs h-10 rounded-xl"
-            >
-              CLOSE
-            </Button>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

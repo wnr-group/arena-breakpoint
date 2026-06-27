@@ -14,26 +14,26 @@ export function StationCard({ station, motionProps }: { station: Station; motion
         // Outer wrapper: holds the hover border OUTSIDE overflow-hidden so it's never clipped
         <motion.div
             {...motionProps}
-            className="group relative rounded-md aspect-[4/3] min-[581px]:aspect-[3/4] cursor-pointer
-        border-3 border-transparent
+            className="group relative rounded-xl aspect-[4/3] min-[581px]:aspect-[3/4] cursor-pointer
+        border-2 border-transparent
         hover:border-primary
-        hover:shadow-[0_0_24px_rgba(184,134,11,0.45)]
+        hover:shadow-[0_0_24px_rgba(255,193,7,0.5)]
         transition-[border-color,box-shadow] duration-300"
         >
-            <div className="relative w-full h-full rounded-md overflow-hidden bg-white/5 backdrop-blur-sm border border-white/20">
-                {/* Transparent Background - video shows through */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent transition-all duration-400 group-hover:from-black/70 group-hover:via-black/30" />
+            <div className="relative w-full h-full rounded-xl overflow-hidden bg-gradient-to-br from-zinc-900/95 via-zinc-950/95 to-black/95 backdrop-blur-md border border-zinc-800/60">
+                {/* Darker gradient overlay for better contrast */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent transition-all duration-400 group-hover:from-black/90 group-hover:via-black/50" />
 
                 {/* Station Number  */}
-                <div className="absolute top-3 left-3.5 z-10 font-bold text-[10px] tracking-widest text-white/60 uppercase">
+                <div className="absolute top-3 left-3.5 z-10 font-bold text-[10px] tracking-widest text-zinc-400 uppercase">
                     {station.station_num}
                 </div>
 
                 {/* Availability Badge */}
                 <div
                     className={`absolute top-3 right-3.5 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[8px] min-[581px]:text-[9px] font-bold tracking-widest uppercase transition-transform duration-400 group-hover:-translate-y-1 ${avail
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50'
-                        : 'bg-red-500/20 text-red-300 border border-red-400/50'
+                        ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-400/60'
+                        : 'bg-red-500/30 text-red-300 border border-red-400/60'
                         }`}
                 >
                     <span
@@ -67,27 +67,27 @@ export function StationCard({ station, motionProps }: { station: Station; motion
 
                     {/* Meta Pills */}
                     <div className="flex flex-wrap gap-1 min-[581px]:gap-1.5 mb-2 min-[581px]:mb-3">
-                        <span className="bg-white/12 border border-white/25 rounded-full text-[10px] min-[581px]:text-[12px] text-white/80 px-2 min-[581px]:px-2.5 py-0.5 min-[581px]:py-1 font-medium tracking-wide">
+                        <span className="bg-zinc-800/60 border border-zinc-700/60 rounded-full text-[10px] min-[581px]:text-[12px] text-zinc-300 px-2 min-[581px]:px-2.5 py-0.5 min-[581px]:py-1 font-medium tracking-wide">
                             Incl. <span className="text-white font-semibold">{station.included_players}</span>{' '}
                             players
                         </span>
-                        <span className="bg-white/12 border border-white/25 rounded-full text-[10px] min-[581px]:text-[12px] text-white/80 px-2 min-[581px]:px-2.5 py-0.5 min-[581px]:py-1 font-medium tracking-wide">
+                        <span className="bg-zinc-800/60 border border-zinc-700/60 rounded-full text-[10px] min-[581px]:text-[12px] text-zinc-300 px-2 min-[581px]:px-2.5 py-0.5 min-[581px]:py-1 font-medium tracking-wide">
                             Max <span className="text-white font-semibold">{station.max_players}</span>
                         </span>
                         {station.extra_player_charge > 0 ? (
-                            <span className="bg-white/12 border border-white/25 rounded-full text-[10px] min-[581px]:text-[12px] text-white/80 px-2 min-[581px]:px-2.5 py-0.5 min-[581px]:py-1 font-medium tracking-wide">
+                            <span className="bg-zinc-800/60 border border-zinc-700/60 rounded-full text-[10px] min-[581px]:text-[12px] text-zinc-300 px-2 min-[581px]:px-2.5 py-0.5 min-[581px]:py-1 font-medium tracking-wide">
                                 +<span className="text-white font-semibold">₹{station.extra_player_charge}</span>
                                 /extra
                             </span>
                         ) : (
-                            <span className="bg-white/12 border border-white/25 rounded-full text-[10px] min-[581px]:text-[12px] text-white/80 px-2 min-[581px]:px-2.5 py-0.5 min-[581px]:py-1 font-medium tracking-wide">
+                            <span className="bg-zinc-800/60 border border-zinc-700/60 rounded-full text-[10px] min-[581px]:text-[12px] text-zinc-300 px-2 min-[581px]:px-2.5 py-0.5 min-[581px]:py-1 font-medium tracking-wide">
                                 <span className="text-white font-semibold">No</span> extra charge
                             </span>
                         )}
                     </div>
 
                     {/* Description */}
-                    <p className="hidden min-[581px]:block text-white/60 text-[13px] leading-relaxed line-clamp-2">
+                    <p className="hidden min-[581px]:block text-zinc-400 text-[13px] leading-relaxed line-clamp-2">
                         {station.description}
                     </p>
                 </div>

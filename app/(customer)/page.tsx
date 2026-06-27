@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react'
 import HeroCarousel from './home/hero-section/page'
 import DevicePage from './home/device/page'
 import FoodMenu from './home/food/page'
-import SubscriptionPage from './home/subscription/page'
 import Footer from '@/components/customer/layout/Footer'
 import Testimonials from './home/testimonial/page'
 
@@ -34,7 +33,6 @@ export default function LandingPage(){
       <HeroCarousel />
       <DevicePage />
       <FoodMenu />
-      <SubscriptionPage />
       <Testimonials />
       <Footer />
     </div>

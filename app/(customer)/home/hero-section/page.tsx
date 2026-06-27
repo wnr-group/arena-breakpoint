@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Gamepad2, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import Navbar from '@/components/customer/layout/NavBar';
 
 
@@ -32,20 +33,6 @@ const slides: SlideData[] = [
   },
   {
     id: 3,
-    image: "https://demo.bravisthemes.com/playhost/wp-content/uploads/2023/12/Slide2.webp",
-    title: "COSMIC WARFARE",
-    subtitle: "Experience high-performance servers with ultra-low latency. Dominate the galaxy with uninterrupted gameplay and dedicated resources.",
-    price: "14.99"
-  },
-  {
-    id: 4,
-    image: "https://demo.bravisthemes.com/playhost/wp-content/uploads/2023/12/Slide4.webp",
-    title: "NEBULA SURVIVAL",
-    subtitle: "Build, explore, and survive in infinite procedurally generated universes. Our servers ensure your progress is always safe and fast.",
-    price: "12.50"
-  },
-  {
-    id: 5,
     image: "https://demo.bravisthemes.com/playhost/wp-content/uploads/2023/12/Slide1.webp",
     title: "STARFLEET COMMAND",
     subtitle: "Lead your fleet to victory. Deploy custom mods effortlessly with our one-click installer and 24/7 priority customer support.",
@@ -93,6 +80,7 @@ const fadeUp: Variants = {
 };
 
 export default function HeroCarousel() {
+  const router = useRouter();
   const [[page, direction], setPage] = useState([0, 0]);
 
   // Wrap around index safely using modulo
@@ -153,25 +141,21 @@ export default function HeroCarousel() {
             />
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0d0a14]/90 via-[#0d0a14]/50 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0d0a14]/60 via-transparent to-transparent" />
+          {/* Lighter gradient overlays to show more background */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0d0a14]/85 via-[#0d0a14]/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0d0a14]/70 via-transparent to-[#0d0a14]/50" />
 
-          {/* Slide Text Content */}
-          <div className="absolute inset-0 flex items-center px-14 sm:px-20 md:px-40 pb-24 md:pb-0">
+          {/* Desktop Layout - centered */}
+          <div className="hidden md:flex absolute inset-0 items-center px-20 lg:px-40">
             <motion.div
               variants={staggerContainer}
               initial="hidden"
               animate="show"
               className="max-w-3xl pt-20"
             >
-              <motion.div variants={fadeUp} className="inline-flex items-center gap-2 md:gap-3 px-4 md:px-5 py-1.5 md:py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-md mb-6 md:mb-8">
-                <span className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[var(--primary)] glow-primary animate-pulse" />
-                <span className="text-xs md:text-sm font-medium text-white tracking-wide">Servers Are Available</span>
-              </motion.div>
-
               <motion.h1
                 variants={fadeUp}
-                className="font-Oxanium text-4xl sm:text-5xl md:text-7xl tracking-wide bg-gradient-to-b from-white via-[#f0f0f0] to-[#a0a0a0] text-transparent bg-clip-text mb-4 leading-tight md:leading-none"
+                className="font-Oxanium text-5xl lg:text-6xl tracking-wide bg-gradient-to-b from-white via-[#f0f0f0] to-[#a0a0a0] text-transparent bg-clip-text mb-4 leading-tight"
                 style={{ textShadow: "0 10px 30px rgba(0,0,0,0.5)" }}
               >
                 {slides[currentIndex].title}
@@ -179,23 +163,60 @@ export default function HeroCarousel() {
 
               <motion.p
                 variants={fadeUp}
-                className="font-Oxanium text-secondary-content text-sm sm:text-base md:text-lg leading-relaxed mb-6 md:mb-10 max-w-2xl font-light"
+                className="font-Oxanium text-secondary-content text-base leading-relaxed mb-10 max-w-2xl font-light"
               >
                 {slides[currentIndex].subtitle}
               </motion.p>
 
-              <motion.div variants={fadeUp} className="flex flex-col gap-3 md:gap-5 font-Oxanium">
-                <p className="text-secondary-content font-medium tracking-wide text-sm md:text-base">Starting at</p>
-                <div className="flex items-end gap-1 md:gap-2 mb-1 md:mb-2">
-                  <span className="text-primary font-bold text-2xl md:text-3xl mb-1">$</span>
-                  <span className="text-5xl md:text-6xl font-black text-white leading-none">{slides[currentIndex].price}</span>
-                  <span className="text-primary font-medium text-sm md:text-xl mb-1 md:mb-1.5">/monthly</span>
-                </div>
-
-                <button className="w-full sm:w-fit mt-1 md:mt-2 bg-gradient-primary hover-gradient-shift glow-primary-hover text-black font-extrabold px-6 md:px-10 py-3 md:py-4 rounded-sm uppercase tracking-widest text-xs md:text-sm transition-all duration-300">
-                  Order Your Game Server Now
+              <motion.div variants={fadeUp}>
+                <button
+                  onClick={() => router.push('/booking')}
+                  className="w-fit bg-gradient-primary text-[var(--button-text)] font-black px-10 py-4 rounded-xl uppercase tracking-widest text-sm transition-all duration-300 hover:scale-[1.02]"
+                >
+                  Explore Games and Pricing
                 </button>
               </motion.div>
+            </motion.div>
+          </div>
+
+          {/* Mobile Layout - text at 25%, button at 80% */}
+          <div className="md:hidden absolute inset-0 px-6 sm:px-10">
+            {/* Text at 25% from top */}
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              animate="show"
+              className="absolute w-full left-0 px-6 sm:px-10 max-w-2xl"
+              style={{ top: '25%' }}
+            >
+              <motion.h1
+                variants={fadeUp}
+                className="font-Oxanium text-2xl sm:text-3xl tracking-wide bg-gradient-to-b from-white via-[#f0f0f0] to-[#a0a0a0] text-transparent bg-clip-text mb-2 leading-tight"
+                style={{ textShadow: "0 10px 30px rgba(0,0,0,0.5)" }}
+              >
+                {slides[currentIndex].title}
+              </motion.h1>
+
+              <motion.p
+                variants={fadeUp}
+                className="font-Oxanium text-secondary-content text-xs sm:text-sm leading-relaxed max-w-xl font-light"
+              >
+                {slides[currentIndex].subtitle}
+              </motion.p>
+            </motion.div>
+
+            {/* Button at 80% of screen height */}
+            <motion.div
+              variants={fadeUp}
+              className="absolute w-full left-0 px-6 sm:px-10"
+              style={{ top: '80%' }}
+            >
+              <button
+                onClick={() => router.push('/booking')}
+                className="w-full bg-gradient-primary text-[var(--button-text)] font-black px-6 py-3 rounded-xl uppercase tracking-widest text-xs transition-all duration-300 active:scale-[0.98]"
+              >
+                Explore Games and Pricing
+              </button>
             </motion.div>
           </div>
         </motion.div>

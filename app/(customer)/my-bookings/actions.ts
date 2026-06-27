@@ -22,3 +22,24 @@ export async function getCustomerBookings(phone: string) {
     return { success: false, error: err.message, bookings: [] };
   }
 }
+
+export async function getBookingById(bookingId: string) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("bookings")
+      .select(`
+        *,
+        booking_device_slots (*),
+        booking_food_items (*)
+      `)
+      .eq("id", bookingId)
+      .single();
+
+    if (error) throw error;
+
+    return { success: true, booking: data };
+  } catch (err: any) {
+    console.error("Error fetching booking:", err);
+    return { success: false, error: err.message, booking: null };
+  }
+}

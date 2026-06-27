@@ -159,9 +159,9 @@ function FoodMenuPageContent() {
         <div className="flex gap-2 overflow-x-auto w-full xl:w-auto scrollbar-none py-0.5">
           <button
             onClick={() => setActiveCategory("all")}
-            className={`px-5 py-2.5 text-[10px] font-black uppercase border rounded-lg transition-all duration-300 whitespace-nowrap tracking-wider ${activeCategory === "all"
-                ? "bg-gradient-to-r from-primary via-amber-400 to-primary text-black border-transparent shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
-                : "bg-zinc-900/40 border-zinc-800/60 text-zinc-400 hover:text-white hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:via-amber-400/10 hover:to-primary/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
+            className={`px-5 py-2.5 text-xs font-black uppercase border rounded-xl transition-all duration-300 whitespace-nowrap ${activeCategory === "all"
+                ? "bg-gradient-primary text-[var(--button-text)] border-primary"
+                : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
               }`}
           >
             All Items
@@ -170,9 +170,9 @@ function FoodMenuPageContent() {
             <button
               key={category}
               onClick={() => setActiveCategory(category)}
-              className={`px-5 py-2.5 text-[10px] font-black uppercase border rounded-lg transition-all duration-300 whitespace-nowrap tracking-wider ${activeCategory === category
-                  ? "bg-gradient-to-r from-primary via-amber-400 to-primary text-black border-transparent shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
-                  : "bg-zinc-900/40 border-zinc-800/60 text-zinc-400 hover:text-white hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:via-amber-400/10 hover:to-primary/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
+              className={`px-5 py-2.5 text-xs font-black uppercase border rounded-xl transition-all duration-300 whitespace-nowrap ${activeCategory === category
+                  ? "bg-gradient-primary text-[var(--button-text)] border-primary"
+                  : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
                 }`}
             >
               {category}
@@ -266,21 +266,21 @@ function FoodMenuPageContent() {
 
                           <div className="w-[110px] flex justify-end">
                             {quantityInCart > 0 ? (
-                              <div className="flex items-center bg-zinc-950 border border-zinc-800/80 p-1 rounded-lg w-full shadow-inner animate-in zoom-in-95 duration-150">
+                              <div className="flex items-center bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 p-1 rounded-lg w-full shadow-md animate-in zoom-in-95 duration-150">
                                 <button
                                   type="button"
                                   onClick={() => dispatch(decrementQuantity(item.id))}
-                                  className="h-6 w-6 flex items-center justify-center rounded-md text-zinc-500 hover:text-white hover:bg-zinc-900 transition-all"
+                                  className="h-6 w-6 flex items-center justify-center rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
                                 >
                                   <Minus className="h-3 w-3" />
                                 </button>
-                                <span className="text-xs font-black text-white flex-1 text-center font-mono">
+                                <span className="text-xs font-black text-primary flex-1 text-center font-mono">
                                   {quantityInCart}
                                 </span>
                                 <button
                                   type="button"
                                   onClick={() => dispatch(incrementQuantity(item.id))}
-                                  className="h-6 w-6 flex items-center justify-center rounded-md text-black bg-primary hover:bg-primary-hover transition-all"
+                                  className="h-6 w-6 flex items-center justify-center rounded-md bg-gradient-primary text-[var(--button-text)] transition-all hover:scale-110"
                                 >
                                   <Plus className="h-3 w-3" />
                                 </button>
@@ -290,7 +290,7 @@ function FoodMenuPageContent() {
                                 type="button"
                                 onClick={() => handleAddToCart(item)}
                                 disabled={item.quantity === 0}
-                                className="h-8 w-8 bg-primary hover:bg-primary-hover text-black flex items-center justify-center rounded-lg shadow-sm active:scale-95 transition-all disabled:bg-zinc-900 disabled:text-zinc-700 disabled:border-transparent cursor-pointer"
+                                className="h-8 w-8 bg-gradient-primary text-[var(--button-text)] flex items-center justify-center rounded-lg shadow-sm active:scale-95 transition-all disabled:bg-zinc-900 disabled:text-zinc-700 disabled:border-transparent cursor-pointer"
                               >
                                 <ShoppingCart className="h-3.5 w-3.5 stroke-[2.5]" />
                               </button>
