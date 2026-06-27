@@ -58,9 +58,9 @@ export default function GamingStationPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-200 pb-12">
       <div className="space-y-1">
-        <p className="text-[10px] text-zinc-500 font-black uppercase tracking-wider">HOME › BOOK SLOT › <span className="text-primary">SELECT DEVICE</span></p>
+        <p className="text-label text-muted-content">HOME › BOOK SLOT › <span className="text-primary">SELECT DEVICE</span></p>
         <h2 className="text-xl font-black uppercase text-white tracking-tight">CHOOSE YOUR GAMING STATION</h2>
-        <p className="text-primary text-[10px] font-black uppercase tracking-widest">• UPDATES LIVE: 24 ACTIVE PLAYERS MATCHING</p>
+        <p className="text-primary text-min font-black uppercase tracking-widest">• UPDATES LIVE: 24 ACTIVE PLAYERS MATCHING</p>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-900 pb-4">
@@ -69,7 +69,7 @@ export default function GamingStationPage() {
             <button
               key={tag}
               onClick={() => setActiveFilter(tag)}
-              className={`px-4 py-2 text-[11px] font-black uppercase border rounded-md transition-all ${activeFilter === tag ? "bg-primary text-black border-transparent" : "bg-[#111] border-zinc-800 text-zinc-400"
+              className={`px-4 py-2 text-min font-black uppercase border rounded-md transition-all ${activeFilter === tag ? "bg-primary text-black border-transparent" : "bg-[#111] border-zinc-800 text-secondary-content"
                 }`}
             >
               {tag}
@@ -121,7 +121,7 @@ export default function GamingStationPage() {
                         <h4 className="font-black text-sm text-white uppercase tracking-tight">
                           {deviceType.display_name}
                         </h4>
-                        <p className="text-[10px] text-zinc-500 font-bold mt-0.5 flex items-center gap-1">
+                        <p className="text-min text-secondary-content font-bold mt-0.5 flex items-center gap-1">
                           <Users className="h-3 w-3" />
                           {deviceType.included_players} included • Max {deviceType.max_players}
                         </p>
@@ -132,7 +132,7 @@ export default function GamingStationPage() {
                       </div>
                     </div>
 
-                    <p className="text-[11px] text-zinc-400 leading-relaxed line-clamp-2 font-medium bg-zinc-950/40 p-2 rounded border border-zinc-900/60 glow-box-hover">
+                    <p className="text-description leading-relaxed line-clamp-2 font-medium bg-zinc-950/40 p-2 rounded border border-zinc-900/60 glow-box-hover">
                       {deviceType.description || "Premium gaming experience with top-tier equipment."}
                     </p>
                   </div>

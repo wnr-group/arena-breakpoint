@@ -179,13 +179,13 @@ export default function HeroCarousel() {
 
               <motion.p
                 variants={fadeUp}
-                className="font-Oxanium text-gray-300 text-sm sm:text-base md:text-lg leading-relaxed mb-6 md:mb-10 max-w-2xl font-light"
+                className="font-Oxanium text-secondary-content text-sm sm:text-base md:text-lg leading-relaxed mb-6 md:mb-10 max-w-2xl font-light"
               >
                 {slides[currentIndex].subtitle}
               </motion.p>
 
               <motion.div variants={fadeUp} className="flex flex-col gap-3 md:gap-5 font-Oxanium">
-                <p className="text-gray-400 font-medium tracking-wide text-sm md:text-base">Starting at</p>
+                <p className="text-secondary-content font-medium tracking-wide text-sm md:text-base">Starting at</p>
                 <div className="flex items-end gap-1 md:gap-2 mb-1 md:mb-2">
                   <span className="text-primary font-bold text-2xl md:text-3xl mb-1">$</span>
                   <span className="text-5xl md:text-6xl font-black text-white leading-none">{slides[currentIndex].price}</span>
@@ -230,7 +230,7 @@ export default function HeroCarousel() {
           >
             {currentIndex + 1}
           </motion.span>
-          <span className="text-xl md:text-2xl font-bold text-gray-500 md:text-gray-600">/ {slides.length}</span>
+          <span className="text-xl md:text-2xl font-bold text-muted-content">/ {slides.length}</span>
         </div>
       </div>
     </div>

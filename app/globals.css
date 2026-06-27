@@ -310,6 +310,52 @@ body {
     /* Visible grey */
     font-style: italic;
   }
+
+  /* 🎯 TEXT VISIBILITY IMPROVEMENTS */
+
+  /* Primary Text - High visibility white */
+  .text-primary-content {
+    color: #FFFFFF;
+  }
+
+  /* Secondary Text - Brighter grey for better readability */
+  .text-secondary-content {
+    color: #D4D4D8; /* zinc-300 - much brighter than zinc-500 */
+  }
+
+  /* Muted Text - Still visible but less prominent */
+  .text-muted-content {
+    color: #A1A1AA; /* zinc-400 - balanced visibility */
+  }
+
+  /* Label Text - For form labels and small headers */
+  .text-label {
+    color: #A1A1AA; /* zinc-400 */
+    font-size: 0.6875rem; /* 11px */
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Description Text - Readable size for body text */
+  .text-description {
+    color: #D4D4D8; /* zinc-300 */
+    font-size: 0.875rem; /* 14px - increased from common 12px */
+    line-height: 1.5;
+  }
+
+  /* Minimum readable text size */
+  .text-min {
+    font-size: 0.75rem; /* 12px minimum */
+  }
+
+  .text-sm-readable {
+    font-size: 0.8125rem; /* 13px - between text-xs and text-sm */
+  }
+
+  .text-base-readable {
+    font-size: 0.9375rem; /* 15px - slightly larger than text-sm */
+  }
 }
 
 /* Gradient Animation Keyframes */

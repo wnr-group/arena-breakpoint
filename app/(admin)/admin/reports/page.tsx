@@ -195,7 +195,7 @@ export default function AdminReportsPage() {
       <Card className="bg-[var(--surface)] border-[#27272a] p-4 space-y-4">
         {/* Quick Filter Buttons */}
         <div>
-          <Label className="text-[10px] font-black uppercase text-zinc-600 mb-2 block">
+          <Label className="text-label text-muted-content mb-2 block">
             Quick Filters
           </Label>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-2">
@@ -251,7 +251,7 @@ export default function AdminReportsPage() {
           <div className="flex-1 grid grid-cols-2 gap-3 w-full">
             {/* FROM DATE POP-OVER */}
             <div className="space-y-2 w-full">
-              <Label className="text-[10px] font-black ml-2 tracking-widest uppercase text-zinc-500 flex items-center gap-1.5">
+              <Label className="text-label text-muted-content ml-2 flex items-center gap-1.5">
                 From Date
               </Label>
               <Popover>
@@ -277,7 +277,7 @@ export default function AdminReportsPage() {
 
             {/* TO DATE POP-OVER */}
             <div className="space-y-2 w-full">
-              <Label className="text-[10px] font-black ml-2 tracking-widest uppercase text-zinc-500 flex items-center gap-1.5">
+              <Label className="text-label text-muted-content ml-2 flex items-center gap-1.5">
                 To Date
               </Label>
               <Popover>
@@ -426,7 +426,7 @@ export default function AdminReportsPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-black uppercase text-zinc-500">
+                    <p className="text-label text-muted-content">
                       Food Orders
                     </p>
                     <ShoppingBag className="h-4 w-4 text-zinc-600" />
@@ -441,7 +441,7 @@ export default function AdminReportsPage() {
 
                 <Card className="bg-[var(--surface)] p-5 hover:border-primary border-1 hover:-translate-y-1">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-black uppercase text-zinc-500">
+                    <p className="text-label text-muted-content">
                       Hours Booked
                     </p>
                     <CalendarDays className="h-4 w-4 text-zinc-600" />
@@ -456,7 +456,7 @@ export default function AdminReportsPage() {
 
                 <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-black uppercase text-zinc-500">
+                    <p className="text-label text-muted-content">
                       Avg Revenue
                     </p>
                     <TrendingUp className="h-4 w-4 text-zinc-600" />
@@ -478,7 +478,7 @@ export default function AdminReportsPage() {
               {/* Food Summary */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
-                  <p className="text-xs font-black uppercase text-zinc-500 mb-2">
+                  <p className="text-label text-muted-content mb-2">
                     Total Revenue
                   </p>
                   <h3 className="text-2xl font-black text-primary">
@@ -486,7 +486,7 @@ export default function AdminReportsPage() {
                   </h3>
                 </Card>
                 <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
-                  <p className="text-xs font-black uppercase text-zinc-500 mb-2">
+                  <p className="text-label text-muted-content mb-2">
                     Items Sold
                   </p>
                   <h3 className="text-2xl font-black text-white">
@@ -494,7 +494,7 @@ export default function AdminReportsPage() {
                   </h3>
                 </Card>
                 <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
-                  <p className="text-xs font-black uppercase text-zinc-500 mb-2">
+                  <p className="text-label text-muted-content mb-2">
                     Total Orders
                   </p>
                   <h3 className="text-2xl font-black text-white">
@@ -502,7 +502,7 @@ export default function AdminReportsPage() {
                   </h3>
                 </Card>
                 <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
-                  <p className="text-xs font-black uppercase text-zinc-500 mb-2">
+                  <p className="text-label text-muted-content mb-2">
                     Avg Order Value
                   </p>
                   <h3 className="text-2xl font-black text-white">
@@ -586,7 +586,7 @@ export default function AdminReportsPage() {
               {/* Device Summary */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
-                  <p className="text-xs font-black uppercase text-zinc-500 mb-2">
+                  <p className="text-label text-muted-content mb-2">
                     Total Revenue
                   </p>
                   <h3 className="text-2xl font-black text-primary">
@@ -594,7 +594,7 @@ export default function AdminReportsPage() {
                   </h3>
                 </Card>
                 <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
-                  <p className="text-xs font-black uppercase text-zinc-500 mb-2">
+                  <p className="text-label text-muted-content mb-2">
                     Total Bookings
                   </p>
                   <h3 className="text-2xl font-black text-white">
@@ -602,7 +602,7 @@ export default function AdminReportsPage() {
                   </h3>
                 </Card>
                 <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
-                  <p className="text-xs font-black uppercase text-zinc-500 mb-2">
+                  <p className="text-label text-muted-content mb-2">
                     Hours Booked
                   </p>
                   <h3 className="text-2xl font-black text-white">
@@ -610,7 +610,7 @@ export default function AdminReportsPage() {
                   </h3>
                 </Card>
                 <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
-                  <p className="text-xs font-black uppercase text-zinc-500 mb-2">
+                  <p className="text-label text-muted-content mb-2">
                     Avg Revenue
                   </p>
                   <h3 className="text-2xl font-black text-white">

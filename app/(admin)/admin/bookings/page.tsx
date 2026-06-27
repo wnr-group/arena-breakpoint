@@ -180,7 +180,7 @@ export default function AdminBookingsPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-black uppercase text-white tracking-tight">BOOKING MANAGEMENT</h1>
-          <p className="text-sm text-zinc-500 font-medium mt-1">View and manage all customer bookings</p>
+          <p className="text-description font-medium mt-1">View and manage all customer bookings</p>
         </div>
         <Button
           onClick={() => router.push("/admin/bookings/walk-in")}
@@ -199,7 +199,7 @@ export default function AdminBookingsPage() {
               <Receipt className="h-5 w-5 text-blue-500" />
             </div>
             <div>
-              <p className="text-[10px] text-zinc-500 font-black uppercase tracking-wider">Total Bookings</p>
+              <p className="text-label text-muted-content">Total Bookings</p>
               <p className="text-xl font-black text-white">{stats?.total || 0}</p>
             </div>
           </div>
@@ -211,7 +211,7 @@ export default function AdminBookingsPage() {
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             </div>
             <div>
-              <p className="text-[10px] text-zinc-500 font-black uppercase tracking-wider">Checked In</p>
+              <p className="text-label text-muted-content">Checked In</p>
               <p className="text-xl font-black text-white">{stats?.checked_in || 0}</p>
             </div>
           </div>
@@ -223,7 +223,7 @@ export default function AdminBookingsPage() {
               <DollarSign className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-[10px] text-zinc-500 font-black uppercase tracking-wider">Today's Revenue</p>
+              <p className="text-label text-muted-content">Today's Revenue</p>
               <p className="text-xl font-black text-primary">₹{stats?.todayRevenue?.toLocaleString('en-IN') || 0}</p>
             </div>
           </div>
@@ -235,7 +235,7 @@ export default function AdminBookingsPage() {
               <CheckCircle2 className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <p className="text-[10px] text-zinc-500 font-black uppercase tracking-wider">Completed</p>
+              <p className="text-label text-muted-content">Completed</p>
               <p className="text-xl font-black text-white">{stats?.completed || 0}</p>
             </div>
           </div>
@@ -247,7 +247,7 @@ export default function AdminBookingsPage() {
               <XCircle className="h-5 w-5 text-red-500" />
             </div>
             <div>
-              <p className="text-[10px] text-zinc-500 font-black uppercase tracking-wider">Cancelled</p>
+              <p className="text-label text-muted-content">Cancelled</p>
               <p className="text-xl font-black text-white">{stats?.cancelled || 0}</p>
             </div>
           </div>
@@ -261,14 +261,14 @@ export default function AdminBookingsPage() {
             <button
               key={tab.id}
               onClick={() => handleFilterChange(tab.id)}
-              className={`px-4 py-2 text-[11px] font-black uppercase border rounded-lg transition-all whitespace-nowrap ${
+              className={`px-4 py-2 text-min font-black uppercase border rounded-lg transition-all whitespace-nowrap ${
                 activeStatusFilter === tab.id
                   ? "bg-primary text-black border-transparent"
-                  : "bg-[var(--surface)] border-[#27272a] text-zinc-400 hover:border-zinc-700"
+                  : "bg-[var(--surface)] border-[#27272a] text-secondary-content hover:border-zinc-700"
               }`}
             >
               {tab.label}
-              <span className={`ml-2 text-[10px] ${activeStatusFilter === tab.id ? "text-black/70" : "text-zinc-600"}`}>
+              <span className={`ml-2 text-min ${activeStatusFilter === tab.id ? "text-black/70" : "text-secondary-content"}`}>
                 ({tab.count})
               </span>
             </button>
@@ -310,28 +310,28 @@ export default function AdminBookingsPage() {
             <table className="w-full">
               <thead className="bg-[var(--background)] border-b border-[#27272a]">
                 <tr>
-                  <th className="py-4 px-4 text-left text-[10px] text-zinc-500 font-black uppercase tracking-wider">
+                  <th className="py-4 px-4 text-left text-label text-muted-content">
                     Booking #
                   </th>
-                  <th className="py-4 px-4 text-left text-[10px] text-zinc-500 font-black uppercase tracking-wider">
+                  <th className="py-4 px-4 text-left text-label text-muted-content">
                     Customer
                   </th>
-                  <th className="py-4 px-4 text-left text-[10px] text-zinc-500 font-black uppercase tracking-wider">
+                  <th className="py-4 px-4 text-left text-label text-muted-content">
                     Device
                   </th>
-                  <th className="py-4 px-4 text-left text-[10px] text-zinc-500 font-black uppercase tracking-wider">
+                  <th className="py-4 px-4 text-left text-label text-muted-content">
                     Date & Time
                   </th>
-                  <th className="py-4 px-4 text-left text-[10px] text-zinc-500 font-black uppercase tracking-wider">
+                  <th className="py-4 px-4 text-left text-label text-muted-content">
                     Amount
                   </th>
-                  <th className="py-4 px-4 text-left text-[10px] text-zinc-500 font-black uppercase tracking-wider">
+                  <th className="py-4 px-4 text-left text-label text-muted-content">
                     Payment
                   </th>
-                  <th className="py-4 px-4 text-left text-[10px] text-zinc-500 font-black uppercase tracking-wider">
+                  <th className="py-4 px-4 text-left text-label text-muted-content">
                     Status
                   </th>
-                  <th className="py-4 px-4 text-right text-[10px] text-zinc-500 font-black uppercase tracking-wider">
+                  <th className="py-4 px-4 text-right text-label text-muted-content">
                     Actions
                   </th>
                 </tr>
@@ -368,7 +368,7 @@ export default function AdminBookingsPage() {
                               <p className="text-sm font-black text-primary font-mono">
                                 {isSingleBooking ? firstBooking.booking_number : `${group.count} Bookings`}
                               </p>
-                              <p className="text-[11px] text-data-visible mt-0.5">
+                              <p className="text-min text-secondary-content mt-0.5">
                                 {new Date(firstBooking.created_at).toLocaleDateString()}
                               </p>
                             </div>
@@ -378,7 +378,7 @@ export default function AdminBookingsPage() {
                           <div className="flex items-center gap-2">
                             <div>
                               <p className="text-sm font-bold text-data-visible">{group.customerName}</p>
-                              <p className="text-xs text-data-placeholder font-mono">{group.phone}</p>
+                              <p className="text-sm-readable text-secondary-content font-mono">{group.phone}</p>
                             </div>
                             {!isSingleBooking && (
                               <span className="bg-gradient-primary text-black text-[8px] font-black px-2 py-0.5 rounded-full">
@@ -399,12 +399,12 @@ export default function AdminBookingsPage() {
                               <p className="text-sm font-bold text-data-visible">
                                 {firstSlot?.device_type || "N/A"}
                               </p>
-                              <p className="text-xs text-data-placeholder">
+                              <p className="text-sm-readable text-secondary-content">
                                 Station #{firstSlot?.device_station_number || "N/A"}
                               </p>
                             </>
                           ) : (
-                            <p className="text-xs text-data-placeholder">Multiple devices</p>
+                            <p className="text-sm-readable text-secondary-content">Multiple devices</p>
                           )}
                         </td>
                         <td className="py-4 px-4">
@@ -413,23 +413,23 @@ export default function AdminBookingsPage() {
                               <p className="text-sm font-bold text-data-visible">
                                 {firstSlot?.slot_date ? new Date(firstSlot.slot_date).toLocaleDateString() : "N/A"}
                               </p>
-                              <p className="text-xs text-data-placeholder">
+                              <p className="text-sm-readable text-secondary-content">
                                 {firstSlot?.slot_start_time || "N/A"} - {firstSlot?.slot_end_time || "N/A"}
                               </p>
                             </>
                           ) : (
-                            <p className="text-xs text-data-placeholder italic">Multiple slots</p>
+                            <p className="text-sm-readable text-secondary-content italic">Multiple slots</p>
                           )}
                         </td>
                         <td className="py-4 px-4">
                           <p className="text-sm font-black text-date-visible">₹{group.totalAmount.toLocaleString('en-IN')}</p>
                           {isSingleBooking && (
                             <div className="flex flex-col gap-0.5 mt-1">
-                              <p className="text-[10.5px] text-data-placeholder">
+                              <p className="text-min text-secondary-content">
                                 Games: ₹{group.totalDevice.toLocaleString('en-IN')}
                               </p>
                               {group.totalFood > 0 && (
-                                <p className="text-[10.5px] text-data-placeholder">
+                                <p className="text-min text-secondary-content">
                                   Food: ₹{group.totalFood.toLocaleString('en-IN')}
                                 </p>
                               )}
@@ -440,14 +440,14 @@ export default function AdminBookingsPage() {
                           {isSingleBooking ? (
                             <PaymentStatusBadge status={firstBooking.payment_status || 'pending'} size="md" />
                           ) : (
-                            <p className="text-xs text-data-placeholder italic">-</p>
+                            <p className="text-sm-readable text-secondary-content italic">-</p>
                           )}
                         </td>
                         <td className="py-4 px-4">
                           {isSingleBooking ? (
                             <BookingStatusBadge status={firstBooking.status} size="md" />
                           ) : (
-                            <p className="text-xs text-data-placeholder italic">-</p>
+                            <p className="text-sm-readable text-secondary-content italic">-</p>
                           )}
                         </td>
                         <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
@@ -526,18 +526,18 @@ export default function AdminBookingsPage() {
                           <tr key={booking.id} className="bg-[var(--background)] hover:bg-[var(--surface)] transition-colors border-l-4 border-l-primary/30">
                             <td className="py-3 px-4 pl-12">
                               <p className="text-sm font-black text-primary font-mono">{booking.booking_number}</p>
-                              <p className="text-[10px] text-data-placeholder mt-0.5">
+                              <p className="text-min text-secondary-content mt-0.5">
                                 Booking #{index + 1}
                               </p>
                             </td>
                             <td className="py-3 px-4">
-                              <p className="text-xs text-data-placeholder">Same customer</p>
+                              <p className="text-sm-readable text-secondary-content">Same customer</p>
                             </td>
                             <td className="py-3 px-4">
                               <p className="text-sm font-bold text-date-visible">
                                 {deviceSlot?.device_type || "N/A"}
                               </p>
-                              <p className="text-xs text-data-placeholder">
+                              <p className="text-sm-readable text-secondary-content">
                                 Station #{deviceSlot?.device_station_number || "N/A"}
                               </p>
                             </td>
@@ -545,18 +545,18 @@ export default function AdminBookingsPage() {
                               <p className="text-sm font-bold text-date-visible">
                                 {deviceSlot?.slot_date ? new Date(deviceSlot.slot_date).toLocaleDateString() : "N/A"}
                               </p>
-                              <p className="text-xs text-data-placeholder">
+                              <p className="text-sm-readable text-secondary-content">
                                 {deviceSlot?.slot_start_time || "N/A"} - {deviceSlot?.slot_end_time || "N/A"}
                               </p>
                             </td>
                             <td className="py-3 px-4">
                               <p className="text-sm font-black text-data-visible">₹{Number(booking.total_amount).toLocaleString('en-IN')}</p>
                               <div className="flex flex-col gap-0.5 mt-1">
-                                <p className="text-[10.5px] text-data-placeholder">
+                                <p className="text-min text-secondary-content">
                                   Games: ₹{Number(booking.device_subtotal || 0).toLocaleString('en-IN')}
                                 </p>
                                 {booking.food_subtotal > 0 && (
-                                  <p className="text-[10.5px] text-data-placeholder">
+                                  <p className="text-min text-secondary-content">
                                     Food: ₹{Number(booking.food_subtotal).toLocaleString('en-IN')}
                                   </p>
                                 )}
