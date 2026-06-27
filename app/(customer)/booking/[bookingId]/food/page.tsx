@@ -72,6 +72,9 @@ export default function FoodOrderPage() {
     return Object.values(cart).reduce((sum, { quantity }) => sum + quantity, 0);
   }, [cart]);
 
+  const [orderConfirmed, setOrderConfirmed] = useState(false);
+  const [confirmedItems, setConfirmedItems] = useState<any[]>([]);
+
   const handleSubmitOrder = async () => {
     if (cartItemsCount === 0) {
       toast.error("Cart Empty", { description: "Please add items to your cart." });
@@ -92,14 +95,9 @@ export default function FoodOrderPage() {
     const result = await addFoodToBooking(bookingId, foodItems);
 
     if (result.success) {
+      setConfirmedItems(foodItems);
+      setOrderConfirmed(true);
       toast.success("Order Placed!", { description: "Your food order has been added to the booking." });
-
-      // If returnUrl exists, go back to it, otherwise go to my-bookings list
-      if (returnUrl) {
-        router.push(returnUrl);
-      } else {
-        router.push(`/my-bookings?phone=${result.phone || ""}`);
-      }
     } else {
       toast.error("Order Failed", { description: result.error || "Something went wrong." });
     }
@@ -111,6 +109,82 @@ export default function FoodOrderPage() {
     return (
       <div className="min-h-screen bg-[#0d0a14] flex items-center justify-center">
         <Loader2 className="h-8 w-8 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  // Order Confirmation View
+  if (orderConfirmed) {
+    return (
+      <div className="min-h-screen text-white pb-24">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+
+          {/* Success Header */}
+          <Card className="bg-[#111] border border-zinc-900 p-6 text-center space-y-4">
+            <div className="flex justify-center">
+              <div className="bg-green-500/10 border border-green-500/30 rounded-full p-4">
+                <ShoppingCart className="h-10 w-10 text-green-500" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-black uppercase text-white tracking-tight">ORDER CONFIRMED!</h2>
+              <p className="text-sm text-zinc-400">Your food order has been successfully placed.</p>
+            </div>
+          </Card>
+
+          {/* Order Items */}
+          <Card className="bg-[#111] border border-zinc-900 p-6 space-y-4">
+            <h3 className="text-sm font-black text-zinc-500 uppercase tracking-wider">Order Items</h3>
+            <div className="space-y-3">
+              {confirmedItems.map((item, index) => (
+                <div key={index} className="flex justify-between items-center py-3 border-b border-zinc-900 last:border-0">
+                  <div className="flex-1">
+                    <p className="text-white font-bold text-sm">{item.item_name}</p>
+                    <p className="text-xs text-zinc-500">{item.item_category}</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-zinc-400 text-sm">x{item.quantity}</span>
+                    <span className="text-primary font-black text-sm w-20 text-right">₹{item.line_total.toFixed(2)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between items-center pt-4 border-t border-zinc-800">
+              <span className="text-zinc-400 font-bold uppercase text-sm">Total</span>
+              <span className="text-primary font-black text-xl">
+                ₹{confirmedItems.reduce((sum, item) => sum + item.line_total, 0).toFixed(2)}
+              </span>
+            </div>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="space-y-2">
+            <Button
+              onClick={() => {
+                if (returnUrl) {
+                  router.push(returnUrl);
+                } else {
+                  router.push(`/my-bookings/${bookingId}`);
+                }
+              }}
+              className="w-full bg-gradient-primary text-[var(--button-text)] font-black uppercase text-sm h-12 rounded-xl"
+            >
+              VIEW BOOKING DETAILS
+            </Button>
+            <Button
+              onClick={() => {
+                setOrderConfirmed(false);
+                setCart({});
+                setConfirmedItems([]);
+              }}
+              variant="outline"
+              className="w-full border-zinc-800 text-zinc-300 hover:text-white font-bold uppercase text-xs h-11 rounded-xl"
+            >
+              ORDER MORE ITEMS
+            </Button>
+          </div>
+
+        </div>
       </div>
     );
   }
