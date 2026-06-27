@@ -10,6 +10,7 @@ import AnimatedBackground from "@/components/customer/layout/AnimatedBackground"
 import { NotificationProvider } from "@/lib/contexts/NotificationContext";
 import { NotificationToastManager } from "@/components/admin/layout/NotificationToast";
 import { AdminNotificationPolling } from "@/components/admin/layout/AdminNotificationPolling";
+import { ScrollToTop } from "@/components/shared/ScrollToTop";
 
 export default function AdminLayout({
   children,
@@ -22,6 +23,7 @@ export default function AdminLayout({
 
   return (
     <NotificationProvider>
+      <ScrollToTop />
       <div className="flex h-screen bg-[var(--background)] overflow-hidden font-sans relative">
       {/* Animated purple background - same as customer pages */}
       <AnimatedBackground />

@@ -80,6 +80,39 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* 📱 MOBILE SCROLL & LAYOUT FIXES */
+html {
+  scroll-behavior: smooth;
+  /* Prevent scroll restoration on navigation - handled by ScrollToTop component */
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+  /* Ensure proper height calculation on mobile browsers (iOS Safari, Android Chrome) */
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+/* Fix for mobile viewport height issues (iOS Safari URL bar) */
+@supports (-webkit-touch-callout: none) {
+  body {
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Prevent content from going behind footer on mobile */
+main {
+  min-height: calc(100vh - 400px); /* Adjust based on navbar + footer height */
+}
+
+@media (max-width: 768px) {
+  main {
+    min-height: calc(100vh - 600px); /* More space for mobile footer */
+    padding-bottom: 2rem !important;
+  }
+}
+
 
 /* Custom Global Dark Scrollbar Styles */
 @layer base {

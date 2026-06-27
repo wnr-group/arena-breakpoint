@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import Navbar from "@/components/customer/layout/NavBar";
 import Footer from "@/components/customer/layout/Footer";
 import AnimatedBackground from "@/components/customer/layout/AnimatedBackground";
+import { ScrollToTop } from "@/components/shared/ScrollToTop";
 
 
 export default function CustomerRouteGroupLayout({ children }: { children: React.ReactNode }) {
@@ -53,26 +54,29 @@ export default function CustomerRouteGroupLayout({ children }: { children: React
   }, [slotLockExpiry, mounted, dispatch, router]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0d0a14] relative">
-      {/* Animated purple background blobs */}
-      <AnimatedBackground />
+    <>
+      <ScrollToTop />
+      <div className="min-h-screen flex flex-col bg-[#0d0a14] relative">
+        {/* Animated purple background blobs */}
+        <AnimatedBackground />
 
-      {/* 10-Minute Hold HUD Alert Banner */}
-      {mounted && timeLeftStr && (
-        <div className="w-full bg-[#E53e3e] text-white text-[11px] font-black tracking-widest uppercase py-2.5 text-center flex items-center justify-center gap-2 sticky top-0 z-50 shadow-xl select-none">
-          <Timer className="h-3.5 w-3.5 animate-pulse text-white" />
-          <span>Slot Held For: <span className="font-mono bg-black/30 px-1.5 py-0.5 rounded text-primary ml-1">{timeLeftStr}</span></span>
-        </div>
-      )}
+        {/* 10-Minute Hold HUD Alert Banner */}
+        {mounted && timeLeftStr && (
+          <div className="w-full bg-[#E53e3e] text-white text-[11px] font-black tracking-widest uppercase py-2.5 text-center flex items-center justify-center gap-2 sticky top-0 z-50 shadow-xl select-none">
+            <Timer className="h-3.5 w-3.5 animate-pulse text-white" />
+            <span>Slot Held For: <span className="font-mono bg-black/30 px-1.5 py-0.5 rounded text-primary ml-1">{timeLeftStr}</span></span>
+          </div>
+        )}
 
-      {/* REUSABLE COMPONENT INJECTIONS */}
-      <Navbar />
+        {/* REUSABLE COMPONENT INJECTIONS */}
+        <Navbar />
 
-      <main className="flex-1 w-full max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col mt-10 relative z-10">
-        {children}
-      </main>
+        <main className="flex-1 w-full max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-8 flex flex-col mt-10 mb-8 relative z-10">
+          {children}
+        </main>
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </>
   );
 }

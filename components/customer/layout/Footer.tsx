@@ -6,7 +6,7 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-[#121212] border-t border-white/5 pt-16 pb-8 overflow-hidden relative">
+    <footer className="bg-[#121212] border-t border-white/5 pt-12 md:pt-16 pb-6 md:pb-8 overflow-hidden relative mt-auto">
 
       {/* Subtle background glow to match the dark theme */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-[#FFC107]/5 blur-[100px] pointer-events-none" />
@@ -14,7 +14,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
 
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 md:gap-10 lg:gap-8 mb-10 md:mb-16">
 
           {/* Column 1: Brand & Description */}
           {/* On tablet (md), takes full width (col-span-2). On desktop (lg), takes 5 out of 12 columns */}
