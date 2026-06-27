@@ -150,11 +150,11 @@ export default function DevicesPage() {
           <Card key={stat.title} className="bg-[var(--surface)] border-[#27272a] hover:border-[#FFC107]/70 hover:-translate-y-1 transition-all duration-500 group">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <stat.icon className="h-5 w-5 text-[#FFC107] group-hover:scale-110 transition-transform duration-500" />
-              <span className="text-[10px] text-[#a1a1aa] uppercase tracking-wider">{stat.title}</span>
+              <span className="text-stat-label">{stat.title}</span>
             </CardHeader>
             <CardContent>
               <div className={`text-2xl lg:text-3xl font-bold mb-1 ${stat.color || 'text-white'}`}>{stat.count}</div>
-              <p className="text-xs text-[#a1a1aa] truncate">{stat.label}</p>
+              <p className="text-min-enhanced text-secondary-content truncate">{stat.label}</p>
             </CardContent>
           </Card>
         ))}

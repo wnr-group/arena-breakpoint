@@ -119,7 +119,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
   };
   if (customers.length === 0) {
     return (
-      <div className="p-12 text-center text-xs font-semibold text-zinc-600 border border-zinc-900 rounded-2xl bg-[#09090b]">
+      <div className="p-12 text-center text-sm-enhanced border border-zinc-900 rounded-2xl bg-[#09090b]">
         No customer profile matches found in records registry.
       </div>
     );
@@ -162,7 +162,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 key={filter.value}
                 onClick={() => setMembershipFilter(filter.value as any)}
                 size="sm"
-                className={`text-xs font-black uppercase h-8 transition-all duration-300 ${
+                className={`text-min-enhanced font-black uppercase h-8 transition-all duration-300 ${
                   membershipFilter === filter.value
                     ? "bg-gradient-primary text-[var(--button-text)] glow-box"
                     : "bg-[var(--surface)] text-zinc-400 hover:bg-[var(--surface-hover)] hover:text-white border border-[#27272a]"
@@ -175,7 +175,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
         </div>
 
         {/* Results Count */}
-        <div className="text-xs text-zinc-500 font-bold">
+        <div className="text-min-enhanced text-secondary-content font-bold">
           Showing {filteredAndSortedCustomers.length} of {customers.length} customers
         </div>
       </div>
@@ -188,7 +188,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
         <Card className="bg-[#0c0c0e]/40 border-zinc-900 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.6)] w-full overflow-x-auto p-1">
           <table className="w-full text-left border-collapse text-sm table-fixed min-w-[1200px]">
             <thead>
-              <tr className="border-b border-zinc-900 bg-[var(--background)]/20 text-zinc-500 font-black uppercase text-[11px] tracking-widest select-none">
+              <tr className="border-b border-zinc-900 bg-[var(--background)]/20 text-label-enhanced select-none">
                 <th className="p-4 w-[20%]">
                   <button
                     onClick={() => handleSort("name")}
@@ -331,7 +331,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                     <span className="text-[13px] text-white font-bold">
                       {row.created_at ? format(new Date(row.created_at), "dd MMM yy") : "N/A"}
                     </span>
-                    <span className="text-[11px] text-zinc-500 uppercase font-bold">
+                    <span className="text-label-enhanced">
                       {row.created_at ? format(new Date(row.created_at), "HH:mm") : ""}
                     </span>
                   </div>

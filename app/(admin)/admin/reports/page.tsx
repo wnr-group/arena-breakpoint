@@ -449,7 +449,7 @@ export default function AdminReportsPage() {
                   <h4 className="text-xl font-black text-primary">
                     {overviewData.totalHoursBooked}
                   </h4>
-                  <p className="text-xs text-data-placeholder zinc-600 mt-1">
+                  <p className="text-min-enhanced text-secondary-content mt-1">
                     Total gaming hours
                   </p>
                 </Card>

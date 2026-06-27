@@ -38,7 +38,7 @@ export default function AdminCustomersDashboard() {
           <h1 className="text-2xl font-black uppercase tracking-tight flex items-center gap-2">
             <Users className="h-6 w-6 text-primary" /> Customer Directory
           </h1>
-          <p className="text-xs text-zinc-500 font-medium mt-0.5">
+          <p className="text-description font-medium mt-0.5">
             Monitor registered players, search demographics info, and verify subscription tracks.
           </p>
         </div>
@@ -47,7 +47,7 @@ export default function AdminCustomersDashboard() {
       {error ? (
         <div className="h-48 w-full flex flex-col items-center justify-center gap-4 border border-red-900/20 rounded-xl bg-red-950/10">
           <div className="text-red-400 text-sm font-bold">Failed to load customers</div>
-          <div className="text-xs text-zinc-500">{error}</div>
+          <div className="text-min-enhanced text-secondary-content">{error}</div>
           <Button
             onClick={loadCustomerDatabase}
             variant="outline"

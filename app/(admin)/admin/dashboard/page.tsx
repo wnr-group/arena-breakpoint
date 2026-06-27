@@ -81,12 +81,12 @@ export default function AdminDashboardPage() {
           <h1 className="text-2xl font-black uppercase text-white tracking-tight">
             DASHBOARD
           </h1>
-          <p className="text-sm text-zinc-500 font-medium mt-1">
+          <p className="text-description font-medium mt-1">
             Welcome back! Here's what's happening today
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm text-zinc-400">
+          <div className="flex items-center gap-2 text-sm-enhanced">
             <Clock className="h-4 w-4" />
             <span className="font-mono">{getCurrentTime()}</span>
           </div>
@@ -105,13 +105,13 @@ export default function AdminDashboardPage() {
         <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 p-5">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <p className="text-xs font-black uppercase text-green-500/70 mb-1">
+              <p className="text-stat-label text-green-400 mb-1">
                 Today's Revenue
               </p>
               <h3 className="text-2xl font-black text-white mb-1">
                 ₹{stats?.todaysRevenue?.toLocaleString('en-IN') || 0}
               </h3>
-              <p className="text-[10px] text-zinc-600">
+              <p className="text-min-enhanced text-secondary-content">
                 From {stats?.todaysBookings || 0} bookings
               </p>
             </div>
@@ -124,13 +124,13 @@ export default function AdminDashboardPage() {
         <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 p-5">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <p className="text-xs font-black uppercase text-blue-500/70 mb-1">
+              <p className="text-stat-label text-blue-400 mb-1">
                 Active Sessions
               </p>
               <h3 className="text-2xl font-black text-white mb-1">
                 {stats?.activeSessions || 0}
               </h3>
-              <p className="text-[10px] text-zinc-600">
+              <p className="text-min-enhanced text-secondary-content">
                 Currently playing
               </p>
             </div>
@@ -143,13 +143,13 @@ export default function AdminDashboardPage() {
         <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20 p-5">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <p className="text-xs font-black uppercase text-amber-500/70 mb-1">
+              <p className="text-stat-label text-amber-400 mb-1">
                 Upcoming
               </p>
               <h3 className="text-2xl font-black text-white mb-1">
                 {stats?.upcomingBookings || 0}
               </h3>
-              <p className="text-[10px] text-zinc-600">
+              <p className="text-min-enhanced text-secondary-content">
                 Next 2 hours
               </p>
             </div>
@@ -162,13 +162,13 @@ export default function AdminDashboardPage() {
         <Card className="bg-gradient-to-br from-amber-500/10 to-orange-600/5 border-amber-500/20 p-5">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <p className="text-xs font-black uppercase text-amber-500/70 mb-1">
+              <p className="text-stat-label text-amber-400 mb-1">
                 Available Devices
               </p>
               <h3 className="text-2xl font-black text-white mb-1">
                 {stats?.availableDevices || 0}
               </h3>
-              <p className="text-[10px] text-zinc-600">
+              <p className="text-min-enhanced text-secondary-content">
                 Ready to use
               </p>
             </div>
@@ -181,7 +181,7 @@ export default function AdminDashboardPage() {
         <Card className="bg-[var(--surface)] border-[#27272a] p-5">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <p className="text-xs font-black uppercase text-zinc-500 mb-1">
+              <p className="text-stat-label mb-1">
                 This Week
               </p>
               <h3 className="text-2xl font-black text-white mb-1">
@@ -203,7 +203,7 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-[var(--surface)] border-[#27272a] p-5">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-black uppercase text-zinc-500">
+            <p className="text-label-enhanced">
               Today's Food Orders
             </p>
             <UtensilsCrossed className="h-4 w-4 text-zinc-600" />
@@ -211,14 +211,14 @@ export default function AdminDashboardPage() {
           <h4 className="text-2xl font-black text-white">
             {quickStats?.todaysFoodOrders || 0}
           </h4>
-          <p className="text-xs text-zinc-600 mt-1">
+          <p className="text-min-enhanced text-secondary-content mt-1">
             Active F&B operations
           </p>
         </Card>
 
         <Card className="bg-[var(--surface)] border-[#27272a] p-5">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-black uppercase text-zinc-500">
+            <p className="text-label-enhanced">
               Peak Hour Today
             </p>
             <Clock className="h-4 w-4 text-zinc-600" />
@@ -226,14 +226,14 @@ export default function AdminDashboardPage() {
           <h4 className="text-2xl font-black text-white">
             {quickStats?.peakHour || "N/A"}
           </h4>
-          <p className="text-xs text-zinc-600 mt-1">
+          <p className="text-min-enhanced text-secondary-content mt-1">
             {quickStats?.peakHourBookings || 0} bookings
           </p>
         </Card>
 
         <Card className="bg-[var(--surface)] border-[#27272a] p-5">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-black uppercase text-zinc-500">
+            <p className="text-label-enhanced">
               Quick Actions
             </p>
             <ArrowRight className="h-4 w-4 text-zinc-600" />
@@ -263,14 +263,14 @@ export default function AdminDashboardPage() {
         {/* Today's Schedule */}
         <Card className="bg-[var(--surface)] border-[#27272a] p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-black uppercase text-zinc-400">
+            <h3 className="text-section-header">
               Today's Schedule
             </h3>
             <Button
               onClick={() => router.push("/admin/bookings")}
               variant="ghost"
               size="sm"
-              className="text-xs text-zinc-500 hover:text-white"
+              className="text-min-enhanced text-secondary-content hover:text-white"
             >
               View All
               <ArrowRight className="h-3 w-3 ml-1" />
@@ -297,10 +297,10 @@ export default function AdminDashboardPage() {
                       <p className="text-sm font-bold text-white">
                         {slot.bookings?.customer_name || "Unknown"}
                       </p>
-                      <p className="text-xs text-zinc-600">
+                      <p className="text-min-enhanced text-secondary-content">
                         {slot.device_type} - {slot.device_station_number}
                       </p>
-                      <p className="text-[10px] text-zinc-700 mt-0.5">
+                      <p className="text-min text-muted-content mt-0.5">
                         {slot.player_count} player{slot.player_count > 1 ? 's' : ''}
                       </p>
                     </div>
@@ -313,7 +313,7 @@ export default function AdminDashboardPage() {
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <Calendar className="h-12 w-12 text-zinc-800 mb-3" />
-                <p className="text-sm text-zinc-600">No bookings scheduled for today</p>
+                <p className="text-sm-enhanced">No bookings scheduled for today</p>
               </div>
             )}
           </div>
@@ -322,14 +322,14 @@ export default function AdminDashboardPage() {
         {/* Recent Bookings */}
         <Card className="bg-[var(--surface)] border-[#27272a] p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-black uppercase text-zinc-400">
+            <h3 className="text-section-header">
               Recent Bookings
             </h3>
             <Button
               onClick={() => router.push("/admin/bookings")}
               variant="ghost"
               size="sm"
-              className="text-xs text-zinc-500 hover:text-white"
+              className="text-min-enhanced text-secondary-content hover:text-white"
             >
               View All
               <ArrowRight className="h-3 w-3 ml-1" />
@@ -353,11 +353,11 @@ export default function AdminDashboardPage() {
                         </p>
                         <BookingStatusBadge status={booking.status} />
                       </div>
-                      <p className="text-xs text-zinc-600">
+                      <p className="text-min-enhanced text-secondary-content">
                         {booking.customer_name} • {booking.customer_phone}
                       </p>
                       {slot && (
-                        <p className="text-[10px] text-zinc-700 mt-1">
+                        <p className="text-min text-muted-content mt-1">
                           {slot.device_type} • {new Date(slot.slot_date).toLocaleDateString('en-IN')}
                         </p>
                       )}
@@ -376,7 +376,7 @@ export default function AdminDashboardPage() {
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <AlertCircle className="h-12 w-12 text-zinc-800 mb-3" />
-                <p className="text-sm text-zinc-600">No recent bookings</p>
+                <p className="text-sm-enhanced">No recent bookings</p>
               </div>
             )}
           </div>

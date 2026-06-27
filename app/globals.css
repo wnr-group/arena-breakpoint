@@ -370,6 +370,15 @@ main {
     letter-spacing: 0.05em;
   }
 
+  /* Enhanced Label - Larger and more visible */
+  .text-label-enhanced {
+    color: #D4D4D8; /* zinc-300 - brighter */
+    font-size: 0.75rem; /* 12px */
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
   /* Description Text - Readable size for body text */
   .text-description {
     color: #D4D4D8; /* zinc-300 */
@@ -382,12 +391,49 @@ main {
     font-size: 0.75rem; /* 12px minimum */
   }
 
+  /* Enhanced minimum - slightly larger */
+  .text-min-enhanced {
+    font-size: 0.8125rem; /* 13px */
+    font-weight: 600;
+  }
+
   .text-sm-readable {
     font-size: 0.8125rem; /* 13px - between text-xs and text-sm */
   }
 
+  .text-sm-enhanced {
+    font-size: 0.875rem; /* 14px */
+    font-weight: 600;
+    color: #D4D4D8; /* zinc-300 */
+  }
+
   .text-base-readable {
     font-size: 0.9375rem; /* 15px - slightly larger than text-sm */
+  }
+
+  /* Card Headers & Section Titles */
+  .text-section-header {
+    font-size: 0.875rem; /* 14px */
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #E4E4E7; /* zinc-200 - very bright */
+  }
+
+  /* Stats & Numbers - Make them pop */
+  .text-stat-value {
+    font-size: 1.5rem; /* 24px */
+    font-weight: 900;
+    color: #FFFFFF;
+    line-height: 1.2;
+  }
+
+  .text-stat-label {
+    font-size: 0.75rem; /* 12px */
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #D4D4D8; /* zinc-300 */
   }
 }
 
