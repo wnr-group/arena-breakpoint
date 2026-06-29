@@ -24,11 +24,6 @@ export function StationCard({ station, motionProps }: { station: Station; motion
                 {/* Darker gradient overlay for better contrast */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent transition-all duration-400 group-hover:from-black/90 group-hover:via-black/50" />
 
-                {/* Station Number  */}
-                <div className="absolute top-3 left-3.5 z-10 font-bold text-[10px] tracking-widest text-zinc-400 uppercase">
-                    {station.station_num}
-                </div>
-
                 {/* Availability Badge */}
                 <div
                     className={`absolute top-3 right-3.5 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[8px] min-[581px]:text-[9px] font-bold tracking-widest uppercase transition-transform duration-400 group-hover:-translate-y-1 ${avail
@@ -39,8 +34,10 @@ export function StationCard({ station, motionProps }: { station: Station; motion
                     <span
                         className={`w-1.5 h-1.5 rounded-full shrink-0 ${avail ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`}
                     />
-                    {station.availability}
+                    Available {station.available_count ?? 0}/{station.total_count ?? 0}
                 </div>
+
+
 
                 {/* Bottom Info - Updated with mobile translation offset */}
                 <div className="absolute bottom-0 left-0 right-0 z-10 px-3.5 pb-3.5 pt-5 min-[581px]:px-4 min-[581px]:pb-4 min-[581px]:pt-6 transition-transform duration-400 ease-[cubic-bezier(.25,1,.5,1)] -translate-y-14 min-[581px]:translate-y-0 group-hover:-translate-y-14">
