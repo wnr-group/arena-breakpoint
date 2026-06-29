@@ -1,7 +1,17 @@
 'use client'
-import React from 'react'
+import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 
 const CTASection: React.FC = () => {
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleJoinElite = () => {
+    setIsLoading(true)
+    router.push('/subscription')
+  }
+
   return (
     <section className="relative w-full max-w-300 mx-auto my-6 md:my-10 overflow-hidden rounded-3xl border border-white/10 bg-black px-4 sm:px-6 py-10 md:py-16 text-center flex flex-col items-center justify-center shadow-2xl">
       <div className="absolute inset-0 z-0">
@@ -28,7 +38,12 @@ const CTASection: React.FC = () => {
         </p>
 
         {/* Button with updated responsive padding and enhanced glowing shadow */}
-        <button className="bg-[#FFD700] hover:bg-[#F2C900] text-black font-bold text-base md:text-[17px] py-3.5 md:py-4 px-8 md:px-12 rounded-full transition-all duration-300 hover:scale-105 shadow-[0_0_20px_rgba(255,215,0,0.25)] hover:shadow-[0_0_40px_rgba(255,215,0,0.45)]">
+        <button
+          onClick={handleJoinElite}
+          disabled={isLoading}
+          className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-bold text-base md:text-[17px] py-3.5 md:py-4 px-8 md:px-12 rounded-full transition-all duration-300 hover:scale-105 shadow-[0_0_20px_rgba(184,134,11,0.25)] hover:shadow-[0_0_40px_rgba(184,134,11,0.45)] flex items-center justify-center gap-2"
+        >
+          {isLoading && <Loader2 className="h-5 w-5 animate-spin" />}
           Join Elite Now
         </button>
       </div>

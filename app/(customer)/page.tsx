@@ -6,6 +6,7 @@ import DevicePage from './home/device/page'
 import FoodMenu from './home/food/page'
 import Footer from '@/components/customer/layout/Footer'
 import Testimonials from './home/testimonial/page'
+import CTASection from '@/components/customer/subscription/CTASection'
 
 
 export default function LandingPage(){
@@ -33,6 +34,15 @@ export default function LandingPage(){
       <HeroCarousel />
       <DevicePage />
       <FoodMenu />
+      <div className="relative py-12 md:py-16 overflow-hidden bg-black/60 border-y border-zinc-900/40">
+        <div
+          className="absolute inset-0 z-0 opacity-80"
+          style={{ background: 'linear-gradient(to bottom, #1E1F22 0%, rgba(30,31,34,0.88) 50%, #1E1F22 100%)' }}
+        />
+        <div className="relative z-10">
+          <CTASection />
+        </div>
+      </div>
       <Testimonials />
       <Footer />
     </div>
