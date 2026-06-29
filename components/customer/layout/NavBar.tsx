@@ -6,6 +6,7 @@ import { Gamepad2, Menu, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
+import { useAppSelector } from '@/lib/redux/hooks';
 
 const navLinks = [
   { label: "Home", path: "/" },
@@ -42,6 +43,9 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const [hasActiveHold, setHasActiveHold] = useState(false);
+
+  const slotLockExpiry = useAppSelector((state) => state.booking.slotLockExpiry);
 
   // Get the current route path
   const pathname = usePathname();
@@ -88,8 +92,24 @@ export default function Navbar() {
     return () => clearTimeout(timer);
   }, [pathname]);
 
+  // Track if slot hold is active
+  useEffect(() => {
+    if (!slotLockExpiry) {
+      setHasActiveHold(false);
+      return;
+    }
+    const checkHold = () => {
+      setHasActiveHold(slotLockExpiry > Date.now());
+    };
+    checkHold();
+    const interval = setInterval(checkHold, 1000);
+    return () => clearInterval(interval);
+  }, [slotLockExpiry]);
+
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${scrolled ? "bg-[#0a0a0a]/80 backdrop-blur-md py-4 shadow-xl" : "bg-transparent py-6"
+    <nav className={`fixed left-0 w-full z-50 transition-all duration-500 ${
+      (hasActiveHold && !scrolled) ? "top-10" : "top-0"
+    } ${scrolled ? "bg-[#0a0a0a]/80 backdrop-blur-md py-4 shadow-xl" : "bg-transparent py-6"
       }`}>
 
       {/* Main Bar */}
