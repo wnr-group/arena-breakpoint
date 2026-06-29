@@ -43,6 +43,17 @@ export default function CustomerDetailsPage() {
     setMounted(true);
   }, []);
 
+  // Force scroll to top on mount and step changes to prevent landing at the bottom/footer
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.body.scrollTop = 0;
+      if (document.documentElement) {
+        document.documentElement.scrollTop = 0;
+      }
+    }
+  }, [step]);
+
   const selectedDurationLabel = useMemo(() => {
     const duration = allDurations.find(d => d.value === selectedDuration);
     return duration?.label || (selectedDuration ? `${selectedDuration} mins` : "--");
