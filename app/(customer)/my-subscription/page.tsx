@@ -85,7 +85,7 @@ function MySubscriptionPageContent() {
     // Calculate days
     daysRemaining = Math.max(0, Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 3600 * 24)))
     const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24))
-    
+
     // Calculate progress (how much time has elapsed)
     if (totalDays > 0) {
       progressPercentage = Math.min(100, Math.max(0, Math.round(((totalDays - daysRemaining) / totalDays) * 100)))
@@ -94,7 +94,7 @@ function MySubscriptionPageContent() {
 
   return (
     <main
-      className="min-h-screen bg-[#0d0a14] text-white font-sans relative overflow-hidden"
+      className="min-h-screen bg-[#0d0a14] text-white font-sans relative overflow-hidden pt-5"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
     >
       {/* Animated background */}
@@ -180,7 +180,7 @@ function MySubscriptionPageContent() {
                 <p className="text-neutral-400 text-sm max-w-md mb-6">
                   No active membership found for +91 {phone}. Subscribe to unlock elite benefits and arena discounts.
                 </p>
-                <button 
+                <button
                   onClick={() => router.push('/subscription')}
                   className="bg-primary hover:bg-primary-hover text-black font-black uppercase py-3 px-8 rounded-lg transition-all text-sm"
                 >
@@ -197,7 +197,7 @@ function MySubscriptionPageContent() {
                 <p className="text-neutral-400 text-sm max-w-md mb-6">
                   Enter your mobile number above to retrieve your active membership details and access elite arena rewards.
                 </p>
-                <button 
+                <button
                   onClick={() => router.push('/subscription')}
                   className="bg-primary hover:bg-primary-hover text-black font-black uppercase py-3 px-8 rounded-lg transition-all text-sm"
                 >
@@ -209,10 +209,10 @@ function MySubscriptionPageContent() {
         ) : (
           /* Main Dashboard Layout if subscribed */
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-            
+
             {/* Left Column (Main Subscription & Savings) */}
             <div className="lg:col-span-2 space-y-8">
-              
+
               {/* DYNAMIC ACTIVE SUBSCRIPTION CARD */}
               <div className="bg-gradient-to-br from-zinc-900 via-[#131313] to-zinc-900 border border-primary/30 rounded-xl p-6 md:p-8 relative overflow-hidden group glow-box-strong">
                 {/* Animated gradient overlay */}

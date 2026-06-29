@@ -82,7 +82,7 @@ export default function SubscriptionActivatedPage() {
 
   return (
     <main
-      className="min-h-screen bg-[#0d0a14] text-white font-sans relative overflow-hidden flex flex-col items-center  px-4 sm:px-6 lg:px-8"
+      className="min-h-screen bg-[#0d0a14] text-white font-sans relative overflow-hidden flex flex-col items-center  px-4 sm:px-6 lg:px-8 pt-5"
     >
       {/* Background Ambient Glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-200 h-150 bg-amber-500/5 rounded-full blur-[150px] pointer-events-none z-0" />
