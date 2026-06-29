@@ -156,7 +156,7 @@ export default function Navbar() {
                 href={link.path}
                 className="group cursor-pointer relative py-2"
               >
-                <span className={`text-sm font-medium transition-colors duration-300 uppercase tracking-widest ${isActive ? "text-white" : "text-gray-300 group-hover:text-white"
+                <span className={`text-sm font-black transition-colors duration-300 uppercase tracking-widest ${isActive ? "text-white" : "text-gray-300 group-hover:text-white"
                   }`}>
                   {link.label}
                 </span>
