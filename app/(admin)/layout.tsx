@@ -38,6 +38,7 @@ export default function AdminLayout({
       <Toaster
         theme="dark"
         position="top-right"
+        closeButton
         toastOptions={{
           style: {
             background: '#121212',
