@@ -114,14 +114,14 @@ export function FoodCard({
             <span className="text-white font-bold text-[14px] sm:text-[15px]">{food.price}</span>
           </span>
 
-          {/* ADD Button  */}
+          {/* BUY Button  */}
           <button
             onClick={(e) => {
               e.stopPropagation()
               handleClick()
             }}
             className="sm:hidden px-4 py-1.5 rounded-md text-[10px] font-bold tracking-widest text-[#0a0a0a] shadow-lg active:scale-95 transition-transform bg-gradient-primary">
-            ADD
+            BUY
           </button>
         </div>
       </div>
