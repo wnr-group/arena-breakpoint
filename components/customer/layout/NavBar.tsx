@@ -41,10 +41,10 @@ const linkItemVariants: Variants = {
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
 
   // Get the current route path
   const pathname = usePathname();
-
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,6 +53,40 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Intercept fetch requests and track navigation transitions to show loading state
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let activeRequests = 0;
+    const originalFetch = window.fetch;
+
+    window.fetch = async (...args) => {
+      activeRequests++;
+      setIsFetching(true);
+      try {
+        return await originalFetch(...args);
+      } finally {
+        activeRequests--;
+        if (activeRequests <= 0) {
+          activeRequests = 0;
+          setIsFetching(false);
+        }
+      }
+    };
+
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, []);
+
+  useEffect(() => {
+    setIsFetching(true);
+    const timer = setTimeout(() => {
+      setIsFetching(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [pathname]);
 
   return (
     <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${scrolled ? "bg-[#0a0a0a]/80 backdrop-blur-md py-4 shadow-xl" : "bg-transparent py-6"
@@ -63,14 +97,31 @@ export default function Navbar() {
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 cursor-pointer group">
-          <Image
-            src="/bp_logo.jpeg"
-            alt="Breakpoint Arena Logo"
-            width={40}
-            height={40}
-            className="object-contain group-hover:scale-110 transition-transform duration-300 rounded-md"
-            priority
-          />
+          <motion.div
+            animate={isFetching ? {
+              rotate: 360,
+              scale: [1, 1.15, 1],
+            } : {
+              rotate: 0,
+              scale: 1
+            }}
+            transition={isFetching ? {
+              rotate: { repeat: Infinity, duration: 1.5, ease: "linear" },
+              scale: { repeat: Infinity, duration: 1.5, ease: "easeInOut" }
+            } : {
+              duration: 0.3
+            }}
+            className="flex-shrink-0"
+          >
+            <Image
+              src="/bp_logo.jpeg"
+              alt="Breakpoint Arena Logo"
+              width={40}
+              height={40}
+              className="object-contain rounded-md"
+              priority
+            />
+          </motion.div>
           <span className="text-2xl font-bold text-white tracking-wide uppercase">Break point Arena</span>
         </Link>
 
