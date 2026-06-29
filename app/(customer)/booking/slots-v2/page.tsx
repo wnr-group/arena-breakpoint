@@ -58,6 +58,33 @@ export default function FlexibleSlotBookingPage() {
     }
   }, [deviceTypeId, router]);
 
+  // Disable body scroll when mobile drawers are open
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mainEl = document.querySelector('main');
+    const htmlEl = document.documentElement;
+    if (mobileCalendarOpen || mobileDurationOpen || mobileStartTimeOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.height = '100dvh';
+      htmlEl.style.overflow = 'hidden';
+      htmlEl.style.height = '100dvh';
+      if (mainEl) mainEl.style.zIndex = '9999';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.height = '';
+      htmlEl.style.overflow = '';
+      htmlEl.style.height = '';
+      if (mainEl) mainEl.style.zIndex = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.height = '';
+      htmlEl.style.overflow = '';
+      htmlEl.style.height = '';
+      if (mainEl) mainEl.style.zIndex = '';
+    };
+  }, [mobileCalendarOpen, mobileDurationOpen, mobileStartTimeOpen]);
+
   useEffect(() => {
     if (!mounted || !calendarDay || !deviceTypeId) {
       console.log('[Frontend] Skipping availability check:', { mounted, calendarDay: !!calendarDay, deviceTypeId: !!deviceTypeId });
