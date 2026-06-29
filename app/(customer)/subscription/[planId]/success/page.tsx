@@ -25,6 +25,9 @@ export default function SubscriptionActivatedPage() {
 
   const [plan, setPlan] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isBookingSlot, setIsBookingSlot] = useState(false)
+  const [isViewingDetails, setIsViewingDetails] = useState(false)
+  const [isBrowsingFood, setIsBrowsingFood] = useState(false)
 
   // Fetch the plan data on mount
   useEffect(() => {
@@ -166,16 +169,25 @@ export default function SubscriptionActivatedPage() {
             </p>
 
             <div className="mt-auto space-y-3">
-              <Link
-                href="/booking"
-                className="w-full bg-[#A855F7] uppercase hover:bg-[#9333EA] text-black font-bold text-[15px] py-4 rounded-xl flex items-center justify-center transition-all shadow-[0_0_15px_rgba(255,193,7,0.2)] hover:scale-[1.02]"
+              <button
+                onClick={() => {
+                  setIsBookingSlot(true)
+                  router.push("/booking")
+                }}
+                disabled={isBookingSlot || isViewingDetails || isBrowsingFood}
+                className="w-full bg-[#A855F7] uppercase hover:bg-[#9333EA] text-black font-bold text-[15px] py-4 rounded-xl flex items-center justify-center transition-all shadow-[0_0_15px_rgba(255,193,7,0.2)] hover:scale-[1.02] disabled:opacity-50 disabled:pointer-events-none"
               >
-                <Gamepad2 className="w-5 h-5 mr-2" />
+                {isBookingSlot ? (
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                ) : (
+                  <Gamepad2 className="w-5 h-5 mr-2" />
+                )}
                 Book Gaming Slot
-              </Link>
+              </button>
 
               <button
                 onClick={() => {
+                  setIsViewingDetails(true)
                   const phone = typeof window !== 'undefined' ? localStorage.getItem('customerPhone') : null
                   if (phone) {
                     router.push(`/my-subscription?phone=${phone}`)
@@ -183,16 +195,32 @@ export default function SubscriptionActivatedPage() {
                     router.push('/my-subscription')
                   }
                 }}
-                className="w-full bg-transparent border border-neutral-700 hover:border-amber-500 text-white font-bold text-[15px] py-4 rounded-xl flex items-center justify-center transition-all hover:text-amber-500"
+                disabled={isBookingSlot || isViewingDetails || isBrowsingFood}
+                className="w-full bg-transparent border border-neutral-700 hover:border-amber-500 text-white font-bold text-[15px] py-4 rounded-xl flex items-center justify-center transition-all hover:text-amber-500 disabled:opacity-50 disabled:pointer-events-none"
               >
-                <FileText className="w-5 h-5 mr-2" />
+                {isViewingDetails ? (
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                ) : (
+                  <FileText className="w-5 h-5 mr-2" />
+                )}
                 View Subscription Details
               </button>
 
-              <Link href="/food" className="w-full text-neutral-400 hover:text-white font-medium text-sm py-3 mt-2 flex items-center justify-center transition-colors">
-                <UtensilsCrossed className="w-4 h-4 mr-2" />
+              <button
+                onClick={() => {
+                  setIsBrowsingFood(true)
+                  router.push("/food")
+                }}
+                disabled={isBookingSlot || isViewingDetails || isBrowsingFood}
+                className="w-full text-neutral-400 hover:text-white font-medium text-sm py-3 mt-2 flex items-center justify-center transition-colors disabled:opacity-50 disabled:pointer-events-none"
+              >
+                {isBrowsingFood ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <UtensilsCrossed className="w-4 h-4 mr-2" />
+                )}
                 Browse Food Menu
-              </Link>
+              </button>
             </div>
           </div>
         </div>

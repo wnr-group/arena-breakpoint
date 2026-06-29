@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useMemo, useEffect } from 'react'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
@@ -26,6 +26,7 @@ interface SubscriptionPricingCardProps {
 
 const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initialPlans }) => {
   const router = useRouter()
+  const [loadingPlanId, setLoadingPlanId] = useState<number | null>(null)
 
   const plans = useMemo(() => {
     return initialPlans
@@ -176,21 +177,27 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
                   ))}
                 </ul>
 
-                <button
+                 <button
                   onClick={e => {
                     e.stopPropagation()
+                    setLoadingPlanId(plan.id)
                     router.push(`/subscription/${plan.id}`)
                   }}
-                  className={`relative w-full py-3.5 rounded-xl font-black text-sm uppercase tracking-wider transition-all duration-300 mt-auto overflow-hidden group/btn ${
+                  disabled={loadingPlanId !== null}
+                  className={`relative w-full py-3.5 rounded-xl font-black text-sm uppercase tracking-wider transition-all duration-300 mt-auto overflow-hidden group/btn flex items-center justify-center gap-2 ${
                     isActive
                       ? 'bg-gradient-to-r from-primary via-amber-400 to-primary text-black hover:shadow-[0_0_30px_rgba(255,193,7,0.5)] hover:scale-[1.02]'
                       : 'bg-transparent border-2 border-zinc-800 text-zinc-400 hover:border-primary hover:text-primary hover:shadow-[0_0_20px_rgba(255,193,7,0.2)]'
                   }`}
                 >
-                  {isActive && (
-                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700" />
+                  {loadingPlanId === plan.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                  ) : (
+                    isActive && (
+                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700" />
+                    )
                   )}
-                  <span className="relative z-10">{plan.buttonText}</span>
+                  <span className="relative z-10">{loadingPlanId === plan.id ? 'Loading...' : plan.buttonText}</span>
                 </button>
               </div>
             )

@@ -20,6 +20,10 @@ function MySubscriptionPageContent() {
   const [subscription, setSubscription] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [hasSearched, setHasSearched] = useState(false)
+  const [isRenewing, setIsRenewing] = useState(false)
+  const [isBooking, setIsBooking] = useState(false)
+  const [isBrowsingPlans, setIsBrowsingPlans] = useState(false)
+  const [isBrowsingFood, setIsBrowsingFood] = useState(false)
 
   const fetchSubscription = async (targetPhone: string) => {
     if (!targetPhone.trim() || targetPhone.length < 10) {
@@ -121,15 +125,26 @@ function MySubscriptionPageContent() {
           </div>
           <div className="flex flex-row gap-3 md:gap-4 shrink-0">
             {subscription && (
-              <button className="flex-1 md:flex-none bg-transparent border-2 border-primary hover:bg-primary/10 text-primary font-black py-3 px-6 rounded-xl transition-all text-sm uppercase tracking-wider hover:shadow-[0_0_20px_rgba(255,193,7,0.3)]">
-                Renew Now
+              <button
+                onClick={() => {
+                  setIsRenewing(true)
+                  router.push(`/subscription/${subscription.plan_id || subscription.plan?.id}`)
+                }}
+                disabled={isRenewing || isBooking}
+                className="flex-1 md:flex-none bg-transparent border-2 border-primary hover:bg-primary/10 text-primary font-black py-3 px-6 rounded-xl transition-all text-sm uppercase tracking-wider hover:shadow-[0_0_20px_rgba(255,193,7,0.3)] flex items-center justify-center gap-2"
+              >
+                {isRenewing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Renew Now"}
               </button>
             )}
             <button
-              onClick={() => router.push('/booking')}
-              className="flex-1 md:flex-none bg-gradient-to-r from-primary via-amber-400 to-primary text-black font-black py-3 px-6 rounded-xl transition-all text-sm shadow-[0_0_20px_rgba(255,193,7,0.3)] hover:shadow-[0_0_40px_rgba(255,193,7,0.5)] hover:scale-[1.02] uppercase tracking-wider"
+              onClick={() => {
+                setIsBooking(true)
+                router.push('/booking')
+              }}
+              disabled={isRenewing || isBooking}
+              className="flex-1 md:flex-none bg-gradient-to-r from-primary via-amber-400 to-primary text-black font-black py-3 px-6 rounded-xl transition-all text-sm shadow-[0_0_20px_rgba(255,193,7,0.3)] hover:shadow-[0_0_40px_rgba(255,193,7,0.5)] hover:scale-[1.02] uppercase tracking-wider flex items-center justify-center gap-2"
             >
-              Book Slot
+              {isBooking ? <Loader2 className="w-4 h-4 animate-spin text-black" /> : "Book Slot"}
             </button>
           </div>
         </div>
@@ -181,10 +196,14 @@ function MySubscriptionPageContent() {
                   No active membership found for +91 {phone}. Subscribe to unlock elite benefits and arena discounts.
                 </p>
                 <button
-                  onClick={() => router.push('/subscription')}
-                  className="bg-primary hover:bg-primary-hover text-black font-black uppercase py-3 px-8 rounded-lg transition-all text-sm"
+                  onClick={() => {
+                    setIsBrowsingPlans(true)
+                    router.push('/subscription')
+                  }}
+                  disabled={isBrowsingPlans}
+                  className="bg-primary hover:bg-primary-hover text-black font-black uppercase py-3 px-8 rounded-lg transition-all text-sm flex items-center justify-center gap-2"
                 >
-                  Browse Plans
+                  {isBrowsingPlans ? <Loader2 className="w-4 h-4 animate-spin text-black" /> : "Browse Plans"}
                 </button>
               </div>
             ) : (
@@ -198,10 +217,14 @@ function MySubscriptionPageContent() {
                   Enter your mobile number above to retrieve your active membership details and access elite arena rewards.
                 </p>
                 <button
-                  onClick={() => router.push('/subscription')}
-                  className="bg-primary hover:bg-primary-hover text-black font-black uppercase py-3 px-8 rounded-lg transition-all text-sm"
+                  onClick={() => {
+                    setIsBrowsingPlans(true)
+                    router.push('/subscription')
+                  }}
+                  disabled={isBrowsingPlans}
+                  className="bg-primary hover:bg-primary-hover text-black font-black uppercase py-3 px-8 rounded-lg transition-all text-sm flex items-center justify-center gap-2"
                 >
-                  Browse Plans
+                  {isBrowsingPlans ? <Loader2 className="w-4 h-4 animate-spin text-black" /> : "Browse Plans"}
                 </button>
               </div>
             )}
@@ -344,8 +367,15 @@ function MySubscriptionPageContent() {
                   <p className="text-neutral-400 text-sm leading-relaxed mb-5">
                     Elite members get {subscription.plan?.discount_percentage || 15}% off on our Signature Gaming Menu.
                   </p>
-                  <button className="w-full bg-[#1a1a1a] hover:bg-[#222] border border-neutral-700 text-white font-bold py-3 rounded-lg transition-colors text-sm">
-                    Browse Food Menu
+                  <button
+                    onClick={() => {
+                      setIsBrowsingFood(true)
+                      router.push('/food')
+                    }}
+                    disabled={isBrowsingFood}
+                    className="w-full bg-[#1a1a1a] hover:bg-[#222] border border-neutral-700 text-white font-bold py-3 rounded-lg transition-colors text-sm flex items-center justify-center gap-2"
+                  >
+                    {isBrowsingFood ? <Loader2 className="w-4 h-4 animate-spin" /> : "Browse Food Menu"}
                   </button>
                 </div>
               </div>
