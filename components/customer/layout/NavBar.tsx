@@ -107,9 +107,8 @@ export default function Navbar() {
   }, [slotLockExpiry]);
 
   return (
-    <nav className={`fixed left-0 w-full z-50 transition-all duration-500 ${
-      (hasActiveHold && !scrolled) ? "top-10" : "top-0"
-    } ${scrolled ? "bg-[#0a0a0a]/80 backdrop-blur-md py-4 shadow-xl" : "bg-transparent py-6"
+    <nav className={`fixed left-0 w-full z-50 transition-all duration-500 ${(hasActiveHold && !scrolled) ? "top-10" : "top-0"
+      } ${scrolled ? "bg-[#0a0a0a]/80 backdrop-blur-md py-4 shadow-xl" : "bg-transparent py-6"
       }`}>
 
       {/* Main Bar */}
@@ -134,7 +133,7 @@ export default function Navbar() {
             className="flex-shrink-0"
           >
             <Image
-              src="/bp_logo.jpeg"
+              src="/bp_logo.png"
               alt="Breakpoint Arena Logo"
               width={40}
               height={40}

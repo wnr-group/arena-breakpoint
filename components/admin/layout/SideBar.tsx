@@ -60,7 +60,7 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
           {isOpen ? (
             <div className="pl-2 flex items-center gap-3 hover:scale-[1.02] transition-transform duration-300 cursor-pointer animate-in fade-in duration-300">
               <img
-                src="/bp_logo.jpeg"
+                src="/bp_logo.png"
                 alt="Breakpoint Arena"
                 className="w-10 h-10 object-contain rounded-md"
               />
