@@ -831,7 +831,7 @@ export default function AdminReportsPage() {
                       className="p-4 bg-[var(--background)] border border-[#27272a] rounded-lg"
                     >
                       <p className="text-xs font-black uppercase text-white mb-2">
-                        {source.source === "walk_in" ? "Walk-In" : "Online"}
+                        {source.source === "walk-in" ? "Walk-In Booking" : "Pre-Booking"}
                       </p>
                       <h4 className="text-xl font-black text-primary mb-1">
                         ₹{source.totalRevenue.toLocaleString('en-IN')}
