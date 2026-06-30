@@ -75,12 +75,12 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
               <span className="w-2 h-4 bg-primary rounded-sm block shadow-primary" />
               Create New Promotion
             </h3>
-            <p className="text-[11px] text-zinc-500 font-semibold mt-0.5 tracking-wide">Configure custom campaign definitions, timelines, and value assets.</p>
+            <p className="text-[11px] text-secondary-content font-semibold mt-0.5 tracking-wide">Configure custom campaign definitions, timelines, and value assets.</p>
           </div>
           <button 
             type="button" 
             onClick={onClose} 
-            className="p-2 rounded-xl bg-zinc-900/50 border border-zinc-800 text-zinc-400 hover:text-primary hover:border-primary/40 transition-all duration-200"
+            className="p-2 rounded-xl bg-zinc-900/50 border border-zinc-800 text-muted-content hover:text-primary hover:border-primary/40 transition-all duration-200"
           >
             <X className="h-4 w-4"/>
           </button>
@@ -164,7 +164,7 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
                     type="button"
                     className="w-full bg-[var(--background)] border border-zinc-800 h-12 rounded-xl px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary"
                   >
-                    <span>{dateFrom ? format(dateFrom, "dd-MM-yyyy") : <span className="text-zinc-600">dd-mm-yyyy</span>}</span>
+                    <span>{dateFrom ? format(dateFrom, "dd-MM-yyyy") : <span className="text-muted-content">dd-mm-yyyy</span>}</span>
                     <CalendarDays className="h-4 w-4 text-primary drop-shadow-[0_0_4px_rgba(184,134,11,0.3)]" />
                   </button>
                 </PopoverTrigger>
@@ -189,7 +189,7 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
                     type="button"
                     className="w-full bg-[var(--background)] border border-zinc-800 h-12 rounded-xl px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary"
                   >
-                    <span>{dateTo ? format(dateTo, "dd-MM-yyyy") : <span className="text-zinc-600">dd-mm-yyyy</span>}</span>
+                    <span>{dateTo ? format(dateTo, "dd-MM-yyyy") : <span className="text-muted-content">dd-mm-yyyy</span>}</span>
                     <CalendarDays className="h-4 w-4 text-primary drop-shadow-[0_0_4px_rgba(184,134,11,0.3)]" />
                   </button>
                 </PopoverTrigger>
@@ -208,9 +208,9 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
           <div className="flex items-center justify-between bg-[var(--background)] border border-zinc-800/60 p-4 rounded-xl transition-all">
             <div className="space-y-0.5">
               <Label className="text-[11px] font-black text-white uppercase tracking-wider block flex items-center gap-1.5">
-                <ShieldCheck className={`h-3.5 w-3.5 ${isActive ? "text-primary" : "text-zinc-600"}`} /> Promotion Active State
+                <ShieldCheck className={`h-3.5 w-3.5 ${isActive ? "text-primary" : "text-muted-content"}`} /> Promotion Active State
               </Label>
-              <span className="text-[10px] text-zinc-500 font-medium block">If deactivated, validation processing will lock this code instantly.</span>
+              <span className="text-label font-medium block">If deactivated, validation processing will lock this code instantly.</span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer select-none">
               <input 
@@ -228,7 +228,7 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
               type="button" 
               onClick={onClose} 
               variant="ghost" 
-              className="border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900 font-black text-xs h-12 px-5 rounded-xl transition-all"
+              className="border border-zinc-800 text-muted-content hover:text-white hover:bg-zinc-900 font-black text-xs h-12 px-5 rounded-xl transition-all"
             >
               Cancel
             </Button>

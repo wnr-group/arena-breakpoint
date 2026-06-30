@@ -1,15 +1,25 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useRouter, useSearchParams } from "next/navigation";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Button } from "@/components/ui/button";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Card } from "@/components/ui/card";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Input } from "@/components/ui/input";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Label } from "@/components/ui/label";
-import { Phone, Loader2, Calendar, Clock, QrCode, UtensilsCrossed, AlertCircle } from "lucide-react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
+import { Phone, Calendar, Clock, QrCode, UtensilsCrossed, AlertCircle } from "lucide-react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { toast } from "sonner";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { getCustomerBookings } from "./actions";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { QRCodeSVG } from "qrcode.react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 function MyBookingsPageContent() {
   const router = useRouter();
@@ -97,7 +107,7 @@ function MyBookingsPageContent() {
         {/* Loading State */}
         {isLoading && (
           <div className="flex justify-center items-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <BreakpointLoader size="lg" />
           </div>
         )}
 

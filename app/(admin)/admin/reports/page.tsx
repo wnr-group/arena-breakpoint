@@ -1,15 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Button } from "@/components/ui/button";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Card } from "@/components/ui/card";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Label } from "@/components/ui/label";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Calendar } from "@/components/ui/calendar";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   DollarSign, TrendingUp, ShoppingBag, Gamepad2,
-  Download, Loader2, UtensilsCrossed, BarChart3, CalendarDays, Receipt
+  Download, UtensilsCrossed, BarChart3, CalendarDays, Receipt
 } from "lucide-react";
 import { toast } from "sonner";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   getDashboardSummary,
   getFoodReports,
@@ -18,9 +24,13 @@ import {
   type ReportFilters
 } from "./actions";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { format } from "date-fns";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { ExpensesTab } from "@/components/admin/reports/ExpensesTab";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { ProfitTab } from "@/components/admin/reports/ProfitTab";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function AdminReportsPage() {
   const [activeTab, setActiveTab] = useState<"overview" | "food" | "device" | "revenue" | "expenses" | "profit">("overview");
@@ -194,7 +204,7 @@ export default function AdminReportsPage() {
           <h1 className="text-2xl font-black uppercase text-white tracking-tight">
             REPORTS & ANALYTICS
           </h1>
-          <p className="text-sm text-zinc-500 font-medium mt-1">
+          <p className="text-sm text-secondary-content font-medium mt-1">
             Track performance and insights across all operations
           </p>
         </div>
@@ -306,7 +316,7 @@ export default function AdminReportsPage() {
                     type="button"
                     className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-3 sm:px-4 text-[10px] sm:text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary overflow-hidden"
                   >
-                    <span className="truncate mr-2">{dateFrom ? format(new Date(dateFrom), "dd-MM-yyyy") : <span className="text-zinc-400">dd-mm-yyyy</span>}</span>
+                    <span className="truncate mr-2">{dateFrom ? format(new Date(dateFrom), "dd-MM-yyyy") : <span className="text-muted-content">dd-mm-yyyy</span>}</span>
                     <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
                   </button>
                 </PopoverTrigger>
@@ -332,7 +342,7 @@ export default function AdminReportsPage() {
                     type="button"
                     className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-3 sm:px-4 text-[10px] sm:text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary overflow-hidden"
                   >
-                    <span className="truncate mr-2">{dateTo ? format(new Date(dateTo), "dd-MM-yyyy") : <span className="text-zinc-400">dd-mm-yyyy</span>}</span>
+                    <span className="truncate mr-2">{dateTo ? format(new Date(dateTo), "dd-MM-yyyy") : <span className="text-muted-content">dd-mm-yyyy</span>}</span>
                     <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
                   </button>
                 </PopoverTrigger>
@@ -382,7 +392,7 @@ export default function AdminReportsPage() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === tab.id
                 ? "text-primary border-b-2 border-primary"
-                : "text-zinc-500 hover:text-zinc-300"
+                : "text-secondary-content hover:text-zinc-300"
                 }`}
             >
               <Icon className="h-4 w-4" />
@@ -395,7 +405,7 @@ export default function AdminReportsPage() {
       {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center h-96">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <BreakpointLoader size="lg" />
         </div>
       ) : (
         <>
@@ -476,7 +486,7 @@ export default function AdminReportsPage() {
                     <p className="text-label text-muted-content">
                       Food Orders
                     </p>
-                    <ShoppingBag className="h-4 w-4 text-zinc-600" />
+                    <ShoppingBag className="h-4 w-4 text-muted-content" />
                   </div>
                   <h4 className="text-xl font-black text-primary">
                     {overviewData.totalFoodOrders}
@@ -491,7 +501,7 @@ export default function AdminReportsPage() {
                     <p className="text-label text-muted-content">
                       Hours Booked
                     </p>
-                    <CalendarDays className="h-4 w-4 text-zinc-600" />
+                    <CalendarDays className="h-4 w-4 text-muted-content" />
                   </div>
                   <h4 className="text-xl font-black text-primary">
                     {overviewData.totalHoursBooked}
@@ -506,7 +516,7 @@ export default function AdminReportsPage() {
                     <p className="text-label text-muted-content">
                       Avg Revenue
                     </p>
-                    <TrendingUp className="h-4 w-4 text-zinc-600" />
+                    <TrendingUp className="h-4 w-4 text-muted-content" />
                   </div>
                   <h4 className="text-xl font-black text-primary">
                     ₹{(overviewData.totalRevenue / (overviewData.totalBookings || 1)).toFixed(0)}
@@ -560,7 +570,7 @@ export default function AdminReportsPage() {
 
               {/* Category Breakdown */}
               <Card className="bg-[var(--surface)] border-[#27272a] p-6">
-                <h3 className="text-sm font-black uppercase text-zinc-400 mb-4">
+                <h3 className="text-sm font-black uppercase text-muted-content mb-4">
                   Category Breakdown
                 </h3>
                 <div className="space-y-3">
@@ -592,7 +602,7 @@ export default function AdminReportsPage() {
 
               {/* Top Items */}
               <Card className="bg-[var(--surface)] border-[#27272a] p-6">
-                <h3 className="text-sm font-black uppercase text-zinc-400 mb-4">
+                <h3 className="text-sm font-black uppercase text-muted-content mb-4">
                   Top Selling Items
                 </h3>
                 <div className="space-y-2">
@@ -668,7 +678,7 @@ export default function AdminReportsPage() {
 
               {/* Device Type Breakdown */}
               <Card className="bg-[var(--surface)] border-[#27272a] p-6">
-                <h3 className="text-sm font-black uppercase text-zinc-400 mb-4">
+                <h3 className="text-sm font-black uppercase text-muted-content mb-4">
                   Device Type Performance
                 </h3>
                 <div className="space-y-3">
@@ -821,7 +831,7 @@ export default function AdminReportsPage() {
 
               {/* Booking Source Breakdown */}
               <Card className="bg-[var(--surface)] border-[#27272a] p-6">
-                <h3 className="text-sm font-black uppercase text-zinc-400 mb-4">
+                <h3 className="text-sm font-black uppercase text-muted-content mb-4">
                   Revenue by Source
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -846,7 +856,7 @@ export default function AdminReportsPage() {
 
               {/* Daily Revenue Chart */}
               <Card className="bg-[var(--surface)] border-[#27272a] p-6">
-                <h3 className="text-sm font-black uppercase text-zinc-400 mb-4">
+                <h3 className="text-sm font-black uppercase text-muted-content mb-4">
                   Daily Revenue Trend
                 </h3>
                 <div className="space-y-2">

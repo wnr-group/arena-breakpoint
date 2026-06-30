@@ -1,15 +1,25 @@
 "use client";
 
 import { useState, useMemo, useTransition, useEffect } from "react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Utensils, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
+import { Utensils, CheckCircle2, AlertTriangle} from "lucide-react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { getMenuItems, deleteMenuItem } from "./actions";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { FoodFilters } from "@/components/admin/food/FoodFilters";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { AddFoodModal } from "@/components/admin/food/AddFoodModal";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { EditFoodModal } from "@/components/admin/food/EditFoodModal";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { FoodGrid } from "@/components/admin/food/FoodGrid";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { MenuItem } from "@/lib/types/food";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { toast } from "sonner";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function FoodPage() {
   const [isPending, startTransition] = useTransition();
@@ -108,7 +118,7 @@ export default function FoodPage() {
       <div className="mt-2">
         {isLoadingData ? (
           <div className="text-center py-12 bg-[var(--surface)] border border-[#27272a] rounded-xl text-[#a1a1aa] flex justify-center items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin text-primary" /> Loading café configuration tracks...
+            <BreakpointLoader size="sm" /> Loading café configuration tracks...
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="text-center py-12 bg-[var(--surface)] border border-[#27272a] rounded-xl text-[#a1a1aa]">

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useMemo, useTransition, useEffect } from "react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   Monitor,
   CheckCircle,
@@ -13,13 +15,21 @@ import {
   MonitorPlay
 } from "lucide-react";
 import { deleteDevice, getDevices, getDeviceTypes } from "./actions";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { DeviceFilters } from "@/components/admin/devices/DeviceFilters";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { AddDeviceModal } from "@/components/admin/devices/AddDeviceModal";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { EditDeviceModal } from "@/components/admin/devices/EditDeviceModal";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { DeviceTable } from "@/components/admin/devices/DeviceTable";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { DeviceGrid } from "@/components/admin/devices/DeviceGrid";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { StatusBadge } from "@/components/admin/devices/StatusBadge";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { toast } from "sonner";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function DevicesPage() {
   const [isPending, startTransition] = useTransition();
@@ -145,7 +155,7 @@ export default function DevicesPage() {
           { title: "Online", count: availableDevices, label: "Available Now", icon: CheckCircle, color: "text-primary" },
           { title: "Busy", count: occupiedDevices, label: "Currently Occupied", icon: PlayCircle },
           { title: "Alert", count: maintenanceDevices, label: "Under Maintenance", icon: Wrench },
-          { title: "Offline", count: inactiveDevices, label: "Deactivated Stations", icon: MonitorPlay, color: "text-zinc-500" }
+          { title: "Offline", count: inactiveDevices, label: "Deactivated Stations", icon: MonitorPlay, color: "text-secondary-content" }
         ].map((stat) => (
           <Card key={stat.title} className="bg-[var(--surface)] border-[#27272a] hover:border-[#FFC107]/70 hover:-translate-y-1 transition-all duration-500 group">
             <CardHeader className="flex flex-row items-center justify-between pb-2">

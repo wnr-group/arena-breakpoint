@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { BookingsTimeline } from "@/components/admin/bookings/BookingsTimeline";
 import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
 import { getTimelineBookings } from "@/app/(admin)/admin/bookings/actions";
-import { Calendar, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function TimelinePage() {
   const [timelineDate, setTimelineDate] = useState(new Date());
@@ -67,7 +68,7 @@ export default function TimelinePage() {
           <h1 className="text-2xl font-black uppercase tracking-tight text-white">
             Bookings Timeline
           </h1>
-          <p className="text-sm text-zinc-500 mt-1">Visual timeline of all bookings</p>
+          <p className="text-sm text-secondary-content mt-1">Visual timeline of all bookings</p>
         </div>
       </div>
 
@@ -114,7 +115,7 @@ export default function TimelinePage() {
       {/* Timeline */}
       {loading ? (
         <div className="h-96 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 text-primary animate-spin" />
+          <BreakpointLoader size="lg" text="Loading Timeline..." />
         </div>
       ) : (
         <BookingsTimeline

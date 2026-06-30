@@ -7,10 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
 import { PaymentStatusBadge } from "@/components/admin/bookings/PaymentStatusBadge";
+import { BookingsGrid } from "@/components/admin/bookings/BookingsGrid";
 import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
 import { CheckoutModal } from "@/components/admin/bookings/CheckoutModal";
 import { getAllBookings, getBookingStats, checkInBooking, checkOutBooking, type BookingFilters } from "./actions";
-import { Search, Filter, Calendar, DollarSign, Users, CheckCircle2, XCircle, Clock, Loader2, Eye, Receipt, Plus, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard } from "lucide-react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
+import { Search, Filter, Calendar, DollarSign, Users, CheckCircle2, XCircle, Clock, Loader2, Eye, Receipt, Plus, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List } from "lucide-react";
 import { toast } from "sonner";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 
@@ -28,6 +30,7 @@ export default function AdminBookingsPage() {
   const [openCheckoutModal, setOpenCheckoutModal] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [expandedCustomers, setExpandedCustomers] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   // Initial load
   useEffect(() => {
@@ -276,8 +279,34 @@ export default function AdminBookingsPage() {
         </div>
 
         <div className="flex gap-2 w-full lg:w-auto">
+          {/* View Mode Toggle */}
+          <div className="flex bg-[var(--surface)] border border-[#27272a] rounded-lg overflow-hidden">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-2 transition-colors ${
+                viewMode === "list"
+                  ? "bg-primary text-black"
+                  : "text-secondary-content hover:text-white"
+              }`}
+              title="List View"
+            >
+              <List className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`p-2 transition-colors ${
+                viewMode === "grid"
+                  ? "bg-primary text-black"
+                  : "text-secondary-content hover:text-white"
+              }`}
+              title="Grid View"
+            >
+              <Grid3x3 className="h-4 w-4" />
+            </button>
+          </div>
+
           <div className="relative flex-1 lg:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-content" />
             <Input
               placeholder="Search by name, phone, or booking number... (auto-search)"
               value={searchQuery}
@@ -291,19 +320,35 @@ export default function AdminBookingsPage() {
         </div>
       </div>
 
-      {/* Bookings Table */}
+      {/* Bookings List/Grid */}
       {loading ? (
         <div className="h-96 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 text-primary animate-spin" />
+          <BreakpointLoader size="lg" text="Loading Bookings..." />
         </div>
       ) : bookings.length === 0 ? (
         <Card className="bg-[var(--surface)] border-[#27272a] p-12">
           <div className="text-center space-y-2">
             <Receipt className="h-12 w-12 text-zinc-700 mx-auto" />
-            <h3 className="text-lg font-black text-zinc-600 uppercase">No Bookings Found</h3>
-            <p className="text-sm text-zinc-600">No bookings match your current filters.</p>
+            <h3 className="text-lg font-black text-muted-content uppercase">No Bookings Found</h3>
+            <p className="text-sm text-muted-content">No bookings match your current filters.</p>
           </div>
         </Card>
+      ) : viewMode === "grid" ? (
+        <BookingsGrid
+          customerGroups={customerGroups}
+          onBookingClick={(booking) => setSelectedBooking(booking)}
+          onCheckIn={handleCheckIn}
+          onCheckOut={handleCheckOut}
+          onAddFood={(booking) => {
+            setSelectedBooking(booking);
+            setOpenFoodModal(true);
+          }}
+          onCheckoutBilling={(bookingId) => {
+            setCheckoutBookingId(bookingId);
+            setOpenCheckoutModal(true);
+          }}
+          isPending={isPending}
+        />
       ) : (
         <Card className="bg-[var(--surface)] border-[#27272a] overflow-hidden">
           <div className="overflow-x-auto">
@@ -355,7 +400,7 @@ export default function AdminBookingsPage() {
                             {!isSingleBooking && (
                               <button
                                 onClick={() => toggleCustomerExpansion(group.phone)}
-                                className="text-zinc-500 hover:text-primary transition-colors"
+                                className="text-secondary-content hover:text-primary transition-colors"
                               >
                                 {isExpanded ? (
                                   <ChevronDown className="h-4 w-4" />
@@ -509,7 +554,7 @@ export default function AdminBookingsPage() {
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => setSelectedBooking(firstBooking)}
-                                className="h-8 w-8 p-0 text-zinc-400 hover:text-white"
+                                className="h-8 w-8 p-0 text-muted-content hover:text-white"
                                 title="View Details"
                               >
                                 <Eye className="h-4 w-4" />
@@ -626,7 +671,7 @@ export default function AdminBookingsPage() {
                                   size="sm"
                                   variant="ghost"
                                   onClick={() => setSelectedBooking(booking)}
-                                  className="h-8 w-8 p-0 text-zinc-400 hover:text-white"
+                                  className="h-8 w-8 p-0 text-muted-content hover:text-white"
                                   title="View Details"
                                 >
                                   <Eye className="h-4 w-4" />

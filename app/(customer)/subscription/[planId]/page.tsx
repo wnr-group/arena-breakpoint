@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { CheckCircle2, ShieldCheck, Loader2, Phone, User, Mail, Cake, ChevronRight } from 'lucide-react'
+import { CheckCircle2, ShieldCheck, Phone, User, Mail, Cake, ChevronRight } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -165,7 +165,7 @@ export default function PlanDetailsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0d0a14]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <BreakpointLoader size="lg" />
       </div>
     )
   }

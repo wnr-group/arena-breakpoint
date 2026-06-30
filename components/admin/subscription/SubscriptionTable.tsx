@@ -116,7 +116,7 @@ export function SubscriptionTable({ data = [], onEdit, onDelete }: SubscriptionT
                         <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span> Active
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold text-zinc-400 border border-zinc-600/50 rounded-full bg-zinc-800/50">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold text-muted-content border border-zinc-600/50 rounded-full bg-zinc-800/50">
                         <span className="w-1.5 h-1.5 rounded-full bg-zinc-500"></span> Inactive
                       </span>
                     )}

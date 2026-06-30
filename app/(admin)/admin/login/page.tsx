@@ -89,7 +89,7 @@ function LoginForm() {
               <CardTitle className="text-3xl font-black text-transparent bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text mb-2">
                 Admin Portal
               </CardTitle>
-              <CardDescription className="text-zinc-400">
+              <CardDescription className="text-muted-content">
                 Sign in to access the dashboard
               </CardDescription>
             </div>
@@ -103,7 +103,7 @@ function LoginForm() {
                   Email Address
                 </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-content" />
                   <Input
                     id="email"
                     type="email"
@@ -112,7 +112,7 @@ function LoginForm() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="pl-10 bg-[var(--background)]/50 border-zinc-800 focus:border-primary/50 focus:ring-primary/20 text-white placeholder:text-zinc-600 h-12"
+                    className="pl-10 bg-[var(--background)]/50 border-zinc-800 focus:border-primary/50 focus:ring-primary/20 text-white placeholder:text-muted-content h-12"
                   />
                 </div>
               </div>
@@ -123,7 +123,7 @@ function LoginForm() {
                   Password
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-content" />
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
@@ -132,12 +132,12 @@ function LoginForm() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="pl-10 pr-10 bg-[var(--background)]/50 border-zinc-800 focus:border-primary/50 focus:ring-primary/20 text-white placeholder:text-zinc-600 h-12"
+                    className="pl-10 pr-10 bg-[var(--background)]/50 border-zinc-800 focus:border-primary/50 focus:ring-primary/20 text-white placeholder:text-muted-content h-12"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-primary transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-content hover:text-primary transition-colors"
                     disabled={isLoading}
                   >
                     {showPassword ? (
@@ -166,7 +166,7 @@ function LoginForm() {
 
             {/* Footer Note */}
             <div className="mt-6 text-center">
-              <p className="text-xs text-zinc-600">
+              <p className="text-xs text-muted-content">
                 Session expires after 12 hours of inactivity
               </p>
             </div>
@@ -175,7 +175,7 @@ function LoginForm() {
 
         {/* Breakpoint Arena Text */}
         <div className="mt-8 text-center">
-          <p className="text-zinc-600 text-sm font-bold tracking-wider">
+          <p className="text-muted-content text-sm font-bold tracking-wider">
             BREAKPOINT ARENA
           </p>
           <p className="text-zinc-700 text-xs mt-1">

@@ -99,15 +99,15 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
             {/* Booking Info */}
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-zinc-500">Booking Number</span>
+                <span className="text-sm font-bold text-secondary-content">Booking Number</span>
                 <span className="text-base font-black text-primary font-mono">{billing.booking_number}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-zinc-500">Customer</span>
+                <span className="text-sm font-bold text-secondary-content">Customer</span>
                 <span className="text-sm font-bold text-white">{billing.customer_name}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-zinc-500">Phone</span>
+                <span className="text-sm font-bold text-secondary-content">Phone</span>
                 <span className="text-sm font-bold text-white">{billing.customer_phone}</span>
               </div>
             </div>
@@ -119,7 +119,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
                 : 'bg-red-500/10 border-red-500/40'
             }`}>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-black uppercase tracking-wider text-zinc-400">Payment Status</h3>
+                <h3 className="text-sm font-black uppercase tracking-wider text-muted-content">Payment Status</h3>
                 {isPaid ? (
                   <CheckCircle2 className="h-8 w-8 text-green-500" />
                 ) : (
@@ -144,11 +144,11 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
                   <>
                     <div className="grid grid-cols-2 gap-3 pt-3 border-t border-zinc-700">
                       <div>
-                        <p className="text-xs text-zinc-500 uppercase mb-1">Amount Paid</p>
+                        <p className="text-xs text-secondary-content uppercase mb-1">Amount Paid</p>
                         <p className="text-lg font-black text-green-400">₹{Number(billing.amount_paid || 0).toFixed(2)}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-zinc-500 uppercase mb-1">Balance Due</p>
+                        <p className="text-xs text-secondary-content uppercase mb-1">Balance Due</p>
                         <p className="text-lg font-black text-red-400">₹{Number(billing.balance_due || 0).toFixed(2)}</p>
                       </div>
                     </div>
@@ -173,7 +173,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
 
             {/* Billing Breakdown - Using Line Items */}
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
-              <h3 className="text-xs font-black uppercase tracking-wider text-zinc-500 flex items-center gap-2">
+              <h3 className="text-xs font-black uppercase tracking-wider text-secondary-content flex items-center gap-2">
                 <DollarSign className="h-4 w-4" />
                 Billing Breakdown
               </h3>
@@ -205,7 +205,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
                                   : 'text-primary'
                                 : isUnpaid
                                   ? 'text-amber-300'
-                                  : 'text-zinc-400'
+                                  : 'text-muted-content'
                             }`}>
                               {item.description}
                               {item.quantity > 1 && item.item_type !== 'device' && (
@@ -241,7 +241,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
                     </div>
                   </>
                 ) : (
-                  <p className="text-center text-zinc-600 py-4">No billing details available</p>
+                  <p className="text-center text-muted-content py-4">No billing details available</p>
                 )}
               </div>
             </div>
@@ -251,7 +251,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
               {!isPaid && (
                 <>
                   <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-                    <Label className="text-xs font-black uppercase text-zinc-500 mb-2 block">
+                    <Label className="text-xs font-black uppercase text-secondary-content mb-2 block">
                       Payment Method (Offline)
                     </Label>
                     <Select value={paymentMethod} onValueChange={(value: 'cash' | 'card' | 'upi') => setPaymentMethod(value)}>
@@ -293,7 +293,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
                 className={`w-full font-black uppercase text-sm h-12 rounded-xl ${
                   isPaid
                     ? 'bg-primary hover:bg-primary-hover text-black'
-                    : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                    : 'bg-zinc-800 text-muted-content cursor-not-allowed'
                 }`}
               >
                 {isProcessing ? (
@@ -307,14 +307,14 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
               <Button
                 onClick={onClose}
                 variant="ghost"
-                className="w-full border border-zinc-800 text-zinc-400 hover:text-white font-bold uppercase text-xs h-10 rounded-xl"
+                className="w-full border border-zinc-800 text-muted-content hover:text-white font-bold uppercase text-xs h-10 rounded-xl"
               >
                 Cancel
               </Button>
             </div>
           </div>
         ) : (
-          <div className="text-center py-12 text-zinc-500">
+          <div className="text-center py-12 text-secondary-content">
             No billing information available
           </div>
         )}

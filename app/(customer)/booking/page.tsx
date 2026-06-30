@@ -1,13 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useRouter } from "next/navigation";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useAppDispatch } from "@/lib/redux/hooks";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { setDeviceType, setPricing, resetBooking } from "@/lib/redux/slices/bookingSlice";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Button } from "@/components/ui/button";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Card } from "@/components/ui/card";
-import { Loader2, Users, Sparkles } from "lucide-react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
+import { Users, Sparkles } from "lucide-react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { getDeviceTypesWithAvailability } from "./actions";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function GamingStationPage() {
   const router = useRouter();

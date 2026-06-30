@@ -180,7 +180,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
                     <img src={filePreviewUrl} alt="Real-time layout sync" className="w-full h-full object-cover animate-in fade-in duration-300" />
                   ) : (
                     <div className="flex flex-col items-center text-zinc-700 gap-1.5">
-                      <ImageIcon className="h-5 w-5 text-zinc-600" />
+                      <ImageIcon className="h-5 w-5 text-muted-content" />
                       <span className="text-[10px]">No image mapped</span>
                     </div>
                   )}

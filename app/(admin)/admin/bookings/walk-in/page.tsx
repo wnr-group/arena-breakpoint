@@ -1,12 +1,19 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useRouter } from "next/navigation";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Button } from "@/components/ui/button";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Card } from "@/components/ui/card";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Calendar } from "@/components/ui/calendar";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Input } from "@/components/ui/input";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Label } from "@/components/ui/label";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   ArrowLeft,
   ChevronRight,
@@ -23,13 +30,16 @@ import {
   Clock
 } from "lucide-react";
 import { toast } from "sonner";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   getDeviceTypesWithAvailability,
   checkFlexibleAvailability,
   checkCustomerExists
 } from "@/app/(customer)/booking/actions";
 import { createWalkInBooking } from "../actions";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   generateStartTimes,
   filterPastTimeSlots,
@@ -302,12 +312,12 @@ export default function WalkInBookingPage() {
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${step >= s.num
                     ? "bg-primary text-black"
-                    : "bg-zinc-900 text-zinc-600 border border-zinc-800"
+                    : "bg-zinc-900 text-muted-content border border-zinc-800"
                     }`}
                 >
                   {s.num}
                 </div>
-                <span className={`text-[9px] font-black uppercase tracking-wider ${step >= s.num ? "text-primary" : "text-zinc-600"
+                <span className={`text-[9px] font-black uppercase tracking-wider ${step >= s.num ? "text-primary" : "text-muted-content"
                   }`}>
                   {s.label}
                 </span>
@@ -322,10 +332,10 @@ export default function WalkInBookingPage() {
         {/* Step 1: Device Selection */}
         {step === 1 && (
           <div className="space-y-6">
-            <h2 className="text-xl font-black uppercase text-zinc-400">Select Device Type</h2>
+            <h2 className="text-xl font-black uppercase text-muted-content">Select Device Type</h2>
             {loadingDevices ? (
               <div className="flex items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <BreakpointLoader size="lg" />
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -344,7 +354,7 @@ export default function WalkInBookingPage() {
                         <div className="flex justify-between items-start">
                           <div>
                             <h3 className="font-black text-sm uppercase">{deviceType.display_name}</h3>
-                            <p className="text-[10px] text-zinc-500 flex items-center gap-1 mt-1">
+                            <p className="text-label flex items-center gap-1 mt-1">
                               <Users className="h-3 w-3" />
                               {deviceType.included_players} included • Max {deviceType.max_players}
                             </p>
@@ -356,7 +366,7 @@ export default function WalkInBookingPage() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-lg font-black text-primary">₹{Number(deviceType.regular_hourly_rate)}</span>
-                          <span className="text-xs text-zinc-600">/hour</span>
+                          <span className="text-xs text-muted-content">/hour</span>
                         </div>
                       </div>
                     </Card>
@@ -371,8 +381,8 @@ export default function WalkInBookingPage() {
         {step === 2 && selectedDeviceType && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-xl font-black uppercase text-zinc-400">Select Date & Time</h2>
-              <p className="text-sm text-zinc-600 mt-1">
+              <h2 className="text-xl font-black uppercase text-muted-content">Select Date & Time</h2>
+              <p className="text-sm text-muted-content mt-1">
                 Selected Device: <span className="text-white font-bold">{selectedDeviceType.display_name}</span>
               </p>
             </div>
@@ -380,7 +390,7 @@ export default function WalkInBookingPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
               {/* Date Picker */}
               <div className="space-y-3">
-                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">📅 Select Date</h3>
+                <h3 className="text-xs font-black text-secondary-content uppercase tracking-widest pl-1">📅 Select Date</h3>
                 <Card className="bg-[#111] border border-zinc-900 p-4 w-full flex justify-center rounded-2xl">
                   <Calendar
                     mode="single"
@@ -393,7 +403,7 @@ export default function WalkInBookingPage() {
 
               {/* Duration Selection */}
               <div className="space-y-3">
-                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">⏱️ Duration</h3>
+                <h3 className="text-xs font-black text-secondary-content uppercase tracking-widest pl-1">⏱️ Duration</h3>
                 <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
                   {filteredDurations.map((duration) => {
                     const isSelected = selectedDuration === duration.value;
@@ -421,17 +431,17 @@ export default function WalkInBookingPage() {
 
               {/* Start Time Selection */}
               <div className="space-y-3">
-                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">🕒 Start Time</h3>
+                <h3 className="text-xs font-black text-secondary-content uppercase tracking-widest pl-1">🕒 Start Time</h3>
                 {loadingSlots ? (
                   <div className="h-96 flex flex-col items-center justify-center gap-2">
                     <Loader2 className="h-5 w-5 text-primary animate-spin" />
-                    <p className="text-xs text-zinc-500">Checking availability...</p>
+                    <p className="text-xs text-secondary-content">Checking availability...</p>
                   </div>
                 ) : availableStartTimesForDate.length === 0 ? (
                   <div className="h-96 flex flex-col items-center justify-center gap-2 text-center px-4">
                     <Clock className="h-8 w-8 text-zinc-700" />
-                    <p className="text-sm text-zinc-400 font-bold">No time slots available</p>
-                    <p className="text-xs text-zinc-600">Try selecting a different date or duration</p>
+                    <p className="text-sm text-muted-content font-bold">No time slots available</p>
+                    <p className="text-xs text-muted-content">Try selecting a different date or duration</p>
                   </div>
                 ) : (
                   <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
@@ -483,16 +493,16 @@ export default function WalkInBookingPage() {
               <Card className="bg-[var(--surface)] border border-zinc-900 p-6 space-y-6 rounded-2xl shadow-2xl animate-in fade-in duration-200">
                 <div className="border-b border-zinc-900 pb-4 space-y-1">
                   <h3 className="text-lg font-black uppercase text-white tracking-tight">WALK-IN PROFILE IDENTIFICATION</h3>
-                  <p className="text-xs text-zinc-500 font-medium">Verify the customer's mobile number to load profiles automatically.</p>
+                  <p className="text-xs text-secondary-content font-medium">Verify the customer's mobile number to load profiles automatically.</p>
                 </div>
 
                 <form onSubmit={handleCustomerPhoneLookup} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <Phone className="h-3.5 w-3.5 text-zinc-600" /> Mobile Number <span className="text-red-500">*</span>
+                    <Label htmlFor="phone" className="text-[11px] font-black text-muted-content uppercase tracking-wider flex items-center gap-1.5">
+                      <Phone className="h-3.5 w-3.5 text-muted-content" /> Mobile Number <span className="text-red-500">*</span>
                     </Label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-600 border-r border-zinc-900 pr-2">+91</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-muted-content border-r border-zinc-900 pr-2">+91</span>
                       <Input
                         id="phone"
                         type="tel"
@@ -511,7 +521,7 @@ export default function WalkInBookingPage() {
                   </Button>
                 </form>
 
-                <div className="pt-2 flex gap-2 items-center text-[10px] text-zinc-600 justify-center border-t border-zinc-950">
+                <div className="pt-2 flex gap-2 items-center text-[10px] text-muted-content justify-center border-t border-zinc-950">
                   <ShieldCheck className="h-4 w-4 text-zinc-700" /><span>Instant index lookup map layers running safely.</span>
                 </div>
               </Card>
@@ -520,18 +530,18 @@ export default function WalkInBookingPage() {
               <Card className="bg-[var(--surface)] border border-zinc-900 p-6 space-y-6 rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200">
                 <div className="border-b border-zinc-900 pb-4 space-y-1">
                   <h3 className="text-lg font-black uppercase text-white tracking-tight">WALK-IN ACCOUNT SIGNUP</h3>
-                  <p className="text-xs text-zinc-500 font-medium">Please generate contact tokens to instantiate profile logs.</p>
+                  <p className="text-xs text-secondary-content font-medium">Please generate contact tokens to instantiate profile logs.</p>
                 </div>
 
                 <div className="bg-[var(--background)] p-3.5 border border-zinc-900 rounded-xl flex items-center justify-between gap-4 text-xs select-none">
                   <div className="space-y-0.5">
-                    <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest block">Customer Phone Number:</span>
+                    <span className="text-[8px] font-black text-muted-content uppercase tracking-widest block">Customer Phone Number:</span>
                     <span className="text-primary font-mono font-black tracking-wider">+91 {customerPhone}</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setShowFullRegistrationFields(false)}
-                    className="px-3 h-8 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[10px] font-black uppercase text-zinc-400 hover:text-primary rounded-lg tracking-wider flex items-center gap-1.5 transition-colors"
+                    className="px-3 h-8 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[10px] font-black uppercase text-muted-content hover:text-primary rounded-lg tracking-wider flex items-center gap-1.5 transition-colors"
                   >
                     <RefreshCw className="h-3 w-3" /> Change Number
                   </button>
@@ -539,8 +549,8 @@ export default function WalkInBookingPage() {
 
                 <form onSubmit={handleManualRegistrationSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <User className="h-3.5 w-3.5 text-zinc-600" /> Customer Name *
+                    <Label htmlFor="name" className="text-[11px] font-black text-muted-content uppercase tracking-wider flex items-center gap-1.5">
+                      <User className="h-3.5 w-3.5 text-muted-content" /> Customer Name *
                     </Label>
                     <Input
                       id="name"
@@ -554,8 +564,8 @@ export default function WalkInBookingPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="dob" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <Cake className="h-3.5 w-3.5 text-zinc-600" /> Date of Birth (DD-MM-YYYY)
+                    <Label htmlFor="dob" className="text-[11px] font-black text-muted-content uppercase tracking-wider flex items-center gap-1.5">
+                      <Cake className="h-3.5 w-3.5 text-muted-content" /> Date of Birth (DD-MM-YYYY)
                     </Label>
                     <Input
                       id="dob"
@@ -570,8 +580,8 @@ export default function WalkInBookingPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <Mail className="h-3.5 w-3.5 text-zinc-600" /> Email (Optional)
+                    <Label htmlFor="email" className="text-[11px] font-black text-muted-content uppercase tracking-wider flex items-center gap-1.5">
+                      <Mail className="h-3.5 w-3.5 text-muted-content" /> Email (Optional)
                     </Label>
                     <Input
                       id="email"
@@ -598,7 +608,7 @@ export default function WalkInBookingPage() {
         {/* Step 4: Confirmation Summary Panel */}
         {step === 4 && selectedDeviceType && selectedStartTime && (
           <div className="space-y-6 max-w-2xl mx-auto">
-            <h2 className="text-xl font-black uppercase text-zinc-400">Confirm Booking</h2>
+            <h2 className="text-xl font-black uppercase text-muted-content">Confirm Booking</h2>
 
             <Card className="bg-[var(--surface)] border border-zinc-900 p-6 space-y-6 rounded-2xl">
 
@@ -606,38 +616,38 @@ export default function WalkInBookingPage() {
               {/* Summary Breakdown Fields Matrix */}
               <div className="space-y-4 text-sm pt-2">
                 <div className="flex justify-between border-b border-zinc-900/60 pb-2">
-                  <span className="text-zinc-500">Customer Name:</span>
+                  <span className="text-secondary-content">Customer Name:</span>
                   <span className="text-white font-bold">{customerName}</span>
                 </div>
                 <div className="flex justify-between border-b border-zinc-900/60 pb-2">
-                  <span className="text-zinc-500">Phone Number:</span>
+                  <span className="text-secondary-content">Phone Number:</span>
                   <span className="text-white font-bold">{customerPhone}</span>
                 </div>
                 {customerEmail && (
                   <div className="flex justify-between border-b border-zinc-900/60 pb-2">
-                    <span className="text-zinc-500">Email:</span>
+                    <span className="text-secondary-content">Email:</span>
                     <span className="text-white font-bold">{customerEmail}</span>
                   </div>
                 )}
                 <div className="flex justify-between border-b border-zinc-900/60 pb-2">
-                  <span className="text-zinc-500">Device Configuration:</span>
+                  <span className="text-secondary-content">Device Configuration:</span>
                   <span className="text-white font-bold uppercase">{selectedDeviceType.display_name}</span>
                 </div>
                 <div className="flex justify-between border-b border-zinc-900/60 pb-2">
-                  <span className="text-zinc-500">Target Date:</span>
+                  <span className="text-secondary-content">Target Date:</span>
                   <span className="text-white font-bold">{selectedDate.toDateString()}</span>
                 </div>
                 <div className="flex justify-between border-b border-zinc-900/60 pb-2">
-                  <span className="text-zinc-500">Selected Time Window:</span>
+                  <span className="text-secondary-content">Selected Time Window:</span>
                   <span className="text-primary font-bold">{selectedStartTime} - {endTime} ({selectedDurationLabel})</span>
                 </div>
               </div>
               <div className="bg-[var(--background)]/40 p-4 border border-zinc-900 rounded-xl space-y-3">
-                <Label className="text-[10px] font-black uppercase text-zinc-400 tracking-wider block">
+                <Label className="text-[10px] font-black uppercase text-muted-content tracking-wider block">
                   Assign Player Allocation Count
                 </Label>
                 <div className="flex items-center justify-between bg-[var(--background)] border border-zinc-900/60 rounded-lg p-3">
-                  <p className="text-xs text-zinc-500 font-medium">
+                  <p className="text-xs text-secondary-content font-medium">
                     {selectedDeviceType.included_players} included • Max {selectedDeviceType.max_players}
                   </p>
                   <div className="flex items-center gap-3">
@@ -670,12 +680,12 @@ export default function WalkInBookingPage() {
 
               <div className="space-y-2 text-sm border-t border-zinc-900 pt-4 bg-[var(--background)]/20 p-3 rounded-xl">
                 <div className="flex justify-between">
-                  <span className="text-zinc-500">Base Station Rate:</span>
+                  <span className="text-secondary-content">Base Station Rate:</span>
                   <span className="text-white font-bold">₹{baseRate}.00</span>
                 </div>
                 {extraPlayersCount > 0 && (
                   <div className="flex justify-between animate-in slide-in-from-top-2 duration-150">
-                    <span className="text-zinc-500">Extra Player Charge Layer ({extraPlayersCount}):</span>
+                    <span className="text-secondary-content">Extra Player Charge Layer ({extraPlayersCount}):</span>
                     <span className="text-primary font-bold">₹{Math.round(extraPlayerCharge)}.00</span>
                   </div>
                 )}

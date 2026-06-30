@@ -14,8 +14,18 @@ import {
   getDashboardStats,
   getRecentBookings,
   getTodaysSchedule,
-  getQuickStats
+  getQuickStats,
+  getTodaysRevenueDetails,
+  getActiveSessionsDetails,
+  getUpcomingBookingsDetails,
+  getAvailableDevicesDetails
 } from "./actions";
+import { TodaysRevenueModal } from "@/components/admin/dashboard/TodaysRevenueModal";
+import { ActiveSessionsModal } from "@/components/admin/dashboard/ActiveSessionsModal";
+import { UpcomingBookingsModal } from "@/components/admin/dashboard/UpcomingBookingsModal";
+import { AvailableDevicesModal } from "@/components/admin/dashboard/AvailableDevicesModal";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
+import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -24,6 +34,18 @@ export default function AdminDashboardPage() {
   const [recentBookings, setRecentBookings] = useState<any[]>([]);
   const [todaysSchedule, setTodaysSchedule] = useState<any[]>([]);
   const [quickStats, setQuickStats] = useState<any>(null);
+
+  // Modal states
+  const [revenueModalOpen, setRevenueModalOpen] = useState(false);
+  const [revenueDetails, setRevenueDetails] = useState<any[]>([]);
+  const [sessionsModalOpen, setSessionsModalOpen] = useState(false);
+  const [sessionsDetails, setSessionsDetails] = useState<any[]>([]);
+  const [upcomingModalOpen, setUpcomingModalOpen] = useState(false);
+  const [upcomingDetails, setUpcomingDetails] = useState<any[]>([]);
+  const [devicesModalOpen, setDevicesModalOpen] = useState(false);
+  const [devicesDetails, setDevicesDetails] = useState<any[]>([]);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  const [bookingDetailOpen, setBookingDetailOpen] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -65,10 +87,54 @@ export default function AdminDashboardPage() {
     });
   };
 
+  const handleRevenueClick = async () => {
+    const result = await getTodaysRevenueDetails();
+    if (result.success) {
+      setRevenueDetails(result.bookings);
+      setRevenueModalOpen(true);
+    }
+  };
+
+  const handleSessionsClick = async () => {
+    const result = await getActiveSessionsDetails();
+    if (result.success) {
+      setSessionsDetails(result.sessions);
+      setSessionsModalOpen(true);
+    }
+  };
+
+  const handleUpcomingClick = async () => {
+    const result = await getUpcomingBookingsDetails();
+    if (result.success) {
+      setUpcomingDetails(result.bookings);
+      setUpcomingModalOpen(true);
+    }
+  };
+
+  const handleDevicesClick = async () => {
+    const result = await getAvailableDevicesDetails();
+    if (result.success) {
+      setDevicesDetails(result.devices);
+      setDevicesModalOpen(true);
+    }
+  };
+
+  const handleBookingClick = (bookingId: string) => {
+    setSelectedBookingId(bookingId);
+    setBookingDetailOpen(true);
+  };
+
+  const handleBookingDetailClose = () => {
+    setBookingDetailOpen(false);
+    setSelectedBookingId(null);
+    // Refresh dashboard data when booking is updated
+    loadDashboardData();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <BreakpointLoader size="lg" text="Loading Dashboard..." />
       </div>
     );
   }
@@ -102,7 +168,10 @@ export default function AdminDashboardPage() {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 p-5">
+        <Card
+          className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 p-5 cursor-pointer hover:border-green-500/40 transition-all hover:scale-[1.02]"
+          onClick={handleRevenueClick}
+        >
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-stat-label text-green-400 mb-1">
@@ -121,7 +190,10 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 p-5">
+        <Card
+          className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 p-5 cursor-pointer hover:border-blue-500/40 transition-all hover:scale-[1.02]"
+          onClick={handleSessionsClick}
+        >
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-stat-label text-blue-400 mb-1">
@@ -140,7 +212,10 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20 p-5">
+        <Card
+          className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20 p-5 cursor-pointer hover:border-amber-500/40 transition-all hover:scale-[1.02]"
+          onClick={handleUpcomingClick}
+        >
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-stat-label text-amber-400 mb-1">
@@ -159,7 +234,10 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-500/10 to-orange-600/5 border-amber-500/20 p-5">
+        <Card
+          className="bg-gradient-to-br from-amber-500/10 to-orange-600/5 border-amber-500/20 p-5 cursor-pointer hover:border-amber-500/40 transition-all hover:scale-[1.02]"
+          onClick={handleDevicesClick}
+        >
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-stat-label text-amber-400 mb-1">
@@ -193,7 +271,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             <div className="p-2 bg-zinc-900 rounded-lg">
-              <TrendingUp className="h-5 w-5 text-zinc-600" />
+              <TrendingUp className="h-5 w-5 text-muted-content" />
             </div>
           </div>
         </Card>
@@ -206,7 +284,7 @@ export default function AdminDashboardPage() {
             <p className="text-label-enhanced">
               Today's Food Orders
             </p>
-            <UtensilsCrossed className="h-4 w-4 text-zinc-600" />
+            <UtensilsCrossed className="h-4 w-4 text-muted-content" />
           </div>
           <h4 className="text-2xl font-black text-white">
             {quickStats?.todaysFoodOrders || 0}
@@ -221,7 +299,7 @@ export default function AdminDashboardPage() {
             <p className="text-label-enhanced">
               Peak Hour Today
             </p>
-            <Clock className="h-4 w-4 text-zinc-600" />
+            <Clock className="h-4 w-4 text-muted-content" />
           </div>
           <h4 className="text-2xl font-black text-white">
             {quickStats?.peakHour || "N/A"}
@@ -236,7 +314,7 @@ export default function AdminDashboardPage() {
             <p className="text-label-enhanced">
               Quick Actions
             </p>
-            <ArrowRight className="h-4 w-4 text-zinc-600" />
+            <ArrowRight className="h-4 w-4 text-muted-content" />
           </div>
           <div className="space-y-2">
             <Button
@@ -289,7 +367,7 @@ export default function AdminDashboardPage() {
                       <span className="text-xs font-black text-primary">
                         {slot.slot_start_time.substring(0, 5)}
                       </span>
-                      <span className="text-[8px] text-zinc-600">
+                      <span className="text-[8px] text-muted-content">
                         {slot.slot_end_time.substring(0, 5)}
                       </span>
                     </div>
@@ -366,7 +444,7 @@ export default function AdminDashboardPage() {
                       <p className="text-sm font-black text-primary">
                         ₹{Number(booking.total_amount).toLocaleString('en-IN')}
                       </p>
-                      <p className="text-[9px] text-zinc-600 uppercase mt-0.5">
+                      <p className="text-[9px] text-muted-content uppercase mt-0.5">
                         {booking.payment_status}
                       </p>
                     </div>
@@ -385,7 +463,7 @@ export default function AdminDashboardPage() {
 
       {/* System Status */}
       <Card className="bg-[var(--surface)] border-[#27272a] p-6">
-        <h3 className="text-sm font-black uppercase text-zinc-400 mb-4">
+        <h3 className="text-sm font-black uppercase text-muted-content mb-4">
           System Status
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -394,7 +472,7 @@ export default function AdminDashboardPage() {
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             </div>
             <div>
-              <p className="text-xs text-zinc-600">Bookings System</p>
+              <p className="text-xs text-muted-content">Bookings System</p>
               <p className="text-sm font-bold text-white">Operational</p>
             </div>
           </div>
@@ -404,7 +482,7 @@ export default function AdminDashboardPage() {
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             </div>
             <div>
-              <p className="text-xs text-zinc-600">Payment Gateway</p>
+              <p className="text-xs text-muted-content">Payment Gateway</p>
               <p className="text-sm font-bold text-white">Operational</p>
             </div>
           </div>
@@ -414,7 +492,7 @@ export default function AdminDashboardPage() {
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             </div>
             <div>
-              <p className="text-xs text-zinc-600">Food Orders</p>
+              <p className="text-xs text-muted-content">Food Orders</p>
               <p className="text-sm font-bold text-white">Operational</p>
             </div>
           </div>
@@ -424,12 +502,49 @@ export default function AdminDashboardPage() {
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             </div>
             <div>
-              <p className="text-xs text-zinc-600">Database</p>
+              <p className="text-xs text-muted-content">Database</p>
               <p className="text-sm font-bold text-white">Connected</p>
             </div>
           </div>
         </div>
       </Card>
+
+      {/* Modals */}
+      <TodaysRevenueModal
+        open={revenueModalOpen}
+        onClose={() => setRevenueModalOpen(false)}
+        bookings={revenueDetails}
+        totalRevenue={stats?.todaysRevenue || 0}
+        onBookingClick={handleBookingClick}
+      />
+
+      <ActiveSessionsModal
+        open={sessionsModalOpen}
+        onClose={() => setSessionsModalOpen(false)}
+        sessions={sessionsDetails}
+        onBookingClick={handleBookingClick}
+      />
+
+      <UpcomingBookingsModal
+        open={upcomingModalOpen}
+        onClose={() => setUpcomingModalOpen(false)}
+        bookings={upcomingDetails}
+        onBookingClick={handleBookingClick}
+      />
+
+      <AvailableDevicesModal
+        open={devicesModalOpen}
+        onClose={() => setDevicesModalOpen(false)}
+        devices={devicesDetails}
+      />
+
+      {/* Booking Detail Modal */}
+      <BookingDetailModal
+        bookingId={selectedBookingId}
+        open={bookingDetailOpen}
+        onClose={handleBookingDetailClose}
+        onUpdate={loadDashboardData}
+      />
     </div>
   );
 }

@@ -3,7 +3,7 @@ export function StatusBadge({ status }: { status: string }) {
 
   if (clean === 'available') {
     return (
-      <span className="inline-flex px-2 py-1 text-[10px] font-bold text-primary border border-primary/30 rounded uppercase bg-primary/5 shadow-[0_0_10px_rgba(184,134,11,0.1)]">
+      <span className="inline-flex px-2 py-1 text-[10px] font-bold text-primary border border-primary/30 rounded uppercase bg-primary/5">
         Available
       </span>
     );
@@ -26,7 +26,7 @@ export function StatusBadge({ status }: { status: string }) {
   }
 
   return (
-    <span className="inline-flex px-2 py-1 text-[10px] font-bold text-zinc-500 border border-zinc-700 rounded uppercase">
+    <span className="inline-flex px-2 py-1 text-[10px] font-bold text-secondary-content border border-zinc-700 rounded uppercase">
       Inactive
     </span>
   );

@@ -1,15 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { getLivePromoListAction, executePromoDeletionAction } from "./actions";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { PromoCodeTable } from "@/components/admin/promo-code/PromoCodeTable";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { AddPromoCodeModal } from "@/components/admin/promo-code/AddPromoCodeModal";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { EditPromoCodeModal } from "@/components/admin/promo-code/EditPromoCodeModal";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { PromoCodeRow } from "@/lib/types/promo-code";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus } from "lucide-react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
+import { Plus } from "lucide-react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { toast } from "sonner";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function AdminPromoCodeDashboard() {
   const [promos, setPromos] = useState<PromoCodeRow[]>([]);
@@ -67,7 +77,7 @@ export default function AdminPromoCodeDashboard() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-900 pb-5">
         <div>
           <h1 className="text-2xl font-black uppercase tracking-tight">Promo Code Management</h1>
-          <p className="text-xs text-zinc-500 font-medium mt-0.5">Configure and monitor structural discount campaigns across the arena platform stores.</p>
+          <p className="text-xs text-secondary-content font-medium mt-0.5">Configure and monitor structural discount campaigns across the arena platform stores.</p>
         </div>
         <Button
           onClick={() => setIsAddOpen(true)}
@@ -81,7 +91,7 @@ export default function AdminPromoCodeDashboard() {
       {error ? (
         <div className="h-48 w-full flex flex-col items-center justify-center gap-4 border border-red-900/20 rounded-xl bg-red-950/10">
           <div className="text-red-400 text-sm font-bold">Failed to load promo codes</div>
-          <div className="text-xs text-zinc-500">{error}</div>
+          <div className="text-xs text-secondary-content">{error}</div>
           <Button
             onClick={loadPromoInventoryGrid}
             variant="outline"
@@ -92,7 +102,7 @@ export default function AdminPromoCodeDashboard() {
         </div>
       ) : loading ? (
         <div className="h-48 w-full flex items-center justify-center border border-zinc-900 rounded-xl bg-[var(--surface)]">
-          <Loader2 className="h-6 w-6 text-primary animate-spin" />
+          <BreakpointLoader size="md" />
         </div>
       ) : (
         <PromoCodeTable

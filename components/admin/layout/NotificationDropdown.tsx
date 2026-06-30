@@ -39,10 +39,10 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
         {notifications.length === 0 ? (
           <div className="p-8 text-center">
             <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center mx-auto mb-3">
-              <Bell className="h-6 w-6 text-zinc-600" />
+              <Bell className="h-6 w-6 text-muted-content" />
             </div>
-            <p className="text-sm text-zinc-500 font-medium">No notifications yet</p>
-            <p className="text-xs text-zinc-600 mt-1">You'll see updates here when customers book or add food</p>
+            <p className="text-sm text-secondary-content font-medium">No notifications yet</p>
+            <p className="text-xs text-muted-content mt-1">You'll see updates here when customers book or add food</p>
           </div>
         ) : (
           notifications.map((notification) => {
@@ -73,12 +73,12 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
                         <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1"></span>
                       )}
                     </div>
-                    <p className="text-xs text-zinc-400 mt-1">{notification.message}</p>
+                    <p className="text-xs text-muted-content mt-1">{notification.message}</p>
                     <div className="flex items-center justify-between mt-2">
-                      <p className="text-[10px] text-zinc-600 font-mono">
+                      <p className="text-[10px] text-muted-content font-mono">
                         {formatDistanceToNow(notification.timestamp, { addSuffix: true })}
                       </p>
-                      <ExternalLink className="h-3 w-3 text-zinc-600 group-hover:text-primary transition-colors" />
+                      <ExternalLink className="h-3 w-3 text-muted-content group-hover:text-primary transition-colors" />
                     </div>
                   </div>
                 </div>

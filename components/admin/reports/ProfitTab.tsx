@@ -38,7 +38,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-zinc-500">Loading profit data...</p>
+        <p className="text-secondary-content">Loading profit data...</p>
       </div>
     )
   }
@@ -61,7 +61,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             <p className="text-xs font-black uppercase text-green-400">Revenue</p>
           </div>
           <p className="text-3xl font-black text-white">₹{data.revenue.toLocaleString('en-IN')}</p>
-          <p className="text-xs text-zinc-500 mt-2">{data.bookingCount} completed booking(s)</p>
+          <p className="text-xs text-secondary-content mt-2">{data.bookingCount} completed booking(s)</p>
         </Card>
 
         {/* Expenses */}
@@ -166,7 +166,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
           <div className="space-y-4">
             <div>
               <div className="flex justify-between items-center mb-2">
-                <p className="text-xs text-zinc-500">Device Bookings</p>
+                <p className="text-xs text-secondary-content">Device Bookings</p>
                 <p className="text-sm font-black text-white">₹{data.deviceRevenue.toLocaleString('en-IN')}</p>
               </div>
               <div className="h-2 bg-zinc-900 rounded-full overflow-hidden">
@@ -178,7 +178,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             </div>
             <div>
               <div className="flex justify-between items-center mb-2">
-                <p className="text-xs text-zinc-500">Food Sales</p>
+                <p className="text-xs text-secondary-content">Food Sales</p>
                 <p className="text-sm font-black text-white">₹{data.foodRevenue.toLocaleString('en-IN')}</p>
               </div>
               <div className="h-2 bg-zinc-900 rounded-full overflow-hidden">
@@ -205,18 +205,18 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
           </h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-              <span className="text-xs text-zinc-400">Revenue</span>
+              <span className="text-xs text-muted-content">Revenue</span>
               <span className="text-sm font-black text-green-400">₹{data.revenue.toLocaleString('en-IN')}</span>
             </div>
             <div className="flex items-center justify-center py-2">
-              <span className="text-2xl font-black text-zinc-600">−</span>
+              <span className="text-2xl font-black text-muted-content">−</span>
             </div>
             <div className="flex items-center justify-between p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <span className="text-xs text-zinc-400">Expenses</span>
+              <span className="text-xs text-muted-content">Expenses</span>
               <span className="text-sm font-black text-red-400">₹{data.totalExpenses.toLocaleString('en-IN')}</span>
             </div>
             <div className="flex items-center justify-center py-2">
-              <span className="text-2xl font-black text-zinc-600">=</span>
+              <span className="text-2xl font-black text-muted-content">=</span>
             </div>
             <div className={`flex items-center justify-between p-4 ${isProfit ? 'bg-primary/10 border-primary/20' : 'bg-red-500/10 border-red-500/20'} border rounded-lg`}>
               <span className={`text-sm font-black uppercase ${isProfit ? 'text-primary' : 'text-red-400'}`}>
@@ -235,19 +235,19 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
         <h3 className="text-sm font-black uppercase text-white mb-4">Insights</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <p className="text-xs text-zinc-500 mb-1">Average Revenue per Booking</p>
+            <p className="text-xs text-secondary-content mb-1">Average Revenue per Booking</p>
             <p className="text-xl font-black text-white">
               ₹{data.bookingCount > 0 ? (data.revenue / data.bookingCount).toFixed(0) : '0'}
             </p>
           </div>
           <div>
-            <p className="text-xs text-zinc-500 mb-1">Device Revenue %</p>
+            <p className="text-xs text-secondary-content mb-1">Device Revenue %</p>
             <p className="text-xl font-black text-white">
               {data.revenue > 0 ? ((data.deviceRevenue / data.revenue) * 100).toFixed(1) : '0'}%
             </p>
           </div>
           <div>
-            <p className="text-xs text-zinc-500 mb-1">Food Revenue %</p>
+            <p className="text-xs text-secondary-content mb-1">Food Revenue %</p>
             <p className="text-xl font-black text-white">
               {data.revenue > 0 ? ((data.foodRevenue / data.revenue) * 100).toFixed(1) : '0'}%
             </p>

@@ -59,7 +59,7 @@ export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTabl
                 </td>
                 <td className="py-4 px-6 text-[#a1a1aa]">{device.device_type?.display_name || 'N/A'}</td>
                 <td className="py-4 px-6 text-sm text-[#a1a1aa] max-w-xs truncate">
-                  {device.specs || <span className="text-zinc-600 italic text-xs">None listed</span>}
+                  {device.specs || <span className="text-muted-content italic text-xs">None listed</span>}
                 </td>
                 <td className="py-4 px-6 font-semibold text-primary">
                   ₹{device.device_type?.regular_hourly_rate ? Number(device.device_type.regular_hourly_rate).toLocaleString('en-IN') : "0"}/hr

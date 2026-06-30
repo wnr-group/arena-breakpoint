@@ -113,7 +113,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
   }, [customers, searchQuery, sortField, sortOrder, membershipFilter]);
 
   const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 text-zinc-600" />;
+    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 text-muted-content" />;
     if (sortOrder === "asc") return <ArrowUp className="h-3 w-3 text-primary" />;
     return <ArrowDown className="h-3 w-3 text-primary" />;
   };
@@ -131,7 +131,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
         {/* Search */}
         <div className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary-content" />
           <Input
             placeholder="Search by name, phone, or email..."
             value={searchQuery}
@@ -141,7 +141,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-content hover:text-white"
             >
               <X className="h-4 w-4" />
             </button>
@@ -150,7 +150,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
 
         {/* Membership Filter */}
         <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-zinc-500" />
+          <Filter className="h-4 w-4 text-secondary-content" />
           <div className="flex gap-2">
             {[
               { value: "all", label: "All" },
@@ -165,7 +165,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 className={`text-min-enhanced font-black uppercase h-8 transition-all duration-300 ${
                   membershipFilter === filter.value
                     ? "bg-gradient-primary text-[var(--button-text)] glow-box"
-                    : "bg-[var(--surface)] text-zinc-400 hover:bg-[var(--surface-hover)] hover:text-white border border-[#27272a]"
+                    : "bg-[var(--surface)] text-muted-content hover:bg-[var(--surface-hover)] hover:text-white border border-[#27272a]"
                 }`}
               >
                 {filter.label}
@@ -181,7 +181,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
       </div>
 
       {filteredAndSortedCustomers.length === 0 ? (
-        <div className="p-12 text-center text-sm font-semibold text-zinc-600 border border-zinc-900 rounded-2xl bg-[#09090b]">
+        <div className="p-12 text-center text-sm font-semibold text-muted-content border border-zinc-900 rounded-2xl bg-[#09090b]">
           No customers found matching your filters.
         </div>
       ) : (
@@ -248,7 +248,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
 
                 {/* Customer Details Name Block */}
                 <td className="p-4 font-black tracking-wide flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-200 shadow-inner flex-shrink-0">
+                  <div className="h-9 w-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-muted-content group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-200 shadow-inner flex-shrink-0">
                     <User className="h-4 w-4 text-primary transition-colors" />
                   </div>
                   <span className="text-zinc-200 group-hover:text-primary transition-colors font-black text-[15px] tracking-normal truncate">
@@ -268,7 +268,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                       {copiedField === `phone-${row.id}` ? (
                         <Check className="h-3.5 w-3.5 text-green-400" />
                       ) : (
-                        <Copy className="h-3.5 w-3.5 text-zinc-500 hover:text-primary" />
+                        <Copy className="h-3.5 w-3.5 text-secondary-content hover:text-primary" />
                       )}
                     </button>
                   </div>
@@ -285,10 +285,10 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 </td>
 
                 {/* Email Address Block */}
-                <td className="p-4 text-zinc-400 font-medium">
+                <td className="p-4 text-muted-content font-medium">
                   <div className="flex items-center gap-2 group/email">
                     <Mail className="h-4 w-4 text-primary flex-shrink-0" />
-                    <span className="truncate text-zinc-400 text-sm">{row.email || "No mail configured"}</span>
+                    <span className="truncate text-muted-content text-sm">{row.email || "No mail configured"}</span>
                     {row.email && (
                       <button
                         onClick={() => handleCopy(row.email!, `email-${row.id}`)}
@@ -297,7 +297,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                         {copiedField === `email-${row.id}` ? (
                           <Check className="h-3.5 w-3.5 text-green-400" />
                         ) : (
-                          <Copy className="h-3.5 w-3.5 text-zinc-500 hover:text-primary" />
+                          <Copy className="h-3.5 w-3.5 text-secondary-content hover:text-primary" />
                         )}
                       </button>
                     )}
@@ -307,7 +307,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 {/* Membership Track */}
                 <td className="p-4 whitespace-nowrap">
                   {hasSub ? (
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 border text-[9px] font-black uppercase rounded-lg tracking-widest ${isActive ? "bg-green-500/10 text-green-400 border-green-500/30" : "bg-zinc-900 text-zinc-500 border-zinc-800"}`}>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 border text-[9px] font-black uppercase rounded-lg tracking-widest ${isActive ? "bg-green-500/10 text-green-400 border-green-500/30" : "bg-zinc-900 text-secondary-content border-zinc-800"}`}>
                       {isActive ? <ShieldCheck className="h-3 w-3" /> : <ShieldAlert className="h-3 w-3" />}
                       {row.subscription_name}
                     </span>
@@ -319,7 +319,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 {/* Expiration Date */}
                 <td className="p-4 text-right font-mono text-[13px]">
                   {row.expiry_date ? (
-                    <span className={isActive ? "text-primary font-bold" : "text-zinc-600 line-through"}>
+                    <span className={isActive ? "text-primary font-bold" : "text-muted-content line-through"}>
                       {format(new Date(row.expiry_date), "dd/MM/yy")}
                     </span>
                   ) : "—"}

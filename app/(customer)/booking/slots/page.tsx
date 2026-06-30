@@ -1,15 +1,25 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useRouter } from "next/navigation";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { setSlot, setPricing, setSlotLockExpiry, setBookingId, setPlayerCount } from "@/lib/redux/slices/bookingSlice";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { checkAvailabilityByDeviceType, initializeSoftLockReservation as createSoftLockTransaction } from "../actions";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Button } from "@/components/ui/button";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Card } from "@/components/ui/card";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Calendar } from "@/components/ui/calendar";
-import { Clock, Loader2, ChevronRight, X, Users, Plus, Minus } from "lucide-react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
+import { Clock, ChevronRight, X, Users, Plus, Minus } from "lucide-react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { toast } from "sonner";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 const staticDaylightSchedulesMatrix = [
   { id: "s1", label: "10:00 AM - 11:00 AM", start: "10:00 AM", end: "11:00 AM", tier: "Morning Slots" },

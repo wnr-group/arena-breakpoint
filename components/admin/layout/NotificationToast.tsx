@@ -47,7 +47,7 @@ function showNotificationToast(notification: Notification) {
 
           <div className="flex-1 min-w-0">
             <h4 className="text-sm font-black text-white mb-1">{notification.title}</h4>
-            <p className="text-xs text-zinc-400">{notification.message}</p>
+            <p className="text-xs text-muted-content">{notification.message}</p>
           </div>
 
           <button
@@ -55,7 +55,7 @@ function showNotificationToast(notification: Notification) {
               e.stopPropagation()
               sonnerToast.dismiss(t)
             }}
-            className="text-zinc-500 hover:text-white transition-colors flex-shrink-0"
+            className="text-secondary-content hover:text-white transition-colors flex-shrink-0"
           >
             <X className="h-4 w-4" />
           </button>

@@ -1,7 +1,7 @@
 // 'use client'
 
 // import { useState, useEffect, useTransition } from 'react'
-// import { PlusCircle, Loader2, Timer} from 'lucide-react'
+// import { PlusCircle, Timer} from 'lucide-react'
 // import { Button } from '@/components/ui/button'
 // import { toast } from 'sonner'
 
@@ -120,7 +120,7 @@
         
 //         {isLoading ? (
 //           <div className="flex flex-col items-center justify-center py-20 text-[#a1a1aa] gap-3">
-//             <Loader2 className="h-8 w-8 animate-spin text-primary" />
+//             <BreakpointLoader size="lg" />
 //             <p className="text-sm font-medium">Loading rules...</p>
 //           </div>
 //         ) : (
@@ -156,7 +156,7 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
-import { PlusCircle, Loader2, Timer} from 'lucide-react'
+import { PlusCircle, Timer} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
@@ -292,7 +292,7 @@ export default function HappyHoursPage() {
         
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 text-[#a1a1aa] gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <BreakpointLoader size="lg" />
             <p className="text-sm font-medium">Loading rules from database...</p>
           </div>
         ) : (
