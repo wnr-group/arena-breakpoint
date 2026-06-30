@@ -1,7 +1,6 @@
 import React from 'react'
 import { Award } from 'lucide-react'
 import { ComparisonTable } from '@/components/customer/subscription/ComparisonTable'
-import CTASection from '@/components/customer/subscription/CTASection'
 import SubscriptionPricingCard from '@/components/customer/subscription/SubscriptionPricingCard'
 import { getSubscriptionPlans } from '@/app/(admin)/admin/subscription/actions'
 
@@ -46,11 +45,6 @@ export default async function SubscriptionPage() {
         {/* Comparison table */}
         <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
           <ComparisonTable plans={plansData} />
-        </div>
-
-        {/* CTA Section */}
-        <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-400">
-          <CTASection />
         </div>
       </div>
     </main>

@@ -6,7 +6,6 @@ import { Gamepad2, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/customer/layout/NavBar';
 
-
 interface SlideData {
   id: number;
   image?: string;
@@ -100,7 +99,7 @@ export default function HeroCarousel() {
   }, [page]);
 
   return (
-    <div className="relative w-full h-screen bg-[#0d0a14] overflow-hidden selection:bg-[var(--primary)] selection:text-black font-Oxanium">
+    <div className="relative w-full h-[100dvh] bg-[#0d0a14] overflow-hidden selection:bg-[var(--primary)] selection:text-black font-Oxanium">
       <Navbar />
 
       {/* Carousel Content */}
@@ -205,11 +204,11 @@ export default function HeroCarousel() {
               </motion.p>
             </motion.div>
 
-            {/* Button at 80% of screen height */}
+            {/* Button at 74% of screen height */}
             <motion.div
               variants={fadeUp}
               className="absolute w-full left-0 px-6 sm:px-10"
-              style={{ top: '80%' }}
+              style={{ top: '70%' }}
             >
               <button
                 onClick={() => router.push('/booking')}
@@ -241,7 +240,8 @@ export default function HeroCarousel() {
       </div>
 
       {/* Bottom Controls */}
-      <div className="absolute bottom-6 md:bottom-8 left-6 md:left-12 right-6 md:right-12 flex justify-center md:justify-end items-end z-40 pointer-events-none">
+      {/* Changed `bottom-6` to `bottom-28` for mobile to ensure it's lifted above mobile browser taskbars */}
+      <div className="absolute bottom-16 md:bottom-8 left-6 md:left-12 right-6 md:right-12 flex justify-center md:justify-end items-end z-40 pointer-events-none">
         <div className="flex items-baseline gap-2 font-mono bg-black/40 md:bg-transparent px-4 py-2 md:p-0 rounded-full backdrop-blur-sm md:backdrop-blur-none pointer-events-auto">
           <motion.span
             key={currentIndex}

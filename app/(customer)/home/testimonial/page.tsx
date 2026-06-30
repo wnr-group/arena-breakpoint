@@ -91,6 +91,25 @@ export default function Testimonials() {
     return () => window.removeEventListener('resize', updateWidth);
   }, [x]);
 
+  // --- NEW: Auto-play functionality ---
+  useEffect(() => {
+    if (singleSetWidth === 0 || isHovering) return;
+
+    let animationFrameId: number;
+    const speed = 0.9; // Adjust this value to change auto-play speed
+
+    const play = () => {
+      const currentX = x.get();
+      x.set(currentX - speed);
+      animationFrameId = requestAnimationFrame(play);
+    };
+
+    animationFrameId = requestAnimationFrame(play);
+
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [singleSetWidth, isHovering, x]);
+  // ------------------------------------
+
   useMotionValueEvent(x, "change", (latestX) => {
     if (singleSetWidth === 0) return;
     if (latestX > -singleSetWidth) {
@@ -181,8 +200,8 @@ export default function Testimonials() {
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
           transition={{ duration: 0.7, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
           className="overflow-hidden md:cursor-none select-none py-3"
-          onMouseEnter={() => setIsHovering(true)}
-          onMouseLeave={() => setIsHovering(false)}
+          onPointerEnter={() => setIsHovering(true)}
+          onPointerLeave={() => setIsHovering(false)}
           onMouseMove={handleMouseMove}
         >
           <motion.div

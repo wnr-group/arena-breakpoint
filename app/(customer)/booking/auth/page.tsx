@@ -43,6 +43,17 @@ export default function CustomerDetailsPage() {
     setMounted(true);
   }, []);
 
+  // Force scroll to top on mount and step changes to prevent landing at the bottom/footer
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.body.scrollTop = 0;
+      if (document.documentElement) {
+        document.documentElement.scrollTop = 0;
+      }
+    }
+  }, [step]);
+
   const selectedDurationLabel = useMemo(() => {
     const duration = allDurations.find(d => d.value === selectedDuration);
     return duration?.label || (selectedDuration ? `${selectedDuration} mins` : "--");
@@ -366,7 +377,7 @@ export default function CustomerDetailsPage() {
 
             {/* Action Call buttons */}
             <div className="pt-4 space-y-2">
-              <Button variant="gradient" type="submit" disabled={isSubmitting} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 shadow-xl transition-all active:scale-[0.99]">
+              <Button variant="gradient" type="submit" disabled={isSubmitting || mobileNumber.trim().length < 10} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 shadow-xl transition-all active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none">
                 {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "CONTINUE"} <ChevronRight className="h-4 w-4 stroke-[3]" />
               </Button>
 
@@ -455,7 +466,7 @@ export default function CustomerDetailsPage() {
             </div>
 
             <div className="pt-4 space-y-2">
-              <Button variant="gradient" type="submit" className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
+              <Button variant="gradient" type="submit" disabled={isSubmitting || !customerName.trim() || !customerDob.trim() || customerDob.length < 10} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none">
                 CONTINUE TO SUMMARY <ChevronRight className="h-4 w-4 stroke-[3]" />
               </Button>
               <Button type="button" onClick={() => setStep("phone")} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">

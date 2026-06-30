@@ -19,6 +19,8 @@ export interface Station {
   availability: string
   description: string
   image: string
+  available_count?: number
+  total_count?: number
 }
 
 export default function DevicePage() {
@@ -127,6 +129,10 @@ export default function DevicePage() {
           ) : (
             <div className="grid gap-4 grid-cols-1 min-[581px]:grid-cols-2 min-[787px]:grid-cols-3 min-[932px]:grid-cols-4">
               {devicesArray.map((device, index) => {
+                const sameTypeDevices = devicesArray.filter(d => d.device_type_id === device.device_type_id || (d.device_type && device.device_type && d.device_type.id === device.device_type.id));
+                const totalCount = sameTypeDevices.length;
+                const availableCount = sameTypeDevices.filter(d => d.status === 'available').length;
+
                 const stationData: Station = {
                   id: device.id,
                   name: device.device_type?.display_name || 'Unknown Station',
@@ -138,7 +144,9 @@ export default function DevicePage() {
                   isAvailable: device.status === 'available',
                   availability: device.status === 'available' ? 'Available' : 'Booked',
                   description: device.specs || device.device_type?.description || '',
-                  image: device.image_url || "https://s40091.pcdn.co/uk/wp-content/uploads/sites/3/2024/08/POOL-HERO.jpg"
+                  image: device.image_url || "https://s40091.pcdn.co/uk/wp-content/uploads/sites/3/2024/08/POOL-HERO.jpg",
+                  available_count: availableCount,
+                  total_count: totalCount
                 };
 
                 return (

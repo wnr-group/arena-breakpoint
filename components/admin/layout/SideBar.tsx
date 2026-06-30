@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "Bookings", href: "/admin/bookings", icon: Calendar },
   { name: "Timeline", href: "/admin/timeline", icon: Clock },
   { name: "Devices", href: "/admin/devices", icon: Monitor },
@@ -60,7 +60,7 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
           {isOpen ? (
             <div className="pl-2 flex items-center gap-3 hover:scale-[1.02] transition-transform duration-300 cursor-pointer animate-in fade-in duration-300">
               <img
-                src="/bp_logo.jpeg"
+                src="/bp_logo.png"
                 alt="Breakpoint Arena"
                 className="w-10 h-10 object-contain rounded-md"
               />
@@ -74,7 +74,7 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
           ) : (
             <div className="mx-auto animate-in fade-in duration-300">
               <img
-                src="/bp_logo.jpeg"
+                src="/bp_logo.png"
                 alt="BP"
                 className="w-10 h-10 object-contain rounded-md"
               />

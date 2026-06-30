@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader2, Plus, Minus, ShoppingCart, UtensilsCrossed, Coffee, Pizza } from "lucide-react";
+import { Loader2, Plus, Minus, ShoppingCart, UtensilsCrossed, Coffee, Pizza, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { getMenuItems, addFoodToBooking } from "./actions";
 
@@ -20,6 +20,7 @@ export default function FoodOrderPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>("All");
+  const [isCartListOpen, setIsCartListOpen] = useState(false);
 
   useEffect(() => {
     loadMenu();
@@ -71,6 +72,20 @@ export default function FoodOrderPage() {
   const cartItemsCount = useMemo(() => {
     return Object.values(cart).reduce((sum, { quantity }) => sum + quantity, 0);
   }, [cart]);
+
+  // Dynamically set main element z-index to ensure the fixed cart bar stays above the footer
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mainEl = document.querySelector('main');
+    if (cartItemsCount > 0) {
+      if (mainEl) mainEl.style.zIndex = '50';
+    } else {
+      if (mainEl) mainEl.style.zIndex = '';
+    }
+    return () => {
+      if (mainEl) mainEl.style.zIndex = '';
+    };
+  }, [cartItemsCount]);
 
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [confirmedItems, setConfirmedItems] = useState<any[]>([]);
@@ -211,11 +226,10 @@ export default function FoodOrderPage() {
             <button
               key={category}
               onClick={() => setActiveCategory(category)}
-              className={`px-4 py-2.5 text-xs font-black uppercase border rounded-xl transition-all whitespace-nowrap ${
-                activeCategory === category
-                  ? "bg-gradient-primary text-[var(--button-text)] border-primary"
-                  : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700"
-              }`}
+              className={`px-4 py-2.5 text-xs font-black uppercase border rounded-xl transition-all whitespace-nowrap ${activeCategory === category
+                ? "bg-gradient-primary text-[var(--button-text)] border-primary"
+                : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                }`}
             >
               {category}
             </button>
@@ -242,11 +256,10 @@ export default function FoodOrderPage() {
                   <div className="space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="text-sm md:text-base font-black uppercase text-white leading-tight">{item.name}</h3>
-                      <span className={`text-[10px] px-2 py-1 rounded-md font-bold uppercase whitespace-nowrap ${
-                        item.category === 'Snacks' ? 'bg-orange-500/10 text-orange-500 border border-orange-500/30' :
+                      <span className={`text-[10px] px-2 py-1 rounded-md font-bold uppercase whitespace-nowrap ${item.category === 'Snacks' ? 'bg-orange-500/10 text-orange-500 border border-orange-500/30' :
                         item.category === 'Drinks' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/30' :
-                        'bg-green-500/10 text-green-500 border border-green-500/30'
-                      }`}>
+                          'bg-green-500/10 text-green-500 border border-green-500/30'
+                        }`}>
                         {item.category}
                       </span>
                     </div>
@@ -281,7 +294,7 @@ export default function FoodOrderPage() {
                           size="sm"
                           className="bg-gradient-primary text-[var(--button-text)] font-black uppercase text-xs h-9 px-4 rounded-lg"
                         >
-                          <Plus className="h-3.5 w-3.5 mr-1" /> Add
+                          <ShoppingBag className="h-3.5 w-3.5 mr-1" /> BUY
                         </Button>
                       )
                     ) : (
@@ -308,6 +321,41 @@ export default function FoodOrderPage() {
       {cartItemsCount > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-[#0d0a14] border-t border-zinc-900 p-4 md:p-5 shadow-2xl z-50 backdrop-blur-lg bg-opacity-95">
           <div className="max-w-6xl mx-auto">
+            {/* Expanded Cart Items List */}
+            {isCartListOpen && (
+              <div className="mb-4 max-h-60 overflow-y-auto border-b border-zinc-900 pb-4 space-y-2.5 animate-in slide-in-from-bottom-2 duration-200">
+                <div className="flex justify-between items-center text-[10px] font-black text-zinc-500 uppercase tracking-widest pb-1 border-b border-zinc-900/60">
+                  <span>Selected Food Items</span>
+                  <span>Quantity & Price</span>
+                </div>
+                {Object.values(cart).map(({ item, quantity }) => (
+                  <div key={item.id} className="flex justify-between items-center text-sm py-1.5 border-b border-zinc-900/10">
+                    <span className="text-white font-bold uppercase text-xs">{item.name}</span>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1 bg-zinc-950 border border-zinc-800 rounded-md p-1 shadow-md">
+                        <button
+                          type="button"
+                          onClick={() => removeFromCart(item.id)}
+                          className="p-1 text-zinc-500 hover:text-white hover:bg-zinc-900 rounded"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <span className="text-xs font-black text-primary w-5 text-center">{quantity}</span>
+                        <button
+                          type="button"
+                          onClick={() => addToCart(item)}
+                          className="p-1 text-zinc-500 hover:text-white hover:bg-zinc-900 rounded"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <span className="text-primary font-black text-xs min-w-[60px] text-right">₹{item.price * quantity}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Mobile Layout */}
             <div className="flex md:hidden flex-col gap-3">
               <div className="flex items-center justify-between">
@@ -320,14 +368,27 @@ export default function FoodOrderPage() {
                     <p className="text-xl font-black text-primary">₹{cartTotal}</p>
                   </div>
                 </div>
-                <Button
-                  onClick={() => setCart({})}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs h-9"
-                >
-                  Clear
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => setIsCartListOpen(!isCartListOpen)}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-9 border-zinc-800 text-zinc-300 hover:bg-zinc-900"
+                  >
+                    {isCartListOpen ? "Hide Items" : "View Items"}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setCart({});
+                      setIsCartListOpen(false);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-9 border-zinc-800 text-red-400 hover:bg-red-950/20"
+                  >
+                    Clear
+                  </Button>
+                </div>
               </div>
               <Button
                 onClick={handleSubmitOrder}
@@ -353,9 +414,19 @@ export default function FoodOrderPage() {
 
               <div className="flex gap-3">
                 <Button
-                  onClick={() => setCart({})}
+                  onClick={() => setIsCartListOpen(!isCartListOpen)}
                   variant="outline"
-                  className="font-bold uppercase text-xs h-12 px-6"
+                  className="font-bold uppercase text-xs h-12 px-6 border-zinc-800 text-zinc-300 hover:bg-zinc-900"
+                >
+                  {isCartListOpen ? "Hide Items" : "View Items"}
+                </Button>
+                <Button
+                  onClick={() => {
+                    setCart({});
+                    setIsCartListOpen(false);
+                  }}
+                  variant="outline"
+                  className="font-bold uppercase text-xs h-12 px-6 border-zinc-800 text-red-400 hover:bg-red-950/20"
                 >
                   Clear Cart
                 </Button>

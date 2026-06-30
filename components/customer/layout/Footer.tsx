@@ -22,7 +22,7 @@ export default function Footer() {
             {/* Logo */}
             <div className="flex items-center gap-3 mb-6">
               <img
-                src="/bp_logo.jpeg"
+                src="/bp_logo.png"
                 alt="Breakpoint Arena Logo"
                 className="w-10 h-10 object-contain rounded-md"
               />

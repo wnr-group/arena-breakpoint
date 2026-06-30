@@ -5,7 +5,7 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Gamepad2, Menu, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import Image from 'next/image';
+import { useAppSelector } from '@/lib/redux/hooks';
 
 const navLinks = [
   { label: "Home", path: "/" },
@@ -41,10 +41,13 @@ const linkItemVariants: Variants = {
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+  const [hasActiveHold, setHasActiveHold] = useState(false);
+
+  const slotLockExpiry = useAppSelector((state) => state.booking.slotLockExpiry);
 
   // Get the current route path
   const pathname = usePathname();
-
 
   useEffect(() => {
     const handleScroll = () => {
@@ -54,8 +57,57 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Intercept fetch requests and track navigation transitions to show loading state
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let activeRequests = 0;
+    const originalFetch = window.fetch;
+
+    window.fetch = async (...args) => {
+      activeRequests++;
+      setIsFetching(true);
+      try {
+        return await originalFetch(...args);
+      } finally {
+        activeRequests--;
+        if (activeRequests <= 0) {
+          activeRequests = 0;
+          setIsFetching(false);
+        }
+      }
+    };
+
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, []);
+
+  useEffect(() => {
+    setIsFetching(true);
+    const timer = setTimeout(() => {
+      setIsFetching(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [pathname]);
+
+  // Track if slot hold is active
+  useEffect(() => {
+    if (!slotLockExpiry) {
+      setHasActiveHold(false);
+      return;
+    }
+    const checkHold = () => {
+      setHasActiveHold(slotLockExpiry > Date.now());
+    };
+    checkHold();
+    const interval = setInterval(checkHold, 1000);
+    return () => clearInterval(interval);
+  }, [slotLockExpiry]);
+
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${scrolled ? "bg-[#0a0a0a]/80 backdrop-blur-md py-4 shadow-xl" : "bg-transparent py-6"
+    <nav className={`fixed left-0 w-full z-50 transition-all duration-500 ${(hasActiveHold && !scrolled) ? "top-10" : "top-0"
+      } ${scrolled ? "bg-[#0a0a0a]/80 backdrop-blur-md py-4 shadow-xl" : "bg-transparent py-6"
       }`}>
 
       {/* Main Bar */}
@@ -63,14 +115,28 @@ export default function Navbar() {
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 cursor-pointer group">
-          <Image
-            src="/bp_logo.jpeg"
-            alt="Breakpoint Arena Logo"
-            width={40}
-            height={40}
-            className="object-contain group-hover:scale-110 transition-transform duration-300 rounded-md"
-            priority
-          />
+          <motion.div
+            animate={isFetching ? {
+              rotate: 360,
+              scale: [1, 1.15, 1],
+            } : {
+              rotate: 0,
+              scale: 1
+            }}
+            transition={isFetching ? {
+              rotate: { repeat: Infinity, duration: 1.5, ease: "linear" },
+              scale: { repeat: Infinity, duration: 1.5, ease: "easeInOut" }
+            } : {
+              duration: 0.3
+            }}
+            className="flex-shrink-0"
+          >
+            <img
+              src="/bp_logo.png"
+              alt="Breakpoint Arena Logo"
+              className="w-10 h-10 object-contain rounded-md"
+            />
+          </motion.div>
           <span className="text-2xl font-bold text-white tracking-wide uppercase">Break point Arena</span>
         </Link>
 
@@ -85,7 +151,7 @@ export default function Navbar() {
                 href={link.path}
                 className="group cursor-pointer relative py-2"
               >
-                <span className={`text-sm font-medium transition-colors duration-300 uppercase tracking-widest ${isActive ? "text-white" : "text-gray-300 group-hover:text-white"
+                <span className={`text-sm font-black transition-colors duration-300 uppercase tracking-widest ${isActive ? "text-white" : "text-gray-300 group-hover:text-white"
                   }`}>
                   {link.label}
                 </span>

@@ -226,7 +226,7 @@ export default function PlanDetailsPage() {
               </div>
 
               <div className="pt-4 space-y-2">
-                <Button variant="gradient" type="submit" disabled={isSubmitting} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
+                <Button variant="gradient" type="submit" disabled={isSubmitting || mobileNumber.length < 10} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
                   {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'CONTINUE'} <ChevronRight className="h-4 w-4 stroke-[3]" />
                 </Button>
                 <Button type="button" onClick={() => router.back()} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
@@ -306,7 +306,7 @@ export default function PlanDetailsPage() {
               </div>
 
               <div className="pt-4 space-y-2">
-                <Button variant="gradient" type="submit" className="w-full text-black font-black uppercase text-xs h-12 rounded-xl">
+                <Button variant="gradient" type="submit" disabled={!customerName.trim() || !customerDob || !isValidDateDDMMYYYY(customerDob)} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl">
                   CONTINUE <ChevronRight className="h-4 w-4 ml-1 stroke-[3]" />
                 </Button>
                 <Button type="button" onClick={() => setStep('phone')} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">

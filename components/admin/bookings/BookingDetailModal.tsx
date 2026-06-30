@@ -106,8 +106,12 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
       toast.success("Food items added successfully!");
       setSelectedFoodItems({});
       setAddFoodModalOpen(false);
-      loadBookingDetails();
-      onUpdate?.();
+      if (openFoodModalDirectly) {
+        onClose();
+      } else {
+        loadBookingDetails();
+        onUpdate?.();
+      }
     } else {
       toast.error("Failed to add food items", { description: result.error });
     }
@@ -179,7 +183,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onClose}>
+      <Dialog open={open && !openFoodModalDirectly} onOpenChange={onClose}>
         <DialogContent className="bg-[var(--surface)] border-[#27272a] text-white max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center justify-between">
@@ -597,7 +601,15 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
       </Dialog>
 
       {/* Add Food Modal */}
-      <Dialog open={addFoodModalOpen} onOpenChange={setAddFoodModalOpen}>
+      <Dialog open={addFoodModalOpen} onOpenChange={(val) => {
+        setAddFoodModalOpen(val);
+        if (!val) {
+          setSelectedFoodItems({});
+          if (openFoodModalDirectly) {
+            onClose();
+          }
+        }
+      }}>
         <DialogContent className="bg-[var(--surface)] border-[#27272a] text-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-black uppercase tracking-tight">
@@ -668,6 +680,9 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
               onClick={() => {
                 setAddFoodModalOpen(false);
                 setSelectedFoodItems({});
+                if (openFoodModalDirectly) {
+                  onClose();
+                }
               }}
               className="border-[#27272a] text-zinc-400 hover:text-white"
             >

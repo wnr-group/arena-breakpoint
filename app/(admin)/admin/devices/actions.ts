@@ -67,6 +67,7 @@ export async function updateDevice(formData: FormData) {
   const status = formData.get('status') as string;
   const specs = formData.get('specs') as string;
   const image_url = formData.get('image_url') as string;
+  const hourly_rate = formData.get('hourly_rate') as string;
 
   if (!id) {
     return { success: false, error: "Missing required device identifier target." };
@@ -85,6 +86,19 @@ export async function updateDevice(formData: FormData) {
 
   if (error) {
     return { success: false, error: error.message };
+  }
+
+  if (device_type_id && hourly_rate) {
+    const { error: rateError } = await supabaseAdmin
+      .from('device_types')
+      .update({
+        regular_hourly_rate: parseFloat(hourly_rate)
+      })
+      .eq('id', device_type_id);
+
+    if (rateError) {
+      return { success: false, error: rateError.message };
+    }
   }
 
   revalidatePath('/admin/devices');
