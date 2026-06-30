@@ -215,7 +215,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                     <img src={filePreviewUrl} alt="Preview display" className="w-full h-full object-cover animate-in fade-in duration-300" />
                   ) : (
                     <div className="flex flex-col items-center text-zinc-700 gap-1.5">
-                      <ImageIcon className="h-5 w-5 text-zinc-600" />
+                      <ImageIcon className="h-5 w-5 text-muted-content" />
                       <span className="text-[10px]">No image file selected</span>
                     </div>
                   )}
@@ -259,5 +259,5 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
 function PreviewFoodBadge({ previewStatus }: { previewStatus: string }) {
   if (previewStatus === 'available') return <span className="inline-flex px-2 py-0.5 text-[10px] font-bold text-primary border border-primary/30 rounded uppercase bg-primary/5">Available</span>;
   if (previewStatus === 'out_of_stock') return <span className="inline-flex px-2 py-0.5 text-[10px] font-bold text-[#f43f5e] border border-[#f43f5e]/30 rounded uppercase bg-[#f43f5e]/5">Out of Stock</span>;
-  return <span className="inline-flex px-2 py-0.5 text-[10px] font-bold text-zinc-500 border border-zinc-800 rounded uppercase bg-zinc-900">Hidden</span>;
+  return <span className="inline-flex px-2 py-0.5 text-[10px] font-bold text-secondary-content border border-zinc-800 rounded uppercase bg-zinc-900">Hidden</span>;
 }

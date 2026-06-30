@@ -104,7 +104,7 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
           variant="ghost"
           size="icon"
           onClick={handleLogout}
-          className="text-zinc-400 hover:text-primary hover:bg-[var(--surface-hover)] transition-all duration-300 h-9 w-9"
+          className="text-muted-content hover:text-primary hover:bg-[var(--surface-hover)] transition-all duration-300 h-9 w-9"
           title="Logout"
         >
           <LogOut className="h-5 w-5" />

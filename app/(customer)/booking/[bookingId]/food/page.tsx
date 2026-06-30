@@ -1,12 +1,19 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Button } from "@/components/ui/button";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Card } from "@/components/ui/card";
-import { Loader2, Plus, Minus, ShoppingCart, UtensilsCrossed, Coffee, Pizza, ShoppingBag } from "lucide-react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
+import { Plus, Minus, ShoppingCart, UtensilsCrossed, Coffee, Pizza, ShoppingBag } from "lucide-react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { toast } from "sonner";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { getMenuItems, addFoodToBooking } from "./actions";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function FoodOrderPage() {
   const router = useRouter();
@@ -123,7 +130,7 @@ export default function FoodOrderPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0d0a14] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
+        <BreakpointLoader size="lg" />
       </div>
     );
   }

@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from "react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useRouter, useSearchParams } from "next/navigation";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   addToCart,
   incrementQuantity,
@@ -10,9 +13,13 @@ import {
   setBookingContext,
 } from "@/lib/redux/slices/foodCartSlice";
 import { Button } from "@/components/ui/button";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Card } from "@/components/ui/card";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Input } from "@/components/ui/input";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { getMenuItems, getMenuCategories } from "./actions";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   Search,
   ShoppingCart,
@@ -26,6 +33,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 function FoodMenuPageContent() {
   const router = useRouter();
@@ -347,7 +355,7 @@ function FoodMenuPageContent() {
 
 export default function FoodMenuPage() {
   return (
-    <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-[#0d0a14]"><Loader2 className="h-6 w-6 text-primary animate-spin" /></div>}>
+    <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-[#0d0a14]"><BreakpointLoader size="md" /></div>}>
       <FoodMenuPageContent />
     </Suspense>
   );

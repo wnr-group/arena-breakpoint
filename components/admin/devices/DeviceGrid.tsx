@@ -75,9 +75,9 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
                   className="flex items-start gap-1.5 text-[11px] text-[#a1a1aa]/80 bg-[#161616] border border-[#27272a]/40 p-2 rounded-lg truncate mt-1"
                   title={device.specs || "No specifications listed"}
                 >
-                  <Cpu className="h-3.5 w-3.5 text-zinc-600 flex-shrink-0" />
+                  <Cpu className="h-3.5 w-3.5 text-muted-content flex-shrink-0" />
                   <span className="truncate">
-                    {device.specs || <span className="text-zinc-600 italic">No specs listed</span>}
+                    {device.specs || <span className="text-muted-content italic">No specs listed</span>}
                   </span>
                 </div>
               </div>
@@ -152,7 +152,7 @@ function GridStatusBadge({ status }: { status: string }) {
   }
   if (status === 'inactive') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-zinc-400 bg-black/60 border border-zinc-700 rounded-full backdrop-blur-md whitespace-nowrap">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-muted-content bg-black/60 border border-zinc-700 rounded-full backdrop-blur-md whitespace-nowrap">
         <span className="w-1 h-1 rounded-full bg-zinc-500" />
         OFFLINE
       </span>

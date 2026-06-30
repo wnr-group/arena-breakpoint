@@ -215,3 +215,139 @@ export async function getQuickStats() {
     return { success: false, error: err.message };
   }
 }
+
+export async function getTodaysRevenueDetails() {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+
+    const { data, error } = await supabaseAdmin
+      .from("bookings")
+      .select(`
+        id,
+        booking_number,
+        customer_name,
+        customer_phone,
+        total_amount,
+        device_subtotal,
+        food_subtotal,
+        status,
+        payment_status,
+        created_at,
+        booking_device_slots!inner(
+          slot_date,
+          slot_start_time,
+          slot_end_time,
+          device_type,
+          device_station_number
+        )
+      `)
+      .eq("booking_device_slots.slot_date", today)
+      .in("status", ["confirmed", "checked_in", "completed"])
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return { success: true, bookings: data || [] };
+  } catch (err: any) {
+    console.error("Get today's revenue details error:", err);
+    return { success: false, error: err.message, bookings: [] };
+  }
+}
+
+export async function getActiveSessionsDetails() {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+
+    const { data, error } = await supabaseAdmin
+      .from("booking_device_slots")
+      .select(`
+        id,
+        slot_start_time,
+        slot_end_time,
+        slot_date,
+        device_type,
+        device_station_number,
+        player_count,
+        bookings!inner(
+          id,
+          booking_number,
+          customer_name,
+          customer_phone,
+          status
+        )
+      `)
+      .eq("bookings.status", "checked_in")
+      .order("slot_start_time", { ascending: true });
+
+    if (error) throw error;
+
+    return { success: true, sessions: data || [] };
+  } catch (err: any) {
+    console.error("Get active sessions details error:", err);
+    return { success: false, error: err.message, sessions: [] };
+  }
+}
+
+export async function getUpcomingBookingsDetails() {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+    const currentTime = now.toTimeString().split(' ')[0];
+    const twoHoursTime = twoHoursLater.toTimeString().split(' ')[0];
+
+    const { data, error } = await supabaseAdmin
+      .from("booking_device_slots")
+      .select(`
+        id,
+        slot_date,
+        slot_start_time,
+        slot_end_time,
+        device_type,
+        device_station_number,
+        player_count,
+        bookings!inner(
+          id,
+          booking_number,
+          customer_name,
+          customer_phone,
+          status
+        )
+      `)
+      .eq("slot_date", today)
+      .gte("slot_start_time", currentTime)
+      .lte("slot_start_time", twoHoursTime)
+      .eq("bookings.status", "confirmed")
+      .order("slot_start_time", { ascending: true });
+
+    if (error) throw error;
+
+    return { success: true, bookings: data || [] };
+  } catch (err: any) {
+    console.error("Get upcoming bookings details error:", err);
+    return { success: false, error: err.message, bookings: [] };
+  }
+}
+
+export async function getAvailableDevicesDetails() {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("devices")
+      .select("id, device_type, station_number, status")
+      .order("device_type", { ascending: true })
+      .order("station_number", { ascending: true });
+
+    if (error) throw error;
+
+    // Transform status to is_available for easier filtering
+    const devices = (data || []).map(device => ({
+      ...device,
+      is_available: device.status === "available"
+    }));
+
+    return { success: true, devices };
+  } catch (err: any) {
+    console.error("Get available devices details error:", err);
+    return { success: false, error: err.message, devices: [] };
+  }
+}

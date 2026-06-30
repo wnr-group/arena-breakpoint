@@ -25,13 +25,13 @@ export function FoodFilters({
   return (
     <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between bg-[var(--surface)] border border-[#27272a]/60 p-4 rounded-xl">
       <div className="relative flex-1 max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary-content" />
         <Input
           type="text"
           placeholder="Search orders or menu items..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9 h-10 bg-[var(--background)] border-[#27272a] text-white placeholder:text-zinc-600 focus-visible:ring-primary"
+          className="pl-9 h-10 bg-[var(--background)] border-[#27272a] text-white placeholder:text-muted-content focus-visible:ring-primary"
         />
       </div>
 
@@ -52,7 +52,7 @@ export function FoodFilters({
         </div>
 
         <div className="flex items-center gap-2 bg-[var(--background)] border border-[#27272a] px-3 h-10 rounded-lg">
-          <SlidersHorizontal className="h-3.5 w-3.5 text-zinc-500" />
+          <SlidersHorizontal className="h-3.5 w-3.5 text-secondary-content" />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}

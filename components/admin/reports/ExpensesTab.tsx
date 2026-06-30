@@ -204,7 +204,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                     type="button"
                     className="w-full mt-2 bg-[var(--background)] border border-zinc-800 h-10 rounded-md px-3 text-sm font-medium text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary"
                   >
-                    <span className="truncate mr-2">{formDate ? format(new Date(formDate), "dd-MM-yyyy") : <span className="text-zinc-400">Select date</span>}</span>
+                    <span className="truncate mr-2">{formDate ? format(new Date(formDate), "dd-MM-yyyy") : <span className="text-muted-content">Select date</span>}</span>
                     <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
                   </button>
                 </PopoverTrigger>
@@ -296,7 +296,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                                 type="button"
                                 className="w-full bg-[var(--background)] border border-zinc-800 h-8 rounded-md px-2 text-sm font-medium text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary"
                               >
-                                <span className="truncate mr-1 text-xs">{formDate ? format(new Date(formDate), "dd-MM-yyyy") : <span className="text-zinc-400">Select</span>}</span>
+                                <span className="truncate mr-1 text-xs">{formDate ? format(new Date(formDate), "dd-MM-yyyy") : <span className="text-muted-content">Select</span>}</span>
                                 <CalendarDays className="h-3 w-3 text-primary flex-shrink-0" />
                               </button>
                             </PopoverTrigger>

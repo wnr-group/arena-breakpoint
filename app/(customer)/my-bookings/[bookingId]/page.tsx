@@ -1,13 +1,21 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Button } from "@/components/ui/button";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Card } from "@/components/ui/card";
-import { QrCode, UtensilsCrossed, ArrowLeft, Loader2 } from "lucide-react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
+import { QrCode, UtensilsCrossed, ArrowLeft} from "lucide-react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { QRCodeSVG } from "qrcode.react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { getBookingById } from "../actions";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { toast } from "sonner";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 function BookingDetailPageContent() {
   const router = useRouter();
@@ -41,7 +49,7 @@ function BookingDetailPageContent() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <BreakpointLoader size="lg" />
       </div>
     );
   }
@@ -181,7 +189,7 @@ export default function BookingDetailPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <BreakpointLoader size="lg" />
       </div>
     }>
       <BookingDetailPageContent />

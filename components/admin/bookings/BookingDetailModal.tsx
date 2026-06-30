@@ -311,7 +311,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
               {/* Game Orders */}
               {booking.booking_device_slots && booking.booking_device_slots.length > 0 && (
                 <Card className="bg-[var(--background)] border-[#27272a] p-5 space-y-4">
-                  <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider border-b border-[#27272a] pb-2 flex items-center gap-2">
+                  <h3 className="text-[10px] font-black text-secondary-content uppercase tracking-wider border-b border-[#27272a] pb-2 flex items-center gap-2">
                     <Gamepad2 className="h-4 w-4" />
                     Game Orders
                   </h3>
@@ -387,7 +387,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                                 </div>
                                 <div className="text-right">
                                   <p className="text-sm font-black text-primary">₹{extraPlayersCharge.toLocaleString('en-IN')}</p>
-                                  <p className="text-[9px] text-zinc-600 uppercase">Additional</p>
+                                  <p className="text-[9px] text-muted-content uppercase">Additional</p>
                                 </div>
                               </div>
                             )}
@@ -537,7 +537,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                               ? 'bg-green-500/20 text-green-400 border border-green-500/40'
                               : booking.payment_status === 'pending'
                               ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
-                              : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
+                              : 'bg-zinc-800 text-secondary-content border border-zinc-700'
                           }`}>
                             {booking.payment_status}
                           </span>
@@ -594,7 +594,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
             </div>
           ) : (
             <div className="h-96 flex items-center justify-center">
-              <p className="text-zinc-600">No booking data available</p>
+              <p className="text-muted-content">No booking data available</p>
             </div>
           )}
         </DialogContent>
@@ -670,7 +670,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
             })}
 
             {menuItems.length === 0 && (
-              <p className="text-center text-zinc-600 py-8">No menu items available</p>
+              <p className="text-center text-muted-content py-8">No menu items available</p>
             )}
           </div>
 
@@ -684,7 +684,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                   onClose();
                 }
               }}
-              className="border-[#27272a] text-zinc-400 hover:text-white"
+              className="border-[#27272a] text-muted-content hover:text-white"
             >
               Cancel
             </Button>
@@ -705,7 +705,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
         <AlertDialogContent className="bg-[var(--surface)] border-[#27272a] text-white">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-bold">Cancel Booking?</AlertDialogTitle>
-            <AlertDialogDescription className="text-zinc-400">
+            <AlertDialogDescription className="text-muted-content">
               Are you sure you want to cancel booking <span className="text-primary font-mono">{booking?.booking_number}</span>?
               This action cannot be undone.
             </AlertDialogDescription>

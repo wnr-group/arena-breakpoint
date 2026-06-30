@@ -135,7 +135,7 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
                   ))}
                 </select>
                 {selectedDeviceType && (
-                  <p className="text-[10px] text-zinc-500">
+                  <p className="text-label">
                     ₹{selectedDeviceType.regular_hourly_rate}/hr • {selectedDeviceType.included_players} player{selectedDeviceType.included_players > 1 ? 's' : ''} included
                   </p>
                 )}
@@ -198,7 +198,7 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
                     <img src={filePreviewUrl} alt="Preview display" className="w-full h-full object-cover animate-in fade-in duration-300" />
                   ) : (
                     <div className="flex flex-col items-center text-zinc-700 gap-1.5">
-                      <ImageIcon className="h-5 w-5 text-zinc-600" />
+                      <ImageIcon className="h-5 w-5 text-muted-content" />
                       <span className="text-[10px]">No asset selected</span>
                     </div>
                   )}

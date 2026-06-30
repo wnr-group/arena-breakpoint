@@ -124,7 +124,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
           <div className="w-1 h-4 bg-gradient-to-b from-primary to-primary rounded-full" />
           Timeline View
         </h3>
-        <div className="text-xs text-zinc-500">
+        <div className="text-xs text-secondary-content">
           {bookings.length} booking{bookings.length !== 1 ? 's' : ''} on this day
         </div>
       </div>
@@ -142,7 +142,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
               <div className="w-40 flex-shrink-0 border-r border-primary/20 p-3">
                 <span className="text-[10px] font-black text-primary uppercase">Device</span>
               </div>
-              <div className="flex flex-1" style={{ minWidth: '4800px' }}>
+              <div className="flex flex-1" style={{ minWidth: '2400px' }}>
                 {timeSlots.map((time, index) => {
                   const isHourStart = time.endsWith(':00');
                   return (
@@ -151,7 +151,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
                       className={`flex-1 border-r border-zinc-800/50 p-2 ${isHourStart ? 'bg-primary/5' : 'bg-transparent'}`}
                     >
                       {isHourStart && (
-                        <div className="text-[9px] font-black text-zinc-400 uppercase">
+                        <div className="text-[9px] font-black text-muted-content uppercase">
                           {formatTime12h(time)}
                         </div>
                       )}
@@ -164,7 +164,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
             {/* Device rows */}
             {deviceKeys.length === 0 ? (
               <div className="p-12 text-center">
-                <p className="text-sm text-zinc-600 font-bold">No bookings for this date</p>
+                <p className="text-sm text-muted-content font-bold">No bookings for this date</p>
                 <p className="text-xs text-zinc-700 mt-1">Try selecting a different date</p>
               </div>
             ) : (
@@ -174,12 +174,12 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
                   <div className="w-40 flex-shrink-0 border-r border-zinc-800/50 p-3 flex items-center sticky left-0 bg-gradient-to-r from-[var(--background)] to-[var(--surface)] z-10 group-hover:from-primary/10 group-hover:to-primary/5">
                     <div>
                       <p className="text-xs font-black text-white">{deviceKey.split(' #')[0]}</p>
-                      <p className="text-[10px] text-zinc-500">Station #{deviceKey.split('#')[1]}</p>
+                      <p className="text-label">Station #{deviceKey.split('#')[1]}</p>
                     </div>
                   </div>
 
                   {/* Timeline grid */}
-                  <div className="flex-1 relative" style={{ minWidth: '4800px', height: '80px' }}>
+                  <div className="flex-1 relative" style={{ minWidth: '2400px', height: '80px' }}>
                     {/* Grid lines */}
                     <div className="absolute inset-0 flex">
                       {timeSlots.map((time) => (
@@ -203,7 +203,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
                       const statusColors = {
                         confirmed: 'bg-blue-500/20 border-blue-500/50 text-blue-300',
                         checked_in: 'bg-green-500/20 border-green-500/50 text-green-300',
-                        completed: 'bg-zinc-700/20 border-zinc-600/50 text-zinc-400',
+                        completed: 'bg-zinc-700/20 border-zinc-600/50 text-muted-content',
                         cancelled: 'bg-red-500/20 border-red-500/50 text-red-400',
                         locked: 'bg-amber-500/20 border-amber-500/50 text-amber-300'
                       };
@@ -241,23 +241,23 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
 
       {/* Legend */}
       <div className="p-3 border-t border-[#27272a] flex items-center gap-4 bg-[var(--background)]">
-        <span className="text-[10px] font-black text-zinc-500 uppercase">Status:</span>
+        <span className="text-[10px] font-black text-secondary-content uppercase">Status:</span>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-blue-500/20 border border-blue-500/50" />
-            <span className="text-[10px] text-zinc-400">Confirmed</span>
+            <span className="text-[10px] text-muted-content">Confirmed</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-green-500/20 border border-green-500/50" />
-            <span className="text-[10px] text-zinc-400">Checked In</span>
+            <span className="text-[10px] text-muted-content">Checked In</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-zinc-700/20 border border-zinc-600/50" />
-            <span className="text-[10px] text-zinc-400">Completed</span>
+            <span className="text-[10px] text-muted-content">Completed</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-red-500/20 border border-red-500/50" />
-            <span className="text-[10px] text-zinc-400">Cancelled</span>
+            <span className="text-[10px] text-muted-content">Cancelled</span>
           </div>
           {currentTimePosition && (
             <div className="flex items-center gap-1.5 ml-2">

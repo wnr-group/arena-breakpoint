@@ -1,12 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { getLiveCustomerRegistryAction } from "./actions";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { CustomerTable } from "@/components/admin/customers/CustomerTable";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { CustomerRow } from "@/lib/types/customers";
-import { Loader2, Users } from "lucide-react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
+import { Users } from "lucide-react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Button } from "@/components/ui/button";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { toast } from "sonner";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function AdminCustomersDashboard() {
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
@@ -58,7 +65,7 @@ export default function AdminCustomersDashboard() {
         </div>
       ) : loading ? (
         <div className="h-48 w-full flex items-center justify-center border border-zinc-900 rounded-xl bg-[var(--surface)]">
-          <Loader2 className="h-6 w-6 text-primary animate-spin" />
+          <BreakpointLoader size="md" />
         </div>
       ) : (
         <CustomerTable customers={customers} />
