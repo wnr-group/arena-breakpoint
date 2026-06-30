@@ -1,25 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useRouter } from "next/navigation";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Button } from "@/components/ui/button";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Card } from "@/components/ui/card";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Input } from "@/components/ui/input";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Label } from "@/components/ui/label";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Search, Phone, Calendar, Clock, QrCode, UtensilsCrossed, User, CheckCircle2, Sparkles, Zap, CreditCard } from "lucide-react";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { toast } from "sonner";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { getBookingsByPhone } from "./actions";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { QRCodeSVG } from "qrcode.react";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function RetrieveBookingPage() {
   const router = useRouter();
