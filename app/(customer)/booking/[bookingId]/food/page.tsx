@@ -5,7 +5,7 @@ import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Minus, ShoppingCart, UtensilsCrossed, Coffee, Pizza, ShoppingBag } from "lucide-react";
+import { Plus, Minus, ShoppingCart, UtensilsCrossed, Coffee, Pizza, ShoppingBag , Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 import { getMenuItems, addFoodToBooking } from "./actions";
 
