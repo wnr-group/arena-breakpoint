@@ -107,12 +107,15 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
               <div
                 key={plan.id}
                 onClick={() => setActiveCard(plan.id)}
-                className={`gaming-card relative flex flex-col flex-none w-[90vw] md:w-[80vw] max-w-85 md:max-w-75 h-auto snap-center rounded-2xl p-6 md:p-8 cursor-pointer transition-all duration-500 ease-out border overflow-hidden group ${
+                className={`gaming-card relative flex flex-col flex-none w-[90vw] md:w-[80vw] max-w-85 md:max-w-75 h-auto snap-center rounded-2xl p-6 md:p-8 cursor-pointer transition-all duration-500 ease-out border group ${
                   isActive
                     ? 'border-primary/60 bg-gradient-to-br from-zinc-900 via-[#131313] to-zinc-900 shadow-[0_0_60px_rgba(255,193,7,0.3),inset_0_0_60px_rgba(255,193,7,0.05)] scale-100 z-10 opacity-100'
                     : 'border-zinc-800 bg-gradient-to-br from-zinc-950 via-[#131313] to-zinc-950 hover:border-primary/40 hover:shadow-[0_0_30px_rgba(255,193,7,0.15)] lg:scale-95 opacity-90 hover:opacity-100 z-0'
                 }`}
               >
+                {/* Gaming card shine container */}
+                <div className="gaming-card-shine" />
+
                 {/* Animated gradient border effect */}
                 {isActive && (
                   <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary via-amber-400 to-primary opacity-20 blur-xl animate-pulse pointer-events-none" />
@@ -242,7 +245,16 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
           animation: glow 2s ease-in-out infinite;
         }
 
-        .gaming-card::before {
+        .gaming-card-shine {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          border-radius: inherit;
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        .gaming-card-shine::before {
           content: '';
           position: absolute;
           top: 0;
@@ -253,7 +265,7 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
           transition: left 0.7s;
         }
 
-        .gaming-card:hover::before {
+        .gaming-card:hover .gaming-card-shine::before {
           left: 100%;
         }
       `,
