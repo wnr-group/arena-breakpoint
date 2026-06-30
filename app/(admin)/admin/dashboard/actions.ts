@@ -333,16 +333,33 @@ export async function getAvailableDevicesDetails() {
   try {
     const { data, error } = await supabaseAdmin
       .from("devices")
-      .select("id, device_type, station_number, status")
-      .order("device_type", { ascending: true })
+      .select(`
+        id,
+        station_number,
+        status,
+        specs,
+        image_url,
+        device_type:device_types(
+          id,
+          name,
+          display_name,
+          regular_hourly_rate
+        )
+      `)
+      .order("status", { ascending: false }) // Show available first
       .order("station_number", { ascending: true });
 
     if (error) throw error;
 
-    // Transform status to is_available for easier filtering
+    // Transform the data to flatten device_type
     const devices = (data || []).map((device: any) => ({
-      ...device,
-      is_available: device.status === "available"
+      id: device.id,
+      station_number: device.station_number,
+      status: device.status,
+      hourly_rate: device.device_type?.regular_hourly_rate || 0,
+      specs: device.specs,
+      image_url: device.image_url,
+      device_type: device.device_type?.display_name || device.device_type?.name || 'Unknown'
     }));
 
     return { success: true, devices };

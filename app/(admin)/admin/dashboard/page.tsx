@@ -9,6 +9,7 @@ import {
   Gamepad2, UtensilsCrossed, Activity, ArrowRight,
   CheckCircle2, Loader2, AlertCircle, Plus, Eye
 } from "lucide-react";
+import { toast } from "sonner";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
 import {
   getDashboardStats,
@@ -112,10 +113,20 @@ export default function AdminDashboardPage() {
   };
 
   const handleDevicesClick = async () => {
-    const result = await getAvailableDevicesDetails();
-    if (result.success) {
-      setDevicesDetails(result.devices);
-      setDevicesModalOpen(true);
+    console.log('Available Devices card clicked');
+    try {
+      const result = await getAvailableDevicesDetails();
+      console.log('Devices result:', result);
+      if (result.success) {
+        setDevicesDetails(result.devices);
+        setDevicesModalOpen(true);
+      } else {
+        console.error('Failed to fetch devices:', result.error);
+        toast.error('Failed to load device details');
+      }
+    } catch (error) {
+      console.error('Error fetching devices:', error);
+      toast.error('An error occurred while loading devices');
     }
   };
 
