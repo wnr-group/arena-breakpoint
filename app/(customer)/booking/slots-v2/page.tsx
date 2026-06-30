@@ -20,6 +20,7 @@ import {
   isWithinBusinessHours,
   isTimeSlotWithinRange
 } from "@/lib/utils/timeSlots";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function FlexibleSlotBookingPage() {
   const router = useRouter();

@@ -15,6 +15,7 @@ import { validatePromoCode, calculatePromoDiscount } from "../promo-actions";
 import { QRCodeSVG } from "qrcode.react";
 import { generateDurationOptions } from "@/lib/utils/timeSlots";
 import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 type Step = "phone" | "details" | "summary" | "success";
 

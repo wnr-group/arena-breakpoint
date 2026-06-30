@@ -10,6 +10,7 @@ import { Search, Phone, Calendar, Clock, QrCode, UtensilsCrossed, User, CheckCir
 import { toast } from "sonner";
 import { getBookingsByPhone } from "./actions";
 import { QRCodeSVG } from "qrcode.react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function RetrieveBookingPage() {
   const router = useRouter();

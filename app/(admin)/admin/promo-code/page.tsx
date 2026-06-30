@@ -10,6 +10,7 @@ import { PromoCodeRow } from "@/lib/types/promo-code";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function AdminPromoCodeDashboard() {
   const [promos, setPromos] = useState<PromoCodeRow[]>([]);

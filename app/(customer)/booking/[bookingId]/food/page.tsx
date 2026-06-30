@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Plus, Minus, ShoppingCart, UtensilsCrossed, Coffee, Pizza, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { getMenuItems, addFoodToBooking } from "./actions";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function FoodOrderPage() {
   const router = useRouter();

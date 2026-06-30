@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Users, Sparkles } from "lucide-react";
 import { getDeviceTypesWithAvailability } from "./actions";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function GamingStationPage() {
   const router = useRouter();

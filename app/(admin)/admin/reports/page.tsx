@@ -22,7 +22,6 @@ import { format } from "date-fns";
 import { ExpensesTab } from "@/components/admin/reports/ExpensesTab";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { ProfitTab } from "@/components/admin/reports/ProfitTab";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function AdminReportsPage() {
   const [activeTab, setActiveTab] = useState<"overview" | "food" | "device" | "revenue" | "expenses" | "profit">("overview");

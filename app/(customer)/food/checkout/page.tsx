@@ -40,6 +40,7 @@ import {
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 type Step = "cart" | "phone" | "details" | "success";
 

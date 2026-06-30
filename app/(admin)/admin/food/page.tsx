@@ -10,6 +10,7 @@ import { EditFoodModal } from "@/components/admin/food/EditFoodModal";
 import { FoodGrid } from "@/components/admin/food/FoodGrid";
 import { MenuItem } from "@/lib/types/food";
 import { toast } from "sonner";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function FoodPage() {
   const [isPending, startTransition] = useTransition();
