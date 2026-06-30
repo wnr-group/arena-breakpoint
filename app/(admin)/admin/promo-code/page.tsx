@@ -1,25 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { getLivePromoListAction, executePromoDeletionAction } from "./actions";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { PromoCodeTable } from "@/components/admin/promo-code/PromoCodeTable";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { AddPromoCodeModal } from "@/components/admin/promo-code/AddPromoCodeModal";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { EditPromoCodeModal } from "@/components/admin/promo-code/EditPromoCodeModal";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { PromoCodeRow } from "@/lib/types/promo-code";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Button } from "@/components/ui/button";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Plus } from "lucide-react";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { toast } from "sonner";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function AdminPromoCodeDashboard() {
   const [promos, setPromos] = useState<PromoCodeRow[]>([]);

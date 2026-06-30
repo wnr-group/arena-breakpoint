@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 interface BreakpointLoaderProps {
@@ -12,6 +13,13 @@ const sizeMap = {
   md: "w-12 h-12",
   lg: "w-16 h-16",
   xl: "w-24 h-24"
+};
+
+const sizePixelMap = {
+  sm: 32,
+  md: 48,
+  lg: 64,
+  xl: 96
 };
 
 const textSizeMap = {
@@ -35,10 +43,13 @@ export function BreakpointLoader({ size = "md", text }: BreakpointLoaderProps) {
         }}
         className="flex-shrink-0"
       >
-        <img
+        <Image
           src="/bp_logo.png"
           alt="Loading..."
+          width={sizePixelMap[size]}
+          height={sizePixelMap[size]}
           className={`${sizeMap[size]} object-contain rounded-md`}
+          priority
         />
       </motion.div>
       {text && (

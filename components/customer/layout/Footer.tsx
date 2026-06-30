@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { Gamepad2, Facebook, Twitter, MessageSquare, Music, Youtube } from 'lucide-react';
 
 export default function Footer() {
@@ -21,9 +22,11 @@ export default function Footer() {
           <div className="md:col-span-2 lg:col-span-5 flex flex-col items-start">
             {/* Logo */}
             <div className="flex items-center gap-3 mb-6">
-              <img
+              <Image
                 src="/bp_logo.png"
                 alt="Breakpoint Arena Logo"
+                width={40}
+                height={40}
                 className="w-10 h-10 object-contain rounded-md"
               />
               <span className="text-2xl font-bold text-white tracking-wide" style={{ fontFamily: "'Oxanium', sans-serif" }}>

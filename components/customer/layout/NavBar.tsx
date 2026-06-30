@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Gamepad2, Menu, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAppSelector } from '@/lib/redux/hooks';
 
@@ -131,10 +132,13 @@ export default function Navbar() {
             }}
             className="flex-shrink-0"
           >
-            <img
+            <Image
               src="/bp_logo.png"
               alt="Breakpoint Arena Logo"
+              width={40}
+              height={40}
               className="w-10 h-10 object-contain rounded-md"
+              priority
             />
           </motion.div>
           <span className="text-2xl font-bold text-white tracking-wide uppercase">Break point Arena</span>

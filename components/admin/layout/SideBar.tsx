@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Calendar, Monitor, Utensils, Tag,
@@ -59,10 +60,13 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
         <div className="p-4 flex items-center justify-between border-b border-[#27272a]/40 h-20 overflow-hidden">
           {isOpen ? (
             <div className="pl-2 flex items-center gap-3 hover:scale-[1.02] transition-transform duration-300 cursor-pointer animate-in fade-in duration-300">
-              <img
+              <Image
                 src="/bp_logo.png"
                 alt="Breakpoint Arena"
+                width={40}
+                height={40}
                 className="w-10 h-10 object-contain rounded-md"
+                priority
               />
               <div>
                 <h1 className="text-lg font-black tracking-tight text-primary drop-shadow-[0_0_10px_rgba(184,134,11,0.3)] whitespace-nowrap">
@@ -73,10 +77,13 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
             </div>
           ) : (
             <div className="mx-auto animate-in fade-in duration-300">
-              <img
+              <Image
                 src="/bp_logo.png"
                 alt="BP"
+                width={40}
+                height={40}
                 className="w-10 h-10 object-contain rounded-md"
+                priority
               />
             </div>
           )}

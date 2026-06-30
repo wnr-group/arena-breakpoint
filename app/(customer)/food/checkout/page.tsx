@@ -1,11 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useRouter } from "next/navigation";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   clearCart,
   removeFromCart,
@@ -14,22 +11,16 @@ import {
 }
   from "@/lib/redux/slices/foodCartSlice";
 import { Button } from "@/components/ui/button";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Card } from "@/components/ui/card";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Input } from "@/components/ui/input";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Label } from "@/components/ui/label";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   addFoodOrderToBooking,
   createStandaloneFoodOrder,
   validateMenuItems
 } from "../actions";
 import { checkCustomerExists } from "../../booking/actions";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { validatePromoCode, calculatePromoDiscount } from "../../booking/promo-actions";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   Loader2,
   Trash2,
@@ -47,11 +38,8 @@ import {
   CheckCircle2, ArrowLeft, Tag
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { toast } from "sonner";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 type Step = "cart" | "phone" | "details" | "success";
 
