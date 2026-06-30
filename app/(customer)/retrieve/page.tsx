@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search, Phone, Calendar, Clock, QrCode, UtensilsCrossed, User, CheckCircle2, Sparkles, Zap, CreditCard } from "lucide-react";
+import { Search, Phone, Calendar, Clock, QrCode, UtensilsCrossed, User, CheckCircle2, Sparkles, Zap, CreditCard , Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 import { getBookingsByPhone } from "./actions";
 import { QRCodeSVG } from "qrcode.react";

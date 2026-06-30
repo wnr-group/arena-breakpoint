@@ -8,7 +8,7 @@ import { checkAvailabilityByDeviceType, initializeSoftLockReservation as createS
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
-import { Clock, ChevronRight, X, Users, Plus, Minus } from "lucide-react";
+import { Clock, ChevronRight, X, Users, Plus, Minus , Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 
 const staticDaylightSchedulesMatrix = [

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { CheckCircle2, ShieldCheck, Phone, User, Mail, Cake, ChevronRight } from 'lucide-react'
+import { CheckCircle2, ShieldCheck, Phone, User, Mail, Cake, ChevronRight , Loader2 } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
