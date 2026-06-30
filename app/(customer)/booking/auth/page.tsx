@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ShieldCheck, Phone, ChevronRight, User, Mail, CheckCircle2, QrCode, Cake, UtensilsCrossed, Tag } from "lucide-react";
+import { ShieldCheck, Phone, ChevronRight, User, Mail, CheckCircle2, QrCode, Cake, UtensilsCrossed, Tag , Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 import { checkCustomerExists, confirmBooking } from "../actions";
 import { validatePromoCode, calculatePromoDiscount } from "../promo-actions";

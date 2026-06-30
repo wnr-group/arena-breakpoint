@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState, Suspense } from 'react'
-import { Percent, Gamepad2, Ticket, Wallet, Monitor, AlertTriangle, History, AlertCircle, Phone } from 'lucide-react'
+import { Percent, Gamepad2, Ticket, Wallet, Monitor, AlertTriangle, History, AlertCircle, Phone , Loader2 } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getMyActiveSubscriptionByPhone } from './action'

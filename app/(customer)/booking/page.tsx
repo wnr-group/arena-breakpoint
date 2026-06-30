@@ -7,7 +7,7 @@ import { useAppDispatch } from "@/lib/redux/hooks";
 import { setDeviceType, setPricing, resetBooking } from "@/lib/redux/slices/bookingSlice";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Users, Sparkles } from "lucide-react";
+import { Users, Sparkles , Loader2 } from 'lucide-react';
 import { getDeviceTypesWithAvailability } from "./actions";
 
 export default function GamingStationPage() {
