@@ -2,6 +2,7 @@
 
 import { useState, FormEvent, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -76,10 +77,13 @@ function LoginForm() {
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-primary via-amber-400 to-primary rounded-2xl blur-xl opacity-50 animate-pulse" />
                 <div className="relative bg-gradient-to-br from-zinc-900 to-[var(--background)] p-4 rounded-2xl border border-primary/30">
-                  <img
+                  <Image
                     src="/bp_logo.png"
                     alt="Breakpoint Arena"
+                    width={64}
+                    height={64}
                     className="w-16 h-16 object-contain rounded-lg"
+                    priority
                   />
                 </div>
               </div>
