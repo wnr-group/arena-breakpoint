@@ -174,6 +174,7 @@ import { EditHappyHourModal } from '@/components/admin/happy-hours/EditHappyHour
 import { AddHappyHourModal } from '@/components/admin/happy-hours/AddHappyHourModal'
 import { HappyHourTable } from '@/components/admin/happy-hours/HappyHourTable'
 import { deleteHappyHour, getHappyHours } from '@/components/admin/happy-hours/action'
+import { BreakpointLoader } from '@/components/shared/BreakpointLoader'
 
 // TODO: Update this import path to match where you saved your CRUD Server Actions
 
