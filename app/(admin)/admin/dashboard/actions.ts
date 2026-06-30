@@ -340,7 +340,7 @@ export async function getAvailableDevicesDetails() {
     if (error) throw error;
 
     // Transform status to is_available for easier filtering
-    const devices = (data || []).map(device => ({
+    const devices = (data || []).map((device: any) => ({
       ...device,
       is_available: device.status === "available"
     }));

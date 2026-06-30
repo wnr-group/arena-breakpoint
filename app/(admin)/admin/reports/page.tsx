@@ -3,19 +3,14 @@
 import { useState, useEffect } from "react";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Button } from "@/components/ui/button";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Card } from "@/components/ui/card";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Label } from "@/components/ui/label";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Calendar } from "@/components/ui/calendar";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   DollarSign, TrendingUp, ShoppingBag, Gamepad2,
   Download, UtensilsCrossed, BarChart3, CalendarDays, Receipt
 } from "lucide-react";
 import { toast } from "sonner";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   getDashboardSummary,
   getFoodReports,
@@ -24,13 +19,9 @@ import {
   type ReportFilters
 } from "./actions";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { format } from "date-fns";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { ExpensesTab } from "@/components/admin/reports/ExpensesTab";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { ProfitTab } from "@/components/admin/reports/ProfitTab";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function AdminReportsPage() {
   const [activeTab, setActiveTab] = useState<"overview" | "food" | "device" | "revenue" | "expenses" | "profit">("overview");

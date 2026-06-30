@@ -3,33 +3,19 @@
 import { useState, useEffect, useMemo } from "react";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useRouter } from "next/navigation";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { setCustomerDetails, setSubscription, setPricing, resetBooking, clearSlotTimer, setPromoCode } from "@/lib/redux/slices/bookingSlice";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Button } from "@/components/ui/button";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Card } from "@/components/ui/card";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Input } from "@/components/ui/input";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Label } from "@/components/ui/label";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { ShieldCheck, Phone, ChevronRight, User, Mail, CheckCircle2, QrCode, Cake, UtensilsCrossed, Tag } from "lucide-react";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { toast } from "sonner";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { checkCustomerExists, confirmBooking } from "../actions";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { validatePromoCode, calculatePromoDiscount } from "../promo-actions";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { QRCodeSVG } from "qrcode.react";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { generateDurationOptions } from "@/lib/utils/timeSlots";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 type Step = "phone" | "details" | "summary" | "success";
 

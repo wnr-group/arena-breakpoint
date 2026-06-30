@@ -3,17 +3,11 @@
 import { useEffect, useState } from "react";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { getLiveCustomerRegistryAction } from "./actions";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { CustomerTable } from "@/components/admin/customers/CustomerTable";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { CustomerRow } from "@/lib/types/customers";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Users } from "lucide-react";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Button } from "@/components/ui/button";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { toast } from "sonner";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function AdminCustomersDashboard() {
   const [customers, setCustomers] = useState<CustomerRow[]>([]);

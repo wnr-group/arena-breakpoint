@@ -3,7 +3,6 @@
 import { useState, useMemo, useTransition, useEffect } from "react";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   Monitor,
   CheckCircle,
@@ -15,21 +14,13 @@ import {
   MonitorPlay
 } from "lucide-react";
 import { deleteDevice, getDevices, getDeviceTypes } from "./actions";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { DeviceFilters } from "@/components/admin/devices/DeviceFilters";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { AddDeviceModal } from "@/components/admin/devices/AddDeviceModal";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { EditDeviceModal } from "@/components/admin/devices/EditDeviceModal";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { DeviceTable } from "@/components/admin/devices/DeviceTable";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { DeviceGrid } from "@/components/admin/devices/DeviceGrid";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { StatusBadge } from "@/components/admin/devices/StatusBadge";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { toast } from "sonner";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function DevicesPage() {
   const [isPending, startTransition] = useTransition();

@@ -3,17 +3,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useRouter } from "next/navigation";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Button } from "@/components/ui/button";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Card } from "@/components/ui/card";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Calendar } from "@/components/ui/calendar";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Input } from "@/components/ui/input";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Label } from "@/components/ui/label";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   ArrowLeft,
   ChevronRight,
@@ -30,16 +24,13 @@ import {
   Clock
 } from "lucide-react";
 import { toast } from "sonner";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   getDeviceTypesWithAvailability,
   checkFlexibleAvailability,
   checkCustomerExists
 } from "@/app/(customer)/booking/actions";
 import { createWalkInBooking } from "../actions";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   generateStartTimes,
   filterPastTimeSlots,

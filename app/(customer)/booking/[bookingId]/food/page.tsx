@@ -3,17 +3,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Button } from "@/components/ui/button";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Card } from "@/components/ui/card";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Plus, Minus, ShoppingCart, UtensilsCrossed, Coffee, Pizza, ShoppingBag } from "lucide-react";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { toast } from "sonner";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { getMenuItems, addFoodToBooking } from "./actions";
-import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 export default function FoodOrderPage() {
   const router = useRouter();
