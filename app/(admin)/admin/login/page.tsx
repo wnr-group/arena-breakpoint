@@ -77,7 +77,7 @@ function LoginForm() {
                 <div className="absolute inset-0 bg-gradient-to-r from-primary via-amber-400 to-primary rounded-2xl blur-xl opacity-50 animate-pulse" />
                 <div className="relative bg-gradient-to-br from-zinc-900 to-[var(--background)] p-4 rounded-2xl border border-primary/30">
                   <img
-                    src="/bp_logo.jpeg"
+                    src="/bp_logo.png"
                     alt="Breakpoint Arena"
                     className="w-16 h-16 object-contain rounded-lg"
                   />

@@ -15,10 +15,9 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 's40091.pcdn.co',
       },
-      // can be removed
       {
         protocol: 'https',
-        hostname: 'zzgqcuwemqrnhlkdqgez.supabase.co',
+        hostname: '*.supabase.co',
       },
     ],
     formats: ['image/webp', 'image/avif'],

@@ -74,7 +74,7 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
           ) : (
             <div className="mx-auto animate-in fade-in duration-300">
               <img
-                src="/bp_logo.jpeg"
+                src="/bp_logo.png"
                 alt="BP"
                 className="w-10 h-10 object-contain rounded-md"
               />
