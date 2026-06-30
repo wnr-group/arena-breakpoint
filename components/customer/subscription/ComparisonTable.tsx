@@ -37,7 +37,11 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ plans = [] }) 
         {/* Table Header */}
         <div className="grid grid-cols-[1.5fr_0.8fr_1fr_1fr_2.7fr] bg-[#2B271E] p-5">
           {['Plan', 'Price', 'Duration', 'Savings', 'Benefits'].map((heading, i) => (
-            <div key={i} className="text-white font-bold text-[15px] text-left pl-6">
+            <div 
+              key={i} 
+              className="font-bold text-[13px] md:text-[14px] text-left pl-6 uppercase tracking-wider"
+              style={{ color: 'var(--primary)' }}
+            >
               {heading}
             </div>
           ))}
