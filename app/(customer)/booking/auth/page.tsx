@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import { setCustomerDetails, setSubscription, setPricing, resetBooking, clearSlotTimer, setPromoCode } from "@/lib/redux/slices/bookingSlice";
+import { setCustomerDetails, setSubscription, setPricing, resetBooking, clearSlotTimer, setPromoCode, releaseSlotHold } from "@/lib/redux/slices/bookingSlice";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -382,7 +382,7 @@ export default function CustomerDetailsPage() {
                 {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "CONTINUE"} <ChevronRight className="h-4 w-4 stroke-[3]" />
               </Button>
 
-              <Button type="button" onClick={() => router.back()} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
+              <Button type="button" onClick={() => { dispatch(releaseSlotHold()); router.back(); }} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
                 ← CHOOSE ALTERNATIVE TIME SLOT
               </Button>
             </div>
