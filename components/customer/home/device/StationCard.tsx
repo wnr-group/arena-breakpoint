@@ -48,8 +48,17 @@ export function StationCard({ station, motionProps }: { station: Station; motion
         transition-[border-color,box-shadow] duration-300"
         >
             <div className="relative w-full h-full rounded-xl overflow-hidden bg-gradient-to-br from-zinc-900/95 via-zinc-950/95 to-black/95 backdrop-blur-md border border-zinc-800/60">
+                {/* Station Cover Image */}
+                {station.image && (
+                    <img
+                        src={station.image}
+                        alt={station.name}
+                        className="absolute inset-0 w-full h-full object-cover opacity-45 group-hover:scale-110 transition-transform duration-500 pointer-events-none"
+                    />
+                )}
+
                 {/* Darker gradient overlay for better contrast */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent transition-all duration-400 group-hover:from-black/90 group-hover:via-black/50" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent transition-all duration-400 group-hover:from-black/95 group-hover:via-black/60 pointer-events-none" />
 
                 {/* Availability Badge */}
                 <div
@@ -136,7 +145,7 @@ export function StationCard({ station, motionProps }: { station: Station; motion
                                 Loading...
                             </>
                         ) : (
-                            avail ? 'Book slot' : 'Join Waitlist'
+                            avail ? 'Book slot' : 'Fully Booked'
                         )}
                     </button>
                 </div>

@@ -146,7 +146,7 @@ export default function DevicePage() {
                   isAvailable: device.status === 'available',
                   availability: device.status === 'available' ? 'Available' : 'Booked',
                   description: device.specs || device.device_type?.description || '',
-                  image: device.image_url || "https://s40091.pcdn.co/uk/wp-content/uploads/sites/3/2024/08/POOL-HERO.jpg",
+                  image: device.image_url || "",
                   available_count: availableCount,
                   total_count: totalCount
                 };
