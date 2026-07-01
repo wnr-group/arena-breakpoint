@@ -632,7 +632,12 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                       <div key={item.id} className="flex justify-between items-center p-4 bg-[var(--background)] border border-[#27272a] rounded-lg hover:border-primary/30 transition-colors">
                         <div className="flex-1">
                           <p className="text-lg font-bold text-white">{item.name}</p>
-                          <p className="text-sm-enhanced text-primary font-bold">₹{Number(item.price).toLocaleString('en-IN')}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm-enhanced text-primary font-bold">₹{Number(item.price).toLocaleString('en-IN')}</p>
+                            <span className="text-xs text-muted-content">
+                              • Stock: {item.quantity}
+                            </span>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
@@ -655,9 +660,15 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                             size="sm"
                             onClick={() => {
                               const qty = (selectedFoodItems[item.id] || 0);
+                              // Check stock availability
+                              if (qty >= item.quantity) {
+                                toast.error(`Only ${item.quantity} ${item.name} available in stock`);
+                                return;
+                              }
                               setSelectedFoodItems({ ...selectedFoodItems, [item.id]: qty + 1 });
                             }}
-                            className="h-10 w-10 p-0 bg-primary hover:bg-primary-hover text-black"
+                            disabled={(selectedFoodItems[item.id] || 0) >= item.quantity}
+                            className="h-10 w-10 p-0 bg-primary hover:bg-primary-hover text-black disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <Plus className="h-4 w-4" />
                           </Button>

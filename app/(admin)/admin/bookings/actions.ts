@@ -312,6 +312,51 @@ export async function addFoodToBooking(
   }>
 ) {
   try {
+    // VALIDATION: Check stock availability before adding
+    const itemIds = items.map(item => item.menuItemId);
+    const { data: menuItems, error: menuError } = await supabaseAdmin
+      .from("menu_items")
+      .select("id, name, quantity, status")
+      .in("id", itemIds);
+
+    if (menuError) throw menuError;
+
+    // Validate each item
+    const unavailableItems: string[] = [];
+    const insufficientStock: string[] = [];
+
+    for (const orderItem of items) {
+      const menuItem = menuItems?.find((m: any) => m.id === orderItem.menuItemId);
+
+      if (!menuItem) {
+        unavailableItems.push(orderItem.itemName);
+        continue;
+      }
+
+      if (menuItem.status !== "available") {
+        unavailableItems.push(menuItem.name);
+        continue;
+      }
+
+      if (menuItem.quantity < orderItem.quantity) {
+        insufficientStock.push(
+          `${menuItem.name} (Available: ${menuItem.quantity}, Requested: ${orderItem.quantity})`
+        );
+      }
+    }
+
+    // If validation fails, return error
+    if (unavailableItems.length > 0 || insufficientStock.length > 0) {
+      let errorMessage = "Cannot add food items:\n";
+      if (unavailableItems.length > 0) {
+        errorMessage += `Unavailable: ${unavailableItems.join(", ")}\n`;
+      }
+      if (insufficientStock.length > 0) {
+        errorMessage += `Insufficient stock: ${insufficientStock.join(", ")}`;
+      }
+      return { success: false, error: errorMessage };
+    }
+
     // Calculate new food subtotal
     const foodLineItems = items.map((item) => ({
       booking_id: bookingId,
@@ -393,6 +438,23 @@ export async function addFoodToBooking(
       .eq("id", bookingId);
 
     if (updateError) throw updateError;
+
+    // Decrement inventory for each item
+    for (const item of items) {
+      const { data: success, error: inventoryError } = await supabaseAdmin.rpc(
+        "decrement_menu_item_quantity",
+        {
+          item_id: item.menuItemId,
+          decrement_by: item.quantity,
+        }
+      );
+
+      if (inventoryError || !success) {
+        console.error("Inventory update error:", inventoryError || "Insufficient stock");
+        // Log for monitoring but don't fail the order
+        // (validation already happened above)
+      }
+    }
 
     return { success: true, foodItems, newTotal };
   } catch (err: any) {
