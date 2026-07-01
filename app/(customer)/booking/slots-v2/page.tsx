@@ -85,6 +85,13 @@ export default function FlexibleSlotBookingPage() {
     };
   }, [mobileCalendarOpen, mobileDurationOpen, mobileStartTimeOpen]);
 
+  // Sync selectedDuration to Redux booking state
+  useEffect(() => {
+    if (mounted) {
+      dispatch(setDuration(selectedDuration));
+    }
+  }, [selectedDuration, mounted, dispatch]);
+
   useEffect(() => {
     if (!mounted || !calendarDay || !deviceTypeId) {
       console.log('[Frontend] Skipping availability check:', { mounted, calendarDay: !!calendarDay, deviceTypeId: !!deviceTypeId });
