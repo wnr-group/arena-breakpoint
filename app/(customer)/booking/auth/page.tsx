@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ShieldCheck, Phone, ChevronRight, User, Mail, CheckCircle2, QrCode, Cake, UtensilsCrossed, Tag , Loader2 } from 'lucide-react';
+import { ShieldCheck, Phone, ChevronRight, User, Mail, CheckCircle2, QrCode, Cake, UtensilsCrossed, Tag, Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 import { checkCustomerExists, confirmBooking } from "../actions";
 import { validatePromoCode, calculatePromoDiscount } from "../promo-actions";
@@ -514,7 +514,7 @@ export default function CustomerDetailsPage() {
             <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Booking Details</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-zinc-500">Device:</span> <span className="text-white font-bold text-right">{deviceTypeName}</span></div>
-              <div className="flex justify-between"><span className="text-zinc-500">Date:</span> <span className="text-white font-bold">{selectedDate ? new Date(selectedDate).toLocaleDateString() : "--"}</span></div>
+              <div className="flex justify-between"><span className="text-zinc-500">Date:</span> <span className="text-white font-bold">{selectedDate ? `${new Date(selectedDate).toLocaleDateString()}, ${new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'short' })}` : "--"}</span></div>
               <div className="flex justify-between"><span className="text-zinc-500">Time Slot:</span> <span className="text-primary font-bold">{selectedSlot}</span></div>
               <div className="flex justify-between"><span className="text-zinc-500">Duration:</span> <span className="text-white font-bold">{selectedDurationLabel}</span></div>
             </div>

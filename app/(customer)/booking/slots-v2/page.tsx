@@ -344,7 +344,7 @@ export default function FlexibleSlotBookingPage() {
               <h3 className="text-sm font-black text-zinc-300 uppercase tracking-wider border-b border-zinc-900/60 pb-2">Booking Summary</h3>
 
               <div className="space-y-2.5 text-sm text-zinc-300 border-b border-zinc-900/60 pb-3">
-                <div className="flex justify-between"><span>Date:</span><strong className="text-white font-bold">{calendarDay ? calendarDay.toLocaleDateString() : "Not Selected"}</strong></div>
+                <div className="flex justify-between"><span>Date:</span><strong className="text-white font-bold">{calendarDay ? `${calendarDay.toLocaleDateString()} (${calendarDay.toLocaleDateString('en-US', { weekday: 'short' })})` : "Not Selected"}</strong></div>
                 <div className="flex justify-between"><span>Duration:</span><strong className="text-white font-bold">{selectedDurationLabel}</strong></div>
                 <div className="flex justify-between"><span>Start Time:</span><strong className="text-primary font-black">{selectedStartTime || "Not Selected"}</strong></div>
                 <div className="flex justify-between"><span>End Time:</span><strong className="text-primary font-black">{endTime || "--"}</strong></div>
@@ -506,7 +506,7 @@ export default function FlexibleSlotBookingPage() {
             <div className="space-y-4 text-sm text-zinc-300 border-b border-zinc-900 pb-3">
               <div className="flex justify-between">
                 <span>Date:</span>
-                <strong className="text-white font-bold">{calendarDay ? calendarDay.toDateString() : "Not Selected"}</strong>
+                <strong className="text-white font-bold">{calendarDay ? `${calendarDay.toLocaleDateString()} (${calendarDay.toLocaleDateString('en-US', { weekday: 'short' })})` : "Not Selected"}</strong>
               </div>
               <div className="flex justify-between">
                 <span>Duration:</span>
