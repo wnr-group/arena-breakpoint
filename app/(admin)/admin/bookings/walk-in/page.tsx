@@ -30,7 +30,7 @@ import {
   checkCustomerExists
 } from "@/app/(customer)/booking/actions";
 import { createWalkInBooking } from "../actions";
-import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
+import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY, formatLocalDate } from "@/lib/utils/dates";
 import {
   generateStartTimes,
   filterPastTimeSlots,
@@ -135,7 +135,7 @@ export default function WalkInBookingPage() {
   const loadAvailability = async () => {
     if (!selectedDeviceType || !selectedDate) return;
     setLoadingSlots(true);
-    const dateString = selectedDate.toISOString().split("T")[0];
+    const dateString = formatLocalDate(selectedDate);
 
     try {
       const result = await checkFlexibleAvailability(dateString, selectedDeviceType.id, selectedDuration);
@@ -235,7 +235,7 @@ export default function WalkInBookingPage() {
       customerDob: formattedDob,
       deviceTypeId: selectedDeviceType.id,
       deviceTypeName: selectedDeviceType.display_name,
-      selectedDate: selectedDate.toISOString().split("T")[0],
+      selectedDate: formatLocalDate(selectedDate),
       selectedSlot: `${selectedStartTime} - ${endTime}`,
       slotStartTime: selectedStartTime,
       slotEndTime: endTime,

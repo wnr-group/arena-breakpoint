@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Clock, ChevronRight, X, Plus, Minus, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from "sonner";
+import { formatLocalDate } from "@/lib/utils/dates";
 import {
   generateStartTimes,
   filterPastTimeSlots,
@@ -126,7 +127,7 @@ export default function FlexibleSlotBookingPage() {
     setQueryingDb(true);
     setAvailableStartTimes(new Set()); // Clear immediately when starting new check
 
-    const dateStr = calendarDay.toISOString().split("T")[0];
+    const dateStr = formatLocalDate(calendarDay);
 
     console.log(`[Frontend] ========================================`);
     console.log(`[Frontend] Checking availability for:`);
@@ -224,7 +225,7 @@ export default function FlexibleSlotBookingPage() {
     }
 
     setSubmittingLock(true);
-    const dateQueryString = calendarDay.toISOString().split("T")[0];
+    const dateQueryString = formatLocalDate(calendarDay);
     const slotLabel = `${selectedStartTime} - ${endTime}`;
 
     const res = await createSoftLockTransaction({

@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Clock, ChevronRight, X, Users, Plus, Minus , Loader2 } from 'lucide-react';
 import { toast } from "sonner";
+import { formatLocalDate } from "@/lib/utils/dates";
 
 const staticDaylightSchedulesMatrix = [
   { id: "s1", label: "10:00 AM - 11:00 AM", start: "10:00 AM", end: "11:00 AM", tier: "Morning Slots" },
@@ -74,7 +75,7 @@ export default function SlotBookingPage() {
     if (!mounted || !calendarDay || !deviceTypeId) return;
     async function checkAvailability() {
       setQueryingDb(true);
-      const res = await checkAvailabilityByDeviceType(calendarDay!.toISOString().split("T")[0], deviceTypeId!);
+      const res = await checkAvailabilityByDeviceType(formatLocalDate(calendarDay!), deviceTypeId!);
       if (res.success) {
         setDisabledLabelsArray(res.unavailableSlots);
         setSlotAvailability(res.slotAvailability || {});
@@ -97,7 +98,7 @@ export default function SlotBookingPage() {
   const handleRegisterTransactionLock = async () => {
     if (!calendarDay || !selectedSlotNode || !deviceTypeId) return;
     setSubmittingLock(true);
-    const dateQueryString = calendarDay.toISOString().split("T")[0];
+    const dateQueryString = formatLocalDate(calendarDay);
 
     const res = await createSoftLockTransaction({
       deviceId: deviceTypeId!, deviceName: deviceTypeName || "Device Type", deviceType: "gaming", hourlyRate: baselineSubtotal,
