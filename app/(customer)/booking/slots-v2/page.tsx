@@ -27,6 +27,15 @@ export default function FlexibleSlotBookingPage() {
   const { deviceTypeId, deviceTypeName, hourlyRate, addons, playerCount, includedPlayers, maxPlayers, extraPlayerCharge } = useAppSelector((state) => state.booking);
 
   const [calendarDay, setCalendarDay] = useState<Date | undefined>(undefined);
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const isDayDisabled = (day: Date) => {
+    return day < today || day.getMonth() !== today.getMonth() || day.getFullYear() !== today.getFullYear();
+  };
   const [selectedStartTime, setSelectedStartTime] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<number>(60); // Default 1 hour in minutes
   const [availableStartTimes, setAvailableStartTimes] = useState<Set<string>>(new Set());
@@ -382,7 +391,7 @@ export default function FlexibleSlotBookingPage() {
             <div className="space-y-3">
               <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">📅 Select Date</h3>
               <Card className="bg-[#111] border border-zinc-900 p-4 w-full flex justify-center rounded-2xl glow-box-hover">
-                <Calendar mode="single" selected={calendarDay} onSelect={setCalendarDay} disabled={(day) => day < new Date(new Date().setHours(0, 0, 0, 0))} />
+                <Calendar mode="single" selected={calendarDay} onSelect={setCalendarDay} disabled={isDayDisabled} />
               </Card>
             </div>
 
@@ -562,7 +571,7 @@ export default function FlexibleSlotBookingPage() {
               </button>
             </div>
             <div className="flex justify-center bg-zinc-950 p-2 rounded-xl">
-              <Calendar mode="single" selected={calendarDay} onSelect={(day) => { setCalendarDay(day); setMobileCalendarOpen(false); }} disabled={(day) => day < new Date(new Date().setHours(0, 0, 0, 0))} />
+              <Calendar mode="single" selected={calendarDay} onSelect={(day) => { setCalendarDay(day); setMobileCalendarOpen(false); }} disabled={isDayDisabled} />
             </div>
           </div>
         </div>
