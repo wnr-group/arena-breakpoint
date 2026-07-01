@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState, Suspense } from 'react'
-import { Percent, Gamepad2, Ticket, Wallet, Monitor, AlertTriangle, History, AlertCircle, Phone , Loader2 } from 'lucide-react'
+import { Percent, Gamepad2, Ticket, Wallet, Monitor, AlertTriangle, History, AlertCircle, Phone, Loader2 } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getMyActiveSubscriptionByPhone } from './action'
@@ -99,7 +99,6 @@ function MySubscriptionPageContent() {
   return (
     <main
       className="min-h-screen bg-[#0d0a14] text-white font-sans relative overflow-hidden pt-5"
-      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
     >
       {/* Animated background */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-[#0d0a14] to-[#0d0a14] pointer-events-none" />
@@ -230,250 +229,90 @@ function MySubscriptionPageContent() {
             )}
           </div>
         ) : (
-          /* Main Dashboard Layout if subscribed */
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+          /* Centered Standalone Active Subscription Card Layout */
+          <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+            {/* DYNAMIC ACTIVE SUBSCRIPTION CARD */}
+            <div className="bg-gradient-to-br from-zinc-900 via-[#131313] to-zinc-900 border border-primary/30 rounded-2xl p-6 md:p-10 relative overflow-hidden group hover:border-primary/60 transition-all duration-300 shadow-[0_4px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_4px_45px_rgba(255,193,7,0.15)]">
+              {/* Animated gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-amber-400/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
-            {/* Left Column (Main Subscription & Savings) */}
-            <div className="lg:col-span-2 space-y-8">
+              {/* Scan line */}
+              <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse pointer-events-none" />
 
-              {/* DYNAMIC ACTIVE SUBSCRIPTION CARD */}
-              <div className="bg-gradient-to-br from-zinc-900 via-[#131313] to-zinc-900 border border-primary/30 rounded-xl p-6 md:p-8 relative overflow-hidden group glow-box-strong">
-                {/* Animated gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-amber-400/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              {/* Card Header */}
+              <div className="flex justify-between items-start mb-8 relative z-10">
+                <div>
+                  <h3 className="text-primary text-xs font-black tracking-[0.2em] uppercase mb-2 drop-shadow-[0_0_10px_rgba(255,193,7,0.3)]">
+                    Elite Membership
+                  </h3>
+                  <h2 className="text-2xl md:text-3.5xl font-black text-transparent bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text">
+                    {subscription.plan?.name || 'Unknown Plan'}
+                  </h2>
+                </div>
+                <div className="bg-gradient-to-r from-green-900/30 to-green-950/30 border border-green-500/30 rounded-full px-4 py-2 flex items-center shadow-[0_0_20px_rgba(34,197,94,0.2)] backdrop-blur-sm">
+                  <div className="w-2 h-2 rounded-full bg-green-500 mr-2 shadow-[0_0_10px_rgba(34,197,94,0.8)] animate-pulse"></div>
+                  <span className="text-green-400 text-xs font-black tracking-wider uppercase">
+                    Active
+                  </span>
+                </div>
+              </div>
 
-                {/* Scan line */}
-                <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse" />
-
-                {/* Card Header */}
-                <div className="flex justify-between items-start mb-8 relative z-10">
+              {/* Progress Bar Section */}
+              <div className="mb-8 relative z-10">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-3 gap-2">
                   <div>
-                    <h3 className="text-primary text-xs font-black tracking-[0.2em] uppercase mb-2 drop-shadow-[0_0_10px_rgba(255,193,7,0.3)]">
-                      Elite Membership
-                    </h3>
-                    <h2 className="text-2xl md:text-3xl font-black text-transparent bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text">
-                      {subscription.plan?.name || 'Unknown Plan'}
-                    </h2>
+                    <div className="text-zinc-500 text-xs font-black uppercase tracking-wider mb-1">
+                      Validity Status
+                    </div>
+                    <div className="text-white font-black text-base md:text-lg">
+                      Valid until {formatDate(subscription.end_date)}{' '}
+                      <span className="text-transparent bg-gradient-to-r from-primary to-amber-300 bg-clip-text text-sm ml-1 block sm:inline">
+                        ({daysRemaining} days remaining)
+                      </span>
+                    </div>
                   </div>
-                  <div className="bg-gradient-to-r from-green-900/30 to-green-950/30 border border-green-500/30 rounded-full px-4 py-2 flex items-center shadow-[0_0_20px_rgba(34,197,94,0.2)] backdrop-blur-sm">
-                    <div className="w-2 h-2 rounded-full bg-green-500 mr-2 shadow-[0_0_10px_rgba(34,197,94,0.8)] animate-pulse"></div>
-                    <span className="text-green-400 text-xs font-black tracking-wider uppercase">
-                      Active
-                    </span>
-                  </div>
+                  <div className="text-zinc-500 text-xs font-black uppercase tracking-wider">{progressPercentage}% Complete</div>
                 </div>
-
-                {/* Progress Bar Section */}
-                <div className="mb-8 relative z-10">
-                  <div className="flex justify-between items-end mb-3">
-                    <div>
-                      <div className="text-zinc-500 text-xs font-black uppercase tracking-wider mb-2">
-                        Validity Status
-                      </div>
-                      <div className="text-white font-black text-lg">
-                        Valid until {formatDate(subscription.end_date)}{' '}
-                        <span className="text-transparent bg-gradient-to-r from-primary to-amber-300 bg-clip-text text-sm ml-1">
-                          ({daysRemaining} days remaining)
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-zinc-500 text-xs font-black uppercase tracking-wider">{progressPercentage}% Complete</div>
-                  </div>
-                  {/* Bar with gaming effect */}
-                  <div className="w-full bg-zinc-900 rounded-full h-3 overflow-hidden border border-zinc-800 shadow-inner">
-                    <div
-                      className="bg-gradient-to-r from-primary via-amber-400 to-primary h-3 rounded-full transition-all duration-1000 ease-out relative overflow-hidden"
-                      style={{ width: `${progressPercentage}%` }}
-                    >
-                      {/* Animated shimmer */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Perks Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
-                  <div className="bg-gradient-to-br from-zinc-950 to-zinc-900 border border-primary/20 rounded-xl p-4 flex items-center group/card hover:border-primary/40 hover:shadow-[0_0_20px_rgba(255,193,7,0.1)] transition-all duration-300 glow-box-hover">
-                    <div className="bg-gradient-to-br from-primary/20 to-amber-500/20 p-3 rounded-lg mr-4 shadow-[0_0_15px_rgba(255,193,7,0.2)]">
-                      <Percent className="w-5 h-5 text-primary drop-shadow-[0_0_8px_rgba(255,193,7,0.5)]" />
-                    </div>
-                    <div>
-                      <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1">
-                        Loyalty Discount
-                      </div>
-                      <div className="text-transparent bg-gradient-to-r from-primary via-amber-300 to-primary bg-clip-text font-black text-lg drop-shadow-[0_0_10px_rgba(255,193,7,0.3)]">
-                        {subscription.plan?.discount_percentage || 0}% OFF
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-[#1a1a1a] border border-neutral-800 rounded-xl p-4 flex items-center glow-box-hover">
-                    <div className="bg-amber-500/10 p-3 rounded-sm mr-4">
-                      <Gamepad2 className="w-5 h-5 text-amber-500" />
-                    </div>
-                    <div>
-                      <div className="text-neutral-400 text-xs font-semibold mb-0.5">Arena Pass</div>
-                      <div className="text-white font-extrabold text-lg">All Access</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Savings Section (Kept static for now, connect to a bookings API later) */}
-              <div>
-                <h3 className="text-sm font-bold text-white mb-4">Your Savings So Far</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  {/* Total Bookings */}
-                  <div className="bg-[#111111] border border-neutral-800 rounded-sm p-6 flex items-center glow-box-hover">
-                    <div className="w-14 h-14 rounded-full border border-amber-500/20 bg-amber-500/5 flex items-center justify-center mr-5">
-                      <Ticket className="w-6 h-6 text-amber-500" />
-                    </div>
-                    <div>
-                      <div className="text-neutral-400 text-xs font-semibold mb-1">
-                        Total Bookings
-                      </div>
-                      <div className="text-white font-extrabold text-3xl">03</div>
-                    </div>
-                  </div>
-
-                  {/* Total Saved */}
-                  <div className="bg-[#111111] border border-neutral-800 rounded-md p-6 flex items-center glow-box-hover">
-                    <div className="w-14 h-14 rounded-full border border-amber-500/20 bg-amber-500/5 flex items-center justify-center mr-5">
-                      <Wallet className="w-6 h-6 text-amber-500" />
-                    </div>
-                    <div>
-                      <div className="text-neutral-400 text-xs font-semibold mb-1">Total Saved</div>
-                      <div className="text-white font-extrabold text-3xl">₹180</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column (Promo & History) */}
-            <div className="lg:col-span-1 space-y-6 md:space-y-8">
-              {/* Promo Card */}
-              <div className="relative rounded-md overflow-hidden bg-[#111111] border border-neutral-800 flex flex-col justify-end p-6 min-h-55">
-                {/* Background Image Setup */}
-                <div className="absolute inset-0 z-0">
-                  <img
-                    className="w-full h-full object-cover opacity-30"
-                    alt="Gaming keyboard background"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFIKGeG2W9raLeDyuxdA9-PVKMcg3gGd30OuafHGO6cRvygZE1X1yb2QDWNvJMYIeuonRyPfymKfC69DyUaTfstYmffrR5GZR6zomB8a7o2dZn6pn_k-FJBA7lOD6wHKbh3uBhRSfZngbB2fq5-_XbFctoGCCoZdgmL9iQyXQ6cQEDm-tCNQSdiIlbRL4I6Z7lG8uvNQ4tnR_yDSF4sCCLZxiUR4GK80YjNc1I6hHuLGSx_TKeSVfzi1pZ23Q4htMWY6yGxtUHpQ"
-                  />
-                  <div className="absolute inset-0 bg-linear-to-t from-[#111111] via-[#111111]/80 to-transparent" />
-                </div>
-
-                <div className="relative z-10">
-                  <h3 className="text-white font-bold mb-2">Feeling Hungry?</h3>
-                  <p className="text-neutral-400 text-sm leading-relaxed mb-5">
-                    Elite members get {subscription.plan?.discount_percentage || 15}% off on our Signature Gaming Menu.
-                  </p>
-                  <button
-                    onClick={() => {
-                      setIsBrowsingFood(true)
-                      router.push('/food')
-                    }}
-                    disabled={isBrowsingFood}
-                    className="w-full bg-[#1a1a1a] hover:bg-[#222] border border-neutral-700 text-white font-bold py-3 rounded-lg transition-colors text-sm flex items-center justify-center gap-2"
+                {/* Bar with gaming effect */}
+                <div className="w-full bg-zinc-900 rounded-full h-3 overflow-hidden border border-zinc-800 shadow-inner">
+                  <div
+                    className="bg-gradient-to-r from-primary via-amber-400 to-primary h-3 rounded-full transition-all duration-1000 ease-out relative overflow-hidden"
+                    style={{ width: `${progressPercentage}%` }}
                   >
-                    {isBrowsingFood ? <Loader2 className="w-4 h-4 animate-spin" /> : "Browse Food Menu"}
-                  </button>
+                    {/* Animated shimmer */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                  </div>
                 </div>
               </div>
 
-              {/* Recent History Card */}
-              <div className="bg-[#111111] border border-neutral-800 rounded-md p-6 glow-box-hover">
-                <h3 className="text-sm font-bold text-white mb-6">Recent History</h3>
-
-                <div className="space-y-6 mb-6">
-                  {/* History Item 1 */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <Gamepad2 className="w-5 h-5 text-amber-500 mr-4" />
-                      <div>
-                        <div className="text-white font-bold text-sm">3hr PS5 Solo</div>
-                        <div className="text-neutral-500 text-xs mt-0.5">May 26, 2026</div>
-                      </div>
-                    </div>
-                    <div className="text-amber-500 font-bold text-sm">- ₹150</div>
+              {/* Perks Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
+                <div className="bg-gradient-to-br from-zinc-950 to-zinc-900 border border-primary/20 rounded-xl p-4 flex items-center group/card hover:border-primary/40 hover:shadow-[0_0_20px_rgba(255,193,7,0.1)] transition-all duration-300">
+                  <div className="bg-gradient-to-br from-primary/20 to-amber-500/20 p-3 rounded-lg mr-4 shadow-[0_0_15px_rgba(255,193,7,0.2)]">
+                    <Percent className="w-5 h-5 text-primary drop-shadow-[0_0_8px_rgba(255,193,7,0.5)]" />
                   </div>
-
-                  {/* History Item 2 */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <Monitor className="w-5 h-5 text-amber-500 mr-4" />
-                      <div>
-                        <div className="text-white font-bold text-sm">3hr PC Arena</div>
-                        <div className="text-neutral-500 text-xs mt-0.5">May 25, 2026</div>
-                      </div>
+                  <div>
+                    <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1">
+                      Loyalty Discount
                     </div>
-                    <div className="text-amber-500 font-bold text-sm">- ₹150</div>
-                  </div>
-
-                  {/* History Item 3 */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <Gamepad2 className="w-5 h-5 text-amber-500 mr-4" />
-                      <div>
-                        <div className="text-white font-bold text-sm">3hr PS5 Solo</div>
-                        <div className="text-neutral-500 text-xs mt-0.5">May 18, 2026</div>
-                      </div>
+                    <div className="text-transparent bg-gradient-to-r from-primary via-amber-300 to-primary bg-clip-text font-black text-lg drop-shadow-[0_0_10px_rgba(255,193,7,0.3)]">
+                      {subscription.plan?.discount_percentage || 0}% OFF
                     </div>
-                    <div className="text-amber-500 font-bold text-sm">- ₹150</div>
                   </div>
                 </div>
-
-                <div className="pt-4 border-t border-neutral-800/50 text-center">
-                  <button className="text-neutral-400 hover:text-white text-xs font-bold transition-colors">
-                    View All History
-                  </button>
+                <div className="bg-gradient-to-br from-zinc-950 to-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center hover:border-zinc-700 transition-all duration-300">
+                  <div className="bg-amber-500/10 p-3 rounded-lg mr-4">
+                    <Gamepad2 className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <div>
+                    <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1">Arena Pass</div>
+                    <div className="text-white font-black text-lg">All Access</div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         )}
-
-        {/* Status Reference Section */}
-        <div className="mt-12 pt-8 border-t border-neutral-800/50">
-          <h3 className="text-sm font-bold text-neutral-500 mb-4">Status Reference</h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {/* Expiring Soon State */}
-            <div className="bg-[#15120a] border border-purple-900/30 rounded-md p-5 flex items-center justify-between glow-box-hover">
-              <div className="flex items-center">
-                <div className="bg-amber-500/10 p-2.5 rounded-lg mr-4">
-                  <AlertTriangle className="w-5 h-5 text-orange-600" />
-                </div>
-                <div>
-                  <div className="text-neutral-200 font-bold text-sm mb-0.5">
-                    Expiring Soon (Reference)
-                  </div>
-                  <div className="text-neutral-500 text-xs">Renews on June 07</div>
-                </div>
-              </div>
-              <div className="bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
-                2 Days Left
-              </div>
-            </div>
-
-            {/* Expired State */}
-            <div className="bg-[#111] border border-neutral-800 rounded-md p-5 flex items-center justify-between opacity-70">
-              <div className="flex items-center">
-                <div className="bg-neutral-800/50 p-2.5 rounded-lg mr-4">
-                  <History className="w-5 h-5 text-neutral-500" />
-                </div>
-                <div>
-                  <div className="text-neutral-300 font-bold text-sm mb-0.5">
-                    Expired (Reference)
-                  </div>
-                  <div className="text-neutral-500 text-xs">Last active 30 days ago</div>
-                </div>
-              </div>
-              <div className="bg-neutral-900 border border-neutral-700 text-neutral-500 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">
-                Inactive
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </main>
   )
