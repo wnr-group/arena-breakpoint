@@ -5,14 +5,15 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
 import { PaymentStatusBadge } from "@/components/admin/bookings/PaymentStatusBadge";
 import { BookingsGrid } from "@/components/admin/bookings/BookingsGrid";
 import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
 import { CheckoutModal } from "@/components/admin/bookings/CheckoutModal";
-import { getAllBookings, getBookingStats, checkInBooking, checkOutBooking, type BookingFilters } from "./actions";
+import { getAllBookings, getBookingStats, checkInBooking, checkOutBooking, getBookingBillingDetails, markBookingAsPaid, type BookingFilters } from "./actions";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
-import { Search, Filter, Calendar, DollarSign, Users, CheckCircle2, XCircle, Clock, Loader2, Eye, Receipt, Plus, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List } from "lucide-react";
+import { Search, Filter, Calendar, DollarSign, Users, CheckCircle2, XCircle, Clock, Loader2, Eye, Receipt, Plus, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 
@@ -31,6 +32,17 @@ export default function AdminBookingsPage() {
   const [isPending, startTransition] = useTransition();
   const [expandedCustomers, setExpandedCustomers] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [pendingPaymentModal, setPendingPaymentModal] = useState<{
+    open: boolean;
+    bookingId: string | null;
+    balanceDue: number;
+    bookingNumber: string;
+  }>({
+    open: false,
+    bookingId: null,
+    balanceDue: 0,
+    bookingNumber: ""
+  });
 
   // Initial load
   useEffect(() => {
@@ -97,6 +109,55 @@ export default function AdminBookingsPage() {
         loadStats();
       } else {
         toast.error("Check-out failed", { description: result.error });
+      }
+    });
+  };
+
+  const handleCheckoutBillingClick = async (bookingId: string) => {
+    // First, check if there are pending payments
+    const billingResult = await getBookingBillingDetails(bookingId);
+
+    if (!billingResult.success || !billingResult.booking) {
+      toast.error("Failed to load billing details");
+      return;
+    }
+
+    const { booking } = billingResult;
+    const balanceDue = Number(booking.balance_due || 0);
+
+    // If there's a balance due (pending payment), show warning modal first
+    if (balanceDue > 0 && booking.payment_status !== "paid") {
+      setPendingPaymentModal({
+        open: true,
+        bookingId: booking.id,
+        balanceDue: balanceDue,
+        bookingNumber: booking.booking_number
+      });
+    } else {
+      // No pending payment, proceed directly to checkout
+      setCheckoutBookingId(bookingId);
+      setOpenCheckoutModal(true);
+    }
+  };
+
+  const handleMarkAsPaidAndProceed = async () => {
+    if (!pendingPaymentModal.bookingId) return;
+
+    startTransition(async () => {
+      const result = await markBookingAsPaid(pendingPaymentModal.bookingId!, "cash");
+
+      if (result.success) {
+        toast.success("Payment marked as paid");
+        setPendingPaymentModal({ open: false, bookingId: null, balanceDue: 0, bookingNumber: "" });
+
+        // Now open the checkout modal
+        setCheckoutBookingId(pendingPaymentModal.bookingId);
+        setOpenCheckoutModal(true);
+
+        loadBookings();
+        loadStats();
+      } else {
+        toast.error("Failed to mark as paid", { description: result.error });
       }
     });
   };
@@ -343,10 +404,7 @@ export default function AdminBookingsPage() {
             setSelectedBooking(booking);
             setOpenFoodModal(true);
           }}
-          onCheckoutBilling={(bookingId) => {
-            setCheckoutBookingId(bookingId);
-            setOpenCheckoutModal(true);
-          }}
+          onCheckoutBilling={handleCheckoutBillingClick}
           isPending={isPending}
         />
       ) : (
@@ -539,10 +597,7 @@ export default function AdminBookingsPage() {
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    onClick={() => {
-                                      setCheckoutBookingId(firstBooking.id);
-                                      setOpenCheckoutModal(true);
-                                    }}
+                                    onClick={() => handleCheckoutBillingClick(firstBooking.id)}
                                     className="h-8 w-8 p-0 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10"
                                     title="Checkout & Billing"
                                   >
@@ -656,10 +711,7 @@ export default function AdminBookingsPage() {
                                     <Button
                                       size="sm"
                                       variant="ghost"
-                                      onClick={() => {
-                                        setCheckoutBookingId(booking.id);
-                                        setOpenCheckoutModal(true);
-                                      }}
+                                      onClick={() => handleCheckoutBillingClick(booking.id)}
                                       className="h-8 w-8 p-0 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10"
                                       title="Checkout & Billing"
                                     >
@@ -704,6 +756,72 @@ export default function AdminBookingsPage() {
         }}
         openFoodModalDirectly={openFoodModal}
       />
+
+      {/* Pending Payment Confirmation Dialog */}
+      <Dialog open={pendingPaymentModal.open} onOpenChange={(open) => {
+        if (!open) {
+          setPendingPaymentModal({ open: false, bookingId: null, balanceDue: 0, bookingNumber: "" });
+        }
+      }}>
+        <DialogContent className="bg-[var(--background)] border-2 border-amber-500/50 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-2 text-amber-400">
+              <AlertCircle className="h-5 w-5" />
+              Pending Payment
+            </DialogTitle>
+            <DialogDescription className="text-secondary-content">
+              This booking has an outstanding balance that needs to be settled.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Booking Info */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+              <p className="text-xs text-secondary-content uppercase mb-1">Booking Number</p>
+              <p className="text-base font-black text-primary font-mono">{pendingPaymentModal.bookingNumber}</p>
+            </div>
+
+            {/* Pending Amount */}
+            <div className="bg-gradient-to-br from-amber-500/20 to-red-500/20 border-2 border-amber-500/40 rounded-lg p-6 text-center">
+              <p className="text-xs text-amber-400/80 uppercase tracking-wider mb-2">Outstanding Balance</p>
+              <p className="text-4xl font-black text-amber-400">
+                ₹{pendingPaymentModal.balanceDue.toFixed(2)}
+              </p>
+              <p className="text-xs text-amber-300/60 mt-2">This amount must be paid before checkout</p>
+            </div>
+
+            {/* Warning Message */}
+            <div className="bg-amber-950/50 border border-amber-900/50 rounded-lg p-3 flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-200">
+                Mark this payment as received to proceed with checkout
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-2">
+            <Button
+              onClick={() => setPendingPaymentModal({ open: false, bookingId: null, balanceDue: 0, bookingNumber: "" })}
+              variant="ghost"
+              className="flex-1 border border-zinc-800 text-muted-content hover:text-white font-bold uppercase text-xs h-10 rounded-lg"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleMarkAsPaidAndProceed}
+              disabled={isPending}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-black uppercase text-xs h-10 rounded-lg"
+            >
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+              )}
+              Mark as Paid
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Checkout & Billing Modal */}
       <CheckoutModal

@@ -219,7 +219,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
                           <div className="flex flex-col h-full justify-between">
                             <div>
                               <p className="text-[10px] font-black uppercase truncate">{booking.customer_name}</p>
-                              <p className="text-[8px] opacity-80 truncate">{booking.booking_number}</p>
+                              <p className="text-[8px] opacity-80 truncate">{booking.device_type} #{booking.device_station_number}</p>
                             </div>
                             <div className="flex items-center justify-between">
                               <span className="text-[9px] font-bold">
