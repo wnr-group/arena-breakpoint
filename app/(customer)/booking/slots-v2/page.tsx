@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { setSlot, setPricing, setSlotLockExpiry, setBookingId, setPlayerCount, setDuration } from "@/lib/redux/slices/bookingSlice";
@@ -27,6 +27,7 @@ export default function FlexibleSlotBookingPage() {
   const { deviceTypeId, deviceTypeName, hourlyRate, addons, playerCount, includedPlayers, maxPlayers, extraPlayerCharge } = useAppSelector((state) => state.booking);
 
   const [calendarDay, setCalendarDay] = useState<Date | undefined>(undefined);
+  const confirmButtonRef = useRef<HTMLDivElement>(null);
   const today = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -379,20 +380,23 @@ export default function FlexibleSlotBookingPage() {
               </div>
             </Card>
 
-            {!canProceed && (
-              <p className="text-[11px] font-bold text-amber-500 text-center mt-2 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
-                {!calendarDay
-                  ? "⚠️ Please select a date to proceed"
-                  : !selectedStartTime
-                    ? "⚠️ Please select a start time to proceed"
-                    : "⚠️ Selected time slot is not available"}
-              </p>
-            )}
+            <div ref={confirmButtonRef} className="w-full">
+              {!canProceed && (
+                <p className="text-[11px] font-bold text-amber-500 text-center mt-2 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
+                  {!calendarDay 
+                    ? "⚠️ Please select a date to proceed" 
+                    : !selectedStartTime 
+                      ? "⚠️ Please select a start time to proceed" 
+                      : "⚠️ Selected time slot is not available"}
+                </p>
+              )}
 
-            <Button variant="gradient" disabled={!canProceed || submittingLock} onClick={handleRegisterTransactionLock} className="w-full text-black font-black uppercase text-xs py-5 rounded-xl flex items-center justify-center gap-1 mt-2 shadow-[0_4px_20px_rgba(255,193,7,0.2)]">
-              {submittingLock ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Confirm & Hold Slot <ChevronRight className="h-4 w-4 stroke-[3]" />
-            </Button>
+              <Button variant="gradient" disabled={!canProceed || submittingLock} onClick={handleRegisterTransactionLock} className="w-full text-black font-black uppercase text-xs py-5 rounded-xl flex items-center justify-center gap-1 mt-2 shadow-[0_4px_20px_rgba(255,193,7,0.2)]">
+                {submittingLock ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Confirm & Hold Slot <ChevronRight className="h-4 w-4 stroke-[3]" />
+              </Button>
+            </div>
+
           </div>
 
           {/* Desktop Layout */}
@@ -655,7 +659,16 @@ export default function FlexibleSlotBookingPage() {
                     key={time}
                     type="button"
                     disabled={!isAvailable}
-                    onClick={() => { setSelectedStartTime(time); setMobileStartTimeOpen(false); }}
+                    onClick={() => { 
+                      setSelectedStartTime(time); 
+                      setMobileStartTimeOpen(false); 
+                      setTimeout(() => {
+                        confirmButtonRef.current?.scrollIntoView({
+                          behavior: 'smooth',
+                          block: 'end'
+                        });
+                      }, 300);
+                    }}
                     className={`p-3 text-center rounded-xl text-xs font-black uppercase transition-all tracking-wider border ${!isAvailable
                       ? "bg-zinc-950/40 border-zinc-900/40 text-zinc-800 cursor-not-allowed line-through"
                       : isSelected
