@@ -76,6 +76,12 @@ function FoodMenuPageContent() {
   };
 
   const handleAddToCart = (item: any) => {
+    // Check if item is in stock
+    if (item.quantity <= 0) {
+      toast.error(`${item.name} is out of stock`);
+      return;
+    }
+
     dispatch(
       addToCart({
         menu_item_id: item.id,
@@ -88,11 +94,24 @@ function FoodMenuPageContent() {
     toast.success(`${item.name} added to cart`);
   };
 
+  const handleIncrementQuantity = (item: any) => {
+    const currentQuantityInCart = getCartItemQuantity(item.id);
+
+    // Check if we can add more based on available stock
+    if (currentQuantityInCart >= item.quantity) {
+      toast.error(`Only ${item.quantity} ${item.name} available in stock`);
+      return;
+    }
+
+    dispatch(incrementQuantity(item.id));
+  };
+
   const filteredItems = useMemo(() => {
     return menuItems.filter((item) => {
       const matchesCategory = activeCategory === "all" || item.category === activeCategory;
       const matchesSearch = !searchQuery || item.name.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
+      const hasStock = item.quantity > 0; // Only show items with available stock
+      return matchesCategory && matchesSearch && hasStock;
     });
   }, [menuItems, activeCategory, searchQuery]);
 
@@ -280,7 +299,7 @@ function FoodMenuPageContent() {
                                 </span>
                                 <button
                                   type="button"
-                                  onClick={() => dispatch(incrementQuantity(item.id))}
+                                  onClick={() => handleIncrementQuantity(item)}
                                   className="h-6 w-6 flex items-center justify-center rounded-md bg-gradient-primary text-[var(--button-text)] transition-all hover:scale-110"
                                 >
                                   <Plus className="h-3 w-3" />

@@ -40,11 +40,29 @@ export default function FoodOrderPage() {
   const categories = ["All", "Snacks", "Drinks", "Meals"];
 
   const filteredItems = useMemo(() => {
-    if (activeCategory === "All") return menuItems;
-    return menuItems.filter(item => item.category === activeCategory);
+    const filtered = activeCategory === "All"
+      ? menuItems
+      : menuItems.filter(item => item.category === activeCategory);
+
+    // Only show items with stock available
+    return filtered.filter(item => item.quantity > 0);
   }, [menuItems, activeCategory]);
 
   const addToCart = (item: any) => {
+    const currentQuantity = cart[item.id]?.quantity || 0;
+
+    // Check if we can add more based on available stock
+    if (currentQuantity >= item.quantity) {
+      toast.error(`Only ${item.quantity} ${item.name} available in stock`);
+      return;
+    }
+
+    // Check if item is in stock
+    if (item.quantity <= 0) {
+      toast.error(`${item.name} is out of stock`);
+      return;
+    }
+
     setCart(prev => ({
       ...prev,
       [item.id]: {
