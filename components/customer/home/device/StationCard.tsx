@@ -1,13 +1,36 @@
 import { Station } from '@/app/(customer)/home/device/page'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation';
+import { useAppDispatch } from '@/lib/redux/hooks';
+import { setDeviceType, setPricing, resetBooking } from '@/lib/redux/slices/bookingSlice';
 
 export function StationCard({ station, motionProps }: { station: Station; motionProps: object }) {
     const avail = station.isAvailable
 
     const router = useRouter()
+    const dispatch = useAppDispatch()
     const handleClick = () => {
-        router.push('/booking')
+        dispatch(resetBooking());
+
+        const hourlyRate = Number(station.regular_hourly_rate) || 0;
+
+        dispatch(setDeviceType({
+            id: station.device_type_id,
+            name: station.name,
+            hourlyRate: hourlyRate,
+            includedPlayers: station.included_players,
+            maxPlayers: station.max_players,
+            extraPlayerCharge: Number(station.extra_player_charge)
+        }));
+
+        dispatch(setPricing({
+            subtotal: hourlyRate,
+            subscriptionDiscount: 0,
+            promoDiscount: 0,
+            total: hourlyRate
+        }));
+
+        router.push('/booking/slots-v2')
     }
 
     return (

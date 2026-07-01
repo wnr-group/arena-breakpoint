@@ -9,6 +9,7 @@ import { SkeletonGrid } from '@/components/shared/SkeletonCard';
 
 export interface Station {
   id: number
+  device_type_id: string
   name: string
   station_num: string
   regular_hourly_rate: number
@@ -135,6 +136,7 @@ export default function DevicePage() {
 
                 const stationData: Station = {
                   id: device.id,
+                  device_type_id: device.device_type?.id || '',
                   name: device.device_type?.display_name || 'Unknown Station',
                   station_num: device.station_number,
                   regular_hourly_rate: device.device_type?.regular_hourly_rate || 0,
