@@ -27,6 +27,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 
 function FoodMenuPageContent() {
   const router = useRouter();
@@ -128,8 +129,10 @@ function FoodMenuPageContent() {
   return (
     <div className="w-full max-w-7xl mx-auto py-4 px-4 space-y-8 pb-36 animate-in fade-in duration-300">
 
-      <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 select-none">
-        <span>Home</span>
+      <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 select-none mt-9 relative z-0">
+        <Link href="/" className="hover:text-primary transition-colors">
+          Home
+        </Link>
         <ChevronRight className="h-3 w-3 text-zinc-700" />
         <span className="text-primary">Respawn Refuel</span>
       </div>
@@ -156,22 +159,24 @@ function FoodMenuPageContent() {
         )}
       </div>
 
-      <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center bg-[#0c0c0e]/60 p-4 rounded-2xl border border-zinc-900/80">
-        <div className="flex gap-2 overflow-x-auto w-full xl:w-auto scrollbar-none py-0.5">
+      <div className="bg-[#0c0c0e]/60 p-4 rounded-2xl border border-zinc-900/80 flex flex-col xl:flex-row gap-4 items-center">
+
+        <div className="flex flex-wrap xl:flex-nowrap gap-2 w-full xl:w-auto xl:flex-1 justify-start">
           <button
             onClick={() => setActiveCategory("all")}
-            className={`px-5 py-2.5 text-xs font-black uppercase border rounded-xl transition-all duration-300 whitespace-nowrap ${activeCategory === "all"
+            className={`px-6 py-2.5 text-xs font-black uppercase border rounded-xl transition-all duration-300 ${activeCategory === "all"
                 ? "bg-gradient-primary text-[var(--button-text)] border-primary"
                 : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
               }`}
           >
             All Items
           </button>
+
           {categories.map((category) => (
             <button
               key={category}
               onClick={() => setActiveCategory(category)}
-              className={`px-5 py-2.5 text-xs font-black uppercase border rounded-xl transition-all duration-300 whitespace-nowrap ${activeCategory === category
+              className={`px-6 py-2.5 text-xs font-black uppercase border rounded-xl transition-all duration-300 ${activeCategory === category
                   ? "bg-gradient-primary text-[var(--button-text)] border-primary"
                   : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
                 }`}
@@ -187,11 +192,11 @@ function FoodMenuPageContent() {
             placeholder="Search menu items..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-zinc-950 border-zinc-800/80 text-xs font-medium text-white h-11 rounded-xl focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-transparent transition-all"
+            className="pl-10 bg-zinc-950 border-zinc-800/80 text-xs font-medium text-white h-11 rounded-xl w-full"
           />
         </div>
       </div>
-
+      
       {/* Menu Categories Grid Loop Output */}
       {Object.keys(groupedItems).length === 0 ? (
         <Card className="bg-[#111]/40 border-zinc-900 p-16 rounded-2xl shadow-xl glow-box-hover">
@@ -260,46 +265,48 @@ function FoodMenuPageContent() {
                           </p>
                         </div>
 
-                        <div className="flex items-center justify-between pt-2 border-t border-zinc-900/60 w-full">
-                          <span className="text-sm font-black text-primary font-mono">
-                            ₹{Number(item.price)}.00
-                          </span>
+                        <div className="flex flex-col gap-2 pt-3 border-t border-zinc-900/60 w-full">
+                          <div className="flex items-center justify-between w-full">
+                            <span className="text-sm font-black text-primary font-mono shrink-0">
+                              ₹{Number(item.price)}.00
+                            </span>
 
-                          <div className="w-[110px] flex justify-end">
-                            {quantityInCart > 0 ? (
-                              <div className="flex items-center bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 p-1 rounded-lg w-full shadow-md animate-in zoom-in-95 duration-150">
+                            <div className="flex items-center justify-end">
+                              {quantityInCart === 0 ? (
                                 <button
-                                  type="button"
-                                  onClick={() => dispatch(decrementQuantity(item.id))}
-                                  className="h-6 w-6 flex items-center justify-center rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
+                                  onClick={() => handleAddToCart(item)}
+                                  className="h-8 w-8 bg-gradient-primary text-[var(--button-text)] flex items-center justify-center rounded-lg shadow-sm active:scale-95 transition-all disabled:bg-zinc-900 disabled:text-zinc-700 disabled:border-transparent cursor-pointer"
                                 >
-                                  <Minus className="h-3 w-3" />
+                                  <ShoppingCart className="h-4 w-4 stroke-[2.5]" />
                                 </button>
-                                <span className="text-xs font-black text-primary flex-1 text-center font-mono">
-                                  {quantityInCart}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => dispatch(incrementQuantity(item.id))}
-                                  className="h-6 w-6 flex items-center justify-center rounded-md bg-gradient-primary text-[var(--button-text)] transition-all hover:scale-110"
-                                >
-                                  <Plus className="h-3 w-3" />
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => handleAddToCart(item)}
-                                disabled={item.quantity === 0}
-                                className="h-8 w-8 bg-gradient-primary text-[var(--button-text)] flex items-center justify-center rounded-lg shadow-sm active:scale-95 transition-all disabled:bg-zinc-900 disabled:text-zinc-700 disabled:border-transparent cursor-pointer"
-                              >
-                                <ShoppingCart className="h-3.5 w-3.5 stroke-[2.5]" />
-                              </button>
-                            )}
+                              ) : (
+                                <div className="hidden sm:flex items-center bg-zinc-900 border border-zinc-700 rounded-lg p-1">
+                                  <button onClick={() => dispatch(decrementQuantity(item.id))} className="h-7 w-7 flex items-center justify-center  rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all">
+                                    <Minus className="h-3.5 w-3.5" />
+                                  </button>
+                                  <span className="text-xs font-black text-primary w-6 text-center font-mono">{quantityInCart}</span>
+                                  <button onClick={() => dispatch(incrementQuantity(item.id))} className="h-7 w-7 flex items-center justify-center rounded-md bg-gradient-primary text-[var(--button-text)] transition-all hover:scale-110">
+                                    <Plus className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </div>
+
+                          {/* Mobile view*/}
+                          {quantityInCart > 0 && (
+                            <div className="flex sm:hidden items-center justify-between bg-zinc-900 border border-zinc-700 rounded-lg p-1 w-full animate-in slide-in-from-top-1 duration-200">
+                              <button onClick={() => dispatch(decrementQuantity(item.id))} className="h-7 w-7 flex items-center justify-center  rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all">
+                                <Minus className="h-3.5 w-3.5" />
+                              </button>
+                              <span className="text-xs font-black text-primary font-mono">{quantityInCart}</span>
+                              <button onClick={() => dispatch(incrementQuantity(item.id))} className="h-7 w-7 flex items-center justify-center rounded-md bg-gradient-primary text-[var(--button-text)] transition-all hover:scale-110">
+                                <Plus className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
-
                     </Card>
                   );
                 })}
@@ -308,7 +315,6 @@ function FoodMenuPageContent() {
           ))}
         </div>
       )}
-
       {cartItemCount > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/80 backdrop-blur-md border-t border-zinc-900 p-4 animate-in slide-in-from-bottom duration-300 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
           <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
@@ -353,3 +359,4 @@ export default function FoodMenuPage() {
     </Suspense>
   );
 }
+
