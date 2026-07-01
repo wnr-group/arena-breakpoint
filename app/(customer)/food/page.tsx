@@ -9,6 +9,7 @@ import {
   incrementQuantity,
   decrementQuantity,
   setBookingContext,
+  clearCart,
 } from "@/lib/redux/slices/foodCartSlice";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -35,11 +36,34 @@ function FoodMenuPageContent() {
   const cartItems = useAppSelector((state) => state.foodCart.items);
   const bookingNumber = useAppSelector((state) => state.foodCart.bookingNumber);
 
+  const cartTotal = useMemo(() => {
+    return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  }, [cartItems]);
+
+  const cartItemCount = useMemo(() => {
+    return cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  }, [cartItems]);
+
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
+  const [isCartListOpen, setIsCartListOpen] = useState(false);
+
+  // Dynamically set main element z-index to ensure the fixed cart bar stays above the footer
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mainEl = document.querySelector('main');
+    if (cartItemCount > 0) {
+      if (mainEl) mainEl.style.zIndex = '50';
+    } else {
+      if (mainEl) mainEl.style.zIndex = '';
+    }
+    return () => {
+      if (mainEl) mainEl.style.zIndex = '';
+    };
+  }, [cartItemCount]);
 
   useEffect(() => {
     const urlBookingId = searchParams.get("bookingId");
@@ -105,13 +129,7 @@ function FoodMenuPageContent() {
     return groups;
   }, [filteredItems]);
 
-  const cartTotal = useMemo(() => {
-    return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  }, [cartItems]);
 
-  const cartItemCount = useMemo(() => {
-    return cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  }, [cartItems]);
 
   const getCartItemQuantity = (menuItemId: string) => {
     return cartItems.find((item) => item.menu_item_id === menuItemId)?.quantity || 0;
@@ -310,34 +328,124 @@ function FoodMenuPageContent() {
       )}
 
       {cartItemCount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/80 backdrop-blur-md border-t border-zinc-900 p-4 animate-in slide-in-from-bottom duration-300 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-          <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 bg-primary/10 border border-primary/20 text-primary hidden sm:flex items-center justify-center rounded-xl shadow-md">
-                <ShoppingCart className="h-4 w-4" />
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0d0a14] border-t border-zinc-900 p-4 md:p-5 shadow-2xl backdrop-blur-lg bg-opacity-95">
+          <div className="max-w-6xl mx-auto">
+            {/* Expanded Cart Items List */}
+            {isCartListOpen && (
+              <div className="mb-4 max-h-60 overflow-y-auto border-b border-zinc-900 pb-4 space-y-2.5 animate-in slide-in-from-bottom-2 duration-200">
+                <div className="flex justify-between items-center text-[10px] font-black text-zinc-500 uppercase tracking-widest pb-1 border-b border-zinc-900/60">
+                  <span>Selected Food Items</span>
+                  <span>Quantity & Price</span>
+                </div>
+                {cartItems.map((item) => (
+                  <div key={item.menu_item_id} className="flex justify-between items-center text-sm py-1.5 border-b border-zinc-900/10">
+                    <span className="text-white font-bold uppercase text-xs">{item.name}</span>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1 bg-zinc-950 border border-zinc-800 rounded-md p-1 shadow-md">
+                        <button
+                          type="button"
+                          onClick={() => dispatch(decrementQuantity(item.menu_item_id))}
+                          className="p-1 text-zinc-500 hover:text-white hover:bg-zinc-900 rounded"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <span className="text-xs font-black text-primary w-5 text-center">{item.quantity}</span>
+                        <button
+                          type="button"
+                          onClick={() => dispatch(incrementQuantity(item.menu_item_id))}
+                          className="p-1 text-zinc-500 hover:text-white hover:bg-zinc-900 rounded"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <span className="text-primary font-black text-xs min-w-[60px] text-right">₹{item.price * item.quantity}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div>
-                <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest">Lounge Basket Summary</p>
-                <p className="text-xs text-zinc-300 font-medium">
-                  Added <span className="text-white font-black">{cartItemCount} items</span> inside your cart
-                </p>
-              </div>
-            </div>
+            )}
 
-            <div className="flex items-center gap-5">
-              <div className="text-right">
-                <span className="text-[9px] text-zinc-500 block font-black uppercase tracking-wider">Subtotal</span>
-                <span className="text-xl font-black text-primary tracking-tight">
-                  ₹{cartTotal}.00
-                </span>
+            {/* Mobile Layout */}
+            <div className="flex md:hidden flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-primary text-black rounded-full w-9 h-9 flex items-center justify-center font-black text-sm">
+                    {cartItemCount}
+                  </div>
+                  <div>
+                    <p className="text-xs text-zinc-500 font-semibold">Cart Total</p>
+                    <p className="text-xl font-black text-primary">₹{cartTotal}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => setIsCartListOpen(!isCartListOpen)}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-9 border-zinc-800 text-zinc-300 hover:bg-zinc-900"
+                  >
+                    {isCartListOpen ? "Hide Items" : "View Items"}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      dispatch(clearCart());
+                      setIsCartListOpen(false);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-9 border-zinc-800 text-red-400 hover:bg-red-950/20"
+                  >
+                    Clear
+                  </Button>
+                </div>
               </div>
               <Button
-                variant="gradient"
                 onClick={() => router.push("/food/checkout")}
-                className="text-black font-black uppercase text-xs h-11 px-5 rounded-xl flex items-center gap-2 shadow-[0_4px_15px_rgba(255,193,7,0.25)] active:scale-[0.98] transition-all"
+                className="w-full bg-gradient-primary text-[var(--button-text)] font-black uppercase text-sm h-12 rounded-xl flex items-center justify-center gap-2"
               >
-                <ShoppingCart className="h-6 w-4 stroke-[3]" />  Your Cart
+                <ShoppingCart className="h-4 w-4" />
+                Your Cart
               </Button>
+            </div>
+
+            {/* Desktop Layout */}
+            <div className="hidden md:flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="bg-primary text-black rounded-full w-10 h-10 flex items-center justify-center font-black text-base">
+                  {cartItemCount}
+                </div>
+                <div>
+                  <p className="text-xs text-zinc-500 font-semibold">Cart Total</p>
+                  <p className="text-xl font-black text-primary">₹{cartTotal}</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => setIsCartListOpen(!isCartListOpen)}
+                  variant="outline"
+                  className="font-bold uppercase text-xs h-12 px-6 border-zinc-800 text-zinc-300 hover:bg-zinc-900"
+                >
+                  {isCartListOpen ? "Hide Items" : "View Items"}
+                </Button>
+                <Button
+                  onClick={() => {
+                    dispatch(clearCart());
+                    setIsCartListOpen(false);
+                  }}
+                  variant="outline"
+                  className="font-bold uppercase text-xs h-12 px-6 border-zinc-800 text-red-400 hover:bg-red-950/20"
+                >
+                  Clear Cart
+                </Button>
+                <Button
+                  onClick={() => router.push("/food/checkout")}
+                  className="bg-gradient-primary text-[var(--button-text)] font-black uppercase text-sm h-12 px-8 flex items-center gap-2 rounded-xl"
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  Your Cart
+                </Button>
+              </div>
             </div>
           </div>
         </div>
