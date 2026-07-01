@@ -40,6 +40,7 @@ import {
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
+import Link from "next/link";
 
 type Step = "cart" | "phone" | "details" | "success";
 
@@ -292,9 +293,17 @@ export default function FoodCheckoutPage() {
     return (
       <div className="w-full max-w-5xl mx-auto py-6 px-4 space-y-6 animate-in fade-in duration-200">
         <div className="flex flex-col gap-1 select-none">
-          <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-zinc-500">
-            <span>Home</span><ChevronRight className="h-2.5 w-2.5 text-zinc-700" />
-            <span>Respawn Refuel</span><ChevronRight className="h-2.5 w-2.5 text-zinc-700" />
+          <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-4 mt-9 relative z-0">
+            <Link href="/" className="hover:text-primary transition-colors">
+              Home
+            </Link>
+            <ChevronRight className="h-2.5 w-2.5 text-zinc-700" />
+
+            <Link href="/food" className="hover:text-primary transition-colors">
+              Respawn Refuel
+            </Link>
+            <ChevronRight className="h-2.5 w-2.5 text-zinc-700" />
+
             <span className="text-primary">Cart</span>
           </div>
           <h1 className="text-3xl font-black uppercase text-white tracking-tight mt-2">
@@ -305,32 +314,33 @@ export default function FoodCheckoutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-7 space-y-3.5">
             {cartItems.map((item) => (
-              <Card key={item.menu_item_id} className="bg-[#121214] border border-zinc-900 p-4 rounded-xl flex items-center justify-between gap-4 transition-all hover:border-zinc-800 glow-box-hover">
-                <div className="flex items-center gap-4 min-w-0">
-                  {item.image_url ? (
-                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-zinc-950 flex-shrink-0 border border-zinc-900/60">
-                      <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className="w-16 h-16 rounded-xl bg-zinc-950 border border-zinc-900/60 flex items-center justify-center text-zinc-800 flex-shrink-0">
-                      <Sparkles className="h-4 w-4 opacity-30" />
-                    </div>
-                  )}
-                  <div className="min-w-0 space-y-0.5">
-                    <h3 className="font-black text-sm text-zinc-100 truncate tracking-wide">{item.name}</h3>
-                    <p className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-widest select-none">{item.category}</p>
+              <Card
+                key={item.menu_item_id}
+                className="bg-[#121214] border border-zinc-900 p-2.5 rounded-xl flex items-center justify-between gap-2 transition-all hover:border-zinc-800"
+              >
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-950 border border-zinc-900/60 flex-shrink-0">
+                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-black text-[12px] text-zinc-100 leading-tight line-clamp-2 break-words">
+                      {item.name}
+                    </h3>
+                    <p className="text-[8px] text-zinc-500 font-extrabold uppercase tracking-widest">{item.category}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-6 flex-shrink-0 select-none">
-                  <div className="flex items-center bg-zinc-950 border border-zinc-800 p-2 rounded-xl">
-                    <button type="button" onClick={() => dispatch(decrementQuantity(item.menu_item_id))} className="h-7 w-7 flex items-center justify-center text-zinc-500 hover:text-white transition-colors"><Minus className="h-3 w-3" /></button>
-                    <span className="text-xs font-black text-zinc-200 w-6 text-center font-mono">{item.quantity}</span>
-                    <button type="button" onClick={() => dispatch(incrementQuantity(item.menu_item_id))} className="h-7 w-7 flex items-center justify-center text-black bg-primary rounded hover:bg-primary-hover ml-2 transition-all"><Plus className="h-3 w-3" /></button>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center bg-zinc-950 border border-zinc-800 p-0.5 rounded-lg">
+                    <button type="button" onClick={() => dispatch(decrementQuantity(item.menu_item_id))} className="h-6 w-6 flex items-center justify-center text-zinc-500"><Minus className="h-3 w-3" /></button>
+                    <span className="text-[10px] font-black text-zinc-200 w-5 text-center font-mono">{item.quantity}</span>
+                    <button type="button" onClick={() => dispatch(incrementQuantity(item.menu_item_id))} className="h-6 w-6 flex items-center justify-center text-black bg-primary rounded"><Plus className="h-3 w-3" /></button>
                   </div>
-                  <span className="text-xl font-mono font-black text-primary min-w-[55px] text-right">₹{item.price * item.quantity}</span>
-                  <button type="button" onClick={() => dispatch(removeFromCart(item.menu_item_id))} className="text-zinc-600 hover:text-red-400 transition-colors pl-1">
-                    <Trash2 className="h-4 w-4" />
+
+                  <span className="text-[13px] font-mono font-black text-primary w-[40px] text-right">₹{item.price * item.quantity}</span>
+
+                  <button type="button" onClick={() => dispatch(removeFromCart(item.menu_item_id))} className="text-zinc-600 hover:text-red-400">
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </Card>
@@ -609,17 +619,18 @@ export default function FoodCheckoutPage() {
           </Card>
         </div>
 
-        <div className="flex items-center justify-center gap-4 pt-2 w-full max-w-lg">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4 w-full px-4">
           <Button
             onClick={handleNewOrder}
-            className="flex-1 mr-10 bg-transparent hover:bg-zinc-900/60 border border-primary/40 text-[11px] font-black text-primary uppercase h-11 px-5 rounded-xl transition-all shadow-inner tracking-wider flex items-center justify-center gap-1.5"
+            className="w-full sm:flex-1 bg-transparent hover:bg-zinc-900/60 border border-primary/40 text-[11px] font-black text-primary uppercase h-12 rounded-xl transition-all shadow-inner tracking-wider flex items-center justify-center gap-1.5"
           >
             Place Another Order
           </Button>
+
           <Button
             onClick={() => router.push("/")}
             variant="ghost"
-            className="text-[11px] font-black uppercase text-zinc-400 hover:text-white h-11 px-4 tracking-wider transition-colors"
+            className="w-full sm:flex-1 text-[11px] font-black uppercase text-zinc-400 hover:text-white h-12 rounded-xl tracking-wider transition-colors flex items-center justify-center"
           >
             Back to Home
           </Button>
