@@ -319,11 +319,7 @@ export default function FlexibleSlotBookingPage() {
               </div>
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
-            {!selectedStartTime && (
-              <p className="text-[10px] text-amber-500/80 font-bold bg-amber-500/5 border border-amber-500/10 p-2 rounded-lg text-center mt-1">
-                ⚠️ Start time must be selected to proceed.
-              </p>
-            )}
+
 
 
 
@@ -388,10 +384,10 @@ export default function FlexibleSlotBookingPage() {
             <div ref={confirmButtonRef} className="w-full">
               {!canProceed && (
                 <p className="text-[11px] font-bold text-amber-500 text-center mt-2 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
-                  {!calendarDay 
-                    ? "⚠️ Please select a date to proceed" 
-                    : !selectedStartTime 
-                      ? "⚠️ Please select a start time to proceed" 
+                  {!calendarDay
+                    ? "⚠️ Please select a date to proceed"
+                    : !selectedStartTime
+                      ? "⚠️ Please select a start time to proceed"
                       : "⚠️ Selected time slot is not available"}
                 </p>
               )}
@@ -664,9 +660,9 @@ export default function FlexibleSlotBookingPage() {
                     key={time}
                     type="button"
                     disabled={!isAvailable}
-                    onClick={() => { 
-                      setSelectedStartTime(time); 
-                      setMobileStartTimeOpen(false); 
+                    onClick={() => {
+                      setSelectedStartTime(time);
+                      setMobileStartTimeOpen(false);
                       setTimeout(() => {
                         confirmButtonRef.current?.scrollIntoView({
                           behavior: 'smooth',
