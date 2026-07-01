@@ -258,17 +258,17 @@ export default function FlexibleSlotBookingPage() {
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="flex-1 space-y-4 md:space-y-6">
           {/* Device Info */}
-          <div className="bg-[#111] border border-zinc-900 rounded-xl p-4 flex items-center justify-between shadow-md glow-box-hover">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="p-2.5 bg-zinc-950 border border-zinc-800 text-primary rounded-lg">
+          <div className="bg-[#111] border border-zinc-900 rounded-xl p-4 flex items-center justify-between gap-4 shadow-md glow-box-hover">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="p-2.5 bg-zinc-950 border border-zinc-800 text-primary rounded-lg flex-shrink-0">
                 <Clock className="h-4 w-4" />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <h4 className="font-black text-xs sm:text-sm min-w-0 text-white uppercase break-words leading-tight">{deviceTypeName || "Gaming Device"}</h4>
                 <p className="text-zinc-400 text-xs font-bold mt-0.5"><span className="text-primary font-black">₹{hourlyRate || 0}</span> / hour</p>
               </div>
             </div>
-            <Button variant="gradient" onClick={() => router.push("/booking")} className="text-black font-black text-[10px]  uppercase h-7 px-3 ">
+            <Button variant="gradient" onClick={() => router.push("/booking")} className="text-black font-black text-[10px] uppercase h-7 px-3 flex-shrink-0">
               Change
             </Button>
           </div>
@@ -321,7 +321,7 @@ export default function FlexibleSlotBookingPage() {
                 <div className="flex justify-between"><span>Duration:</span><strong className="text-white font-bold">{selectedDurationLabel}</strong></div>
                 <div className="flex justify-between"><span>Start Time:</span><strong className="text-primary font-black">{selectedStartTime || "Not Selected"}</strong></div>
                 <div className="flex justify-between"><span>End Time:</span><strong className="text-primary font-black">{endTime || "--"}</strong></div>
-                <div className="flex justify-between"><span>Device:</span><strong className="text-white uppercase truncate max-w-[200px]">{deviceTypeName || "N/A"}</strong></div>
+                <div className="flex justify-between"><span>Device:</span><strong className="text-xs text-white uppercase truncate max-w-[200px]">{deviceTypeName || "N/A"}</strong></div>
               </div>
 
               {/* Player Multiplier Controller */}
@@ -480,9 +480,9 @@ export default function FlexibleSlotBookingPage() {
                 <span>End Time:</span>
                 <strong className="text-primary font-black">{endTime || "--"}</strong>
               </div>
-              <div className="flex justify-between">
+               <div className="flex justify-between">
                 <span>Device:</span>
-                <strong className="text-white uppercase text-right max-w-[200px] break-words leading-tight max-w-[160px]">{deviceTypeName || "N/A"}</strong>
+                <strong className="text-xs text-white uppercase text-right max-w-[200px] break-words leading-tight max-w-[160px]">{deviceTypeName || "N/A"}</strong>
               </div>
             </div>
 
