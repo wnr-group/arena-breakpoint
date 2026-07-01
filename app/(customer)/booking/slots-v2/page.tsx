@@ -319,6 +319,11 @@ export default function FlexibleSlotBookingPage() {
               </div>
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
+            {!selectedStartTime && (
+              <p className="text-[10px] text-amber-500/80 font-bold bg-amber-500/5 border border-amber-500/10 p-2 rounded-lg text-center mt-1">
+                ⚠️ Start time must be selected to proceed.
+              </p>
+            )}
 
 
 
