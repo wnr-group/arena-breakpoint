@@ -265,7 +265,7 @@ export default function FlexibleSlotBookingPage() {
               </div>
               <div className="min-w-0">
                 <h4 className="font-black text-xs sm:text-sm min-w-0 text-white uppercase break-words leading-tight">{deviceTypeName || "Gaming Device"}</h4>
-                <p className="text-zinc-500 text-[10px] font-bold mt-0.5">₹{hourlyRate || 0}/hour</p>
+                <p className="text-zinc-400 text-xs font-bold mt-0.5"><span className="text-primary font-black">₹{hourlyRate || 0}</span> / hour</p>
               </div>
             </div>
             <Button variant="gradient" onClick={() => router.push("/booking")} className="text-black font-black text-[10px]  uppercase h-7 px-3 ">
@@ -287,25 +287,25 @@ export default function FlexibleSlotBookingPage() {
           {/* Mobile Flow Container */}
           <div className="space-y-4 md:hidden">
             <div onClick={() => setMobileCalendarOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer glow-box-hover">
-              <div className="space-y-0.5">
-                <span className="text-[8px] font-black text-zinc-500 uppercase block">Select Date</span>
-                <span className="text-xs font-black text-white">{calendarDay ? calendarDay.toLocaleDateString() : "Choose Date"}</span>
+              <div className="space-y-1">
+                <span className="text-label-enhanced block">Select Date</span>
+                <span className="text-sm font-black text-white">{calendarDay ? calendarDay.toLocaleDateString() : "Choose Date"}</span>
               </div>
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
 
             <div onClick={() => setMobileDurationOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer glow-box-hover">
-              <div className="space-y-0.5">
-                <span className="text-[8px] font-black text-zinc-500 uppercase block">Duration</span>
-                <span className="text-xs font-black text-white">{selectedDurationLabel}</span>
+              <div className="space-y-1">
+                <span className="text-label-enhanced block">Duration</span>
+                <span className="text-sm font-black text-white">{selectedDurationLabel}</span>
               </div>
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
 
             <div onClick={() => setMobileStartTimeOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer glow-box-hover">
-              <div className="space-y-0.5">
-                <span className="text-[8px] font-black text-zinc-500 uppercase block">Start Time</span>
-                <span className="text-xs font-black text-primary">{selectedStartTime || "Choose Start Time"}</span>
+              <div className="space-y-1">
+                <span className="text-label-enhanced block">Start Time</span>
+                <span className="text-sm font-black text-primary">{selectedStartTime || "Choose Start Time"}</span>
               </div>
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
@@ -314,9 +314,9 @@ export default function FlexibleSlotBookingPage() {
 
             {/* Inline Dynamic Mobile Summary Card Block */}
             <Card className="bg-[#111] border border-zinc-900 p-5 space-y-4 shadow-xl rounded-xl glow-box-strong">
-              <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider border-b border-zinc-900/60 pb-2">Booking Summary</h3>
+              <h3 className="text-sm font-black text-zinc-300 uppercase tracking-wider border-b border-zinc-900/60 pb-2">Booking Summary</h3>
 
-              <div className="space-y-2.5 text-xs text-zinc-400 border-b border-zinc-900/60 pb-3">
+              <div className="space-y-2.5 text-sm text-zinc-300 border-b border-zinc-900/60 pb-3">
                 <div className="flex justify-between"><span>Date:</span><strong className="text-white font-bold">{calendarDay ? calendarDay.toLocaleDateString() : "Not Selected"}</strong></div>
                 <div className="flex justify-between"><span>Duration:</span><strong className="text-white font-bold">{selectedDurationLabel}</strong></div>
                 <div className="flex justify-between"><span>Start Time:</span><strong className="text-primary font-black">{selectedStartTime || "Not Selected"}</strong></div>
@@ -328,7 +328,7 @@ export default function FlexibleSlotBookingPage() {
               <div className="space-y-2">
                 <h4 className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Number of Players</h4>
                 <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-lg p-2.5">
-                  <p className="text-[11px] text-zinc-500">{includedPlayers} included • Max {maxPlayers}</p>
+                  <p className="text-xs text-zinc-300 font-bold">{includedPlayers} included • Max {maxPlayers}</p>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -358,13 +358,13 @@ export default function FlexibleSlotBookingPage() {
               </div>
 
               {/* Mobile Price Calculations */}
-              <div className="space-y-2 text-xs text-zinc-500 pt-1">
+              <div className="space-y-2 text-sm text-zinc-300 pt-1">
                 <div className="flex justify-between"><span>Base Rate ({selectedDurationLabel})</span><span className="text-white font-bold">₹{Math.round(baselineSubtotal)}.00</span></div>
                 {extraPlayersCount > 0 && (
                   <div className="flex justify-between"><span>Extra Players ({extraPlayersCount} × {selectedDurationLabel})</span><span className="text-primary font-bold">₹{Math.round(extraPlayersCharge)}.00</span></div>
                 )}
                 <div className="flex justify-between items-baseline pt-2.5 border-t border-zinc-900 text-white font-black">
-                  <span className="text-xs uppercase">Total Payable</span>
+                  <span className="text-sm uppercase">Total Payable</span>
                   <span className="text-xl text-primary">₹{Math.round(aggregatedPayableTotal)}.00</span>
                 </div>
               </div>
@@ -461,9 +461,9 @@ export default function FlexibleSlotBookingPage() {
         {/* Desktop Sidebar Summary */}
         <div className="hidden lg:block w-[360px] flex-shrink-0">
           <Card className="bg-[#111] border border-zinc-900 p-6 text-white space-y-6 shadow-2xl rounded-2xl sticky top-24 glow-box-strong">
-            <h3 className="text-sm font-black text-zinc-400 uppercase tracking-wider border-b border-zinc-900 pb-3">Booking Summary</h3>
+            <h3 className="text-sm font-black text-zinc-300 uppercase tracking-wider border-b border-zinc-900 pb-3">Booking Summary</h3>
 
-            <div className="space-y-4 text-xs text-zinc-400 border-b border-zinc-900 pb-3">
+            <div className="space-y-4 text-sm text-zinc-300 border-b border-zinc-900 pb-3">
               <div className="flex justify-between">
                 <span>Date:</span>
                 <strong className="text-white font-bold">{calendarDay ? calendarDay.toDateString() : "Not Selected"}</strong>
@@ -491,7 +491,7 @@ export default function FlexibleSlotBookingPage() {
               <h4 className="text-xs font-black text-zinc-400 uppercase tracking-wider mb-3">Number of Players</h4>
               <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-lg p-3">
                 <div className="flex-1">
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-sm text-zinc-300 font-bold">
                     {includedPlayers} included • Max {maxPlayers}
                   </p>
                 </div>
@@ -521,7 +521,7 @@ export default function FlexibleSlotBookingPage() {
               </div>
             </div>
 
-            <div className="space-y-2.5 text-xs text-zinc-500">
+            <div className="space-y-2.5 text-sm text-zinc-300">
               <div className="flex justify-between">
                 <span>Base Rate ({selectedDurationLabel})</span>
                 <span className="text-white font-bold">₹{Math.round(baselineSubtotal)}.00</span>
