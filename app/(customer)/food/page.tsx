@@ -27,6 +27,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 
 function FoodMenuPageContent() {
   const router = useRouter();
@@ -147,8 +148,10 @@ function FoodMenuPageContent() {
   return (
     <div className="w-full max-w-7xl mx-auto py-4 px-4 space-y-8 pb-36 animate-in fade-in duration-300">
 
-      <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 select-none">
-        <span>Home</span>
+      <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 select-none mt-9 relative z-0">
+        <Link href="/" className="hover:text-primary transition-colors">
+          Home
+        </Link>
         <ChevronRight className="h-3 w-3 text-zinc-700" />
         <span className="text-primary">Respawn Refuel</span>
       </div>
