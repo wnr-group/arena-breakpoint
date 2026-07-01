@@ -132,7 +132,7 @@ export async function addFoodOrderToBooking(
 
     // Update inventory quantities
     for (const item of items) {
-      const { error: inventoryError } = await supabaseAdmin.rpc(
+      const { data: success, error: inventoryError } = await supabaseAdmin.rpc(
         "decrement_menu_item_quantity",
         {
           item_id: item.menu_item_id,
@@ -140,9 +140,10 @@ export async function addFoodOrderToBooking(
         }
       );
 
-      if (inventoryError) {
+      if (inventoryError || !success) {
         console.error("Inventory update error:", inventoryError);
-        // Continue even if inventory update fails
+        // Log for monitoring but don't fail the order
+        // (validation already happened, this is just audit trail)
       }
     }
 
@@ -322,7 +323,7 @@ export async function createStandaloneFoodOrder(
 
     // Update inventory
     for (const item of items) {
-      const { error: inventoryError } = await supabaseAdmin.rpc(
+      const { data: success, error: inventoryError } = await supabaseAdmin.rpc(
         "decrement_menu_item_quantity",
         {
           item_id: item.menu_item_id,
@@ -330,8 +331,9 @@ export async function createStandaloneFoodOrder(
         }
       );
 
-      if (inventoryError) {
-        console.error("Inventory update error:", inventoryError);
+      if (inventoryError || !success) {
+        console.error("Inventory update error:", inventoryError || "Insufficient stock");
+        // Log for monitoring but don't fail the order
       }
     }
 

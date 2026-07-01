@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
 import { PaymentStatusBadge } from "@/components/admin/bookings/PaymentStatusBadge";
 import { BookingsGrid } from "@/components/admin/bookings/BookingsGrid";
@@ -43,6 +45,7 @@ export default function AdminBookingsPage() {
     balanceDue: 0,
     bookingNumber: ""
   });
+  const [quickPaymentMethod, setQuickPaymentMethod] = useState<'cash' | 'card' | 'upi'>('cash');
 
   // Initial load
   useEffect(() => {
@@ -144,11 +147,14 @@ export default function AdminBookingsPage() {
     if (!pendingPaymentModal.bookingId) return;
 
     startTransition(async () => {
-      const result = await markBookingAsPaid(pendingPaymentModal.bookingId!, "cash");
+      const result = await markBookingAsPaid(pendingPaymentModal.bookingId!, quickPaymentMethod);
 
       if (result.success) {
-        toast.success("Payment marked as paid");
+        toast.success("Payment marked as paid", {
+          description: `Received via ${quickPaymentMethod.toUpperCase()}`
+        });
         setPendingPaymentModal({ open: false, bookingId: null, balanceDue: 0, bookingNumber: "" });
+        setQuickPaymentMethod('cash'); // Reset to default
 
         // Now open the checkout modal
         setCheckoutBookingId(pendingPaymentModal.bookingId);
@@ -796,6 +802,29 @@ export default function AdminBookingsPage() {
               <p className="text-xs text-amber-200">
                 Mark this payment as received to proceed with checkout
               </p>
+            </div>
+
+            {/* Payment Method Selector */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+              <Label className="text-xs font-black uppercase text-secondary-content mb-2 block">
+                Payment Method Received
+              </Label>
+              <Select value={quickPaymentMethod} onValueChange={(value: 'cash' | 'card' | 'upi') => setQuickPaymentMethod(value)}>
+                <SelectTrigger className="w-full bg-zinc-800 border-zinc-700 text-white h-11">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-zinc-700">
+                  <SelectItem value="cash" className="text-white hover:bg-zinc-800">
+                    💵 Cash
+                  </SelectItem>
+                  <SelectItem value="card" className="text-white hover:bg-zinc-800">
+                    💳 Card
+                  </SelectItem>
+                  <SelectItem value="upi" className="text-white hover:bg-zinc-800">
+                    📱 UPI
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

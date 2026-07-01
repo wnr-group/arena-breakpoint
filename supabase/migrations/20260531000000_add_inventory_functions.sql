@@ -1,17 +1,37 @@
 -- Function to safely decrement menu item quantity
+-- Returns TRUE if successful, FALSE if insufficient stock
 CREATE OR REPLACE FUNCTION decrement_menu_item_quantity(
   item_id UUID,
   decrement_by INTEGER
 )
-RETURNS VOID
+RETURNS BOOLEAN
 LANGUAGE plpgsql
 AS $$
 DECLARE
   new_quantity INTEGER;
+  current_quantity INTEGER;
 BEGIN
+  -- Get current quantity
+  SELECT quantity INTO current_quantity
+  FROM menu_items
+  WHERE id = item_id;
+
+  -- Check if we have enough stock
+  IF current_quantity IS NULL THEN
+    RAISE NOTICE 'Menu item % not found', item_id;
+    RETURN FALSE;
+  END IF;
+
+  IF current_quantity < decrement_by THEN
+    RAISE NOTICE 'Insufficient stock for item %. Available: %, Requested: %',
+                 item_id, current_quantity, decrement_by;
+    RETURN FALSE;
+  END IF;
+
+  -- Perform the decrement (will fail if constraint violated)
   UPDATE menu_items
   SET
-    quantity = GREATEST(0, quantity - decrement_by),
+    quantity = quantity - decrement_by,
     updated_at = NOW()
   WHERE id = item_id
   RETURNING quantity INTO new_quantity;
@@ -22,6 +42,15 @@ BEGIN
     SET status = 'unavailable'
     WHERE id = item_id;
   END IF;
+
+  RETURN TRUE;
+EXCEPTION
+  WHEN check_violation THEN
+    RAISE NOTICE 'Quantity constraint violated for item %', item_id;
+    RETURN FALSE;
+  WHEN OTHERS THEN
+    RAISE NOTICE 'Error decrementing quantity for item %: %', item_id, SQLERRM;
+    RETURN FALSE;
 END;
 $$;
 

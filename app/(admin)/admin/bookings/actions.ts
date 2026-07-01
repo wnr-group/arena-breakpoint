@@ -808,7 +808,10 @@ export async function markBookingAsPaid(
       .update({ is_paid: true })
       .eq("booking_id", bookingId);
 
-    if (lineItemsError) console.error("Failed to update line items:", lineItemsError);
+    if (lineItemsError) {
+      console.error("Failed to update line items:", lineItemsError);
+      throw new Error("Failed to update line items payment status");
+    }
 
     // Update food items status from 'pending' to 'preparing' since they're now paid
     // This allows kitchen staff to start preparing paid orders
@@ -818,7 +821,11 @@ export async function markBookingAsPaid(
       .eq("booking_id", bookingId)
       .eq("status", "pending"); // Only update pending items (not already preparing/ready/served)
 
-    if (foodItemsError) console.error("Failed to update food items status:", foodItemsError);
+    if (foodItemsError) {
+      console.error("Failed to update food items status:", foodItemsError);
+      // Don't throw - food status is non-critical, payment is already marked
+      // This allows the transaction to succeed even if food status update fails
+    }
 
     return {
       success: true,
