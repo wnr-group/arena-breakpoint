@@ -8,7 +8,7 @@ import { checkFlexibleAvailability, initializeSoftLockReservation as createSoftL
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
-import { Clock, ChevronRight, X, Plus, Minus, AlertCircle , Loader2 } from 'lucide-react';
+import { Clock, ChevronRight, X, Plus, Minus, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 import {
   generateStartTimes,
@@ -379,6 +379,16 @@ export default function FlexibleSlotBookingPage() {
               </div>
             </Card>
 
+            {!canProceed && (
+              <p className="text-[11px] font-bold text-amber-500 text-center mt-2 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
+                {!calendarDay
+                  ? "⚠️ Please select a date to proceed"
+                  : !selectedStartTime
+                    ? "⚠️ Please select a start time to proceed"
+                    : "⚠️ Selected time slot is not available"}
+              </p>
+            )}
+
             <Button variant="gradient" disabled={!canProceed || submittingLock} onClick={handleRegisterTransactionLock} className="w-full text-black font-black uppercase text-xs py-5 rounded-xl flex items-center justify-center gap-1 mt-2 shadow-[0_4px_20px_rgba(255,193,7,0.2)]">
               {submittingLock ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Confirm & Hold Slot <ChevronRight className="h-4 w-4 stroke-[3]" />
@@ -489,7 +499,7 @@ export default function FlexibleSlotBookingPage() {
                 <span>End Time:</span>
                 <strong className="text-primary font-black">{endTime || "--"}</strong>
               </div>
-               <div className="flex justify-between">
+              <div className="flex justify-between">
                 <span>Device:</span>
                 <strong className="text-xs text-white uppercase text-right max-w-[200px] break-words leading-tight max-w-[160px]">{deviceTypeName || "N/A"}</strong>
               </div>
@@ -547,11 +557,21 @@ export default function FlexibleSlotBookingPage() {
               </div>
             </div>
 
+            {!canProceed && (
+              <p className="text-[11px] font-bold text-amber-500 text-center mt-3 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
+                {!calendarDay
+                  ? "⚠️ Please select a date to proceed"
+                  : !selectedStartTime
+                    ? "⚠️ Please select a start time to proceed"
+                    : "⚠️ Selected time slot is not available"}
+              </p>
+            )}
+
             <Button
               variant="gradient"
               disabled={submittingLock || !canProceed}
               onClick={handleRegisterTransactionLock}
-              className="w-full text-black font-black uppercase py-5 text-xs rounded-xl flex items-center justify-center gap-1"
+              className="w-full text-black font-black uppercase py-5 text-xs rounded-xl flex items-center justify-center gap-1 mt-3"
             >
               {submittingLock ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Confirm & Hold Slot <ChevronRight className="h-4 w-4 stroke-[3]" />
