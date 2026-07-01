@@ -553,7 +553,7 @@ export async function confirmBooking(payload: {
 
     const deviceCharges = payload.hourlyRate * durationHours;
     const extraPlayersCount = Math.max(0, payload.playerCount - payload.includedPlayers);
-    const extraPlayersTotal = extraPlayersCount * payload.extraPlayerCharge;
+    const extraPlayersTotal = extraPlayersCount * payload.extraPlayerCharge * durationHours;
     const addonsTotal = payload.addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
 
     // Calculate device subtotal (device + extra players, NOT food)
@@ -613,8 +613,8 @@ export async function confirmBooking(payload: {
       lineItems.push({
         booking_id: booking.id,
         item_type: 'extra_players',
-        description: `Extra Players (${extraPlayersCount} × ₹${payload.extraPlayerCharge})`,
-        quantity: extraPlayersCount,
+        description: `Extra Players (${extraPlayersCount} × ₹${payload.extraPlayerCharge} × ${durationHours}h)`,
+        quantity: extraPlayersCount * durationHours,
         unit_price: payload.extraPlayerCharge,
         line_total: extraPlayersTotal,
         added_by: 'customer',

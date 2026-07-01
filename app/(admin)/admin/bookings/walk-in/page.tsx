@@ -228,6 +228,7 @@ export default function WalkInBookingPage() {
       selectedSlot: `${selectedStartTime} - ${endTime}`,
       slotStartTime: selectedStartTime,
       slotEndTime: endTime,
+      durationHours,
       hourlyRate: Number(selectedDeviceType.regular_hourly_rate) || 0,
       playerCount,
       includedPlayers: selectedDeviceType.included_players,

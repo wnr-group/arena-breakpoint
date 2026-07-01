@@ -24,17 +24,6 @@ export default function AdminLayout({
   return (
     <NotificationProvider>
       <ScrollToTop />
-      <div className="flex h-screen bg-[var(--background)] overflow-hidden font-sans relative">
-      {/* Animated purple background - same as customer pages */}
-      <AnimatedBackground />
-
-      {/* Session Monitor for auto-redirect on expiry */}
-      {!isLoginPage && <SessionMonitor />}
-
-      {/* Notification System */}
-      {!isLoginPage && <AdminNotificationPolling />}
-      {!isLoginPage && <NotificationToastManager />}
-
       <Toaster
         theme="dark"
         position="top-right"
@@ -46,7 +35,20 @@ export default function AdminLayout({
             border: '1px solid #27272a',
           },
         }}
+        style={{
+          zIndex: 99999,
+        }}
       />
+      <div className="flex h-screen bg-[var(--background)] overflow-hidden font-sans relative">
+      {/* Animated purple background - same as customer pages */}
+      <AnimatedBackground />
+
+      {/* Session Monitor for auto-redirect on expiry */}
+      {!isLoginPage && <SessionMonitor />}
+
+      {/* Notification System */}
+      {!isLoginPage && <AdminNotificationPolling />}
+      {!isLoginPage && <NotificationToastManager />}
 
       {/* 1. Left Sidebar (Dynamic Width Control) */}
       {!isLoginPage && (

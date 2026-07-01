@@ -10,7 +10,9 @@ export interface ReportFilters {
 // Food Reports
 export async function getFoodReports(filters?: ReportFilters) {
   try {
-    let query = supabaseAdmin
+    // Get all food items from PAID and PARTIAL bookings
+    // Note: For partial, only include if food item status is "served" or "paid"
+    const { data: allData, error } = await supabaseAdmin
       .from("booking_food_items")
       .select(`
         id,
@@ -25,19 +27,33 @@ export async function getFoodReports(filters?: ReportFilters) {
           booking_number,
           customer_name,
           status,
-          created_at
+          payment_status,
+          created_at,
+          updated_at,
+          payment_groups(paid_at)
         )
       `)
-      .neq("bookings.status", "cancelled");
+      .neq("bookings.status", "cancelled")
+      .in("bookings.payment_status", ["paid", "partial"])
+      .order("created_at", { ascending: false });
 
-    if (filters?.dateFrom) {
-      query = query.gte("created_at", filters.dateFrom);
-    }
-    if (filters?.dateTo) {
-      query = query.lte("created_at", `${filters.dateTo}T23:59:59.999Z`);
-    }
+    if (error) throw error;
 
-    const { data, error } = await query.order("created_at", { ascending: false });
+    // Filter by payment date (use paid_at if available, otherwise use updated_at as fallback)
+    let data = allData;
+    if (filters?.dateFrom || filters?.dateTo) {
+      data = (allData || []).filter((item: any) => {
+        // Use paid_at from payment_groups, fallback to booking updated_at
+        const paidAt = item.bookings?.payment_groups?.paid_at || item.bookings?.updated_at || item.bookings?.created_at;
+        if (!paidAt) return false;
+
+        const paidDate = paidAt.split('T')[0];
+        if (filters.dateFrom && paidDate < filters.dateFrom) return false;
+        if (filters.dateTo && paidDate > filters.dateTo) return false;
+
+        return true;
+      });
+    }
 
     if (error) throw error;
 
@@ -124,7 +140,9 @@ export async function getFoodReports(filters?: ReportFilters) {
 // Device Reports
 export async function getDeviceReports(filters?: ReportFilters) {
   try {
-    let query = supabaseAdmin
+    // Get all device slots from PAID and PARTIAL bookings
+    // Device is typically paid first, so include both
+    const { data: allData, error } = await supabaseAdmin
       .from("booking_device_slots")
       .select(`
         id,
@@ -143,19 +161,36 @@ export async function getDeviceReports(filters?: ReportFilters) {
           booking_number,
           customer_name,
           status,
-          created_at
+          payment_status,
+          subscription_discount,
+          promo_discount,
+          device_subtotal,
+          created_at,
+          updated_at,
+          payment_groups(paid_at)
         )
       `)
-      .in("bookings.status", ["confirmed", "checked_in", "completed"]);
+      .neq("bookings.status", "cancelled")
+      .in("bookings.payment_status", ["paid", "partial"])
+      .order("created_at", { ascending: false });
 
-    if (filters?.dateFrom) {
-      query = query.gte("slot_date", filters.dateFrom);
-    }
-    if (filters?.dateTo) {
-      query = query.lte("slot_date", filters.dateTo);
-    }
+    if (error) throw error;
 
-    const { data, error } = await query.order("created_at", { ascending: false });
+    // Filter by payment date (use paid_at if available, otherwise use updated_at as fallback)
+    let data = allData;
+    if (filters?.dateFrom || filters?.dateTo) {
+      data = (allData || []).filter((slot: any) => {
+        // Use paid_at from payment_groups, fallback to booking updated_at
+        const paidAt = slot.bookings?.payment_groups?.paid_at || slot.bookings?.updated_at || slot.bookings?.created_at;
+        if (!paidAt) return false;
+
+        const paidDate = paidAt.split('T')[0];
+        if (filters.dateFrom && paidDate < filters.dateFrom) return false;
+        if (filters.dateTo && paidDate > filters.dateTo) return false;
+
+        return true;
+      });
+    }
 
     if (error) throw error;
 
@@ -174,8 +209,26 @@ export async function getDeviceReports(filters?: ReportFilters) {
     let totalHours = 0;
     let totalPlayers = 0;
 
+    // Track booking discounts to apply only once per booking (not per slot)
+    const bookingDiscountsApplied: Record<string, boolean> = {};
+
     (data || []).forEach((slot: any) => {
       const deviceType = slot.device_type || "Unknown";
+      const slotRevenue = Number(slot.slot_total) + Number(slot.extra_players_total || 0);
+
+      // Calculate discount for this slot (only apply once per booking)
+      const bookingNumber = slot.bookings?.booking_number;
+      let slotDiscount = 0;
+
+      if (bookingNumber && !bookingDiscountsApplied[bookingNumber]) {
+        const subscriptionDiscount = Number(slot.bookings?.subscription_discount || 0);
+        const promoDiscount = Number(slot.bookings?.promo_discount || 0);
+        slotDiscount = subscriptionDiscount + promoDiscount;
+        bookingDiscountsApplied[bookingNumber] = true;
+      }
+
+      // Revenue after discount (discounts only apply to device revenue, not food)
+      const finalSlotRevenue = Math.max(0, slotRevenue - slotDiscount);
 
       if (!deviceTypeStats[deviceType]) {
         deviceTypeStats[deviceType] = {
@@ -189,11 +242,11 @@ export async function getDeviceReports(filters?: ReportFilters) {
       }
 
       deviceTypeStats[deviceType].totalBookings += 1;
-      deviceTypeStats[deviceType].totalRevenue += Number(slot.slot_total);
+      deviceTypeStats[deviceType].totalRevenue += finalSlotRevenue;
       deviceTypeStats[deviceType].totalHours += slot.duration_hours;
       deviceTypeStats[deviceType].extraPlayerRevenue += Number(slot.extra_players_total || 0);
 
-      totalRevenue += Number(slot.slot_total);
+      totalRevenue += finalSlotRevenue;
       totalBookings += 1;
       totalHours += slot.duration_hours;
       totalPlayers += slot.player_count || 0;
@@ -246,14 +299,20 @@ export async function getRevenueReports(filters?: ReportFilters) {
         customer_name,
         device_subtotal,
         food_subtotal,
+        subscription_discount,
+        promo_discount,
         total_amount,
+        amount_paid,
         payment_status,
         booking_source,
         status,
         created_at,
-        booking_device_slots(slot_date)
+        updated_at,
+        booking_device_slots(slot_date),
+        payment_groups(paid_at)
       `)
-      .in("status", ["confirmed", "checked_in", "completed"]);
+      .in("payment_status", ["paid", "partial"])
+      .neq("status", "cancelled");
 
     if (filters?.dateFrom || filters?.dateTo) {
       // We need to filter by slot_date, so we'll do this after fetching
@@ -263,15 +322,17 @@ export async function getRevenueReports(filters?: ReportFilters) {
 
     if (error) throw error;
 
-    // Filter by slot date if needed
+    // Filter by payment date (use paid_at if available, otherwise use updated_at as fallback)
     let filteredData = data || [];
     if (filters?.dateFrom || filters?.dateTo) {
       filteredData = (data || []).filter((booking: any) => {
-        const slotDate = booking.booking_device_slots?.[0]?.slot_date || booking.created_at.split('T')[0];
-        if (!slotDate) return false;
+        // Use paid_at from payment_groups, fallback to booking updated_at
+        const paidAt = booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
+        if (!paidAt) return false;
 
-        if (filters.dateFrom && slotDate < filters.dateFrom) return false;
-        if (filters.dateTo && slotDate > filters.dateTo) return false;
+        const paidDate = paidAt.split('T')[0];
+        if (filters.dateFrom && paidDate < filters.dateFrom) return false;
+        if (filters.dateTo && paidDate > filters.dateTo) return false;
 
         return true;
       });
@@ -299,20 +360,41 @@ export async function getRevenueReports(filters?: ReportFilters) {
     }> = {};
 
     filteredData.forEach((booking: any) => {
-      const revenue = Number(booking.total_amount);
-      const deviceRev = Number(booking.device_subtotal || 0);
-      const foodRev = Number(booking.food_subtotal || 0);
+      const amountPaid = Number(booking.amount_paid || 0);
+      const deviceSubtotal = Number(booking.device_subtotal || 0);
+      const foodSubtotal = Number(booking.food_subtotal || 0);
+      const subscriptionDiscount = Number(booking.subscription_discount || 0);
+      const promoDiscount = Number(booking.promo_discount || 0);
+      const totalDiscount = subscriptionDiscount + promoDiscount;
       const source = booking.booking_source || "online";
-      const slotDate = booking.booking_device_slots?.[0]?.slot_date || booking.created_at.split('T')[0];
+
+      // Track revenue by payment date (use paid_at if available, otherwise use updated_at)
+      const paidAt = booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
+      const revenueDate = paidAt.split('T')[0];
+
+      // Calculate actual revenue based on payment status
+      let revenue, deviceRev, foodRev;
+      if (booking.payment_status === 'partial') {
+        // For partial: amount_paid usually covers device first
+        revenue = amountPaid;
+        deviceRev = Math.min(amountPaid, deviceSubtotal);
+        foodRev = Math.max(0, amountPaid - deviceSubtotal);
+      } else {
+        // Fully paid - deduct discounts from device revenue (discounts don't apply to food)
+        revenue = Number(booking.total_amount);
+        deviceRev = Math.max(0, deviceSubtotal - totalDiscount);
+        foodRev = foodSubtotal;
+      }
 
       totalRevenue += revenue;
       deviceRevenue += deviceRev;
       foodRevenue += foodRev;
 
-      if (booking.payment_status === "paid") {
+      // Count paid and partial bookings
+      if (booking.payment_status === 'paid') {
         paidCount += 1;
       } else {
-        pendingCount += 1;
+        pendingCount += 1; // partial counts as pending
       }
 
       // Source breakdown
@@ -326,18 +408,18 @@ export async function getRevenueReports(filters?: ReportFilters) {
       sourceBreakdown[source].totalRevenue += revenue;
       sourceBreakdown[source].bookingCount += 1;
 
-      // Daily revenue
-      if (!dailyRevenue[slotDate]) {
-        dailyRevenue[slotDate] = {
-          date: slotDate,
+      // Daily revenue - track by payment date
+      if (!dailyRevenue[revenueDate]) {
+        dailyRevenue[revenueDate] = {
+          date: revenueDate,
           deviceRevenue: 0,
           foodRevenue: 0,
           totalRevenue: 0
         };
       }
-      dailyRevenue[slotDate].deviceRevenue += deviceRev;
-      dailyRevenue[slotDate].foodRevenue += foodRev;
-      dailyRevenue[slotDate].totalRevenue += revenue;
+      dailyRevenue[revenueDate].deviceRevenue += deviceRev;
+      dailyRevenue[revenueDate].foodRevenue += foodRev;
+      dailyRevenue[revenueDate].totalRevenue += revenue;
     });
 
     const sourceBreakdownArray = Object.values(sourceBreakdown)
@@ -524,19 +606,63 @@ export async function deleteExpense(id: string) {
 
 export async function getProfitAndLoss(filters: { dateFrom: string; dateTo: string }) {
   try {
-    // Get revenue from completed bookings using completed_at
-    const { data: completedBookings, error: revenueError } = await supabaseAdmin
+    // Get revenue from PAID and PARTIAL bookings (count only amount_paid)
+    const { data: allPaidBookings, error: revenueError } = await supabaseAdmin
       .from("bookings")
-      .select("amount_paid, device_subtotal, food_subtotal")
-      .eq("status", "completed")
-      .gte("completed_at", filters.dateFrom)
-      .lte("completed_at", filters.dateTo);
+      .select(`
+        device_subtotal,
+        food_subtotal,
+        subscription_discount,
+        promo_discount,
+        total_amount,
+        amount_paid,
+        payment_status,
+        created_at,
+        updated_at,
+        booking_device_slots(slot_date),
+        payment_groups(paid_at)
+      `)
+      .in("payment_status", ["paid", "partial"])
+      .neq("status", "cancelled");
 
     if (revenueError) throw revenueError;
 
-    // Calculate revenue breakdown - use subtotals if amount_paid is 0
-    const deviceRevenue = completedBookings?.reduce((sum: number, b: any) => sum + Number(b.device_subtotal || 0), 0) || 0;
-    const foodRevenue = completedBookings?.reduce((sum: number, b: any) => sum + Number(b.food_subtotal || 0), 0) || 0;
+    // Filter by payment date (use paid_at if available, otherwise use updated_at as fallback)
+    const paidBookings = (allPaidBookings || []).filter((booking: any) => {
+      // Use paid_at from payment_groups, fallback to updated_at, then created_at
+      const paidAt = booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
+      if (!paidAt) return false;
+
+      const paidDate = paidAt.split('T')[0];
+      return paidDate >= filters.dateFrom && paidDate <= filters.dateTo;
+    });
+
+    // Calculate revenue breakdown - use actual amount paid minus discounts
+    // Revenue = what we actually receive = amount_paid (which already has discounts deducted)
+    let deviceRevenue = 0;
+    let foodRevenue = 0;
+
+    paidBookings.forEach((b: any) => {
+      const amountPaid = Number(b.amount_paid || 0);
+      const deviceSubtotal = Number(b.device_subtotal || 0);
+      const foodSubtotal = Number(b.food_subtotal || 0);
+      const subscriptionDiscount = Number(b.subscription_discount || 0);
+      const promoDiscount = Number(b.promo_discount || 0);
+      const totalDiscount = subscriptionDiscount + promoDiscount;
+
+      if (b.payment_status === 'partial') {
+        // For partial: amount_paid usually covers device first
+        deviceRevenue += Math.min(amountPaid, deviceSubtotal);
+        foodRevenue += Math.max(0, amountPaid - deviceSubtotal);
+      } else {
+        // Fully paid - deduct discounts from device revenue (discounts don't apply to food)
+        // Revenue = subtotals - discounts
+        const deviceRevenueBeforeDiscount = deviceSubtotal;
+        deviceRevenue += Math.max(0, deviceRevenueBeforeDiscount - totalDiscount);
+        foodRevenue += foodSubtotal;
+      }
+    });
+
     const revenue = deviceRevenue + foodRevenue;
 
     // Get expenses with category breakdown
@@ -572,7 +698,7 @@ export async function getProfitAndLoss(filters: { dateFrom: string; dateTo: stri
         netProfit,
         profit: netProfit, // For backward compatibility
         profitMargin,
-        bookingCount: completedBookings?.length || 0,
+        bookingCount: paidBookings.length,
         expenseCount: expenses?.length || 0,
       },
     };

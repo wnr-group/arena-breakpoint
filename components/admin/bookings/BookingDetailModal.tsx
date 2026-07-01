@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -16,7 +17,7 @@ import { QRCodeSVG } from "qrcode.react";
 import {
   User, Phone, Mail, Calendar, Clock, DollarSign,
   Loader2, CheckCircle2, XCircle, LogIn, LogOut,
-  UtensilsCrossed, QrCode, MapPin, Gamepad2, Plus, Minus
+  UtensilsCrossed, QrCode, MapPin, Gamepad2, Plus, Minus, Search, Filter
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -36,9 +37,10 @@ interface BookingDetailModalProps {
   onClose: () => void;
   onUpdate?: () => void;
   openFoodModalDirectly?: boolean;
+  onPendingPayment?: (bookingId: string, balanceDue: number, bookingNumber: string) => void;
 }
 
-export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoodModalDirectly }: BookingDetailModalProps) {
+export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoodModalDirectly, onPendingPayment }: BookingDetailModalProps) {
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -47,6 +49,8 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [selectedFoodItems, setSelectedFoodItems] = useState<Record<string, number>>({});
   const [updatingPlayerCount, setUpdatingPlayerCount] = useState(false);
+  const [foodSearchQuery, setFoodSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
   useEffect(() => {
     if (open && bookingId) {
@@ -134,7 +138,26 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
   };
 
   const handleCheckOut = async () => {
-    if (!bookingId) return;
+    if (!bookingId || !booking) return;
+
+    // Check if there are pending payments before checkout
+    const balanceDue = Number(booking.balance_due || 0);
+
+    // If there's a balance due (pending payment), trigger the pending payment handler or show modal
+    if (balanceDue > 0 && booking.payment_status !== "paid") {
+      if (onPendingPayment) {
+        // Pass to parent to handle with the pending payment modal
+        onPendingPayment(booking.id, balanceDue, booking.booking_number);
+        onClose(); // Close this modal so the parent modal can show
+      } else {
+        // Fallback: show error toast
+        toast.error("Cannot check out", {
+          description: `There is a pending balance of ₹${balanceDue.toLocaleString('en-IN')}. Please mark the payment as paid first.`
+        });
+      }
+      return;
+    }
+
     setActionLoading(true);
     const result = await checkOutBooking(bookingId);
     if (result.success) {
@@ -542,6 +565,21 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                             {booking.payment_status}
                           </span>
                         </div>
+
+                        {/* Balance Due Warning */}
+                        {Number(booking.balance_due || 0) > 0 && booking.payment_status !== 'paid' && (
+                          <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                            <div className="flex items-center justify-between">
+                              <span className="text-amber-400 font-bold text-sm uppercase">Balance Due:</span>
+                              <span className="text-amber-300 font-black text-lg">
+                                ₹{Number(booking.balance_due).toLocaleString('en-IN')}
+                              </span>
+                            </div>
+                            <p className="text-xs text-amber-300/60 mt-1">
+                              Payment must be collected before checkout
+                            </p>
+                          </div>
+                        )}
                       </>
                     );
                   })()}
@@ -562,14 +600,22 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                 )}
 
                 {booking.status === "checked_in" && (
-                  <Button
-                    onClick={handleCheckOut}
-                    disabled={actionLoading}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-sm h-12 px-8 flex items-center gap-2"
-                  >
-                    {actionLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogOut className="h-5 w-5" />}
-                    Check Out Customer
-                  </Button>
+                  <>
+                    <Button
+                      onClick={handleCheckOut}
+                      disabled={actionLoading || (Number(booking.balance_due || 0) > 0 && booking.payment_status !== 'paid')}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-sm h-12 px-8 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {actionLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogOut className="h-5 w-5" />}
+                      Check Out Customer
+                    </Button>
+                    {Number(booking.balance_due || 0) > 0 && booking.payment_status !== 'paid' && (
+                      <p className="text-xs text-amber-400 flex items-center gap-1">
+                        <XCircle className="h-3.5 w-3.5" />
+                        Cannot checkout - pending balance of ₹{Number(booking.balance_due).toLocaleString('en-IN')}
+                      </p>
+                    )}
+                  </>
                 )}
 
                 {(booking.status === "confirmed" || booking.status === "checked_in") && (
@@ -605,6 +651,8 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
         setAddFoodModalOpen(val);
         if (!val) {
           setSelectedFoodItems({});
+          setFoodSearchQuery("");
+          setSelectedCategory("All");
           if (openFoodModalDirectly) {
             onClose();
           }
@@ -617,9 +665,47 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
             </DialogTitle>
           </DialogHeader>
 
+          {/* Search and Filter Controls */}
+          <div className="space-y-3 mt-4 pb-4 border-b border-[#27272a]">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-content" />
+              <Input
+                type="text"
+                placeholder="Search food items..."
+                value={foodSearchQuery}
+                onChange={(e) => setFoodSearchQuery(e.target.value)}
+                className="pl-10 bg-[var(--background)] border-[#27272a] text-white placeholder:text-muted-content focus:border-primary/50"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <Filter className="h-4 w-4 text-muted-content" />
+              {["All", "Snacks", "Drinks", "Meals"].map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
+                    selectedCategory === category
+                      ? "bg-primary text-black"
+                      : "bg-[var(--background)] text-muted-content hover:text-white border border-[#27272a] hover:border-primary/30"
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-4 mt-4">
             {["Snacks", "Drinks", "Meals"].map((category) => {
-              const categoryItems = menuItems.filter((item) => item.category === category);
+              // Filter by selected category and search query
+              const categoryItems = menuItems.filter((item) => {
+                const matchesCategory = selectedCategory === "All" || item.category === category;
+                const matchesSearch = foodSearchQuery === "" ||
+                  item.name.toLowerCase().includes(foodSearchQuery.toLowerCase());
+                return item.category === category && matchesCategory && matchesSearch;
+              });
+
               if (categoryItems.length === 0) return null;
 
               return (
@@ -662,13 +748,16 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                               const qty = (selectedFoodItems[item.id] || 0);
                               // Check stock availability
                               if (qty >= item.quantity) {
-                                toast.error(`Only ${item.quantity} ${item.name} available in stock`);
+                                if (item.quantity === 0) {
+                                  toast.error(`${item.name} is out of stock`);
+                                } else {
+                                  toast.error(`Only ${item.quantity} ${item.name} available in stock`);
+                                }
                                 return;
                               }
                               setSelectedFoodItems({ ...selectedFoodItems, [item.id]: qty + 1 });
                             }}
-                            disabled={(selectedFoodItems[item.id] || 0) >= item.quantity}
-                            className="h-10 w-10 p-0 bg-primary hover:bg-primary-hover text-black disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="h-10 w-10 p-0 bg-primary hover:bg-primary-hover text-black"
                           >
                             <Plus className="h-4 w-4" />
                           </Button>
@@ -683,6 +772,21 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
             {menuItems.length === 0 && (
               <p className="text-center text-muted-content py-8">No menu items available</p>
             )}
+
+            {menuItems.length > 0 &&
+              !["Snacks", "Drinks", "Meals"].some((category) => {
+                const categoryItems = menuItems.filter((item) => {
+                  const matchesCategory = selectedCategory === "All" || item.category === category;
+                  const matchesSearch = foodSearchQuery === "" ||
+                    item.name.toLowerCase().includes(foodSearchQuery.toLowerCase());
+                  return item.category === category && matchesCategory && matchesSearch;
+                });
+                return categoryItems.length > 0;
+              }) && (
+                <p className="text-center text-muted-content py-8">
+                  No items match your search or filter criteria
+                </p>
+              )}
           </div>
 
           <div className="flex justify-end gap-2 pt-4 border-t border-[#27272a] mt-4">
@@ -691,6 +795,8 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
               onClick={() => {
                 setAddFoodModalOpen(false);
                 setSelectedFoodItems({});
+                setFoodSearchQuery("");
+                setSelectedCategory("All");
                 if (openFoodModalDirectly) {
                   onClose();
                 }

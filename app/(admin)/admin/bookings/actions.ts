@@ -381,7 +381,7 @@ export async function addFoodToBooking(
 
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
-      .select("food_subtotal, device_subtotal, subscription_discount, promo_discount")
+      .select("food_subtotal, device_subtotal, subscription_discount, promo_discount, amount_paid")
       .eq("id", bookingId)
       .single();
 
@@ -391,6 +391,7 @@ export async function addFoodToBooking(
     const deviceSubtotal = Number(booking.device_subtotal || 0);
     const subscriptionDiscount = Number(booking.subscription_discount || 0);
     const promoDiscount = Number(booking.promo_discount || 0);
+    const amountPaid = Number(booking.amount_paid || 0);
 
     // Total = device + food - discounts (discounts don't apply to food)
     const newTotal = deviceSubtotal + newFoodSubtotal - subscriptionDiscount - promoDiscount;
@@ -426,13 +427,23 @@ export async function addFoodToBooking(
 
     if (lineItemsError) throw lineItemsError;
 
-    // Update booking: set payment_status to 'pending' since there are unpaid items
+    // Determine payment status based on amount paid vs new total
+    let newPaymentStatus: 'pending' | 'partial' | 'paid';
+    if (amountPaid >= newTotal) {
+      newPaymentStatus = 'paid'; // Already fully paid
+    } else if (amountPaid > 0) {
+      newPaymentStatus = 'partial'; // Partially paid (device paid, food unpaid)
+    } else {
+      newPaymentStatus = 'pending'; // Nothing paid yet
+    }
+
+    // Update booking
     const { error: updateError } = await supabaseAdmin
       .from("bookings")
       .update({
         food_subtotal: newFoodSubtotal,
         total_amount: newTotal,
-        payment_status: 'pending', // Mark as pending since food is unpaid
+        payment_status: newPaymentStatus,
         updated_at: new Date().toISOString()
       })
       .eq("id", bookingId);
@@ -474,6 +485,7 @@ export async function createWalkInBooking(payload: {
   selectedSlot: string;
   slotStartTime: string;
   slotEndTime: string;
+  durationHours: number;
   hourlyRate: number;
   playerCount: number;
   includedPlayers: number;
@@ -588,7 +600,7 @@ export async function createWalkInBooking(payload: {
 
     // Step 5: Create device slot
     const extraPlayersCount = Math.max(0, payload.playerCount - payload.includedPlayers);
-    const extraPlayersTotal = extraPlayersCount * payload.extraPlayerCharge;
+    const extraPlayersTotal = extraPlayersCount * payload.extraPlayerCharge * payload.durationHours;
 
     const { error: slotError } = await supabaseAdmin
       .from("booking_device_slots")
@@ -600,9 +612,9 @@ export async function createWalkInBooking(payload: {
         slot_date: payload.selectedDate,
         slot_start_time: startTime,
         slot_end_time: endTime,
-        duration_hours: 1,
+        duration_hours: payload.durationHours,
         hourly_rate: payload.hourlyRate,
-        slot_total: payload.total,
+        slot_total: payload.subtotal,
         player_count: payload.playerCount,
         included_players: payload.includedPlayers,
         extra_player_charge: payload.extraPlayerCharge,
@@ -643,15 +655,16 @@ export async function updatePlayerCount(slotId: string, newPlayerCount: number, 
 
     const includedPlayers = slot.included_players || 1;
     const extraPlayerCharge = slot.extra_player_charge || 0;
+    const durationHours = slot.duration_hours || 1;
     const oldPlayerCount = slot.player_count || includedPlayers;
 
-    // Calculate new extra players charge
+    // Calculate new extra players charge (per hour * duration)
     const newExtraPlayers = Math.max(0, newPlayerCount - includedPlayers);
-    const newExtraPlayersTotal = newExtraPlayers * extraPlayerCharge;
+    const newExtraPlayersTotal = newExtraPlayers * extraPlayerCharge * durationHours;
 
-    // Calculate old extra players charge
+    // Calculate old extra players charge (per hour * duration)
     const oldExtraPlayers = Math.max(0, oldPlayerCount - includedPlayers);
-    const oldExtraPlayersTotal = oldExtraPlayers * extraPlayerCharge;
+    const oldExtraPlayersTotal = oldExtraPlayers * extraPlayerCharge * durationHours;
 
     // Calculate difference in total
     const difference = newExtraPlayersTotal - oldExtraPlayersTotal;

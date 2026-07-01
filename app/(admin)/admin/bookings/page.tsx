@@ -39,11 +39,13 @@ export default function AdminBookingsPage() {
     bookingId: string | null;
     balanceDue: number;
     bookingNumber: string;
+    isCheckout: boolean; // Track if this is from checkout attempt (vs billing modal)
   }>({
     open: false,
     bookingId: null,
     balanceDue: 0,
-    bookingNumber: ""
+    bookingNumber: "",
+    isCheckout: false
   });
   const [quickPaymentMethod, setQuickPaymentMethod] = useState<'cash' | 'card' | 'upi'>('cash');
 
@@ -102,6 +104,30 @@ export default function AdminBookingsPage() {
   };
 
   const handleCheckOut = async (bookingId: string, bookingNumber: string) => {
+    // Check if there are pending payments before checkout
+    const billingResult = await getBookingBillingDetails(bookingId);
+
+    if (!billingResult.success || !billingResult.booking) {
+      toast.error("Failed to load booking details");
+      return;
+    }
+
+    const { booking } = billingResult;
+    const balanceDue = Number(booking.balance_due || 0);
+
+    // If there's a balance due (pending payment), show warning modal first
+    if (balanceDue > 0 && booking.payment_status !== "paid") {
+      setPendingPaymentModal({
+        open: true,
+        bookingId: booking.id,
+        balanceDue: balanceDue,
+        bookingNumber: booking.booking_number,
+        isCheckout: true // Mark this as a checkout attempt
+      });
+      return;
+    }
+
+    // No pending payment, proceed with checkout
     startTransition(async () => {
       const result = await checkOutBooking(bookingId);
       if (result.success) {
@@ -134,10 +160,11 @@ export default function AdminBookingsPage() {
         open: true,
         bookingId: booking.id,
         balanceDue: balanceDue,
-        bookingNumber: booking.booking_number
+        bookingNumber: booking.booking_number,
+        isCheckout: false // This is for billing modal, not direct checkout
       });
     } else {
-      // No pending payment, proceed directly to checkout
+      // No pending payment, proceed directly to checkout billing modal
       setCheckoutBookingId(bookingId);
       setOpenCheckoutModal(true);
     }
@@ -146,19 +173,32 @@ export default function AdminBookingsPage() {
   const handleMarkAsPaidAndProceed = async () => {
     if (!pendingPaymentModal.bookingId) return;
 
+    const bookingIdToProcess = pendingPaymentModal.bookingId;
+    const isCheckoutAttempt = pendingPaymentModal.isCheckout;
+
     startTransition(async () => {
-      const result = await markBookingAsPaid(pendingPaymentModal.bookingId!, quickPaymentMethod);
+      const result = await markBookingAsPaid(bookingIdToProcess, quickPaymentMethod);
 
       if (result.success) {
         toast.success("Payment marked as paid", {
           description: `Received via ${quickPaymentMethod.toUpperCase()}`
         });
-        setPendingPaymentModal({ open: false, bookingId: null, balanceDue: 0, bookingNumber: "" });
+        setPendingPaymentModal({ open: false, bookingId: null, balanceDue: 0, bookingNumber: "", isCheckout: false });
         setQuickPaymentMethod('cash'); // Reset to default
 
-        // Now open the checkout modal
-        setCheckoutBookingId(pendingPaymentModal.bookingId);
-        setOpenCheckoutModal(true);
+        if (isCheckoutAttempt) {
+          // If this was a checkout attempt, proceed with checkout
+          const checkoutResult = await checkOutBooking(bookingIdToProcess);
+          if (checkoutResult.success) {
+            toast.success("Customer checked out successfully");
+          } else {
+            toast.error("Check-out failed", { description: checkoutResult.error });
+          }
+        } else {
+          // Otherwise, open the checkout billing modal
+          setCheckoutBookingId(bookingIdToProcess);
+          setOpenCheckoutModal(true);
+        }
 
         loadBookings();
         loadStats();
@@ -197,7 +237,12 @@ export default function AdminBookingsPage() {
     });
 
     const totalAmount = sorted.reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
-    const totalDevice = sorted.reduce((sum, b) => sum + Number(b.device_subtotal || 0), 0);
+    // Calculate actual revenue after discounts
+    const totalDevice = sorted.reduce((sum, b) => {
+      const deviceSubtotal = Number(b.device_subtotal || 0);
+      const discount = Number(b.subscription_discount || 0) + Number(b.promo_discount || 0);
+      return sum + Math.max(0, deviceSubtotal - discount);
+    }, 0);
     const totalFood = sorted.reduce((sum, b) => sum + Number(b.food_subtotal || 0), 0);
 
     // Check for back-to-back bookings
@@ -659,7 +704,7 @@ export default function AdminBookingsPage() {
                               <p className="text-sm font-black text-data-visible">₹{Number(booking.total_amount).toLocaleString('en-IN')}</p>
                               <div className="flex flex-col gap-0.5 mt-1">
                                 <p className="text-min text-secondary-content">
-                                  Games: ₹{Number(booking.device_subtotal || 0).toLocaleString('en-IN')}
+                                  Games: ₹{Math.max(0, Number(booking.device_subtotal || 0) - (Number(booking.subscription_discount || 0) + Number(booking.promo_discount || 0))).toLocaleString('en-IN')}
                                 </p>
                                 {booking.food_subtotal > 0 && (
                                   <p className="text-min text-secondary-content">
@@ -761,12 +806,22 @@ export default function AdminBookingsPage() {
           loadStats();
         }}
         openFoodModalDirectly={openFoodModal}
+        onPendingPayment={(bookingId, balanceDue, bookingNumber) => {
+          // Show the pending payment modal (from checkout attempt)
+          setPendingPaymentModal({
+            open: true,
+            bookingId,
+            balanceDue,
+            bookingNumber,
+            isCheckout: true
+          });
+        }}
       />
 
       {/* Pending Payment Confirmation Dialog */}
       <Dialog open={pendingPaymentModal.open} onOpenChange={(open) => {
         if (!open) {
-          setPendingPaymentModal({ open: false, bookingId: null, balanceDue: 0, bookingNumber: "" });
+          setPendingPaymentModal({ open: false, bookingId: null, balanceDue: 0, bookingNumber: "", isCheckout: false });
         }
       }}>
         <DialogContent className="bg-[var(--background)] border-2 border-amber-500/50 text-white max-w-md">
@@ -830,7 +885,7 @@ export default function AdminBookingsPage() {
 
           <DialogFooter className="flex gap-2">
             <Button
-              onClick={() => setPendingPaymentModal({ open: false, bookingId: null, balanceDue: 0, bookingNumber: "" })}
+              onClick={() => setPendingPaymentModal({ open: false, bookingId: null, balanceDue: 0, bookingNumber: "", isCheckout: false })}
               variant="ghost"
               className="flex-1 border border-zinc-800 text-muted-content hover:text-white font-bold uppercase text-xs h-10 rounded-lg"
             >

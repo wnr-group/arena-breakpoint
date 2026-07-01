@@ -205,7 +205,7 @@ export default function CustomerDetailsPage() {
       }
 
       const deviceCharges = (hourlyRate || 0) * durationInHours;
-      const extraPlayerCharges = (playerCount - includedPlayers) * extraPlayerCharge;
+      const extraPlayerCharges = (playerCount - includedPlayers) * extraPlayerCharge * durationInHours;
       const discountableAmount = deviceCharges + extraPlayerCharges; // NOT food
 
       const discount = await calculatePromoDiscount(
@@ -255,7 +255,7 @@ export default function CustomerDetailsPage() {
     }
 
     const deviceCharges = (hourlyRate || 0) * durationInHours;
-    const extraPlayerCharges = (playerCount - includedPlayers) * extraPlayerCharge;
+    const extraPlayerCharges = (playerCount - includedPlayers) * extraPlayerCharge * durationInHours;
     const addonsTotal = addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
     const calculatedSubtotal = deviceCharges + extraPlayerCharges + addonsTotal;
     const calculatedTotal = calculatedSubtotal - bookingState.subscriptionDiscount;
@@ -606,7 +606,7 @@ export default function CustomerDetailsPage() {
                 }
 
                 const deviceCharges = hourlyRate! * durationInHours;
-                const extraPlayerCharges = (playerCount - includedPlayers) * extraPlayerCharge;
+                const extraPlayerCharges = (playerCount - includedPlayers) * extraPlayerCharge * durationInHours;
                 const addonsTotal = addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
                 const calculatedSubtotal = deviceCharges + extraPlayerCharges + addonsTotal;
                 const calculatedTotal = calculatedSubtotal - bookingState.subscriptionDiscount - bookingState.promoDiscount;
@@ -620,7 +620,7 @@ export default function CustomerDetailsPage() {
 
                     {playerCount > includedPlayers && (
                       <div className="flex justify-between">
-                        <span className="text-zinc-500">Extra Players ({playerCount - includedPlayers} × ₹{extraPlayerCharge}):</span>
+                        <span className="text-zinc-500">Extra Players ({playerCount - includedPlayers} × ₹{extraPlayerCharge} × {durationInHours}h):</span>
                         <span className="text-white">₹{extraPlayerCharges.toFixed(2)}</span>
                       </div>
                     )}
@@ -722,7 +722,7 @@ export default function CustomerDetailsPage() {
             <div className="flex justify-between"><span className="text-zinc-500">Duration:</span> <span className="text-white font-bold">{selectedDurationLabel}</span></div>
             <div className="flex justify-between"><span className="text-zinc-500">Players:</span> <span className="text-white font-bold">{playerCount}</span></div>
             {playerCount > includedPlayers && (
-              <div className="flex justify-between text-xs"><span className="text-zinc-600">Extra Players:</span> <span className="text-zinc-400">+₹{((playerCount - includedPlayers) * extraPlayerCharge).toFixed(2)}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-zinc-600">Extra Players:</span> <span className="text-zinc-400">+₹{((playerCount - includedPlayers) * extraPlayerCharge * ((selectedDuration || 60) / 60)).toFixed(2)}</span></div>
             )}
             {bookingState.subscriptionDiscount > 0 && (
               <div className="flex justify-between text-xs text-green-500"><span>Subscription Discount ({bookingState.subscriptionDiscountPercentage}%):</span> <span>-₹{bookingState.subscriptionDiscount.toFixed(2)}</span></div>
