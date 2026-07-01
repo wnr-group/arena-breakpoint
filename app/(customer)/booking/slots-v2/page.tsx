@@ -200,7 +200,23 @@ export default function FlexibleSlotBookingPage() {
   }, [availableStartTimes, selectedStartTime]);
 
   const handleRegisterTransactionLock = async () => {
-    if (!calendarDay || !selectedStartTime || !endTime || !deviceTypeId) return;
+    if (!calendarDay) {
+      toast.error("Please select a date to proceed");
+      return;
+    }
+    if (!selectedStartTime) {
+      toast.error("Please select a start time to proceed");
+      return;
+    }
+    if (!deviceTypeId) {
+      toast.error("Please select a device to proceed");
+      return;
+    }
+    if (!isTimeAvailable(selectedStartTime)) {
+      toast.error("Selected time slot is not available");
+      return;
+    }
+    if (!endTime) return;
 
     if (!isWithinBusinessHours(selectedStartTime, endTime)) {
       toast.error("Selected time range exceeds business hours");
@@ -392,7 +408,7 @@ export default function FlexibleSlotBookingPage() {
                 </p>
               )}
 
-              <Button variant="gradient" disabled={!canProceed || submittingLock} onClick={handleRegisterTransactionLock} className="w-full text-black font-black uppercase text-xs py-5 rounded-xl flex items-center justify-center gap-1 mt-2 shadow-[0_4px_20px_rgba(255,193,7,0.2)]">
+              <Button variant="gradient" disabled={submittingLock} onClick={handleRegisterTransactionLock} className={`w-full text-black font-black uppercase text-xs py-5 rounded-xl flex items-center justify-center gap-1 mt-2 shadow-[0_4px_20px_rgba(255,193,7,0.2)] ${!canProceed ? "opacity-50 cursor-not-allowed" : ""}`}>
                 {submittingLock ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Confirm & Hold Slot <ChevronRight className="h-4 w-4 stroke-[3]" />
               </Button>
@@ -574,9 +590,9 @@ export default function FlexibleSlotBookingPage() {
 
             <Button
               variant="gradient"
-              disabled={submittingLock || !canProceed}
+              disabled={submittingLock}
               onClick={handleRegisterTransactionLock}
-              className="w-full text-black font-black uppercase py-5 text-xs rounded-xl flex items-center justify-center gap-1 mt-3"
+              className={`w-full text-black font-black uppercase py-5 text-xs rounded-xl flex items-center justify-center gap-1 mt-3 ${!canProceed ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               {submittingLock ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Confirm & Hold Slot <ChevronRight className="h-4 w-4 stroke-[3]" />
