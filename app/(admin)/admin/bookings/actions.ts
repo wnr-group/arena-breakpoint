@@ -810,6 +810,16 @@ export async function markBookingAsPaid(
 
     if (lineItemsError) console.error("Failed to update line items:", lineItemsError);
 
+    // Update food items status from 'pending' to 'preparing' since they're now paid
+    // This allows kitchen staff to start preparing paid orders
+    const { error: foodItemsError } = await supabaseAdmin
+      .from("booking_food_items")
+      .update({ status: "preparing" })
+      .eq("booking_id", bookingId)
+      .eq("status", "pending"); // Only update pending items (not already preparing/ready/served)
+
+    if (foodItemsError) console.error("Failed to update food items status:", foodItemsError);
+
     return {
       success: true,
       message: `Booking ${booking.booking_number} marked as paid`,
