@@ -36,7 +36,14 @@ export default function FlexibleSlotBookingPage() {
   }, []);
 
   const isDayDisabled = (day: Date) => {
-    return day < today || day.getMonth() !== today.getMonth() || day.getFullYear() !== today.getFullYear();
+    return day < today;  // Only disable past dates
+  };
+
+  const isDayHidden = (day: Date) => {
+    // Hide dates outside current month view to prevent showing overflow dates
+    const viewMonth = calendarDay?.getMonth() ?? today.getMonth();
+    const viewYear = calendarDay?.getFullYear() ?? today.getFullYear();
+    return day.getMonth() !== viewMonth || day.getFullYear() !== viewYear;
   };
   const [selectedStartTime, setSelectedStartTime] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<number>(60); // Default 1 hour in minutes
@@ -423,7 +430,7 @@ export default function FlexibleSlotBookingPage() {
             <div className="space-y-3">
               <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">📅 Select Date</h3>
               <Card className="bg-[#111] border border-zinc-900 p-4 w-full flex justify-center rounded-2xl glow-box-hover">
-                <Calendar mode="single" selected={calendarDay} onSelect={setCalendarDay} disabled={isDayDisabled} />
+                <Calendar mode="single" selected={calendarDay} onSelect={setCalendarDay} disabled={isDayDisabled} hidden={isDayHidden} />
               </Card>
             </div>
 
@@ -613,7 +620,7 @@ export default function FlexibleSlotBookingPage() {
               </button>
             </div>
             <div className="flex justify-center bg-zinc-950 p-2 rounded-xl">
-              <Calendar mode="single" selected={calendarDay} onSelect={(day) => { setCalendarDay(day); setMobileCalendarOpen(false); }} disabled={isDayDisabled} />
+              <Calendar mode="single" selected={calendarDay} onSelect={(day) => { setCalendarDay(day); setMobileCalendarOpen(false); }} disabled={isDayDisabled} hidden={isDayHidden} />
             </div>
           </div>
         </div>

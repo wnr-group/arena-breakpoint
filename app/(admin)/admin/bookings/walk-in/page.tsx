@@ -82,7 +82,14 @@ export default function WalkInBookingPage() {
   }, []);
 
   const isDayDisabled = (day: Date) => {
-    return day < today || day.getMonth() !== today.getMonth() || day.getFullYear() !== today.getFullYear();
+    return day < today;  // Only disable past dates
+  };
+
+  const isDayHidden = (day: Date) => {
+    // Hide dates outside current month view to prevent showing overflow dates
+    const viewMonth = selectedDate?.getMonth() ?? today.getMonth();
+    const viewYear = selectedDate?.getFullYear() ?? today.getFullYear();
+    return day.getMonth() !== viewMonth || day.getFullYear() !== viewYear;
   };
 
   // Filter out past time slots for today
@@ -399,6 +406,7 @@ export default function WalkInBookingPage() {
                     selected={selectedDate}
                     onSelect={(date) => date && setSelectedDate(date)}
                     disabled={isDayDisabled}
+                    hidden={isDayHidden}
                   />
                 </Card>
               </div>
