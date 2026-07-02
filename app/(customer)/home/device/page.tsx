@@ -9,6 +9,7 @@ import { SkeletonGrid } from '@/components/shared/SkeletonCard';
 
 export interface Station {
   id: number
+  device_type_id: string
   name: string
   station_num: string
   regular_hourly_rate: number
@@ -135,6 +136,7 @@ export default function DevicePage() {
 
                 const stationData: Station = {
                   id: device.id,
+                  device_type_id: device.device_type?.id || '',
                   name: device.device_type?.display_name || 'Unknown Station',
                   station_num: device.station_number,
                   regular_hourly_rate: device.device_type?.regular_hourly_rate || 0,
@@ -144,7 +146,7 @@ export default function DevicePage() {
                   isAvailable: device.status === 'available',
                   availability: device.status === 'available' ? 'Available' : 'Booked',
                   description: device.specs || device.device_type?.description || '',
-                  image: device.image_url || "https://s40091.pcdn.co/uk/wp-content/uploads/sites/3/2024/08/POOL-HERO.jpg",
+                  image: device.image_url || "",
                   available_count: availableCount,
                   total_count: totalCount
                 };

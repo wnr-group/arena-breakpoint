@@ -35,9 +35,13 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ plans = [] }) 
 
       <div className="max-w-250 mx-auto min-w-200 rounded-xl overflow-hidden shadow-2xl">
         {/* Table Header */}
-        <div className="grid grid-cols-5 bg-[#2B271E] p-5">
+        <div className="grid grid-cols-[1.5fr_0.8fr_1fr_1fr_2.7fr] bg-[#2B271E] p-5">
           {['Plan', 'Price', 'Duration', 'Savings', 'Benefits'].map((heading, i) => (
-            <div key={i} className="text-white font-bold text-[15px] text-left pl-6">
+            <div 
+              key={i} 
+              className="font-bold text-[13px] md:text-[14px] text-left pl-6 uppercase tracking-wider"
+              style={{ color: 'var(--primary)' }}
+            >
               {heading}
             </div>
           ))}
@@ -60,23 +64,25 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ plans = [] }) 
             return (
               <div
                 key={plan.id}
-                className={`grid grid-cols-5 p-5 items-center transition-colors ${
-                  i % 2 === 0 ? 'bg-[#191919]' : 'bg-[#222222]'
-                }`}
+                className={`grid grid-cols-[1.5fr_0.8fr_1fr_1fr_2.7fr] p-5 items-center transition-colors ${i % 2 === 0 ? 'bg-[#191919]' : 'bg-[#222222]'
+                  }`}
               >
-                <div className="font-bold text-white pl-6 text-[14px] md:text-[15px]">
+                <div className="font-bold text-white pl-6 text-[14px] md:text-[15px] text-left">
                   {plan.name}
                 </div>
-                <div className="text-neutral-300 pl-6 text-[14px] md:text-[15px] font-medium">
+                <div className="text-neutral-300 pl-6 text-[14px] md:text-[15px] font-medium text-left">
                   ₹{plan.price}
                 </div>
-                <div className="text-neutral-300 pl-6 text-[14px] md:text-[15px] font-medium">
+                <div className="text-neutral-300 pl-6 text-[14px] md:text-[15px] font-medium text-left">
                   {duration}
                 </div>
-                <div className="text-yellow-300 pl-6 text-[14px] md:text-[15px] font-medium ">
+                <div
+                  className="pl-6 text-[14px] md:text-[15px] font-medium text-left"
+                  style={{ color: 'var(--primary)' }}
+                >
                   {savings}
                 </div>
-                <div className="text-neutral-300 pl-6 text-[14px] md:text-[15px] font-medium">
+                <div className="text-neutral-300 pl-6 text-[14px] md:text-[15px] font-medium text-left">
                   {topBenefit}
                 </div>
               </div>

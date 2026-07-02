@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { setSlot, setPricing, setSlotLockExpiry, setBookingId, setPlayerCount, setDuration } from "@/lib/redux/slices/bookingSlice";
@@ -8,8 +8,9 @@ import { checkFlexibleAvailability, initializeSoftLockReservation as createSoftL
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
-import { Clock, ChevronRight, X, Plus, Minus, AlertCircle , Loader2 } from 'lucide-react';
+import { Clock, ChevronRight, X, Plus, Minus, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from "sonner";
+import { formatLocalDate } from "@/lib/utils/dates";
 import {
   generateStartTimes,
   filterPastTimeSlots,
@@ -27,6 +28,23 @@ export default function FlexibleSlotBookingPage() {
   const { deviceTypeId, deviceTypeName, hourlyRate, addons, playerCount, includedPlayers, maxPlayers, extraPlayerCharge } = useAppSelector((state) => state.booking);
 
   const [calendarDay, setCalendarDay] = useState<Date | undefined>(undefined);
+  const confirmButtonRef = useRef<HTMLDivElement>(null);
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const isDayDisabled = (day: Date) => {
+    return day < today;  // Only disable past dates
+  };
+
+  const isDayHidden = (day: Date) => {
+    // Hide dates outside current month view to prevent showing overflow dates
+    const viewMonth = calendarDay?.getMonth() ?? today.getMonth();
+    const viewYear = calendarDay?.getFullYear() ?? today.getFullYear();
+    return day.getMonth() !== viewMonth || day.getFullYear() !== viewYear;
+  };
   const [selectedStartTime, setSelectedStartTime] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<number>(60); // Default 1 hour in minutes
   const [availableStartTimes, setAvailableStartTimes] = useState<Set<string>>(new Set());
@@ -85,6 +103,13 @@ export default function FlexibleSlotBookingPage() {
     };
   }, [mobileCalendarOpen, mobileDurationOpen, mobileStartTimeOpen]);
 
+  // Sync selectedDuration to Redux booking state
+  useEffect(() => {
+    if (mounted) {
+      dispatch(setDuration(selectedDuration));
+    }
+  }, [selectedDuration, mounted, dispatch]);
+
   useEffect(() => {
     if (!mounted || !calendarDay || !deviceTypeId) {
       console.log('[Frontend] Skipping availability check:', { mounted, calendarDay: !!calendarDay, deviceTypeId: !!deviceTypeId });
@@ -109,7 +134,7 @@ export default function FlexibleSlotBookingPage() {
     setQueryingDb(true);
     setAvailableStartTimes(new Set()); // Clear immediately when starting new check
 
-    const dateStr = calendarDay.toISOString().split("T")[0];
+    const dateStr = formatLocalDate(calendarDay);
 
     console.log(`[Frontend] ========================================`);
     console.log(`[Frontend] Checking availability for:`);
@@ -183,7 +208,23 @@ export default function FlexibleSlotBookingPage() {
   }, [availableStartTimes, selectedStartTime]);
 
   const handleRegisterTransactionLock = async () => {
-    if (!calendarDay || !selectedStartTime || !endTime || !deviceTypeId) return;
+    if (!calendarDay) {
+      toast.error("Please select a date to proceed");
+      return;
+    }
+    if (!selectedStartTime) {
+      toast.error("Please select a start time to proceed");
+      return;
+    }
+    if (!deviceTypeId) {
+      toast.error("Please select a device to proceed");
+      return;
+    }
+    if (!isTimeAvailable(selectedStartTime)) {
+      toast.error("Selected time slot is not available");
+      return;
+    }
+    if (!endTime) return;
 
     if (!isWithinBusinessHours(selectedStartTime, endTime)) {
       toast.error("Selected time range exceeds business hours");
@@ -191,7 +232,7 @@ export default function FlexibleSlotBookingPage() {
     }
 
     setSubmittingLock(true);
-    const dateQueryString = calendarDay.toISOString().split("T")[0];
+    const dateQueryString = formatLocalDate(calendarDay);
     const slotLabel = `${selectedStartTime} - ${endTime}`;
 
     const res = await createSoftLockTransaction({
@@ -251,17 +292,17 @@ export default function FlexibleSlotBookingPage() {
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="flex-1 space-y-4 md:space-y-6">
           {/* Device Info */}
-          <div className="bg-[#111] border border-zinc-900 rounded-xl p-4 flex items-center justify-between shadow-md glow-box-hover">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="p-2.5 bg-zinc-950 border border-zinc-800 text-primary rounded-lg">
+          <div className="bg-[#111] border border-zinc-900 rounded-xl p-4 flex items-center justify-between gap-4 shadow-md glow-box-hover">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="p-2.5 bg-zinc-950 border border-zinc-800 text-primary rounded-lg flex-shrink-0">
                 <Clock className="h-4 w-4" />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <h4 className="font-black text-xs sm:text-sm min-w-0 text-white uppercase break-words leading-tight">{deviceTypeName || "Gaming Device"}</h4>
-                <p className="text-zinc-500 text-[10px] font-bold mt-0.5">₹{hourlyRate || 0}/hour</p>
+                <p className="text-zinc-400 text-xs font-bold mt-0.5"><span className="text-primary font-black">₹{hourlyRate || 0}</span> / hour</p>
               </div>
             </div>
-            <Button variant="gradient" onClick={() => router.push("/booking")} className="text-black font-black text-[10px]  uppercase h-7 px-3 ">
+            <Button variant="gradient" onClick={() => router.push("/booking")} className="text-black font-black text-[10px] uppercase h-7 px-3 flex-shrink-0">
               Change
             </Button>
           </div>
@@ -280,48 +321,49 @@ export default function FlexibleSlotBookingPage() {
           {/* Mobile Flow Container */}
           <div className="space-y-4 md:hidden">
             <div onClick={() => setMobileCalendarOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer glow-box-hover">
-              <div className="space-y-0.5">
-                <span className="text-[8px] font-black text-zinc-500 uppercase block">Select Date</span>
-                <span className="text-xs font-black text-white">{calendarDay ? calendarDay.toLocaleDateString() : "Choose Date"}</span>
+              <div className="space-y-1">
+                <span className="text-label-enhanced block">Select Date</span>
+                <span className="text-sm font-black text-white">{calendarDay ? calendarDay.toLocaleDateString() : "Choose Date"}</span>
               </div>
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
 
             <div onClick={() => setMobileDurationOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer glow-box-hover">
-              <div className="space-y-0.5">
-                <span className="text-[8px] font-black text-zinc-500 uppercase block">Duration</span>
-                <span className="text-xs font-black text-white">{selectedDurationLabel}</span>
+              <div className="space-y-1">
+                <span className="text-label-enhanced block">Duration</span>
+                <span className="text-sm font-black text-white">{selectedDurationLabel}</span>
               </div>
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
 
             <div onClick={() => setMobileStartTimeOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer glow-box-hover">
-              <div className="space-y-0.5">
-                <span className="text-[8px] font-black text-zinc-500 uppercase block">Start Time</span>
-                <span className="text-xs font-black text-primary">{selectedStartTime || "Choose Start Time"}</span>
+              <div className="space-y-1">
+                <span className="text-label-enhanced block">Start Time</span>
+                <span className="text-sm font-black text-primary">{selectedStartTime || "Choose Start Time"}</span>
               </div>
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
 
 
 
+
             {/* Inline Dynamic Mobile Summary Card Block */}
             <Card className="bg-[#111] border border-zinc-900 p-5 space-y-4 shadow-xl rounded-xl glow-box-strong">
-              <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider border-b border-zinc-900/60 pb-2">Booking Summary</h3>
+              <h3 className="text-sm font-black text-zinc-300 uppercase tracking-wider border-b border-zinc-900/60 pb-2">Booking Summary</h3>
 
-              <div className="space-y-2.5 text-xs text-zinc-400 border-b border-zinc-900/60 pb-3">
-                <div className="flex justify-between"><span>Date:</span><strong className="text-white font-bold">{calendarDay ? calendarDay.toLocaleDateString() : "Not Selected"}</strong></div>
+              <div className="space-y-2.5 text-sm text-zinc-300 border-b border-zinc-900/60 pb-3">
+                <div className="flex justify-between"><span>Date:</span><strong className="text-white font-bold">{calendarDay ? `${calendarDay.toLocaleDateString()} (${calendarDay.toLocaleDateString('en-US', { weekday: 'short' })})` : "Not Selected"}</strong></div>
                 <div className="flex justify-between"><span>Duration:</span><strong className="text-white font-bold">{selectedDurationLabel}</strong></div>
                 <div className="flex justify-between"><span>Start Time:</span><strong className="text-primary font-black">{selectedStartTime || "Not Selected"}</strong></div>
                 <div className="flex justify-between"><span>End Time:</span><strong className="text-primary font-black">{endTime || "--"}</strong></div>
-                <div className="flex justify-between"><span>Device:</span><strong className="text-white uppercase truncate max-w-[200px]">{deviceTypeName || "N/A"}</strong></div>
+                <div className="flex justify-between"><span>Device:</span><strong className="text-xs text-white uppercase truncate max-w-[200px]">{deviceTypeName || "N/A"}</strong></div>
               </div>
 
               {/* Player Multiplier Controller */}
               <div className="space-y-2">
                 <h4 className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Number of Players</h4>
                 <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-lg p-2.5">
-                  <p className="text-[11px] text-zinc-500">{includedPlayers} included • Max {maxPlayers}</p>
+                  <p className="text-xs text-zinc-300 font-bold">{includedPlayers} included • Max {maxPlayers}</p>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -351,22 +393,35 @@ export default function FlexibleSlotBookingPage() {
               </div>
 
               {/* Mobile Price Calculations */}
-              <div className="space-y-2 text-xs text-zinc-500 pt-1">
+              <div className="space-y-2 text-sm text-zinc-300 pt-1">
                 <div className="flex justify-between"><span>Base Rate ({selectedDurationLabel})</span><span className="text-white font-bold">₹{Math.round(baselineSubtotal)}.00</span></div>
                 {extraPlayersCount > 0 && (
                   <div className="flex justify-between"><span>Extra Players ({extraPlayersCount} × {selectedDurationLabel})</span><span className="text-primary font-bold">₹{Math.round(extraPlayersCharge)}.00</span></div>
                 )}
                 <div className="flex justify-between items-baseline pt-2.5 border-t border-zinc-900 text-white font-black">
-                  <span className="text-xs uppercase">Total Payable</span>
+                  <span className="text-sm uppercase">Total Payable</span>
                   <span className="text-xl text-primary">₹{Math.round(aggregatedPayableTotal)}.00</span>
                 </div>
               </div>
             </Card>
 
-            <Button variant="gradient" disabled={!canProceed || submittingLock} onClick={handleRegisterTransactionLock} className="w-full text-black font-black uppercase text-xs py-5 rounded-xl flex items-center justify-center gap-1 mt-2 shadow-[0_4px_20px_rgba(255,193,7,0.2)]">
-              {submittingLock ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Confirm & Hold Slot <ChevronRight className="h-4 w-4 stroke-[3]" />
-            </Button>
+            <div ref={confirmButtonRef} className="w-full">
+              {!canProceed && (
+                <p className="text-[11px] font-bold text-amber-500 text-center mt-2 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
+                  {!calendarDay
+                    ? "⚠️ Please select a date to proceed"
+                    : !selectedStartTime
+                      ? "⚠️ Please select a start time to proceed"
+                      : "⚠️ Selected time slot is not available"}
+                </p>
+              )}
+
+              <Button variant="gradient" disabled={submittingLock} onClick={handleRegisterTransactionLock} className={`w-full text-black font-black uppercase text-xs py-5 rounded-xl flex items-center justify-center gap-1 mt-2 shadow-[0_4px_20px_rgba(255,193,7,0.2)] ${!canProceed ? "opacity-50 cursor-not-allowed" : ""}`}>
+                {submittingLock ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Confirm & Hold Slot <ChevronRight className="h-4 w-4 stroke-[3]" />
+              </Button>
+            </div>
+
           </div>
 
           {/* Desktop Layout */}
@@ -375,7 +430,7 @@ export default function FlexibleSlotBookingPage() {
             <div className="space-y-3">
               <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">📅 Select Date</h3>
               <Card className="bg-[#111] border border-zinc-900 p-4 w-full flex justify-center rounded-2xl glow-box-hover">
-                <Calendar mode="single" selected={calendarDay} onSelect={setCalendarDay} disabled={(day) => day < new Date(new Date().setHours(0, 0, 0, 0))} />
+                <Calendar mode="single" selected={calendarDay} onSelect={setCalendarDay} disabled={isDayDisabled} hidden={isDayHidden} />
               </Card>
             </div>
 
@@ -454,12 +509,12 @@ export default function FlexibleSlotBookingPage() {
         {/* Desktop Sidebar Summary */}
         <div className="hidden lg:block w-[360px] flex-shrink-0">
           <Card className="bg-[#111] border border-zinc-900 p-6 text-white space-y-6 shadow-2xl rounded-2xl sticky top-24 glow-box-strong">
-            <h3 className="text-sm font-black text-zinc-400 uppercase tracking-wider border-b border-zinc-900 pb-3">Booking Summary</h3>
+            <h3 className="text-sm font-black text-zinc-300 uppercase tracking-wider border-b border-zinc-900 pb-3">Booking Summary</h3>
 
-            <div className="space-y-4 text-xs text-zinc-400 border-b border-zinc-900 pb-3">
+            <div className="space-y-4 text-sm text-zinc-300 border-b border-zinc-900 pb-3">
               <div className="flex justify-between">
                 <span>Date:</span>
-                <strong className="text-white font-bold">{calendarDay ? calendarDay.toDateString() : "Not Selected"}</strong>
+                <strong className="text-white font-bold">{calendarDay ? `${calendarDay.toLocaleDateString()} (${calendarDay.toLocaleDateString('en-US', { weekday: 'short' })})` : "Not Selected"}</strong>
               </div>
               <div className="flex justify-between">
                 <span>Duration:</span>
@@ -475,7 +530,7 @@ export default function FlexibleSlotBookingPage() {
               </div>
               <div className="flex justify-between">
                 <span>Device:</span>
-                <strong className="text-white uppercase text-right max-w-[200px] break-words leading-tight max-w-[160px]">{deviceTypeName || "N/A"}</strong>
+                <strong className="text-xs text-white uppercase text-right max-w-[200px] break-words leading-tight max-w-[160px]">{deviceTypeName || "N/A"}</strong>
               </div>
             </div>
 
@@ -484,7 +539,7 @@ export default function FlexibleSlotBookingPage() {
               <h4 className="text-xs font-black text-zinc-400 uppercase tracking-wider mb-3">Number of Players</h4>
               <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-lg p-3">
                 <div className="flex-1">
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-sm text-zinc-300 font-bold">
                     {includedPlayers} included • Max {maxPlayers}
                   </p>
                 </div>
@@ -514,7 +569,7 @@ export default function FlexibleSlotBookingPage() {
               </div>
             </div>
 
-            <div className="space-y-2.5 text-xs text-zinc-500">
+            <div className="space-y-2.5 text-sm text-zinc-300">
               <div className="flex justify-between">
                 <span>Base Rate ({selectedDurationLabel})</span>
                 <span className="text-white font-bold">₹{Math.round(baselineSubtotal)}.00</span>
@@ -531,11 +586,21 @@ export default function FlexibleSlotBookingPage() {
               </div>
             </div>
 
+            {!canProceed && (
+              <p className="text-[11px] font-bold text-amber-500 text-center mt-3 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
+                {!calendarDay
+                  ? "⚠️ Please select a date to proceed"
+                  : !selectedStartTime
+                    ? "⚠️ Please select a start time to proceed"
+                    : "⚠️ Selected time slot is not available"}
+              </p>
+            )}
+
             <Button
               variant="gradient"
-              disabled={submittingLock || !canProceed}
+              disabled={submittingLock}
               onClick={handleRegisterTransactionLock}
-              className="w-full text-black font-black uppercase py-5 text-xs rounded-xl flex items-center justify-center gap-1"
+              className={`w-full text-black font-black uppercase py-5 text-xs rounded-xl flex items-center justify-center gap-1 mt-3 ${!canProceed ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               {submittingLock ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Confirm & Hold Slot <ChevronRight className="h-4 w-4 stroke-[3]" />
@@ -555,7 +620,7 @@ export default function FlexibleSlotBookingPage() {
               </button>
             </div>
             <div className="flex justify-center bg-zinc-950 p-2 rounded-xl">
-              <Calendar mode="single" selected={calendarDay} onSelect={(day) => { setCalendarDay(day); setMobileCalendarOpen(false); }} disabled={(day) => day < new Date(new Date().setHours(0, 0, 0, 0))} />
+              <Calendar mode="single" selected={calendarDay} onSelect={(day) => { setCalendarDay(day); setMobileCalendarOpen(false); }} disabled={isDayDisabled} hidden={isDayHidden} />
             </div>
           </div>
         </div>
@@ -619,7 +684,16 @@ export default function FlexibleSlotBookingPage() {
                     key={time}
                     type="button"
                     disabled={!isAvailable}
-                    onClick={() => { setSelectedStartTime(time); setMobileStartTimeOpen(false); }}
+                    onClick={() => {
+                      setSelectedStartTime(time);
+                      setMobileStartTimeOpen(false);
+                      setTimeout(() => {
+                        confirmButtonRef.current?.scrollIntoView({
+                          behavior: 'smooth',
+                          block: 'end'
+                        });
+                      }, 300);
+                    }}
                     className={`p-3 text-center rounded-xl text-xs font-black uppercase transition-all tracking-wider border ${!isAvailable
                       ? "bg-zinc-950/40 border-zinc-900/40 text-zinc-800 cursor-not-allowed line-through"
                       : isSelected

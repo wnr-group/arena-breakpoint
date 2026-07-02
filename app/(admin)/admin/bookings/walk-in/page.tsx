@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,7 @@ import {
   checkCustomerExists
 } from "@/app/(customer)/booking/actions";
 import { createWalkInBooking } from "../actions";
-import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
+import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY, formatLocalDate } from "@/lib/utils/dates";
 import {
   generateStartTimes,
   filterPastTimeSlots,
@@ -52,6 +52,7 @@ export default function WalkInBookingPage() {
 
   // Slot selection
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const proceedButtonRef = useRef<HTMLDivElement>(null);
   const [selectedStartTime, setSelectedStartTime] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<number>(60); // Default 1 hour in minutes
   const [availableStartTimes, setAvailableStartTimes] = useState<Set<string>>(new Set());
@@ -73,6 +74,23 @@ export default function WalkInBookingPage() {
 
   const allStartTimes = useMemo(() => generateStartTimes(), []);
   const allDurations = useMemo(() => generateDurationOptions(), []);
+
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const isDayDisabled = (day: Date) => {
+    return day < today;  // Only disable past dates
+  };
+
+  const isDayHidden = (day: Date) => {
+    // Hide dates outside current month view to prevent showing overflow dates
+    const viewMonth = selectedDate?.getMonth() ?? today.getMonth();
+    const viewYear = selectedDate?.getFullYear() ?? today.getFullYear();
+    return day.getMonth() !== viewMonth || day.getFullYear() !== viewYear;
+  };
 
   // Filter out past time slots for today
   const availableStartTimesForDate = useMemo(() => {
@@ -124,7 +142,7 @@ export default function WalkInBookingPage() {
   const loadAvailability = async () => {
     if (!selectedDeviceType || !selectedDate) return;
     setLoadingSlots(true);
-    const dateString = selectedDate.toISOString().split("T")[0];
+    const dateString = formatLocalDate(selectedDate);
 
     try {
       const result = await checkFlexibleAvailability(dateString, selectedDeviceType.id, selectedDuration);
@@ -224,7 +242,7 @@ export default function WalkInBookingPage() {
       customerDob: formattedDob,
       deviceTypeId: selectedDeviceType.id,
       deviceTypeName: selectedDeviceType.display_name,
-      selectedDate: selectedDate.toISOString().split("T")[0],
+      selectedDate: formatLocalDate(selectedDate),
       selectedSlot: `${selectedStartTime} - ${endTime}`,
       slotStartTime: selectedStartTime,
       slotEndTime: endTime,
@@ -388,7 +406,8 @@ export default function WalkInBookingPage() {
                     mode="single"
                     selected={selectedDate}
                     onSelect={(date) => date && setSelectedDate(date)}
-                    disabled={(day) => day < new Date(new Date().setHours(0, 0, 0, 0))}
+                    disabled={isDayDisabled}
+                    hidden={isDayHidden}
                   />
                 </Card>
               </div>
@@ -444,7 +463,15 @@ export default function WalkInBookingPage() {
                         <button
                           key={time}
                           disabled={!isAvailable}
-                          onClick={() => setSelectedStartTime(time)}
+                          onClick={() => {
+                            setSelectedStartTime(time);
+                            setTimeout(() => {
+                              proceedButtonRef.current?.scrollIntoView({
+                                behavior: "smooth",
+                                block: "end"
+                              });
+                            }, 100);
+                          }}
                           className={`w-full p-3 border text-left rounded-xl transition-all duration-300 text-sm font-bold ${!isAvailable
                             ? "bg-zinc-950/20 border-zinc-950 text-zinc-800 cursor-not-allowed"
                             : isSelected
@@ -461,7 +488,12 @@ export default function WalkInBookingPage() {
               </div>
             </div>
 
-            <div className="flex justify-end mt-8">
+            <div ref={proceedButtonRef} className="flex flex-col items-end mt-8 gap-2">
+              {!selectedStartTime && (
+                <p className="text-[11px] font-bold text-amber-500 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl max-w-sm text-right">
+                  ⚠️ Please select a start time to proceed.
+                </p>
+              )}
               <Button
                 disabled={!selectedDate || !selectedStartTime || loadingSlots}
                 onClick={() => {

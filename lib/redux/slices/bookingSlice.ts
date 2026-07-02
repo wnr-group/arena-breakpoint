@@ -218,6 +218,13 @@ export const bookingSlice = createSlice({
       state.slotLockExpiry = null; // Only stops the countdown
     },
 
+    releaseSlotHold: (state) => {
+      state.slotLockExpiry = null;
+      state.selectedSlot = null;
+      state.slotStartTime = null;
+      state.slotEndTime = null;
+    },
+
     resetBooking: () => initialState,
   },
 })
@@ -237,6 +244,7 @@ export const {
   setSlotLockExpiry,
   setDuration,
   clearSlotTimer,
+  releaseSlotHold,
   resetBooking,
 } = bookingSlice.actions
 

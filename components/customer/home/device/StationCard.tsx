@@ -1,13 +1,40 @@
+import React, { useState } from 'react';
 import { Station } from '@/app/(customer)/home/device/page'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation';
+import { useAppDispatch } from '@/lib/redux/hooks';
+import { setDeviceType, setPricing, resetBooking } from '@/lib/redux/slices/bookingSlice';
+import { Loader2 } from 'lucide-react';
 
 export function StationCard({ station, motionProps }: { station: Station; motionProps: object }) {
     const avail = station.isAvailable
+    const [isLoading, setIsLoading] = useState(false)
 
     const router = useRouter()
+    const dispatch = useAppDispatch()
     const handleClick = () => {
-        router.push('/booking')
+        setIsLoading(true);
+        dispatch(resetBooking());
+
+        const hourlyRate = Number(station.regular_hourly_rate) || 0;
+
+        dispatch(setDeviceType({
+            id: station.device_type_id,
+            name: station.name,
+            hourlyRate: hourlyRate,
+            includedPlayers: station.included_players,
+            maxPlayers: station.max_players,
+            extraPlayerCharge: Number(station.extra_player_charge)
+        }));
+
+        dispatch(setPricing({
+            subtotal: hourlyRate,
+            subscriptionDiscount: 0,
+            promoDiscount: 0,
+            total: hourlyRate
+        }));
+
+        router.push('/booking/slots-v2')
     }
 
     return (
@@ -21,8 +48,17 @@ export function StationCard({ station, motionProps }: { station: Station; motion
         transition-[border-color,box-shadow] duration-300"
         >
             <div className="relative w-full h-full rounded-xl overflow-hidden bg-gradient-to-br from-zinc-900/95 via-zinc-950/95 to-black/95 backdrop-blur-md border border-zinc-800/60">
+                {/* Station Cover Image */}
+                {station.image && (
+                    <img
+                        src={station.image}
+                        alt={station.name}
+                        className="absolute inset-0 w-full h-full object-cover opacity-45 group-hover:scale-110 transition-transform duration-500 pointer-events-none"
+                    />
+                )}
+
                 {/* Darker gradient overlay for better contrast */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent transition-all duration-400 group-hover:from-black/90 group-hover:via-black/50" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent transition-all duration-400 group-hover:from-black/95 group-hover:via-black/60 pointer-events-none" />
 
                 {/* Availability Badge */}
                 <div
@@ -96,14 +132,21 @@ export function StationCard({ station, motionProps }: { station: Station; motion
                             e.stopPropagation()
                             handleClick()
                         }}
-                        disabled={!avail}
-                        className={`w-full py-2.5 min-[581px]:py-3 rounded-xl font-black text-[12px] min-[581px]:text-[13px] tracking-widest uppercase transition-colors duration-200 ${avail
+                        disabled={!avail || isLoading}
+                        className={`w-full py-2.5 min-[581px]:py-3 rounded-xl font-black text-[12px] min-[581px]:text-[13px] tracking-widest uppercase transition-colors duration-200 flex items-center justify-center gap-2 ${avail
                             ? 'bg-gradient-primary text-[var(--button-text)] hover:bg-gradient-primary-hover active:scale-95'
                             : 'bg-white/6 text-white/25 border border-white/10 cursor-not-allowed'
                             }`}
                         style={{ fontFamily: "'Rajdhani', sans-serif" }}
                     >
-                        {avail ? 'Book slot' : 'Join Waitlist'}
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Loading...
+                            </>
+                        ) : (
+                            avail ? 'Book slot' : 'Fully Booked'
+                        )}
                     </button>
                 </div>
             </div>

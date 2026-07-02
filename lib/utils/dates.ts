@@ -156,3 +156,14 @@ export function handleDobInput(value: string): string {
     return `${numbers.slice(0, 2)}-${numbers.slice(2, 4)}-${numbers.slice(4, 8)}`;
   }
 }
+
+/**
+ * Safely converts a Date object to local YYYY-MM-DD string without timezone shifting
+ */
+export function formatLocalDate(date: Date): string {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
