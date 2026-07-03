@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import {
   DollarSign, TrendingUp, ShoppingBag, Gamepad2,
-  Download, UtensilsCrossed, BarChart3, CalendarDays, Receipt
+  UtensilsCrossed, BarChart3, CalendarDays, Receipt
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -22,6 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { ExpensesTab } from "@/components/admin/reports/ExpensesTab";
 import { ProfitTab } from "@/components/admin/reports/ProfitTab";
+import { CountUp, CurrencyCountUp } from "@/components/shared/CountUp";
 
 export default function AdminReportsPage() {
   const [activeTab, setActiveTab] = useState<"overview" | "food" | "device" | "revenue" | "expenses" | "profit">("overview");
@@ -102,10 +103,6 @@ export default function AdminReportsPage() {
 
   const handleApplyFilters = () => {
     loadData();
-  };
-
-  const handleExport = () => {
-    toast.success("Export feature coming soon!");
   };
 
   const setQuickDateRange = (preset: "today" | "7days" | "30days" | "month" | "90days" | "all") => {
@@ -199,13 +196,6 @@ export default function AdminReportsPage() {
             Track performance and insights across all operations
           </p>
         </div>
-        <Button
-          onClick={handleExport}
-          className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs"
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Export Report
-        </Button>
       </div>
 
       {/* Date Filters */}
@@ -412,7 +402,7 @@ export default function AdminReportsPage() {
                         Total Revenue
                       </p>
                       <h3 className="text-2xl font-black text-white">
-                        ₹{overviewData.totalRevenue.toLocaleString('en-IN')}
+                        <CurrencyCountUp amount={overviewData.totalRevenue} duration={1500} />
                       </h3>
                     </div>
                     <div className="p-2 bg-green-500/10 rounded-lg">
@@ -428,7 +418,7 @@ export default function AdminReportsPage() {
                         Device Revenue
                       </p>
                       <h3 className="text-2xl font-black text-white">
-                        ₹{overviewData.deviceRevenue.toLocaleString('en-IN')}
+                        <CurrencyCountUp amount={overviewData.deviceRevenue} duration={1300} />
                       </h3>
                     </div>
                     <div className="p-2 bg-blue-500/10 rounded-lg">
@@ -444,7 +434,7 @@ export default function AdminReportsPage() {
                         Food Revenue
                       </p>
                       <h3 className="text-2xl font-black text-white">
-                        ₹{overviewData.foodRevenue.toLocaleString('en-IN')}
+                        <CurrencyCountUp amount={overviewData.foodRevenue} duration={1300} />
                       </h3>
                     </div>
                     <div className="p-2 bg-amber-500/10 rounded-lg">
@@ -460,7 +450,7 @@ export default function AdminReportsPage() {
                         Total Bookings
                       </p>
                       <h3 className="text-2xl font-black text-white">
-                        {overviewData.totalBookings}
+                        <CountUp end={overviewData.totalBookings} duration={1000} />
                       </h3>
                     </div>
                     <div className="p-2 bg-amber-500/10 rounded-lg">
@@ -480,10 +470,10 @@ export default function AdminReportsPage() {
                     <ShoppingBag className="h-4 w-4 text-muted-content" />
                   </div>
                   <h4 className="text-xl font-black text-primary">
-                    {overviewData.totalFoodOrders}
+                    <CountUp end={overviewData.totalFoodOrders} duration={900} />
                   </h4>
                   <p className="text-xs text-data-placeholder mt-1">
-                    {overviewData.totalItemsSold} items sold
+                    <CountUp end={overviewData.totalItemsSold} duration={1000} /> items sold
                   </p>
                 </Card>
 
@@ -495,7 +485,7 @@ export default function AdminReportsPage() {
                     <CalendarDays className="h-4 w-4 text-muted-content" />
                   </div>
                   <h4 className="text-xl font-black text-primary">
-                    {overviewData.totalHoursBooked}
+                    <CountUp end={overviewData.totalHoursBooked} duration={1000} decimals={1} />
                   </h4>
                   <p className="text-min-enhanced text-secondary-content mt-1">
                     Total gaming hours
@@ -510,7 +500,7 @@ export default function AdminReportsPage() {
                     <TrendingUp className="h-4 w-4 text-muted-content" />
                   </div>
                   <h4 className="text-xl font-black text-primary">
-                    ₹{(overviewData.totalRevenue / (overviewData.totalBookings || 1)).toFixed(0)}
+                    <CurrencyCountUp amount={overviewData.totalRevenue / (overviewData.totalBookings || 1)} duration={1100} />
                   </h4>
                   <p className="text-xs text-data-placeholder mt-1">
                     Per booking
@@ -525,104 +515,161 @@ export default function AdminReportsPage() {
             <div className="space-y-6">
               {/* Food Summary */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
-                  <p className="text-label text-muted-content mb-2">
-                    Total Revenue
-                  </p>
-                  <h3 className="text-2xl font-black text-primary">
-                    ₹{foodData.summary.totalRevenue.toLocaleString('en-IN')}
-                  </h3>
+                <Card className="bg-gradient-to-br from-amber-500/10 to-orange-600/5 border-amber-500/20 p-6 hover:-translate-y-1 transition-all">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs font-black uppercase text-amber-500/70 mb-2">
+                        Total Revenue
+                      </p>
+                      <h3 className="text-2xl font-black text-white">
+                        <CurrencyCountUp amount={foodData.summary.totalRevenue} duration={1300} />
+                      </h3>
+                    </div>
+                    <div className="p-2 bg-amber-500/10 rounded-lg">
+                      <DollarSign className="h-5 w-5 text-amber-500" />
+                    </div>
+                  </div>
                 </Card>
-                <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
-                  <p className="text-label text-muted-content mb-2">
-                    Items Sold
-                  </p>
-                  <h3 className="text-2xl font-black text-white">
-                    {foodData.summary.totalItemsSold}
-                  </h3>
+                <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 p-6 hover:-translate-y-1 transition-all">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs font-black uppercase text-green-500/70 mb-2">
+                        Items Sold
+                      </p>
+                      <h3 className="text-2xl font-black text-white">
+                        <CountUp end={foodData.summary.totalItemsSold} duration={1000} />
+                      </h3>
+                    </div>
+                    <div className="p-2 bg-green-500/10 rounded-lg">
+                      <ShoppingBag className="h-5 w-5 text-green-500" />
+                    </div>
+                  </div>
                 </Card>
-                <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
-                  <p className="text-label text-muted-content mb-2">
-                    Total Orders
-                  </p>
-                  <h3 className="text-2xl font-black text-white">
-                    {foodData.summary.totalOrders}
-                  </h3>
+                <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 p-6 hover:-translate-y-1 transition-all">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs font-black uppercase text-blue-500/70 mb-2">
+                        Total Orders
+                      </p>
+                      <h3 className="text-2xl font-black text-white">
+                        <CountUp end={foodData.summary.totalOrders} duration={1000} />
+                      </h3>
+                    </div>
+                    <div className="p-2 bg-blue-500/10 rounded-lg">
+                      <Receipt className="h-5 w-5 text-blue-500" />
+                    </div>
+                  </div>
                 </Card>
-                <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
-                  <p className="text-label text-muted-content mb-2">
-                    Avg Order Value
-                  </p>
-                  <h3 className="text-2xl font-black text-white">
-                    ₹{foodData.summary.averageOrderValue.toFixed(0)}
-                  </h3>
+                <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20 p-6 hover:-translate-y-1 transition-all">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs font-black uppercase text-purple-500/70 mb-2">
+                        Avg Order Value
+                      </p>
+                      <h3 className="text-2xl font-black text-white">
+                        <CurrencyCountUp amount={foodData.summary.averageOrderValue} duration={1100} />
+                      </h3>
+                    </div>
+                    <div className="p-2 bg-purple-500/10 rounded-lg">
+                      <TrendingUp className="h-5 w-5 text-purple-500" />
+                    </div>
+                  </div>
                 </Card>
               </div>
 
               {/* Category Breakdown */}
               <Card className="bg-[var(--surface)] border-[#27272a] p-6">
-                <h3 className="text-sm font-black uppercase text-muted-content mb-4">
-                  Category Breakdown
-                </h3>
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="p-2 bg-amber-500/10 rounded-lg">
+                    <UtensilsCrossed className="h-5 w-5 text-amber-500" />
+                  </div>
+                  <h3 className="text-sm font-black uppercase text-white">
+                    Category Breakdown
+                  </h3>
+                </div>
                 <div className="space-y-3">
-                  {foodData.categoryBreakdown.map((category: any) => (
-                    <div
-                      key={category.category}
-                      className="flex items-center justify-between p-3 bg-[var(--background)] border border-[#27272a] rounded-lg"
-                    >
-                      <div>
-                        <p className="text-sm font-bold text-white">
-                          {category.category}
-                        </p>
-                        <p className="text-xs text-data-placeholder">
-                          {category.totalQuantity} items • {category.itemCount} unique items
-                        </p>
+                  {foodData.categoryBreakdown.map((category: any, index: number) => {
+                    const colors = [
+                      { bg: 'from-amber-500/10 to-orange-500/5', border: 'border-amber-500/20', text: 'text-amber-400' },
+                      { bg: 'from-green-500/10 to-emerald-500/5', border: 'border-green-500/20', text: 'text-green-400' },
+                      { bg: 'from-blue-500/10 to-cyan-500/5', border: 'border-blue-500/20', text: 'text-blue-400' },
+                      { bg: 'from-purple-500/10 to-pink-500/5', border: 'border-purple-500/20', text: 'text-purple-400' },
+                    ];
+                    const color = colors[index % colors.length];
+                    return (
+                      <div
+                        key={category.category}
+                        className={`flex items-center justify-between p-4 bg-gradient-to-r ${color.bg} border ${color.border} rounded-xl hover:scale-[1.02] transition-all`}
+                      >
+                        <div>
+                          <p className={`text-sm font-black ${color.text}`}>
+                            {category.category}
+                          </p>
+                          <p className="text-xs text-secondary-content mt-1">
+                            <CountUp end={category.totalQuantity} duration={800} /> items • <CountUp end={category.itemCount} duration={800} /> unique
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-black text-white">
+                            <CurrencyCountUp amount={category.totalRevenue} duration={1100} />
+                          </p>
+                          <p className="text-[10px] text-secondary-content uppercase mt-1">
+                            <CountUp end={(category.totalRevenue / foodData.summary.totalRevenue) * 100} duration={900} decimals={1} suffix="% of total" />
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-lg font-black text-primary">
-                          ₹{category.totalRevenue.toLocaleString('en-IN')}
-                        </p>
-                        <p className="text-[9px] text-data-placeholder uppercase">
-                          {((category.totalRevenue / foodData.summary.totalRevenue) * 100).toFixed(1)}% of total
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </Card>
 
               {/* Top Items */}
               <Card className="bg-[var(--surface)] border-[#27272a] p-6">
-                <h3 className="text-sm font-black uppercase text-muted-content mb-4">
-                  Top Selling Items
-                </h3>
-                <div className="space-y-2">
-                  {foodData.topItems.map((item: any, idx: number) => (
-                    <div
-                      key={item.itemName}
-                      className="flex items-center justify-between p-3 bg-[var(--background)] border border-[#27272a] rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-black">
-                          {idx + 1}
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="text-sm font-black uppercase text-white">
+                    Top Selling Items
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  {foodData.topItems.map((item: any, idx: number) => {
+                    const rankColors = [
+                      'bg-gradient-to-br from-yellow-500 to-yellow-600 text-yellow-900',
+                      'bg-gradient-to-br from-zinc-300 to-zinc-400 text-zinc-900',
+                      'bg-gradient-to-br from-amber-600 to-amber-700 text-amber-950',
+                      'bg-gradient-to-br from-primary to-primary/80 text-white'
+                    ];
+                    const rankColor = idx < 3 ? rankColors[idx] : rankColors[3];
+
+                    return (
+                      <div
+                        key={item.itemName}
+                        className="flex items-center justify-between p-4 bg-gradient-to-r from-[var(--background)] to-[var(--background)]/50 border border-zinc-800 rounded-xl hover:border-primary/30 hover:scale-[1.01] transition-all"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-xl ${rankColor} flex items-center justify-center text-sm font-black shadow-lg`}>
+                            {idx + 1}
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-white">{item.itemName}</p>
+                            <p className="text-xs text-secondary-content mt-1">
+                              {item.category} • <CountUp end={item.totalQuantity} duration={800} /> sold
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-bold text-white">{item.itemName}</p>
-                          <p className="text-xs text-data-placeholder">
-                            {item.category} • {item.totalQuantity} sold
+                        <div className="text-right">
+                          <p className="text-base font-black text-primary">
+                            <CurrencyCountUp amount={item.totalRevenue} duration={1000} />
+                          </p>
+                          <p className="text-[10px] text-secondary-content uppercase mt-1">
+                            <CountUp end={item.orderCount} duration={800} /> orders
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-black text-white">
-                          ₹{item.totalRevenue.toLocaleString('en-IN')}
-                        </p>
-                        <p className="text-[9px] text-data-placeholder uppercase">
-                          {item.orderCount} orders
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </Card>
             </div>
@@ -633,83 +680,135 @@ export default function AdminReportsPage() {
             <div className="space-y-6">
               {/* Device Summary */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
-                  <p className="text-label text-muted-content mb-2">
-                    Total Revenue
-                  </p>
-                  <h3 className="text-2xl font-black text-primary">
-                    ₹{deviceData.summary.totalRevenue.toLocaleString('en-IN')}
-                  </h3>
+                <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-600/5 border-blue-500/20 p-6 hover:-translate-y-1 transition-all">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs font-black uppercase text-blue-500/70 mb-2">
+                        Total Revenue
+                      </p>
+                      <h3 className="text-2xl font-black text-white">
+                        <CurrencyCountUp amount={deviceData.summary.totalRevenue} duration={1300} />
+                      </h3>
+                    </div>
+                    <div className="p-2 bg-blue-500/10 rounded-lg">
+                      <DollarSign className="h-5 w-5 text-blue-500" />
+                    </div>
+                  </div>
                 </Card>
-                <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
-                  <p className="text-label text-muted-content mb-2">
-                    Total Bookings
-                  </p>
-                  <h3 className="text-2xl font-black text-white">
-                    {deviceData.summary.totalBookings}
-                  </h3>
+                <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20 p-6 hover:-translate-y-1 transition-all">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs font-black uppercase text-purple-500/70 mb-2">
+                        Total Bookings
+                      </p>
+                      <h3 className="text-2xl font-black text-white">
+                        <CountUp end={deviceData.summary.totalBookings} duration={1000} />
+                      </h3>
+                    </div>
+                    <div className="p-2 bg-purple-500/10 rounded-lg">
+                      <CalendarDays className="h-5 w-5 text-purple-500" />
+                    </div>
+                  </div>
                 </Card>
-                <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
-                  <p className="text-label text-muted-content mb-2">
-                    Hours Booked
-                  </p>
-                  <h3 className="text-2xl font-black text-white">
-                    {deviceData.summary.totalHours}
-                  </h3>
+                <Card className="bg-gradient-to-br from-green-500/10 to-emerald-600/5 border-green-500/20 p-6 hover:-translate-y-1 transition-all">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs font-black uppercase text-green-500/70 mb-2">
+                        Hours Booked
+                      </p>
+                      <h3 className="text-2xl font-black text-white">
+                        <CountUp end={deviceData.summary.totalHours} duration={1000} />
+                      </h3>
+                    </div>
+                    <div className="p-2 bg-green-500/10 rounded-lg">
+                      <Gamepad2 className="h-5 w-5 text-green-500" />
+                    </div>
+                  </div>
                 </Card>
-                <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
-                  <p className="text-label text-muted-content mb-2">
-                    Avg Revenue
-                  </p>
-                  <h3 className="text-2xl font-black text-white">
-                    ₹{deviceData.summary.averageRevenuePerBooking.toFixed(0)}
-                  </h3>
+                <Card className="bg-gradient-to-br from-amber-500/10 to-orange-600/5 border-amber-500/20 p-6 hover:-translate-y-1 transition-all">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs font-black uppercase text-amber-500/70 mb-2">
+                        Avg Revenue
+                      </p>
+                      <h3 className="text-2xl font-black text-white">
+                        <CurrencyCountUp amount={deviceData.summary.averageRevenuePerBooking} duration={1100} />
+                      </h3>
+                    </div>
+                    <div className="p-2 bg-amber-500/10 rounded-lg">
+                      <TrendingUp className="h-5 w-5 text-amber-500" />
+                    </div>
+                  </div>
                 </Card>
               </div>
 
               {/* Device Type Breakdown */}
               <Card className="bg-[var(--surface)] border-[#27272a] p-6">
-                <h3 className="text-sm font-black uppercase text-muted-content mb-4">
-                  Device Type Performance
-                </h3>
-                <div className="space-y-3">
-                  {deviceData.deviceBreakdown.map((device: any) => (
-                    <div
-                      key={device.deviceType}
-                      className="p-4 bg-[var(--background)] border border-[#27272a] rounded-lg"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-black text-white">
-                          {device.deviceType}
-                        </h4>
-                        <p className="text-lg font-black text-primary">
-                          ₹{device.totalRevenue.toLocaleString('en-IN')}
-                        </p>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                        <div>
-                          <p className="text-data-placeholder">Bookings</p>
-                          <p className="font-bold text-white">{device.totalBookings}</p>
-                        </div>
-                        <div>
-                          <p className="text-data-placeholder">Hours</p>
-                          <p className="font-bold text-white">{device.totalHours}h</p>
-                        </div>
-                        <div>
-                          <p className="text-data-placeholder">Avg Players</p>
-                          <p className="font-bold text-white">
-                            {device.averagePlayersPerBooking.toFixed(1)}
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="p-2 bg-blue-500/10 rounded-lg">
+                    <Gamepad2 className="h-5 w-5 text-blue-500" />
+                  </div>
+                  <h3 className="text-sm font-black uppercase text-white">
+                    Device Type Performance
+                  </h3>
+                </div>
+                <div className="space-y-4">
+                  {deviceData.deviceBreakdown.map((device: any, index: number) => {
+                    const colors = [
+                      { bg: 'from-blue-500/10 to-cyan-500/5', border: 'border-blue-500/20', text: 'text-blue-400', icon: 'bg-blue-500/10', iconColor: 'text-blue-500' },
+                      { bg: 'from-purple-500/10 to-pink-500/5', border: 'border-purple-500/20', text: 'text-purple-400', icon: 'bg-purple-500/10', iconColor: 'text-purple-500' },
+                      { bg: 'from-green-500/10 to-emerald-500/5', border: 'border-green-500/20', text: 'text-green-400', icon: 'bg-green-500/10', iconColor: 'text-green-500' },
+                      { bg: 'from-amber-500/10 to-orange-500/5', border: 'border-amber-500/20', text: 'text-amber-400', icon: 'bg-amber-500/10', iconColor: 'text-amber-500' },
+                    ];
+                    const color = colors[index % colors.length];
+
+                    return (
+                      <div
+                        key={device.deviceType}
+                        className={`p-5 bg-gradient-to-r ${color.bg} border ${color.border} rounded-xl hover:scale-[1.01] transition-all`}
+                      >
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 ${color.icon} rounded-lg`}>
+                              <Gamepad2 className={`h-5 w-5 ${color.iconColor}`} />
+                            </div>
+                            <h4 className={`text-base font-black ${color.text}`}>
+                              {device.deviceType}
+                            </h4>
+                          </div>
+                          <p className="text-xl font-black text-white">
+                            <CurrencyCountUp amount={device.totalRevenue} duration={1200} />
                           </p>
                         </div>
-                        <div>
-                          <p className="text-data-placeholder">Extra Player Rev</p>
-                          <p className="font-bold text-primary">
-                            ₹{device.extraPlayerRevenue.toLocaleString('en-IN')}
-                          </p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div className="p-3 bg-[var(--background)]/50 rounded-lg">
+                            <p className="text-[10px] text-secondary-content uppercase font-bold mb-1">Bookings</p>
+                            <p className="text-base font-black text-white">
+                              <CountUp end={device.totalBookings} duration={800} />
+                            </p>
+                          </div>
+                          <div className="p-3 bg-[var(--background)]/50 rounded-lg">
+                            <p className="text-[10px] text-secondary-content uppercase font-bold mb-1">Hours</p>
+                            <p className="text-base font-black text-white">
+                              <CountUp end={device.totalHours} duration={800} />h
+                            </p>
+                          </div>
+                          <div className="p-3 bg-[var(--background)]/50 rounded-lg">
+                            <p className="text-[10px] text-secondary-content uppercase font-bold mb-1">Avg Players</p>
+                            <p className="text-base font-black text-white">
+                              <CountUp end={device.averagePlayersPerBooking} duration={900} decimals={1} />
+                            </p>
+                          </div>
+                          <div className="p-3 bg-[var(--background)]/50 rounded-lg">
+                            <p className="text-[10px] text-secondary-content uppercase font-bold mb-1">Extra Rev</p>
+                            <p className={`text-base font-black ${color.text}`}>
+                              <CurrencyCountUp amount={device.extraPlayerRevenue} duration={1000} />
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </Card>
             </div>
@@ -725,19 +824,19 @@ export default function AdminReportsPage() {
                     Total Revenue
                   </p>
                   <h3 className="text-3xl font-black text-white mb-4">
-                    ₹{revenueData.summary.totalRevenue.toLocaleString('en-IN')}
+                    <CurrencyCountUp amount={revenueData.summary.totalRevenue} duration={1500} />
                   </h3>
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between">
                       <span className="text-data-placeholder">Device Revenue:</span>
                       <span className="font-bold text-white">
-                        ₹{revenueData.summary.deviceRevenue.toLocaleString('en-IN')}
+                        <CurrencyCountUp amount={revenueData.summary.deviceRevenue} duration={1200} />
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-data-placeholder">Food Revenue:</span>
                       <span className="font-bold text-white">
-                        ₹{revenueData.summary.foodRevenue.toLocaleString('en-IN')}
+                        <CurrencyCountUp amount={revenueData.summary.foodRevenue} duration={1200} />
                       </span>
                     </div>
                   </div>
@@ -752,12 +851,12 @@ export default function AdminReportsPage() {
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-xs text-data-placeholder">Paid</span>
                         <span className="text-sm font-black text-green-500">
-                          {revenueData.summary.paidBookings}
+                          <CountUp end={revenueData.summary.paidBookings} duration={800} />
                         </span>
                       </div>
                       <div className="w-full bg-zinc-900 rounded-full h-2">
                         <div
-                          className="bg-green-500 h-2 rounded-full"
+                          className="bg-green-500 h-2 rounded-full transition-all duration-[1500ms] ease-out"
                           style={{
                             width: `${(revenueData.summary.paidBookings / revenueData.summary.totalBookings) * 100}%`
                           }}
@@ -768,12 +867,12 @@ export default function AdminReportsPage() {
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-xs text-data-placeholder">Pending</span>
                         <span className="text-sm font-black text-amber-500">
-                          {revenueData.summary.pendingBookings}
+                          <CountUp end={revenueData.summary.pendingBookings} duration={800} />
                         </span>
                       </div>
                       <div className="w-full bg-zinc-900 rounded-full h-2">
                         <div
-                          className="bg-amber-500 h-2 rounded-full"
+                          className="bg-amber-500 h-2 rounded-full transition-all duration-[1500ms] ease-out"
                           style={{
                             width: `${(revenueData.summary.pendingBookings / revenueData.summary.totalBookings) * 100}%`
                           }}
@@ -792,12 +891,12 @@ export default function AdminReportsPage() {
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-xs text-data-placeholder">Device</span>
                         <span className="text-sm font-black text-blue-500">
-                          {revenueData.summary.deviceRevenuePercentage.toFixed(1)}%
+                          <CountUp end={revenueData.summary.deviceRevenuePercentage} duration={1000} decimals={1} suffix="%" />
                         </span>
                       </div>
                       <div className="w-full bg-zinc-900 rounded-full h-2">
                         <div
-                          className="bg-blue-500 h-2 rounded-full"
+                          className="bg-blue-500 h-2 rounded-full transition-all duration-[1500ms] ease-out"
                           style={{ width: `${revenueData.summary.deviceRevenuePercentage}%` }}
                         />
                       </div>
@@ -806,12 +905,12 @@ export default function AdminReportsPage() {
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-xs text-data-placeholder">Food</span>
                         <span className="text-sm font-black text-amber-500">
-                          {revenueData.summary.foodRevenuePercentage.toFixed(1)}%
+                          <CountUp end={revenueData.summary.foodRevenuePercentage} duration={1000} decimals={1} suffix="%" />
                         </span>
                       </div>
                       <div className="w-full bg-zinc-900 rounded-full h-2">
                         <div
-                          className="bg-amber-500 h-2 rounded-full"
+                          className="bg-amber-500 h-2 rounded-full transition-all duration-[1500ms] ease-out"
                           style={{ width: `${revenueData.summary.foodRevenuePercentage}%` }}
                         />
                       </div>
@@ -835,10 +934,10 @@ export default function AdminReportsPage() {
                         {source.source === "walk-in" ? "Walk-In Booking" : "Pre-Booking"}
                       </p>
                       <h4 className="text-xl font-black text-primary mb-1">
-                        ₹{source.totalRevenue.toLocaleString('en-IN')}
+                        <CurrencyCountUp amount={source.totalRevenue} duration={1200} />
                       </h4>
                       <p className="text-xs text-data-placeholder">
-                        {source.bookingCount} bookings
+                        <CountUp end={source.bookingCount} duration={800} /> bookings
                       </p>
                     </div>
                   ))}
@@ -858,10 +957,10 @@ export default function AdminReportsPage() {
                       <p className="text-xs font-black uppercase text-white">Cash</p>
                     </div>
                     <h4 className="text-xl font-black text-green-400 mb-1">
-                      ₹{revenueData.summary.totalCash.toLocaleString('en-IN')}
+                      <CurrencyCountUp amount={revenueData.summary.totalCash} duration={1100} />
                     </h4>
                     <p className="text-xs text-data-placeholder">
-                      {revenueData.summary.cashPercentage.toFixed(1)}% of total
+                      <CountUp end={revenueData.summary.cashPercentage} duration={900} decimals={1} suffix="% of total" />
                     </p>
                   </div>
 
@@ -872,10 +971,10 @@ export default function AdminReportsPage() {
                       <p className="text-xs font-black uppercase text-white">Card</p>
                     </div>
                     <h4 className="text-xl font-black text-blue-400 mb-1">
-                      ₹{revenueData.summary.totalCard.toLocaleString('en-IN')}
+                      <CurrencyCountUp amount={revenueData.summary.totalCard} duration={1100} />
                     </h4>
                     <p className="text-xs text-data-placeholder">
-                      {revenueData.summary.cardPercentage.toFixed(1)}% of total
+                      <CountUp end={revenueData.summary.cardPercentage} duration={900} decimals={1} suffix="% of total" />
                     </p>
                   </div>
 
@@ -886,10 +985,10 @@ export default function AdminReportsPage() {
                       <p className="text-xs font-black uppercase text-white">UPI</p>
                     </div>
                     <h4 className="text-xl font-black text-purple-400 mb-1">
-                      ₹{revenueData.summary.totalUpi.toLocaleString('en-IN')}
+                      <CurrencyCountUp amount={revenueData.summary.totalUpi} duration={1100} />
                     </h4>
                     <p className="text-xs text-data-placeholder">
-                      {revenueData.summary.upiPercentage.toFixed(1)}% of total
+                      <CountUp end={revenueData.summary.upiPercentage} duration={900} decimals={1} suffix="% of total" />
                     </p>
                   </div>
                 </div>
@@ -915,19 +1014,19 @@ export default function AdminReportsPage() {
                             })}
                           </span>
                           <span className="font-bold text-white">
-                            ₹{day.totalRevenue.toLocaleString('en-IN')}
+                            <CurrencyCountUp amount={day.totalRevenue} duration={1000} />
                           </span>
                         </div>
                         <div className="w-full bg-zinc-900 rounded-full h-2.5 overflow-hidden">
                           <div className="flex h-full">
                             <div
-                              className="bg-blue-500"
+                              className="bg-blue-500 transition-all duration-[1500ms] ease-out"
                               style={{
                                 width: `${(day.deviceRevenue / day.totalRevenue) * percentage}%`
                               }}
                             />
                             <div
-                              className="bg-amber-500"
+                              className="bg-amber-500 transition-all duration-[1500ms] ease-out"
                               style={{
                                 width: `${(day.foodRevenue / day.totalRevenue) * percentage}%`
                               }}

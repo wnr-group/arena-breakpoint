@@ -100,6 +100,11 @@ export function BookingsGrid({
                     <p className="text-lg font-black text-primary">
                       ₹{Number(booking.total_amount).toLocaleString('en-IN')}
                     </p>
+                    {booking.payment_status === 'partial' && booking.balance_due && (
+                      <p className="text-[10px] text-amber-400 font-bold mt-0.5">
+                        Due: ₹{Number(booking.balance_due).toLocaleString('en-IN')}
+                      </p>
+                    )}
                   </div>
                   <PaymentStatusBadge status={booking.payment_status || 'pending'} size="sm" />
                 </div>

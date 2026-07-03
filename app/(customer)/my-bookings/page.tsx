@@ -156,6 +156,23 @@ function MyBookingsPageContent() {
                         Amount: <span className="text-white font-black">₹{booking.total_amount}</span>
                       </div>
                     </div>
+
+                    {/* Payment Status Row */}
+                    <div className="flex items-center gap-2 text-sm pt-1 border-t border-zinc-900">
+                      <span className="text-zinc-500">Payment:</span>
+                      <span className={`font-bold uppercase text-xs px-2 py-0.5 rounded ${
+                        booking.payment_status === 'paid' ? 'bg-green-500/20 text-green-400' :
+                        booking.payment_status === 'partial' ? 'bg-amber-500/20 text-amber-400' :
+                        'bg-red-500/20 text-red-400'
+                      }`}>
+                        {booking.payment_status}
+                      </span>
+                      {booking.payment_status === 'partial' && booking.balance_due && (
+                        <span className="text-xs text-amber-400">
+                          (Balance: ₹{Number(booking.balance_due).toFixed(0)})
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <Button

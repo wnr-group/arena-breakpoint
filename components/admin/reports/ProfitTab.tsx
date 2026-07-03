@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card'
 import { TrendingUp, TrendingDown, DollarSign, Receipt, Percent } from 'lucide-react'
 import { getProfitAndLoss } from '@/app/(admin)/admin/reports/actions'
 import { toast } from 'sonner'
+import { CountUp, CurrencyCountUp } from '@/components/shared/CountUp'
 
 interface ProfitTabProps {
   dateFrom: string
@@ -60,8 +61,12 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             </div>
             <p className="text-xs font-black uppercase text-green-400">Revenue</p>
           </div>
-          <p className="text-3xl font-black text-white">₹{data.revenue.toLocaleString('en-IN')}</p>
-          <p className="text-xs text-secondary-content mt-2">{data.bookingCount} completed booking(s)</p>
+          <p className="text-3xl font-black text-white">
+            <CurrencyCountUp amount={data.revenue} duration={1500} />
+          </p>
+          <p className="text-xs text-secondary-content mt-2">
+            <CountUp end={data.bookingCount} duration={800} /> completed booking(s)
+          </p>
         </Card>
 
         {/* Expenses */}
@@ -72,8 +77,12 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             </div>
             <p className="text-xs font-black uppercase text-red-400">Expenses</p>
           </div>
-          <p className="text-3xl font-black text-white">₹{data.totalExpenses.toLocaleString('en-IN')}</p>
-          <p className="text-sm-enhanced text-secondary-content mt-2">{data.expenseCount} expense(s)</p>
+          <p className="text-3xl font-black text-white">
+            <CurrencyCountUp amount={data.totalExpenses} duration={1400} />
+          </p>
+          <p className="text-sm-enhanced text-secondary-content mt-2">
+            <CountUp end={data.expenseCount} duration={800} /> expense(s)
+          </p>
         </Card>
 
         {/* Net Profit */}
@@ -91,7 +100,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             </p>
           </div>
           <p className={`text-3xl font-black ${isProfit ? 'text-primary' : 'text-red-400'}`}>
-            ₹{Math.abs(data.netProfit).toLocaleString('en-IN')}
+            <CurrencyCountUp amount={Math.abs(data.netProfit)} duration={1600} />
           </p>
           <p className="text-sm-enhanced text-secondary-content mt-2">After all expenses</p>
         </Card>
@@ -107,7 +116,9 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             </div>
             <p className="text-stat-label text-orange-400">OpEx</p>
           </div>
-          <p className="text-2xl font-black text-white">₹{data.opexExpenses.toLocaleString('en-IN')}</p>
+          <p className="text-2xl font-black text-white">
+            <CurrencyCountUp amount={data.opexExpenses} duration={1200} />
+          </p>
           <p className="text-sm-enhanced text-secondary-content mt-2">Operational expenses</p>
         </Card>
 
@@ -119,7 +130,9 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             </div>
             <p className="text-stat-label text-blue-400">CapEx</p>
           </div>
-          <p className="text-2xl font-black text-white">₹{data.capexExpenses.toLocaleString('en-IN')}</p>
+          <p className="text-2xl font-black text-white">
+            <CurrencyCountUp amount={data.capexExpenses} duration={1200} />
+          </p>
           <p className="text-sm-enhanced text-secondary-content mt-2">Capital investments</p>
         </Card>
 
@@ -138,7 +151,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             </p>
           </div>
           <p className={`text-2xl font-black ${isOperationalProfit ? 'text-green-400' : 'text-red-400'}`}>
-            ₹{Math.abs(data.operationalProfit).toLocaleString('en-IN')}
+            <CurrencyCountUp amount={Math.abs(data.operationalProfit)} duration={1300} />
           </p>
           <p className="text-sm-enhanced text-secondary-content mt-2">Revenue - OpEx</p>
         </Card>
@@ -151,7 +164,9 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             </div>
             <p className="text-stat-label text-purple-400">Margin</p>
           </div>
-          <p className="text-2xl font-black text-white">{data.profitMargin.toFixed(1)}%</p>
+          <p className="text-2xl font-black text-white">
+            <CountUp end={data.profitMargin} duration={1000} decimals={1} suffix="%" />
+          </p>
           <p className="text-sm-enhanced text-secondary-content mt-2">Net profit margin</p>
         </Card>
       </div>
@@ -167,11 +182,13 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <p className="text-xs text-secondary-content">Device Bookings</p>
-                <p className="text-sm font-black text-white">₹{data.deviceRevenue.toLocaleString('en-IN')}</p>
+                <p className="text-sm font-black text-white">
+                  <CurrencyCountUp amount={data.deviceRevenue} duration={1100} />
+                </p>
               </div>
               <div className="h-2 bg-zinc-900 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-primary to-primary"
+                  className="h-full bg-gradient-to-r from-primary to-primary transition-all duration-[1500ms] ease-out"
                   style={{ width: `${data.revenue > 0 ? (data.deviceRevenue / data.revenue) * 100 : 0}%` }}
                 />
               </div>
@@ -179,11 +196,13 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <p className="text-xs text-secondary-content">Food Sales</p>
-                <p className="text-sm font-black text-white">₹{data.foodRevenue.toLocaleString('en-IN')}</p>
+                <p className="text-sm font-black text-white">
+                  <CurrencyCountUp amount={data.foodRevenue} duration={1100} />
+                </p>
               </div>
               <div className="h-2 bg-zinc-900 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-amber-500 to-orange-500"
+                  className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-[1500ms] ease-out"
                   style={{ width: `${data.revenue > 0 ? (data.foodRevenue / data.revenue) * 100 : 0}%` }}
                 />
               </div>
@@ -191,7 +210,9 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             <div className="pt-2 border-t border-zinc-800">
               <div className="flex justify-between items-center">
                 <p className="text-xs font-black text-primary uppercase">Total Revenue</p>
-                <p className="text-lg font-black text-primary">₹{data.revenue.toLocaleString('en-IN')}</p>
+                <p className="text-lg font-black text-primary">
+                  <CurrencyCountUp amount={data.revenue} duration={1300} />
+                </p>
               </div>
             </div>
           </div>
@@ -206,14 +227,18 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
               <span className="text-xs text-muted-content">Revenue</span>
-              <span className="text-sm font-black text-green-400">₹{data.revenue.toLocaleString('en-IN')}</span>
+              <span className="text-sm font-black text-green-400">
+                <CurrencyCountUp amount={data.revenue} duration={1100} />
+              </span>
             </div>
             <div className="flex items-center justify-center py-2">
               <span className="text-2xl font-black text-muted-content">−</span>
             </div>
             <div className="flex items-center justify-between p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
               <span className="text-xs text-muted-content">Expenses</span>
-              <span className="text-sm font-black text-red-400">₹{data.totalExpenses.toLocaleString('en-IN')}</span>
+              <span className="text-sm font-black text-red-400">
+                <CurrencyCountUp amount={data.totalExpenses} duration={1100} />
+              </span>
             </div>
             <div className="flex items-center justify-center py-2">
               <span className="text-2xl font-black text-muted-content">=</span>
@@ -223,7 +248,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
                 {isProfit ? 'Profit' : 'Loss'}
               </span>
               <span className={`text-xl font-black ${isProfit ? 'text-primary' : 'text-red-400'}`}>
-                ₹{Math.abs(data.profit).toLocaleString('en-IN')}
+                <CurrencyCountUp amount={Math.abs(data.profit)} duration={1400} />
               </span>
             </div>
           </div>
@@ -237,19 +262,32 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
           <div>
             <p className="text-xs text-secondary-content mb-1">Average Revenue per Booking</p>
             <p className="text-xl font-black text-white">
-              ₹{data.bookingCount > 0 ? (data.revenue / data.bookingCount).toFixed(0) : '0'}
+              <CurrencyCountUp
+                amount={data.bookingCount > 0 ? data.revenue / data.bookingCount : 0}
+                duration={1000}
+              />
             </p>
           </div>
           <div>
             <p className="text-xs text-secondary-content mb-1">Device Revenue %</p>
             <p className="text-xl font-black text-white">
-              {data.revenue > 0 ? ((data.deviceRevenue / data.revenue) * 100).toFixed(1) : '0'}%
+              <CountUp
+                end={data.revenue > 0 ? (data.deviceRevenue / data.revenue) * 100 : 0}
+                duration={1000}
+                decimals={1}
+                suffix="%"
+              />
             </p>
           </div>
           <div>
             <p className="text-xs text-secondary-content mb-1">Food Revenue %</p>
             <p className="text-xl font-black text-white">
-              {data.revenue > 0 ? ((data.foodRevenue / data.revenue) * 100).toFixed(1) : '0'}%
+              <CountUp
+                end={data.revenue > 0 ? (data.foodRevenue / data.revenue) * 100 : 0}
+                duration={1000}
+                decimals={1}
+                suffix="%"
+              />
             </p>
           </div>
         </div>

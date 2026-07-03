@@ -582,6 +582,9 @@ export async function confirmBooking(payload: {
         promo_discount: promoDiscount,
         total_amount: totalAmount,
         amount_paid: totalAmount,  // Customer pays full amount upfront
+        cash_amount: 0,  // Online payment, not cash
+        card_amount: totalAmount,  // Assume card/online payment
+        upi_amount: 0,  // Not UPI unless specified
         status: "confirmed",
         payment_status: "paid",
         locked_by: "customer"

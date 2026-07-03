@@ -37,6 +37,10 @@ export async function getAllBookings(filters?: BookingFilters) {
         customer_email,
         customer_dob,
         total_amount,
+        amount_paid,
+        cash_amount,
+        card_amount,
+        upi_amount,
         device_subtotal,
         food_subtotal,
         subscription_discount,
@@ -96,7 +100,13 @@ export async function getAllBookings(filters?: BookingFilters) {
 
     if (error) throw error;
 
-    return { success: true, bookings: data || [] };
+    // Calculate balance_due for each booking
+    const bookingsWithBalance = (data || []).map((booking: any) => ({
+      ...booking,
+      balance_due: Number(booking.total_amount || 0) - Number(booking.amount_paid || 0)
+    }));
+
+    return { success: true, bookings: bookingsWithBalance };
   } catch (err: any) {
     console.error("Get bookings error:", err);
     return { success: false, error: err.message, bookings: [] };
@@ -154,7 +164,32 @@ export async function getBookingDetails(bookingId: string) {
 
     if (error) throw error;
 
-    return { success: true, booking: data };
+    // Also fetch line items to check what's unpaid
+    const { data: lineItems, error: lineItemsError } = await supabaseAdmin
+      .from("booking_line_items")
+      .select("*")
+      .eq("booking_id", bookingId)
+      .order("display_order", { ascending: true });
+
+    if (lineItemsError) {
+      console.warn("Failed to fetch line items:", lineItemsError);
+    }
+
+    // Calculate unpaid items
+    const unpaidItems = lineItems?.filter((item: any) => !item.is_paid) || [];
+
+    // Calculate balance_due
+    const balanceDue = Number(data.total_amount || 0) - Number(data.amount_paid || 0);
+
+    return {
+      success: true,
+      booking: {
+        ...data,
+        line_items: lineItems || [],
+        unpaid_items: unpaidItems,
+        balance_due: balanceDue
+      }
+    };
   } catch (err: any) {
     console.error("Get booking details error:", err);
     return { success: false, error: err.message, booking: null };

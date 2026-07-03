@@ -15,9 +15,10 @@ import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailMod
 import { CheckoutModal } from "@/components/admin/bookings/CheckoutModal";
 import { getAllBookings, getBookingStats, checkInBooking, checkOutBooking, getBookingBillingDetails, markBookingAsPaid, type BookingFilters } from "./actions";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
-import { Search, Filter, Calendar, DollarSign, Users, CheckCircle2, XCircle, Clock, Loader2, Eye, Receipt, Plus, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List, AlertCircle } from "lucide-react";
+import { Search, Filter, Calendar, DollarSign, Users, CheckCircle2, XCircle, Clock, Loader2, Eye, Receipt, Plus, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List, AlertCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useDebounce } from "@/lib/hooks/useDebounce";
+import { CountUp, CurrencyCountUp } from "@/components/shared/CountUp";
 
 export default function AdminBookingsPage() {
   const router = useRouter();
@@ -102,6 +103,26 @@ export default function AdminBookingsPage() {
   const handleFilterChange = (status: string) => {
     setActiveStatusFilter(status);
     // loadBookings will be triggered automatically by useEffect watching activeStatusFilter
+  };
+
+  const handleRefresh = () => {
+    loadBookings({
+      status: activeStatusFilter === "all" ? undefined : activeStatusFilter,
+      searchQuery: debouncedSearch || undefined
+    });
+    loadStats();
+    toast.success("Refreshed", { description: "Bookings data reloaded" });
+  };
+
+  const handleBookingDetailClose = () => {
+    setSelectedBooking(null);
+    setOpenFoodModal(false);
+    // Reload data when closing booking detail modal
+    loadBookings({
+      status: activeStatusFilter === "all" ? undefined : activeStatusFilter,
+      searchQuery: debouncedSearch || undefined
+    });
+    loadStats();
   };
 
   const handleCheckIn = async (bookingId: string, bookingNumber: string) => {
@@ -328,13 +349,24 @@ export default function AdminBookingsPage() {
           <h1 className="text-2xl font-black uppercase text-white tracking-tight">BOOKING MANAGEMENT</h1>
           <p className="text-description font-medium mt-1">View and manage all customer bookings</p>
         </div>
-        <Button
-          onClick={() => router.push("/admin/bookings/walk-in")}
-          className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-10 px-6"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create Walk-In Booking
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleRefresh}
+            disabled={loading}
+            variant="outline"
+            className="border-[#27272a] text-white hover:bg-[var(--surface)] font-black uppercase text-xs h-10 px-4"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button
+            onClick={() => router.push("/admin/bookings/walk-in")}
+            className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-10 px-6"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Walk-In Booking
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -346,7 +378,7 @@ export default function AdminBookingsPage() {
             </div>
             <div>
               <p className="text-label text-muted-content">Total Bookings</p>
-              <p className="text-xl font-black text-white">{stats?.total || 0}</p>
+              <p className="text-xl font-black text-white"><CountUp end={stats?.total || 0} duration={1000} /></p>
             </div>
           </div>
         </Card>
@@ -358,7 +390,7 @@ export default function AdminBookingsPage() {
             </div>
             <div>
               <p className="text-label text-muted-content">Checked In</p>
-              <p className="text-xl font-black text-white">{stats?.checked_in || 0}</p>
+              <p className="text-xl font-black text-white"><CountUp end={stats?.checked_in || 0} duration={900} /></p>
             </div>
           </div>
         </Card>
@@ -370,7 +402,7 @@ export default function AdminBookingsPage() {
             </div>
             <div>
               <p className="text-label text-muted-content">Today's Revenue</p>
-              <p className="text-xl font-black text-primary">₹{stats?.todayRevenue?.toLocaleString('en-IN') || 0}</p>
+              <p className="text-xl font-black text-primary"><CurrencyCountUp amount={stats?.todayRevenue || 0} duration={1200} /></p>
             </div>
           </div>
         </Card>
@@ -382,7 +414,7 @@ export default function AdminBookingsPage() {
             </div>
             <div>
               <p className="text-label text-muted-content">Completed</p>
-              <p className="text-xl font-black text-white">{stats?.completed || 0}</p>
+              <p className="text-xl font-black text-white"><CountUp end={stats?.completed || 0} duration={900} /></p>
             </div>
           </div>
         </Card>
@@ -394,7 +426,7 @@ export default function AdminBookingsPage() {
             </div>
             <div>
               <p className="text-label text-muted-content">Cancelled</p>
-              <p className="text-xl font-black text-white">{stats?.cancelled || 0}</p>
+              <p className="text-xl font-black text-white"><CountUp end={stats?.cancelled || 0} duration={800} /></p>
             </div>
           </div>
         </Card>
@@ -623,7 +655,19 @@ export default function AdminBookingsPage() {
                         </td>
                         <td className="py-4 px-4">
                           {isSingleBooking ? (
-                            <PaymentStatusBadge status={firstBooking.payment_status || 'pending'} size="md" />
+                            <div className="space-y-1">
+                              <PaymentStatusBadge status={firstBooking.payment_status || 'pending'} size="md" />
+                              {firstBooking.payment_status === 'partial' && (
+                                <div className="space-y-0.5">
+                                  <p className="text-min text-blue-400">
+                                    Paid: ₹{Number(firstBooking.amount_paid || 0).toLocaleString('en-IN')}
+                                  </p>
+                                  <p className="text-min text-amber-400 font-semibold">
+                                    Due: ₹{Number(firstBooking.balance_due || 0).toLocaleString('en-IN')}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
                           ) : (
                             <p className="text-sm-readable text-secondary-content italic">-</p>
                           )}
@@ -828,10 +872,7 @@ export default function AdminBookingsPage() {
       <BookingDetailModal
         bookingId={selectedBooking?.id || null}
         open={!!selectedBooking}
-        onClose={() => {
-          setSelectedBooking(null);
-          setOpenFoodModal(false);
-        }}
+        onClose={handleBookingDetailClose}
         onUpdate={() => {
           loadBookings();
           loadStats();

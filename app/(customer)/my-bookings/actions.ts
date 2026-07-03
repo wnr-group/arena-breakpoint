@@ -16,7 +16,13 @@ export async function getCustomerBookings(phone: string) {
 
     if (error) throw error;
 
-    return { success: true, bookings: data || [] };
+    // Calculate balance_due for each booking
+    const bookingsWithBalance = (data || []).map((booking: any) => ({
+      ...booking,
+      balance_due: Number(booking.total_amount || 0) - Number(booking.amount_paid || 0)
+    }));
+
+    return { success: true, bookings: bookingsWithBalance };
   } catch (err: any) {
     console.error("Error fetching bookings:", err);
     return { success: false, error: err.message, bookings: [] };
@@ -37,7 +43,13 @@ export async function getBookingById(bookingId: string) {
 
     if (error) throw error;
 
-    return { success: true, booking: data };
+    // Calculate balance_due
+    const bookingWithBalance = {
+      ...data,
+      balance_due: Number(data.total_amount || 0) - Number(data.amount_paid || 0)
+    };
+
+    return { success: true, booking: bookingWithBalance };
   } catch (err: any) {
     console.error("Error fetching booking:", err);
     return { success: false, error: err.message, booking: null };

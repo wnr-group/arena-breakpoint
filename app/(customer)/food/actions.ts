@@ -254,6 +254,9 @@ export async function createStandaloneFoodOrder(
         promo_code_id: promoCodeId,
         total_amount: finalTotal,
         amount_paid: finalTotal,
+        cash_amount: 0,  // Online payment, not cash
+        card_amount: finalTotal,  // Assume card/online payment
+        upi_amount: 0,  // Not UPI unless specified
         status: "confirmed",
         payment_status: "paid",
         locked_by: "customer",

@@ -154,10 +154,29 @@ function BookingDetailPageContent() {
       <Card className="bg-[#111] border border-zinc-900 p-6 shadow-xl rounded-2xl space-y-3 glow-box-strong">
         <div className="flex justify-between text-base">
           <span className="text-zinc-500">Payment Status:</span>
-          <span className={`font-bold uppercase ${booking.payment_status === 'paid' ? 'text-green-500' : 'text-amber-500'}`}>
+          <span className={`font-bold uppercase ${
+            booking.payment_status === 'paid' ? 'text-green-500' :
+            booking.payment_status === 'partial' ? 'text-amber-500' :
+            'text-red-500'
+          }`}>
             {booking.payment_status}
           </span>
         </div>
+
+        {/* Show payment breakdown for partial payments */}
+        {booking.payment_status === 'partial' && (
+          <>
+            <div className="flex justify-between text-sm text-zinc-400 border-t border-zinc-800 pt-2">
+              <span>Amount Paid:</span>
+              <span className="text-white font-bold">₹{Number(booking.amount_paid || 0).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-amber-400">Balance Due:</span>
+              <span className="text-amber-300 font-bold">₹{Number(booking.balance_due || 0).toFixed(2)}</span>
+            </div>
+          </>
+        )}
+
         <div className="flex justify-between text-lg border-t border-zinc-800 pt-3">
           <span className="text-zinc-500 font-bold">Total Amount:</span>
           <span className="text-white font-black text-2xl text-primary">₹{booking.total_amount}</span>

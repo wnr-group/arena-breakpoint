@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   DollarSign, TrendingUp, Calendar, Users, Clock,
   Gamepad2, UtensilsCrossed, Activity, ArrowRight,
-  CheckCircle2, Loader2, AlertCircle, Plus, Eye
+  CheckCircle2, Loader2, AlertCircle, Plus, Eye, RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
@@ -27,6 +27,7 @@ import { UpcomingBookingsModal } from "@/components/admin/dashboard/UpcomingBook
 import { AvailableDevicesModal } from "@/components/admin/dashboard/AvailableDevicesModal";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
+import { CountUp, CurrencyCountUp } from "@/components/shared/CountUp";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -79,6 +80,18 @@ export default function AdminDashboardPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRefresh = () => {
+    loadDashboardData();
+    toast.success("Refreshed", { description: "Dashboard data reloaded" });
+  };
+
+  const handleBookingDetailClose = () => {
+    setBookingDetailOpen(false);
+    setSelectedBookingId(null);
+    // Reload dashboard data when closing booking detail
+    loadDashboardData();
   };
 
   const getCurrentTime = () => {
@@ -135,13 +148,6 @@ export default function AdminDashboardPage() {
     setBookingDetailOpen(true);
   };
 
-  const handleBookingDetailClose = () => {
-    setBookingDetailOpen(false);
-    setSelectedBookingId(null);
-    // Refresh dashboard data when booking is updated
-    loadDashboardData();
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -168,6 +174,15 @@ export default function AdminDashboardPage() {
             <span className="font-mono">{getCurrentTime()}</span>
           </div>
           <Button
+            onClick={handleRefresh}
+            disabled={loading}
+            variant="outline"
+            className="border-[#27272a] text-white hover:bg-[var(--surface)] font-black uppercase text-xs h-10 px-4"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button
             onClick={() => router.push("/admin/bookings/walk-in")}
             className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-10 px-6"
           >
@@ -189,10 +204,10 @@ export default function AdminDashboardPage() {
                 Today's Revenue
               </p>
               <h3 className="text-2xl font-black text-white mb-1">
-                ₹{stats?.todaysRevenue?.toLocaleString('en-IN') || 0}
+                <CurrencyCountUp amount={stats?.todaysRevenue || 0} duration={1200} />
               </h3>
               <p className="text-min-enhanced text-secondary-content">
-                From {stats?.todaysBookings || 0} bookings
+                From <CountUp end={stats?.todaysBookings || 0} duration={800} /> bookings
               </p>
             </div>
             <div className="p-2 bg-green-500/10 rounded-lg">
@@ -211,7 +226,7 @@ export default function AdminDashboardPage() {
                 Active Sessions
               </p>
               <h3 className="text-2xl font-black text-white mb-1">
-                {stats?.activeSessions || 0}
+                <CountUp end={stats?.activeSessions || 0} duration={800} />
               </h3>
               <p className="text-min-enhanced text-secondary-content">
                 Currently playing
@@ -233,7 +248,7 @@ export default function AdminDashboardPage() {
                 Upcoming
               </p>
               <h3 className="text-2xl font-black text-white mb-1">
-                {stats?.upcomingBookings || 0}
+                <CountUp end={stats?.upcomingBookings || 0} duration={800} />
               </h3>
               <p className="text-min-enhanced text-secondary-content">
                 Next 2 hours
@@ -255,7 +270,7 @@ export default function AdminDashboardPage() {
                 Available Devices
               </p>
               <h3 className="text-2xl font-black text-white mb-1">
-                {stats?.availableDevices || 0}
+                <CountUp end={stats?.availableDevices || 0} duration={800} />
               </h3>
               <p className="text-min-enhanced text-secondary-content">
                 Ready to use
@@ -274,7 +289,7 @@ export default function AdminDashboardPage() {
                 This Week
               </p>
               <h3 className="text-2xl font-black text-white mb-1">
-                ₹{quickStats?.thisWeekRevenue?.toLocaleString('en-IN') || 0}
+                <CurrencyCountUp amount={quickStats?.thisWeekRevenue || 0} duration={1200} />
               </h3>
               <div className="flex items-center gap-1 text-[10px] text-green-500">
                 <TrendingUp className="h-3 w-3" />

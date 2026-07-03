@@ -14,6 +14,7 @@ export function Toaster() {
           background: '#121212',
           color: '#ffffff',
           border: '1px solid #27272a',
+          opacity: 1,
         },
         className: 'toast-item',
         descriptionClassName: 'toast-description',
@@ -21,6 +22,10 @@ export function Toaster() {
       style={{
         zIndex: 99999,
       }}
+      // Ensure proper visibility settings
+      visibleToasts={9}
+      expand={true}
+      gap={12}
     />
   )
 }

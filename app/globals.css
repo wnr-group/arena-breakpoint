@@ -500,12 +500,36 @@ main {
   z-index: 100 !important;
 }
 
+/* Ensure toast container is always visible */
+[data-sonner-toaster][data-theme="dark"] {
+  --normal-bg: #121212 !important;
+  --normal-border: #27272a !important;
+  --normal-text: #ffffff !important;
+}
+
 [data-sonner-toast] {
   z-index: 100 !important;
   background-color: #121212 !important;
   border: 1px solid #27272a !important;
   color: #ffffff !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  opacity: 1 !important;
+  min-height: 48px !important;
+  padding: 12px 16px !important;
+}
+
+/* Fix stacked toast visibility */
+[data-sonner-toast][data-mounted="true"] {
+  opacity: 1 !important;
+}
+
+[data-sonner-toast][data-expanded="false"] {
+  opacity: 1 !important;
+}
+
+/* Ensure all toasts in stack are visible */
+[data-sonner-toast][data-y-position] {
+  opacity: 1 !important;
 }
 
 /* Toast title styling */
@@ -513,6 +537,8 @@ main {
   color: #ffffff !important;
   font-weight: 600 !important;
   font-size: 0.875rem !important;
+  opacity: 1 !important;
+  display: block !important;
 }
 
 /* Toast description styling */
@@ -521,6 +547,8 @@ main {
   font-size: 0.8125rem !important;
   line-height: 1.4 !important;
   margin-top: 0.25rem !important;
+  opacity: 1 !important;
+  display: block !important;
 }
 
 /* Toast close button */
@@ -579,13 +607,64 @@ main {
 /* Ensure content visibility */
 [data-sonner-toast] [data-content] {
   color: #ffffff !important;
+  opacity: 1 !important;
 }
 
 /* Fix empty white box issue - ensure all text elements have color */
 [data-sonner-toast] * {
   color: inherit !important;
+  opacity: 1 !important;
+}
+
+/* Specifically target toast text content */
+[data-sonner-toast] [data-content] > div {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* Ensure title and description are visible */
+[data-sonner-toast] [data-title],
+[data-sonner-toast] [data-description],
+[data-sonner-toast] [data-content] * {
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 [data-sonner-toast] svg {
   fill: currentColor !important;
+  opacity: 1 !important;
+}
+
+/* Additional fix for toast content rendering */
+[data-sonner-toast] > div {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 12px !important;
+}
+
+/* Force text to be visible in all states */
+[data-sonner-toast] [data-title]:empty::before,
+[data-sonner-toast] [data-description]:empty::before {
+  content: none !important;
+}
+
+/* Prevent text color from being overridden */
+[data-sonner-toast] button,
+[data-sonner-toast] div,
+[data-sonner-toast] span,
+[data-sonner-toast] p {
+  color: inherit !important;
+}
+
+/* Ensure proper text rendering */
+[data-sonner-toast] [data-title] {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+}
+
+[data-sonner-toast] [data-description] {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
 }

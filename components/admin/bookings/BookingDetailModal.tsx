@@ -11,8 +11,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BookingStatusBadge } from "./BookingStatusBadge";
-import { getBookingDetails, checkInBooking, checkOutBooking, cancelBooking, addFoodToBooking, updatePlayerCount } from "@/app/(admin)/admin/bookings/actions";
+import { getBookingDetails, checkInBooking, checkOutBooking, cancelBooking, addFoodToBooking, updatePlayerCount, markBookingAsPaid } from "@/app/(admin)/admin/bookings/actions";
 import { getMenuItems } from "@/app/(admin)/admin/food/actions";
+import { Label } from "@/components/ui/label";
 import { QRCodeSVG } from "qrcode.react";
 import {
   User, Phone, Mail, Calendar, Clock, DollarSign,
@@ -43,6 +44,12 @@ interface BookingDetailModalProps {
 export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoodModalDirectly, onPendingPayment }: BookingDetailModalProps) {
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [markAsPaidModalOpen, setMarkAsPaidModalOpen] = useState(false);
+  const [paymentSplit, setPaymentSplit] = useState({
+    cashAmount: 0,
+    cardAmount: 0,
+    upiAmount: 0
+  });
   const [actionLoading, setActionLoading] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [addFoodModalOpen, setAddFoodModalOpen] = useState(false);
@@ -200,6 +207,47 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
     }
 
     setUpdatingPlayerCount(false);
+  };
+
+  const handleOpenMarkAsPaidModal = () => {
+    const balanceDue = Number(booking?.balance_due || 0);
+    // Default to full balance in cash
+    setPaymentSplit({
+      cashAmount: balanceDue,
+      cardAmount: 0,
+      upiAmount: 0
+    });
+    setMarkAsPaidModalOpen(true);
+  };
+
+  const handleMarkAsPaid = async () => {
+    if (!bookingId) return;
+
+    const totalSplit = paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount;
+    const balanceDue = Number(booking?.balance_due || 0);
+
+    if (Math.abs(totalSplit - balanceDue) > 0.01) {
+      toast.error("Invalid payment split", {
+        description: `Payment split (₹${totalSplit}) must equal balance due (₹${balanceDue})`
+      });
+      return;
+    }
+
+    setActionLoading(true);
+    const result = await markBookingAsPaid(bookingId, paymentSplit);
+
+    if (result.success) {
+      toast.success("Payment marked as paid", {
+        description: `Booking ${booking.booking_number} fully paid`
+      });
+      setMarkAsPaidModalOpen(false);
+      loadBookingDetails();
+      onUpdate?.();
+    } else {
+      toast.error("Failed to mark as paid", { description: result.error });
+    }
+
+    setActionLoading(false);
   };
 
   const deviceSlot = booking?.booking_device_slots?.[0];
@@ -558,24 +606,74 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                           <span className={`font-black uppercase px-3 py-1 rounded-full ${
                             booking.payment_status === 'paid'
                               ? 'bg-green-500/20 text-green-400 border border-green-500/40'
-                              : booking.payment_status === 'pending'
+                              : booking.payment_status === 'partial'
                               ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                              : booking.payment_status === 'pending'
+                              ? 'bg-red-500/20 text-red-400 border border-red-500/40'
                               : 'bg-zinc-800 text-secondary-content border border-zinc-700'
                           }`}>
                             {booking.payment_status}
                           </span>
                         </div>
 
+                        {/* Payment Breakdown for Partial/Paid */}
+                        {(booking.payment_status === 'partial' || booking.payment_status === 'paid') && Number(booking.amount_paid || 0) > 0 && (
+                          <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-blue-400 font-bold uppercase">Amount Paid:</span>
+                              <span className="text-blue-300 font-black">
+                                ₹{Number(booking.amount_paid || 0).toLocaleString('en-IN')}
+                              </span>
+                            </div>
+                            {/* Show payment method breakdown */}
+                            <div className="space-y-1 text-xs text-blue-300/70 pl-2 border-l-2 border-blue-500/30">
+                              {Number(booking.cash_amount || 0) > 0 && (
+                                <div className="flex justify-between">
+                                  <span>Cash:</span>
+                                  <span className="font-semibold">₹{Number(booking.cash_amount).toLocaleString('en-IN')}</span>
+                                </div>
+                              )}
+                              {Number(booking.card_amount || 0) > 0 && (
+                                <div className="flex justify-between">
+                                  <span>Card:</span>
+                                  <span className="font-semibold">₹{Number(booking.card_amount).toLocaleString('en-IN')}</span>
+                                </div>
+                              )}
+                              {Number(booking.upi_amount || 0) > 0 && (
+                                <div className="flex justify-between">
+                                  <span>UPI:</span>
+                                  <span className="font-semibold">₹{Number(booking.upi_amount).toLocaleString('en-IN')}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
                         {/* Balance Due Warning */}
                         {Number(booking.balance_due || 0) > 0 && booking.payment_status !== 'paid' && (
-                          <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                          <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg space-y-2">
                             <div className="flex items-center justify-between">
                               <span className="text-amber-400 font-bold text-sm uppercase">Balance Due:</span>
                               <span className="text-amber-300 font-black text-lg">
                                 ₹{Number(booking.balance_due).toLocaleString('en-IN')}
                               </span>
                             </div>
-                            <p className="text-xs text-amber-300/60 mt-1">
+                            {booking.payment_status === 'partial' && booking.unpaid_items && booking.unpaid_items.length > 0 && (
+                              <div className="border-t border-amber-500/20 pt-2 space-y-1">
+                                <p className="text-xs text-amber-300/80 font-bold uppercase">
+                                  Unpaid Items:
+                                </p>
+                                <div className="space-y-1 pl-2">
+                                  {booking.unpaid_items.map((item: any, idx: number) => (
+                                    <div key={idx} className="flex justify-between text-xs text-amber-300/70">
+                                      <span>{item.description || item.item_type}</span>
+                                      <span className="font-semibold">₹{Number(item.line_total).toLocaleString('en-IN')}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            <p className="text-xs text-amber-300/60 border-t border-amber-500/20 pt-2">
                               Payment must be collected before checkout
                             </p>
                           </div>
@@ -610,10 +708,14 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                       Check Out Customer
                     </Button>
                     {Number(booking.balance_due || 0) > 0 && booking.payment_status !== 'paid' && (
-                      <p className="text-xs text-amber-400 flex items-center gap-1">
-                        <XCircle className="h-3.5 w-3.5" />
-                        Cannot checkout - pending balance of ₹{Number(booking.balance_due).toLocaleString('en-IN')}
-                      </p>
+                      <Button
+                        onClick={handleOpenMarkAsPaidModal}
+                        disabled={actionLoading}
+                        className="bg-amber-600 hover:bg-amber-700 text-white font-black uppercase text-sm h-12 px-8 flex items-center gap-2"
+                      >
+                        <DollarSign className="h-5 w-5" />
+                        Mark as Paid
+                      </Button>
                     )}
                   </>
                 )}
@@ -842,6 +944,109 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Mark as Paid Modal */}
+      <Dialog open={markAsPaidModalOpen} onOpenChange={setMarkAsPaidModalOpen}>
+        <DialogContent className="bg-[var(--surface)] border-[#27272a] text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase tracking-tight">
+              Mark as Paid
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Balance Due Display */}
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-amber-400 uppercase">Balance Due:</span>
+                <span className="text-2xl font-black text-amber-300">
+                  ₹{Number(booking?.balance_due || 0).toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+
+            {/* Payment Split Inputs */}
+            <div className="space-y-3">
+              <p className="text-sm font-bold text-muted-content uppercase">Payment Split:</p>
+
+              {/* Cash */}
+              <div className="space-y-1">
+                <Label htmlFor="cash" className="text-xs font-bold text-zinc-400 uppercase">Cash</Label>
+                <Input
+                  id="cash"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={paymentSplit.cashAmount}
+                  onChange={(e) => setPaymentSplit({ ...paymentSplit, cashAmount: parseFloat(e.target.value) || 0 })}
+                  className="bg-[var(--background)] border-[#27272a] text-white h-11"
+                />
+              </div>
+
+              {/* Card */}
+              <div className="space-y-1">
+                <Label htmlFor="card" className="text-xs font-bold text-zinc-400 uppercase">Card</Label>
+                <Input
+                  id="card"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={paymentSplit.cardAmount}
+                  onChange={(e) => setPaymentSplit({ ...paymentSplit, cardAmount: parseFloat(e.target.value) || 0 })}
+                  className="bg-[var(--background)] border-[#27272a] text-white h-11"
+                />
+              </div>
+
+              {/* UPI */}
+              <div className="space-y-1">
+                <Label htmlFor="upi" className="text-xs font-bold text-zinc-400 uppercase">UPI</Label>
+                <Input
+                  id="upi"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={paymentSplit.upiAmount}
+                  onChange={(e) => setPaymentSplit({ ...paymentSplit, upiAmount: parseFloat(e.target.value) || 0 })}
+                  className="bg-[var(--background)] border-[#27272a] text-white h-11"
+                />
+              </div>
+
+              {/* Total Split Display */}
+              <div className="bg-[var(--background)] border border-[#27272a] rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-zinc-400">Total Split:</span>
+                  <span className={`text-lg font-black ${
+                    Math.abs((paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount) - Number(booking?.balance_due || 0)) < 0.01
+                      ? 'text-green-400'
+                      : 'text-red-400'
+                  }`}>
+                    ₹{(paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4 border-t border-[#27272a]">
+            <Button
+              variant="ghost"
+              onClick={() => setMarkAsPaidModalOpen(false)}
+              disabled={actionLoading}
+              className="border-[#27272a] text-muted-content hover:text-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleMarkAsPaid}
+              disabled={actionLoading}
+              className="bg-green-600 hover:bg-green-700 text-white font-black uppercase"
+            >
+              {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+              Confirm Payment
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
