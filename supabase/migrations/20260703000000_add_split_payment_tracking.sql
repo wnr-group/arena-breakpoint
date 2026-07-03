@@ -11,10 +11,34 @@ ADD COLUMN IF NOT EXISTS cash_amount NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
 ADD COLUMN IF NOT EXISTS card_amount NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
 ADD COLUMN IF NOT EXISTS upi_amount NUMERIC(10, 2) DEFAULT 0.00 NOT NULL;
 
--- Add constraint to ensure split amounts equal amount_paid
+-- Backfill existing bookings based on their payment_method BEFORE adding constraint
+UPDATE public.bookings
+SET
+  cash_amount = CASE WHEN payment_method = 'cash' THEN amount_paid ELSE 0 END,
+  card_amount = CASE WHEN payment_method = 'card' THEN amount_paid ELSE 0 END,
+  upi_amount = CASE WHEN payment_method = 'upi' THEN amount_paid ELSE 0 END
+WHERE payment_method IS NOT NULL AND amount_paid > 0;
+
+-- For bookings with no payment_method but amount_paid > 0, assume cash
+UPDATE public.bookings
+SET cash_amount = amount_paid
+WHERE payment_method IS NULL AND amount_paid > 0 AND cash_amount = 0;
+
+-- Fix any remaining rows where split doesn't match (this handles edge cases)
+-- Set all three to 0 if amount_paid is 0
+UPDATE public.bookings
+SET cash_amount = 0, card_amount = 0, upi_amount = 0
+WHERE amount_paid = 0;
+
+-- For any remaining mismatches, set cash_amount to make up the difference
+UPDATE public.bookings
+SET cash_amount = amount_paid - card_amount - upi_amount
+WHERE ABS((cash_amount + card_amount + upi_amount) - amount_paid) >= 0.01;
+
+-- Add constraint to ensure split amounts equal amount_paid (with 0.01 tolerance for rounding)
 ALTER TABLE public.bookings
 ADD CONSTRAINT check_payment_split CHECK (
-  cash_amount + card_amount + upi_amount = amount_paid
+  ABS((cash_amount + card_amount + upi_amount) - amount_paid) < 0.01
 );
 
 -- Add comments
@@ -50,11 +74,3 @@ CREATE TRIGGER trigger_set_payment_method
   ON public.bookings
   FOR EACH ROW
   EXECUTE FUNCTION set_payment_method_from_split();
-
--- Backfill existing bookings based on their payment_method
-UPDATE public.bookings
-SET
-  cash_amount = CASE WHEN payment_method = 'cash' THEN amount_paid ELSE 0 END,
-  card_amount = CASE WHEN payment_method = 'card' THEN amount_paid ELSE 0 END,
-  upi_amount = CASE WHEN payment_method = 'upi' THEN amount_paid ELSE 0 END
-WHERE payment_method IS NOT NULL AND amount_paid > 0;
