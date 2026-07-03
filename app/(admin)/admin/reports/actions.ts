@@ -303,6 +303,9 @@ export async function getRevenueReports(filters?: ReportFilters) {
         promo_discount,
         total_amount,
         amount_paid,
+        cash_amount,
+        card_amount,
+        upi_amount,
         payment_status,
         booking_source,
         status,
@@ -343,6 +346,11 @@ export async function getRevenueReports(filters?: ReportFilters) {
     let foodRevenue = 0;
     let paidCount = 0;
     let pendingCount = 0;
+
+    // Payment method totals
+    let totalCash = 0;
+    let totalCard = 0;
+    let totalUpi = 0;
 
     // Revenue by source
     const sourceBreakdown: Record<string, {
@@ -389,6 +397,11 @@ export async function getRevenueReports(filters?: ReportFilters) {
       totalRevenue += revenue;
       deviceRevenue += deviceRev;
       foodRevenue += foodRev;
+
+      // Track payment method amounts
+      totalCash += Number(booking.cash_amount || 0);
+      totalCard += Number(booking.card_amount || 0);
+      totalUpi += Number(booking.upi_amount || 0);
 
       // Count paid and partial bookings
       if (booking.payment_status === 'paid') {
@@ -439,6 +452,13 @@ export async function getRevenueReports(filters?: ReportFilters) {
         pendingBookings: pendingCount,
         averageRevenuePerBooking: filteredData.length ? totalRevenue / filteredData.length : 0,
         deviceRevenuePercentage: totalRevenue ? (deviceRevenue / totalRevenue) * 100 : 0,
+        // Payment method breakdown
+        totalCash,
+        totalCard,
+        totalUpi,
+        cashPercentage: totalRevenue ? (totalCash / totalRevenue) * 100 : 0,
+        cardPercentage: totalRevenue ? (totalCard / totalRevenue) * 100 : 0,
+        upiPercentage: totalRevenue ? (totalUpi / totalRevenue) * 100 : 0,
         foodRevenuePercentage: totalRevenue ? (foodRevenue / totalRevenue) * 100 : 0
       },
       sourceBreakdown: sourceBreakdownArray,

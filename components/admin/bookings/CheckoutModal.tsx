@@ -43,10 +43,19 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
   };
 
   const handleMarkAsPaid = async () => {
-    if (!bookingId) return;
+    if (!bookingId || !billing) return;
 
     setIsProcessing(true);
-    const result = await markBookingAsPaid(bookingId, paymentMethod);
+
+    // Create payment split based on selected method (full amount in selected method)
+    const balanceDue = billing.total_amount - (billing.amount_paid || 0);
+    const paymentSplit = {
+      cashAmount: paymentMethod === 'cash' ? balanceDue : 0,
+      cardAmount: paymentMethod === 'card' ? balanceDue : 0,
+      upiAmount: paymentMethod === 'upi' ? balanceDue : 0
+    };
+
+    const result = await markBookingAsPaid(bookingId, paymentSplit);
     if (result.success) {
       toast.success("Payment Marked", { description: `Booking marked as paid via ${paymentMethod.toUpperCase()}` });
       loadBillingDetails();

@@ -853,7 +853,11 @@ export async function getBookingBillingDetails(bookingId: string) {
 
 export async function markBookingAsPaid(
   bookingId: string,
-  paymentMethod: 'cash' | 'card' | 'upi'
+  paymentSplit: {
+    cashAmount: number;
+    cardAmount: number;
+    upiAmount: number;
+  }
 ) {
   try {
     // Get booking total
@@ -865,13 +869,22 @@ export async function markBookingAsPaid(
 
     if (fetchError || !booking) throw new Error("Booking not found");
 
-    // Update booking payment status
+    // Validate that split amounts equal total
+    const totalSplit = paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount;
+    if (Math.abs(totalSplit - booking.total_amount) > 0.01) {
+      throw new Error(`Payment split (₹${totalSplit}) does not match booking total (₹${booking.total_amount})`);
+    }
+
+    // Update booking payment status with split amounts
     const { error: updateError } = await supabaseAdmin
       .from("bookings")
       .update({
         payment_status: "paid",
         amount_paid: booking.total_amount,
-        payment_method: paymentMethod,
+        cash_amount: paymentSplit.cashAmount,
+        card_amount: paymentSplit.cardAmount,
+        upi_amount: paymentSplit.upiAmount,
+        // payment_method will be set automatically by trigger
       })
       .eq("id", bookingId);
 

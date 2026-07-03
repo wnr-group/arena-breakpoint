@@ -845,6 +845,56 @@ export default function AdminReportsPage() {
                 </div>
               </Card>
 
+              {/* Payment Method Breakdown */}
+              <Card className="bg-[var(--surface)] border-[#27272a] p-6">
+                <h3 className="text-sm font-black uppercase text-muted-content mb-4">
+                  Revenue by Payment Method
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {/* Cash */}
+                  <div className="p-4 bg-[var(--background)] border border-[#27272a] rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">💵</span>
+                      <p className="text-xs font-black uppercase text-white">Cash</p>
+                    </div>
+                    <h4 className="text-xl font-black text-green-400 mb-1">
+                      ₹{revenueData.summary.totalCash.toLocaleString('en-IN')}
+                    </h4>
+                    <p className="text-xs text-data-placeholder">
+                      {revenueData.summary.cashPercentage.toFixed(1)}% of total
+                    </p>
+                  </div>
+
+                  {/* Card */}
+                  <div className="p-4 bg-[var(--background)] border border-[#27272a] rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">💳</span>
+                      <p className="text-xs font-black uppercase text-white">Card</p>
+                    </div>
+                    <h4 className="text-xl font-black text-blue-400 mb-1">
+                      ₹{revenueData.summary.totalCard.toLocaleString('en-IN')}
+                    </h4>
+                    <p className="text-xs text-data-placeholder">
+                      {revenueData.summary.cardPercentage.toFixed(1)}% of total
+                    </p>
+                  </div>
+
+                  {/* UPI */}
+                  <div className="p-4 bg-[var(--background)] border border-[#27272a] rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">📱</span>
+                      <p className="text-xs font-black uppercase text-white">UPI</p>
+                    </div>
+                    <h4 className="text-xl font-black text-purple-400 mb-1">
+                      ₹{revenueData.summary.totalUpi.toLocaleString('en-IN')}
+                    </h4>
+                    <p className="text-xs text-data-placeholder">
+                      {revenueData.summary.upiPercentage.toFixed(1)}% of total
+                    </p>
+                  </div>
+                </div>
+              </Card>
+
               {/* Daily Revenue Chart */}
               <Card className="bg-[var(--surface)] border-[#27272a] p-6">
                 <h3 className="text-sm font-black uppercase text-muted-content mb-4">

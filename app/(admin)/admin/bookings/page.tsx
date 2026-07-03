@@ -47,7 +47,23 @@ export default function AdminBookingsPage() {
     bookingNumber: "",
     isCheckout: false
   });
-  const [quickPaymentMethod, setQuickPaymentMethod] = useState<'cash' | 'card' | 'upi'>('cash');
+  const [paymentSplit, setPaymentSplit] = useState({
+    cashAmount: 0,
+    cardAmount: 0,
+    upiAmount: 0
+  });
+
+  // Initialize payment split when modal opens
+  useEffect(() => {
+    if (pendingPaymentModal.open && pendingPaymentModal.balanceDue > 0) {
+      // Default to full amount in cash
+      setPaymentSplit({
+        cashAmount: pendingPaymentModal.balanceDue,
+        cardAmount: 0,
+        upiAmount: 0
+      });
+    }
+  }, [pendingPaymentModal.open, pendingPaymentModal.balanceDue]);
 
   // Initial load
   useEffect(() => {
@@ -173,18 +189,33 @@ export default function AdminBookingsPage() {
   const handleMarkAsPaidAndProceed = async () => {
     if (!pendingPaymentModal.bookingId) return;
 
+    // Validate split amounts
+    const totalSplit = paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount;
+    if (Math.abs(totalSplit - pendingPaymentModal.balanceDue) > 0.01) {
+      toast.error("Invalid payment split", {
+        description: `Total split (₹${totalSplit.toFixed(2)}) must equal balance due (₹${pendingPaymentModal.balanceDue.toFixed(2)})`
+      });
+      return;
+    }
+
     const bookingIdToProcess = pendingPaymentModal.bookingId;
     const isCheckoutAttempt = pendingPaymentModal.isCheckout;
 
     startTransition(async () => {
-      const result = await markBookingAsPaid(bookingIdToProcess, quickPaymentMethod);
+      const result = await markBookingAsPaid(bookingIdToProcess, paymentSplit);
 
       if (result.success) {
+        // Build payment description
+        const methods = [];
+        if (paymentSplit.cashAmount > 0) methods.push(`Cash: ₹${paymentSplit.cashAmount}`);
+        if (paymentSplit.cardAmount > 0) methods.push(`Card: ₹${paymentSplit.cardAmount}`);
+        if (paymentSplit.upiAmount > 0) methods.push(`UPI: ₹${paymentSplit.upiAmount}`);
+
         toast.success("Payment marked as paid", {
-          description: `Received via ${quickPaymentMethod.toUpperCase()}`
+          description: methods.join(', ')
         });
         setPendingPaymentModal({ open: false, bookingId: null, balanceDue: 0, bookingNumber: "", isCheckout: false });
-        setQuickPaymentMethod('cash'); // Reset to default
+        setPaymentSplit({ cashAmount: 0, cardAmount: 0, upiAmount: 0 }); // Reset
 
         if (isCheckoutAttempt) {
           // If this was a checkout attempt, proceed with checkout
@@ -859,27 +890,108 @@ export default function AdminBookingsPage() {
               </p>
             </div>
 
-            {/* Payment Method Selector */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-              <Label className="text-xs font-black uppercase text-secondary-content mb-2 block">
-                Payment Method Received
+            {/* Split Payment Inputs */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 space-y-3">
+              <Label className="text-xs font-black uppercase text-secondary-content block">
+                Split Payment Across Methods
               </Label>
-              <Select value={quickPaymentMethod} onValueChange={(value: 'cash' | 'card' | 'upi') => setQuickPaymentMethod(value)}>
-                <SelectTrigger className="w-full bg-zinc-800 border-zinc-700 text-white h-11">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-700">
-                  <SelectItem value="cash" className="text-white hover:bg-zinc-800">
-                    💵 Cash
-                  </SelectItem>
-                  <SelectItem value="card" className="text-white hover:bg-zinc-800">
-                    💳 Card
-                  </SelectItem>
-                  <SelectItem value="upi" className="text-white hover:bg-zinc-800">
-                    📱 UPI
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+
+              {/* Cash Amount */}
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">💵</span>
+                <div className="flex-1">
+                  <Label className="text-[10px] text-zinc-500 uppercase">Cash</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={paymentSplit.cashAmount || ''}
+                    onChange={(e) => setPaymentSplit({ ...paymentSplit, cashAmount: parseFloat(e.target.value) || 0 })}
+                    className="bg-zinc-800 border-zinc-700 text-white h-9 text-sm"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              {/* Card Amount */}
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">💳</span>
+                <div className="flex-1">
+                  <Label className="text-[10px] text-zinc-500 uppercase">Card</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={paymentSplit.cardAmount || ''}
+                    onChange={(e) => setPaymentSplit({ ...paymentSplit, cardAmount: parseFloat(e.target.value) || 0 })}
+                    className="bg-zinc-800 border-zinc-700 text-white h-9 text-sm"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              {/* UPI Amount */}
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">📱</span>
+                <div className="flex-1">
+                  <Label className="text-[10px] text-zinc-500 uppercase">UPI</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={paymentSplit.upiAmount || ''}
+                    onChange={(e) => setPaymentSplit({ ...paymentSplit, upiAmount: parseFloat(e.target.value) || 0 })}
+                    className="bg-zinc-800 border-zinc-700 text-white h-9 text-sm"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              {/* Total Validator */}
+              <div className="pt-2 border-t border-zinc-800">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-zinc-500">Total Split:</span>
+                  <span className={`text-sm font-black ${Math.abs((paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount) - pendingPaymentModal.balanceDue) < 0.01 ? 'text-green-400' : 'text-red-400'}`}>
+                    ₹{(paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount).toFixed(2)}
+                  </span>
+                </div>
+                {Math.abs((paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount) - pendingPaymentModal.balanceDue) >= 0.01 && (
+                  <p className="text-[10px] text-red-400 mt-1">
+                    ⚠️ Total must equal ₹{pendingPaymentModal.balanceDue.toFixed(2)}
+                  </p>
+                )}
+              </div>
+
+              {/* Quick Fill Buttons */}
+              <div className="flex gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPaymentSplit({ cashAmount: pendingPaymentModal.balanceDue, cardAmount: 0, upiAmount: 0 })}
+                  className="flex-1 text-[10px] h-7 border-zinc-700 hover:bg-zinc-800"
+                >
+                  All Cash
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPaymentSplit({ cashAmount: 0, cardAmount: pendingPaymentModal.balanceDue, upiAmount: 0 })}
+                  className="flex-1 text-[10px] h-7 border-zinc-700 hover:bg-zinc-800"
+                >
+                  All Card
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPaymentSplit({ cashAmount: 0, cardAmount: 0, upiAmount: pendingPaymentModal.balanceDue })}
+                  className="flex-1 text-[10px] h-7 border-zinc-700 hover:bg-zinc-800"
+                >
+                  All UPI
+                </Button>
+              </div>
             </div>
           </div>
 
