@@ -491,6 +491,10 @@ main {
   animation: scan 2s ease-in-out infinite;
 }
 
+/* ================================================
+   SONNER TOAST STYLING
+   ================================================ */
+
 /* Ensure Sonner toasts appear above Radix Dialog (z-50) */
 [data-sonner-toaster] {
   z-index: 100 !important;
@@ -498,4 +502,90 @@ main {
 
 [data-sonner-toast] {
   z-index: 100 !important;
+  background-color: #121212 !important;
+  border: 1px solid #27272a !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Toast title styling */
+[data-sonner-toast] [data-title] {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+}
+
+/* Toast description styling */
+[data-sonner-toast] [data-description] {
+  color: #d4d4d8 !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.4 !important;
+  margin-top: 0.25rem !important;
+}
+
+/* Toast close button */
+[data-sonner-toast] [data-close-button] {
+  background-color: transparent !important;
+  border: 1px solid #3f3f46 !important;
+  color: #a1a1aa !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  background-color: #27272a !important;
+  color: #ffffff !important;
+}
+
+/* Success toast styling */
+[data-sonner-toast][data-type="success"] {
+  border-left: 3px solid #10b981 !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-icon] {
+  color: #10b981 !important;
+}
+
+/* Error toast styling */
+[data-sonner-toast][data-type="error"] {
+  border-left: 3px solid #ef4444 !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-icon] {
+  color: #ef4444 !important;
+}
+
+/* Warning toast styling */
+[data-sonner-toast][data-type="warning"] {
+  border-left: 3px solid #f59e0b !important;
+}
+
+[data-sonner-toast][data-type="warning"] [data-icon] {
+  color: #f59e0b !important;
+}
+
+/* Info toast styling */
+[data-sonner-toast][data-type="info"] {
+  border-left: 3px solid #3b82f6 !important;
+}
+
+[data-sonner-toast][data-type="info"] [data-icon] {
+  color: #3b82f6 !important;
+}
+
+/* Loading toast styling */
+[data-sonner-toast][data-type="loading"] [data-icon] {
+  color: var(--primary) !important;
+}
+
+/* Ensure content visibility */
+[data-sonner-toast] [data-content] {
+  color: #ffffff !important;
+}
+
+/* Fix empty white box issue - ensure all text elements have color */
+[data-sonner-toast] * {
+  color: inherit !important;
+}
+
+[data-sonner-toast] svg {
+  fill: currentColor !important;
 }
