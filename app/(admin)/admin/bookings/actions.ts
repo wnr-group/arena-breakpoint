@@ -860,30 +860,43 @@ export async function markBookingAsPaid(
   }
 ) {
   try {
-    // Get booking total
+    // Get booking details including current payment status
     const { data: booking, error: fetchError } = await supabaseAdmin
       .from("bookings")
-      .select("total_amount, booking_number")
+      .select("total_amount, amount_paid, cash_amount, card_amount, upi_amount, booking_number")
       .eq("id", bookingId)
       .single();
 
     if (fetchError || !booking) throw new Error("Booking not found");
 
-    // Validate that split amounts equal total
+    // Calculate balance due
+    const currentAmountPaid = Number(booking.amount_paid || 0);
+    const balanceDue = Number(booking.total_amount) - currentAmountPaid;
+
+    // Validate that split amounts equal balance due (not total, since there might be partial payment)
     const totalSplit = paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount;
-    if (Math.abs(totalSplit - booking.total_amount) > 0.01) {
-      throw new Error(`Payment split (₹${totalSplit}) does not match booking total (₹${booking.total_amount})`);
+    if (Math.abs(totalSplit - balanceDue) > 0.01) {
+      throw new Error(`Payment split (₹${totalSplit}) does not match balance due (₹${balanceDue})`);
     }
 
-    // Update booking payment status with split amounts
+    // Add the new payment to existing split amounts
+    const newCashAmount = Number(booking.cash_amount || 0) + paymentSplit.cashAmount;
+    const newCardAmount = Number(booking.card_amount || 0) + paymentSplit.cardAmount;
+    const newUpiAmount = Number(booking.upi_amount || 0) + paymentSplit.upiAmount;
+    const newAmountPaid = currentAmountPaid + totalSplit;
+
+    // Determine if fully paid or still partial
+    const newPaymentStatus = Math.abs(newAmountPaid - booking.total_amount) < 0.01 ? "paid" : "partial";
+
+    // Update booking payment status with accumulated split amounts
     const { error: updateError } = await supabaseAdmin
       .from("bookings")
       .update({
-        payment_status: "paid",
-        amount_paid: booking.total_amount,
-        cash_amount: paymentSplit.cashAmount,
-        card_amount: paymentSplit.cardAmount,
-        upi_amount: paymentSplit.upiAmount,
+        payment_status: newPaymentStatus,
+        amount_paid: newAmountPaid,
+        cash_amount: newCashAmount,
+        card_amount: newCardAmount,
+        upi_amount: newUpiAmount,
         // payment_method will be set automatically by trigger
       })
       .eq("id", bookingId);
