@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState, useMemo, useEffect } from 'react'
-import { CheckCircle2, Loader2 } from 'lucide-react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
+import { motion, useMotionValue, useMotionValueEvent, animate } from 'framer-motion'
+import { CheckCircle2, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
@@ -27,6 +28,11 @@ interface SubscriptionPricingCardProps {
 const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initialPlans }) => {
   const router = useRouter()
   const [loadingPlanId, setLoadingPlanId] = useState<number | null>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [singleSetWidth, setSingleSetWidth] = useState(0)
+  const [isHovered, setIsHovered] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(0)
+  const x = useMotionValue(0)
 
   const plans = useMemo(() => {
     return initialPlans
@@ -61,7 +67,7 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
     const channel = supabase
       .channel('public:subscription_plans')
       .on(
-        'postgres_changes',
+         'postgres_changes',
         {
           event: '*', // Listen for INSERT, UPDATE, and DELETE
           schema: 'public',
@@ -78,8 +84,85 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
     }
   }, [router])
 
-  const defaultPlanId = plans[0]?.id || ''
-  const [activeCard, setActiveCard] = useState<number | string>(defaultPlanId)
+  // Measure card sizes and sets widths
+  useEffect(() => {
+    if (plans.length === 0) return
+
+    const updateWidth = () => {
+      if (cardRef.current) {
+        const cardWidth = cardRef.current.offsetWidth
+        const gap = 24 // matching gap-6 (24px)
+        const setWidth = (cardWidth + gap) * plans.length
+        setSingleSetWidth(setWidth)
+        x.jump(-setWidth)
+      }
+    }
+
+    updateWidth()
+    // Give it a tiny delay to ensure client-side rendering layout is fully computed
+    const timer = setTimeout(updateWidth, 100)
+
+    window.addEventListener('resize', updateWidth)
+    return () => {
+      window.removeEventListener('resize', updateWidth)
+      clearTimeout(timer)
+    }
+  }, [plans.length, x])
+
+  // Continuous auto-play/scroll loop
+  useEffect(() => {
+    if (singleSetWidth === 0 || isHovered || plans.length <= 1) return
+
+    let animationFrameId: number
+    const speed = 0.8 // Adjust speed of the marquee auto-scroll
+
+    const play = () => {
+      const currentX = x.get()
+      x.set(currentX - speed)
+      animationFrameId = requestAnimationFrame(play)
+    }
+
+    animationFrameId = requestAnimationFrame(play)
+    return () => cancelAnimationFrame(animationFrameId)
+  }, [singleSetWidth, isHovered, x, plans.length])
+
+  // Listen to x changes to handle infinite wrap-around and active index updates
+  useMotionValueEvent(x, 'change', (latestX) => {
+    if (singleSetWidth === 0 || plans.length === 0) return
+
+    if (latestX > -singleSetWidth) {
+      x.jump(latestX - singleSetWidth)
+      return
+    } else if (latestX <= -singleSetWidth * 2) {
+      x.jump(latestX + singleSetWidth)
+      return
+    }
+
+    const positionWithinSet = Math.abs(latestX + singleSetWidth)
+    const scrollPercentage = positionWithinSet / singleSetWidth
+    let index = Math.round(scrollPercentage * plans.length)
+    if (index >= plans.length) index = 0
+    setActiveIndex(index)
+  })
+
+  const handleCardClick = (index: number) => {
+    if (singleSetWidth === 0) return
+    const itemWidth = singleSetWidth / plans.length
+    const targetX = -singleSetWidth - (index * itemWidth)
+    animate(x, targetX, { type: 'spring', stiffness: 220, damping: 28 })
+  }
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const prevIndex = (activeIndex - 1 + plans.length) % plans.length
+    handleCardClick(prevIndex)
+  }
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const nextIndex = (activeIndex + 1) % plans.length
+    handleCardClick(nextIndex)
+  }
 
   if (plans.length === 0) {
     return (
@@ -88,6 +171,9 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
       </div>
     )
   }
+
+  const extendedPlans = [...plans, ...plans, ...plans]
+  const activeCardId = plans[activeIndex]?.id || ''
 
   return (
     <section
@@ -98,114 +184,166 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-r from-primary/20 via-amber-400/20 to-amber-500/20 rounded-full blur-[120px] pointer-events-none z-0 animate-pulse" />
       <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-gradient-to-l from-amber-500/15 via-amber-400/15 to-primary/15 rounded-full blur-[100px] pointer-events-none z-0 animate-pulse" style={{ animationDelay: '1s' }} />
 
-      <div className="max-w-300 mx-auto relative z-10 w-full">
-        <div className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-12 pt-8 px-[5vw] md:px-8 hide-scrollbar items-stretch justify-start">
-          {plans.map(plan => {
-            const isActive = activeCard === plan.id
+      <div className="max-w-7xl mx-auto relative z-10 w-full group/slider px-4">
+        {/* Navigation Arrows */}
+        {plans.length > 1 && (
+          <>
+            <button
+              onClick={handlePrev}
+              className="absolute left-6 md:left-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-xl bg-zinc-950/90 border border-zinc-800 text-zinc-400 hover:text-primary hover:border-primary/50 hover:bg-zinc-900 flex items-center justify-center transition-all duration-300 backdrop-blur-md opacity-60 md:opacity-0 group-hover/slider:opacity-100 shadow-[0_0_20px_rgba(0,0,0,0.8)]"
+              aria-label="Previous Plan"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleNext}
+              className="absolute right-6 md:right-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-xl bg-zinc-950/90 border border-zinc-800 text-zinc-400 hover:text-primary hover:border-primary/50 hover:bg-zinc-900 flex items-center justify-center transition-all duration-300 backdrop-blur-md opacity-60 md:opacity-0 group-hover/slider:opacity-100 shadow-[0_0_20px_rgba(0,0,0,0.8)]"
+              aria-label="Next Plan"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </>
+        )}
 
-            return (
-              <div
-                key={plan.id}
-                onClick={() => setActiveCard(plan.id)}
-                className={`gaming-card relative flex flex-col flex-none w-[90vw] md:w-[80vw] max-w-85 md:max-w-75 h-auto snap-center rounded-2xl p-6 md:p-8 cursor-pointer transition-all duration-500 ease-out border group ${
-                  isActive
-                    ? 'border-primary/60 bg-gradient-to-br from-zinc-900 via-[#131313] to-zinc-900 shadow-[0_0_60px_rgba(255,193,7,0.3),inset_0_0_60px_rgba(255,193,7,0.05)] scale-100 z-10 opacity-100'
-                    : 'border-zinc-800 bg-gradient-to-br from-zinc-950 via-[#131313] to-zinc-950 hover:border-primary/40 hover:shadow-[0_0_30px_rgba(255,193,7,0.15)] lg:scale-95 opacity-90 hover:opacity-100 z-0'
-                }`}
-              >
-                {/* Gaming card shine container */}
-                <div className="gaming-card-shine" />
+        <div
+          className="overflow-hidden select-none py-3"
+          onPointerEnter={() => setIsHovered(true)}
+          onPointerLeave={() => setIsHovered(false)}
+        >
+          <motion.div
+            drag="x"
+            dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+            style={{ x }}
+            className="flex gap-6 w-max"
+          >
+            {extendedPlans.map((plan, idx) => {
+              const isActive = activeCardId === plan.id
 
-                {/* Animated gradient border effect */}
-                {isActive && (
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary via-amber-400 to-primary opacity-20 blur-xl animate-pulse pointer-events-none" />
-                )}
-
-                {/* Scan line animation */}
-                {isActive && (
-                  <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent animate-scan-line" />
-                  </div>
-                )}
-
-                {plan.badge && (
-                  <div
-                    className={`absolute -top-3.5 left-1/2 transform -translate-x-1/2 px-4 py-1.5 text-[10px] font-black rounded-full uppercase tracking-widest transition-all duration-300 ${
-                      isActive
-                        ? 'bg-gradient-to-r from-primary via-amber-400 to-primary text-black shadow-[0_0_20px_rgba(255,193,7,0.6)] animate-glow'
-                        : 'bg-zinc-900 text-primary border border-primary/30'
-                    }`}
-                  >
-                    {plan.badge}
-                  </div>
-                )}
-
-                <div className="mb-6 mt-2 text-left border-b border-zinc-800/50 pb-6 relative z-10">
-                  <span className="text-zinc-500 text-xs font-black tracking-[0.2em] uppercase block mb-2">
-                    {plan.category}
-                  </span>
-                  <h3 className={`text-xl md:text-2xl font-black mb-3 tracking-tight transition-all duration-300 ${
-                    isActive ? 'text-transparent bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text' : 'text-white'
-                  }`}>
-                    {plan.title}
-                  </h3>
-                  <div className="flex items-baseline">
-                    <span className={`text-3xl md:text-4xl font-black tracking-tighter transition-all duration-300 ${
-                      isActive ? 'text-transparent bg-gradient-to-r from-primary via-amber-300 to-primary bg-clip-text' : 'text-white'
-                    }`}>
-                      ₹{plan.price}
-                    </span>
-                    <span className="text-zinc-500 ml-2 text-xs md:text-sm font-bold">
-                      {plan.duration}
-                    </span>
-                  </div>
-                </div>
-
-                <ul className="grow space-y-3.5 mb-8 relative z-10">
-                  {plan.features.map((feature: string, idx: number) => (
-                    <li
-                      key={idx}
-                      className={`flex items-start text-sm font-medium transition-all duration-300 ${
-                        isActive ? 'text-zinc-200' : 'text-zinc-400'
-                      }`}
-                      style={{ animationDelay: `${idx * 50}ms` }}
-                    >
-                      <CheckCircle2
-                        className={`w-4 h-4 mr-3 shrink-0 mt-0.5 transition-all duration-300 ${
-                          isActive ? 'text-primary drop-shadow-[0_0_8px_rgba(255,193,7,0.6)]' : 'text-zinc-600'
-                        }`}
-                      />
-                      <span className="leading-tight">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                 <button
-                  onClick={e => {
-                    e.stopPropagation()
-                    setLoadingPlanId(plan.id)
-                    router.push(`/subscription/${plan.id}`)
+              return (
+                <div
+                  ref={idx === 0 ? cardRef : null}
+                  key={`${plan.id}-${idx}`}
+                  onClick={() => {
+                    const originalIndex = idx % plans.length
+                    handleCardClick(originalIndex)
                   }}
-                  disabled={loadingPlanId !== null}
-                  className={`relative w-full py-3.5 rounded-xl font-black text-sm uppercase tracking-wider transition-all duration-300 mt-auto overflow-hidden group/btn flex items-center justify-center gap-2 ${
+                  className={`gaming-card relative flex flex-col flex-none w-[300px] md:w-[350px] h-auto rounded-2xl p-6 md:p-8 cursor-pointer transition-all duration-500 ease-out border group ${
                     isActive
-                      ? 'bg-gradient-to-r from-primary via-amber-400 to-primary text-black hover:shadow-[0_0_30px_rgba(255,193,7,0.5)] hover:scale-[1.02]'
-                      : 'bg-transparent border-2 border-zinc-800 text-zinc-400 hover:border-primary hover:text-primary hover:shadow-[0_0_20px_rgba(255,193,7,0.2)]'
+                      ? 'border-primary/60 bg-gradient-to-br from-zinc-900 via-[#131313] to-zinc-900 shadow-[0_0_60px_rgba(255,193,7,0.3),inset_0_0_60px_rgba(255,193,7,0.05)] scale-100 z-10 opacity-100'
+                      : 'border-zinc-800 bg-gradient-to-br from-zinc-950 via-[#131313] to-zinc-950 hover:border-primary/40 hover:shadow-[0_0_30px_rgba(255,193,7,0.15)] lg:scale-95 opacity-90 hover:opacity-100 z-0'
                   }`}
                 >
-                  {loadingPlanId === plan.id ? (
-                    <Loader2 className="w-4 h-4 animate-spin shrink-0" />
-                  ) : (
-                    isActive && (
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700" />
-                    )
+                  {/* Gaming card shine container */}
+                  <div className="gaming-card-shine" />
+
+                  {/* Animated gradient border effect */}
+                  {isActive && (
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary via-amber-400 to-primary opacity-20 blur-xl animate-pulse pointer-events-none" />
                   )}
-                  <span className="relative z-10">{loadingPlanId === plan.id ? 'Loading...' : plan.buttonText}</span>
-                </button>
-              </div>
-            )
-          })}
+
+                  {/* Scan line animation */}
+                  {isActive && (
+                    <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+                      <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent animate-scan-line" />
+                    </div>
+                  )}
+
+                  {plan.badge && (
+                    <div
+                      className={`absolute -top-3.5 left-1/2 transform -translate-x-1/2 px-4 py-1.5 text-[10px] font-black rounded-full uppercase tracking-widest transition-all duration-300 ${
+                        isActive
+                          ? 'bg-gradient-to-r from-primary via-amber-400 to-primary text-black shadow-[0_0_20px_rgba(255,193,7,0.6)] animate-glow'
+                          : 'bg-zinc-900 text-primary border border-primary/30'
+                      }`}
+                    >
+                      {plan.badge}
+                    </div>
+                  )}
+
+                  <div className="mb-6 mt-2 text-left border-b border-zinc-800/50 pb-6 relative z-10">
+                    <span className="text-zinc-500 text-xs font-black tracking-[0.2em] uppercase block mb-2">
+                      {plan.category}
+                    </span>
+                    <h3 className={`text-xl md:text-2xl font-black mb-3 tracking-tight transition-all duration-300 ${
+                      isActive ? 'text-transparent bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text' : 'text-white'
+                    }`}>
+                      {plan.title}
+                    </h3>
+                    <div className="flex items-baseline">
+                      <span className={`text-3xl md:text-4xl font-black tracking-tighter transition-all duration-300 ${
+                        isActive ? 'text-transparent bg-gradient-to-r from-primary via-amber-300 to-primary bg-clip-text' : 'text-white'
+                      }`}>
+                        ₹{plan.price}
+                      </span>
+                      <span className="text-zinc-500 ml-2 text-xs md:text-sm font-bold">
+                        {plan.duration}
+                      </span>
+                    </div>
+                  </div>
+
+                  <ul className="grow space-y-3.5 mb-8 relative z-10">
+                    {plan.features.map((feature: string, idx: number) => (
+                      <li
+                        key={idx}
+                        className={`flex items-start text-sm font-medium transition-all duration-300 ${
+                          isActive ? 'text-zinc-200' : 'text-zinc-400'
+                        }`}
+                        style={{ animationDelay: `${idx * 50}ms` }}
+                      >
+                        <CheckCircle2
+                          className={`w-4 h-4 mr-3 shrink-0 mt-0.5 transition-all duration-300 ${
+                            isActive ? 'text-primary drop-shadow-[0_0_8px_rgba(255,193,7,0.6)]' : 'text-zinc-600'
+                          }`}
+                        />
+                        <span className="leading-tight">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <button
+                    onClick={e => {
+                      e.stopPropagation()
+                      setLoadingPlanId(plan.id)
+                      router.push(`/subscription/${plan.id}`)
+                    }}
+                    disabled={loadingPlanId !== null}
+                    className={`relative w-full py-3.5 rounded-xl font-black text-sm uppercase tracking-wider transition-all duration-300 mt-auto overflow-hidden group/btn flex items-center justify-center gap-2 ${
+                      isActive
+                        ? 'bg-gradient-to-r from-primary via-amber-400 to-primary text-black hover:shadow-[0_0_30px_rgba(255,193,7,0.5)] hover:scale-[1.02]'
+                        : 'bg-transparent border-2 border-zinc-800 text-zinc-400 hover:border-primary hover:text-primary hover:shadow-[0_0_20px_rgba(255,193,7,0.2)]'
+                    }`}
+                  >
+                    {loadingPlanId === plan.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                    ) : (
+                      isActive && (
+                        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700" />
+                      )
+                    )}
+                    <span className="relative z-10">{loadingPlanId === plan.id ? 'Loading...' : plan.buttonText}</span>
+                  </button>
+                </div>
+              )
+            })}
+          </motion.div>
         </div>
+
+        {/* Dots */}
+        {plans.length > 1 && (
+          <div className="mt-8 flex items-center justify-center gap-2">
+            {plans.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleCardClick(idx)}
+                className="relative h-1.5 rounded-full transition-all duration-300 overflow-hidden"
+                style={{
+                  width: activeIndex === idx ? 28 : 8,
+                  background: activeIndex === idx ? 'var(--primary)' : 'rgba(255,255,255,0.15)',
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <style
