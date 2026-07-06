@@ -1,10 +1,19 @@
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Gamepad2, Facebook, Twitter, MessageSquare, Music, Youtube } from 'lucide-react';
 
 export default function Footer() {
   // Fetch current year dynamically
   const currentYear = new Date().getFullYear();
+
+  const footerLinks = [
+    { label: 'HOME', path: '/' },
+    { label: 'SUBSCRIPTIONS', path: '/subscription' },
+    { label: 'Retrieve Booking', path: '/retrieve' },
+    { label: 'Food Menu', path: '/food' },
+    { label: 'Book Slot', path: '/booking' },
+  ];
 
   return (
     <footer className="bg-[#121212] border-t border-white/5 pt-12 md:pt-16 pb-6 md:pb-8 overflow-hidden relative mt-auto">
@@ -35,7 +44,7 @@ export default function Footer() {
             </div>
             {/* Description */}
             <p className="text-[#a1a1aa] text-sm leading-relaxed pr-0 lg:pr-8">
-              Lorem ipsum culpa tempor tempor eu laboris adipisicing sunt excepteur enim laborum officia eiusmod laborum sint do aliqua incididunt est aute deserunt in elit non sed ut velit ullamco aliquip. Nulla cupidatat elit amet sed labore ut et consequat nostrud laboris aliqua ex est fugiat quis aliqua duis quis esse dolor laboris non duis sunt.
+              Break Point Arena is the ultimate premium gaming destination, offering state-of-the-art gaming stations, console hubs, competitive tournaments, custom memberships, and a curated menu to fuel your sessions. Book your slot now and level up your gaming experience.
             </p>
           </div>
 
@@ -45,11 +54,11 @@ export default function Footer() {
               Pages
             </h3>
             <ul className="flex flex-col gap-4 uppercase">
-              {['HOME', 'SUBSCRIPTIONS', 'Retrieve Booking', 'Food Menu', 'Book Slot'].map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-[#a1a1aa] text-sm hover:text-[#FFC107] transition-colors duration-300">
-                    {link}
-                  </a>
+              {footerLinks.map((link) => (
+                <li key={link.label}>
+                  <Link href={link.path} className="text-[#a1a1aa] text-sm hover:text-[#FFC107] transition-colors duration-300">
+                    {link.label}
+                  </Link>
                 </li>
               ))}
             </ul>
