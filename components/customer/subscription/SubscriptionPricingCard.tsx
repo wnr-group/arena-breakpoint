@@ -6,6 +6,7 @@ import { CheckCircle2, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
+import { checkCustomerExists } from '@/app/(customer)/booking/actions'
 
 // The DB Interface
 interface SubscriptionPlanDB {
@@ -33,6 +34,24 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
   const [isHovered, setIsHovered] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const x = useMotionValue(0)
+  const [activePlanId, setActivePlanId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const checkActiveSubscription = async () => {
+      const savedPhone = typeof window !== 'undefined' ? localStorage.getItem('customerPhone') : null
+      if (savedPhone) {
+        try {
+          const result = await checkCustomerExists(savedPhone)
+          if (result.success && result.subscription) {
+            setActivePlanId(result.subscription.plan_id ? String(result.subscription.plan_id) : null)
+          }
+        } catch (e) {
+          console.error('Failed to check active subscription:', e)
+        }
+      }
+    }
+    checkActiveSubscription()
+  }, [])
 
   const plans = useMemo(() => {
     return initialPlans
@@ -303,12 +322,18 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
                   <button
                     onClick={e => {
                       e.stopPropagation()
+                      if (activePlanId === String(plan.id)) {
+                        router.push('/my-subscription')
+                        return
+                      }
                       setLoadingPlanId(plan.id)
                       router.push(`/subscription/${plan.id}`)
                     }}
                     disabled={loadingPlanId !== null}
                     className={`relative w-full py-3.5 rounded-xl font-black text-sm uppercase tracking-wider transition-all duration-300 mt-auto overflow-hidden group/btn flex items-center justify-center gap-2 ${
-                      isActive
+                      activePlanId === String(plan.id)
+                        ? 'bg-gradient-to-r from-primary via-amber-400 to-primary text-black hover:shadow-[0_0_30px_rgba(255,193,7,0.5)] hover:scale-[1.02]'
+                        : isActive
                         ? 'bg-gradient-to-r from-primary via-amber-400 to-primary text-black hover:shadow-[0_0_30px_rgba(255,193,7,0.5)] hover:scale-[1.02]'
                         : 'bg-transparent border-2 border-zinc-800 text-zinc-400 hover:border-primary hover:text-primary hover:shadow-[0_0_20px_rgba(255,193,7,0.2)]'
                     }`}
@@ -320,7 +345,9 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
                         <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700" />
                       )
                     )}
-                    <span className="relative z-10">{loadingPlanId === plan.id ? 'Loading...' : plan.buttonText}</span>
+                    <span className="relative z-10">
+                      {loadingPlanId === plan.id ? 'Loading...' : activePlanId === String(plan.id) ? 'View Details' : plan.buttonText}
+                    </span>
                   </button>
                 </div>
               )

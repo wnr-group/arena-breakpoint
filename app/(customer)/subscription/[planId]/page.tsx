@@ -82,6 +82,21 @@ export default function PlanDetailsPage() {
     const result = await checkCustomerExists(mobileNumber)
 
     if (result.exists && result.customer) {
+      // Check if already subscribed to this plan
+      if (result.subscription) {
+        if (String(result.subscription.plan_id) === String(plan.id)) {
+          toast.error('Already Subscribed', {
+            description: `You already have an active subscription to ${plan.name} (valid until ${new Date(result.subscription.end_date).toLocaleDateString()}).`
+          })
+          setIsSubmitting(false)
+          return
+        } else {
+          toast.warning('Active Subscription Found', {
+            description: `You already have an active subscription to ${result.subscription.plan_name} (valid until ${new Date(result.subscription.end_date).toLocaleDateString()}).`
+          })
+        }
+      }
+
       // Customer exists
       setCustomerExists(true)
       setCustomerId(result.customer.id)
