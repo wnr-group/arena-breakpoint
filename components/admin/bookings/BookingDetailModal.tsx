@@ -802,7 +802,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
             {["Snacks", "Drinks", "Meals"].map((category) => {
               // Filter by selected category and search query
               const categoryItems = menuItems.filter((item) => {
-                const matchesCategory = selectedCategory === "All" || item.category === category;
+                const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
                 const matchesSearch = foodSearchQuery === "" ||
                   item.name.toLowerCase().includes(foodSearchQuery.toLowerCase());
                 return item.category === category && matchesCategory && matchesSearch;
@@ -878,7 +878,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
             {menuItems.length > 0 &&
               !["Snacks", "Drinks", "Meals"].some((category) => {
                 const categoryItems = menuItems.filter((item) => {
-                  const matchesCategory = selectedCategory === "All" || item.category === category;
+                  const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
                   const matchesSearch = foodSearchQuery === "" ||
                     item.name.toLowerCase().includes(foodSearchQuery.toLowerCase());
                   return item.category === category && matchesCategory && matchesSearch;
