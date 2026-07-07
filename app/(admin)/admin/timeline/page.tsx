@@ -9,6 +9,8 @@ import { getTimelineBookings } from "@/app/(admin)/admin/bookings/actions";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
 export default function TimelinePage() {
   const [timelineDate, setTimelineDate] = useState(new Date());
@@ -23,7 +25,10 @@ export default function TimelinePage() {
 
   const loadTimelineBookings = async () => {
     setLoading(true);
-    const dateStr = timelineDate.toISOString().split('T')[0];
+    const year = timelineDate.getFullYear();
+    const month = String(timelineDate.getMonth() + 1).padStart(2, '0');
+    const day = String(timelineDate.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
     const result = await getTimelineBookings(dateStr);
     if (result.success) {
       setTimelineBookings(result.bookings);
@@ -84,12 +89,27 @@ export default function TimelinePage() {
               <ChevronLeft className="h-4 w-4" />
             </Button>
 
-            <div className="flex items-center gap-2 px-4 py-2 bg-[var(--surface)] border border-[#27272a] rounded-lg">
-              <Calendar className="h-4 w-4 text-primary" />
-              <span className="text-sm font-bold text-white">
-                {formatDate(timelineDate)}
-              </span>
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 px-4 py-2 bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[#27272a] rounded-lg transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <Calendar className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-bold text-white">
+                    {formatDate(timelineDate)}
+                  </span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-zinc-800 rounded-xl shadow-2xl" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={timelineDate}
+                  onSelect={(date) => date && setTimelineDate(date)}
+                  className="text-white"
+                />
+              </PopoverContent>
+            </Popover>
 
             <Button
               onClick={goToNextDay}
