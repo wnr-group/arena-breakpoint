@@ -19,7 +19,10 @@ export async function getDashboardStats() {
           status,
           total_amount,
           device_subtotal,
-          food_subtotal
+          food_subtotal,
+          cash_amount,
+          card_amount,
+          upi_amount
         )
       `)
       .eq("slot_date", today)
@@ -230,6 +233,9 @@ export async function getTodaysRevenueDetails() {
         total_amount,
         device_subtotal,
         food_subtotal,
+        cash_amount,
+        card_amount,
+        upi_amount,
         status,
         payment_status,
         created_at,
