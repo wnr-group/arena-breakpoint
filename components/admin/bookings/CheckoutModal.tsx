@@ -122,11 +122,10 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
             </div>
 
             {/* Payment Status Card */}
-            <div className={`border-2 rounded-xl p-6 ${
-              isPaid
+            <div className={`border-2 rounded-xl p-6 ${isPaid
                 ? 'bg-green-500/10 border-green-500/40'
                 : 'bg-red-500/10 border-red-500/40'
-            }`}>
+              }`}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-black uppercase tracking-wider text-muted-content">Payment Status</h3>
                 {isPaid ? (
@@ -139,11 +138,10 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-base font-bold text-white">Status:</span>
-                  <Badge className={`${
-                    isPaid
+                  <Badge className={`${isPaid
                       ? 'bg-green-500/20 text-green-400 border-green-500/40'
                       : 'bg-red-500/20 text-red-400 border-red-500/40'
-                  } font-black uppercase`}>
+                    } font-black uppercase`}>
                     {isPaid ? 'Fully Paid' : 'Pending Payment'}
                   </Badge>
                 </div>
@@ -197,25 +195,23 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
                       return (
                         <div
                           key={item.id}
-                          className={`flex items-center justify-between py-2 px-3 rounded-lg ${
-                            isUnpaid
+                          className={`flex items-center justify-between py-2 px-3 rounded-lg ${isUnpaid
                               ? 'bg-amber-500/10 border-l-4 border-amber-500'
                               : 'border-b border-zinc-800'
-                          }`}
+                            }`}
                         >
                           <div className="flex items-center gap-2 flex-1">
                             {isUnpaid && (
                               <AlertCircle className="h-3 w-3 text-amber-500 flex-shrink-0" />
                             )}
-                            <span className={`font-medium ${
-                              isDiscount
+                            <span className={`font-medium ${isDiscount
                                 ? item.item_type === 'subscription_discount'
                                   ? 'text-green-500'
                                   : 'text-primary'
                                 : isUnpaid
                                   ? 'text-amber-300'
                                   : 'text-muted-content'
-                            }`}>
+                              }`}>
                               {item.description}
                               {item.quantity > 1 && item.item_type !== 'device' && (
                                 <span className="text-xs ml-1">x{item.quantity}</span>
@@ -227,15 +223,14 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
                               </Badge>
                             )}
                           </div>
-                          <span className={`font-bold ${
-                            isDiscount
+                          <span className={`font-bold ${isDiscount
                               ? item.item_type === 'subscription_discount'
                                 ? 'text-green-500'
                                 : 'text-primary'
                               : isUnpaid
                                 ? 'text-amber-300'
                                 : 'text-white'
-                          }`}>
+                            }`}>
                             {isDiscount ? '-' : ''}₹{Math.abs(Number(item.line_total)).toFixed(2)}
                           </span>
                         </div>
@@ -299,11 +294,10 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
               <Button
                 onClick={handleCloseBooking}
                 disabled={isProcessing || !isPaid}
-                className={`w-full font-black uppercase text-sm h-12 rounded-xl ${
-                  isPaid
+                className={`w-full font-black uppercase text-sm h-12 rounded-xl ${isPaid
                     ? 'bg-primary hover:bg-primary-hover text-black'
                     : 'bg-zinc-800 text-muted-content cursor-not-allowed'
-                }`}
+                  }`}
               >
                 {isProcessing ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />

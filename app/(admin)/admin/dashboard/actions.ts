@@ -56,11 +56,27 @@ export async function getDashboardStats() {
 
     if (upcomingError) throw upcomingError;
 
-    // Calculate today's revenue
+    // Calculate today's revenue based on payment date (same as reports page)
     let todaysRevenue = 0;
-    (todaysBookings || []).forEach((booking: any) => {
-      todaysRevenue += Number(booking.bookings?.total_amount || 0);
-    });
+    
+    const { data: paymentsToday, error: paymentsError } = await supabaseAdmin
+      .from("bookings")
+      .select(`
+        total_amount,
+        created_at,
+        updated_at,
+        payment_groups(paid_at)
+      `)
+      .in("status", ["confirmed", "checked_in", "completed"]);
+
+    if (!paymentsError && paymentsToday) {
+      paymentsToday.forEach((booking: any) => {
+        const paidAt = booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
+        if (paidAt && paidAt.split('T')[0] === today) {
+          todaysRevenue += Number(booking.total_amount || 0);
+        }
+      });
+    }
 
     // Get total bookings count for today
     const todaysBookingsCount = todaysBookings?.length || 0;
@@ -239,21 +255,28 @@ export async function getTodaysRevenueDetails() {
         status,
         payment_status,
         created_at,
-        booking_device_slots!inner(
+        updated_at,
+        booking_device_slots(
           slot_date,
           slot_start_time,
           slot_end_time,
           device_type,
           device_station_number
-        )
+        ),
+        payment_groups(paid_at)
       `)
-      .eq("booking_device_slots.slot_date", today)
-      .in("status", ["confirmed", "checked_in", "completed"])
-      .order("created_at", { ascending: false });
+      .in("status", ["confirmed", "checked_in", "completed"]);
 
     if (error) throw error;
 
-    return { success: true, bookings: data || [] };
+    // Filter by payment date being today (using paid_at, updated_at, or created_at)
+    const filteredBookings = (data || []).filter((booking: any) => {
+      const paidAt = booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
+      if (!paidAt) return false;
+      return paidAt.split('T')[0] === today;
+    });
+
+    return { success: true, bookings: filteredBookings };
   } catch (err: any) {
     console.error("Get today's revenue details error:", err);
     return { success: false, error: err.message, bookings: [] };

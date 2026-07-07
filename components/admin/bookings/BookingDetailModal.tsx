@@ -969,6 +969,43 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
             <div className="space-y-3">
               <p className="text-sm font-bold text-muted-content uppercase">Payment Split:</p>
 
+              {/* Quick Select Method */}
+              <div className="grid grid-cols-3 gap-2 pb-2 border-b border-zinc-800/80">
+                <Button
+                  type="button"
+                  onClick={() => setPaymentSplit({ cashAmount: Number(booking?.balance_due || 0), cardAmount: 0, upiAmount: 0 })}
+                  className={`h-9 text-xs font-black uppercase rounded-lg border transition-all ${
+                    paymentSplit.cashAmount === Number(booking?.balance_due || 0)
+                      ? 'bg-green-600 hover:bg-green-700 border-transparent text-white shadow-[0_0_12px_rgba(34,197,94,0.15)]'
+                      : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white'
+                  }`}
+                >
+                  💵 Cash
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => setPaymentSplit({ cashAmount: 0, cardAmount: Number(booking?.balance_due || 0), upiAmount: 0 })}
+                  className={`h-9 text-xs font-black uppercase rounded-lg border transition-all ${
+                    paymentSplit.cardAmount === Number(booking?.balance_due || 0)
+                      ? 'bg-blue-600 hover:bg-blue-700 border-transparent text-white shadow-[0_0_12px_rgba(59,130,246,0.15)]'
+                      : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white'
+                  }`}
+                >
+                  💳 Card
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => setPaymentSplit({ cashAmount: 0, cardAmount: 0, upiAmount: Number(booking?.balance_due || 0) })}
+                  className={`h-9 text-xs font-black uppercase rounded-lg border transition-all ${
+                    paymentSplit.upiAmount === Number(booking?.balance_due || 0)
+                      ? 'bg-purple-600 hover:bg-purple-700 border-transparent text-white shadow-[0_0_12px_rgba(168,85,247,0.15)]'
+                      : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white'
+                  }`}
+                >
+                  📱 UPI
+                </Button>
+              </div>
+
               {/* Cash */}
               <div className="space-y-1">
                 <Label htmlFor="cash" className="text-xs font-bold text-zinc-400 uppercase">Cash</Label>
