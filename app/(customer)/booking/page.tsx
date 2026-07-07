@@ -148,9 +148,9 @@ export default function GamingStationPage() {
                           {deviceType.included_players} included • Max {deviceType.max_players}
                         </p>
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <span className="text-base font-black text-primary">₹{Number(deviceType.regular_hourly_rate)}</span>
-                        <span className="text-[9px] text-zinc-600 block">/hr</span>
+                      <div className="text-right flex-shrink-0 flex items-baseline gap-1 mt-1">
+                        <span className="text-lg font-black text-primary">₹{Number(deviceType.regular_hourly_rate)}</span>
+                        <span className="text-xs text-zinc-300 font-bold">/hr</span>
                       </div>
                     </div>
 
