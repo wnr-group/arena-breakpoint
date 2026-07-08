@@ -29,6 +29,21 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ plans = [] }) 
       className="w-full mt-12 overflow-x-auto px-4 pb-12"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
     >
+      <style>{`
+        @keyframes savingsGlow {
+          0%, 100% {
+            box-shadow: 0 0 6px rgba(255, 193, 7, 0.35), 0 0 2px rgba(255, 193, 7, 0.2);
+            filter: brightness(1);
+          }
+          50% {
+            box-shadow: 0 0 16px rgba(255, 193, 7, 0.8), 0 0 8px rgba(255, 193, 7, 0.4);
+            filter: brightness(1.2);
+          }
+        }
+        .animate-savings-glow {
+          animation: savingsGlow 2.5s infinite ease-in-out;
+        }
+      `}</style>
       <h2 className="text-3xl md:text-4xl font-bold text-center text-white mb-10 tracking-tight">
         Quick Comparison
       </h2>
@@ -76,11 +91,16 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ plans = [] }) 
                 <div className="text-neutral-300 pl-6 text-[14px] md:text-[15px] font-medium text-left">
                   {duration}
                 </div>
-                <div
-                  className="pl-6 text-[14px] md:text-[15px] font-medium text-left"
-                  style={{ color: 'var(--primary)' }}
-                >
-                  {savings}
+                <div className="pl-6 text-left">
+                  {plan.discount_percentage > 0 ? (
+                    <span className="inline-block px-3 py-1 text-xs md:text-[13px] font-extrabold bg-gradient-primary text-black rounded-full shadow-[0_0_10px_rgba(255,193,7,0.25)] border border-[#FFD54F]/30 uppercase tracking-wide animate-savings-glow">
+                      Up to {plan.discount_percentage}%
+                    </span>
+                  ) : (
+                    <span className="text-neutral-500 text-[14px] md:text-[15px] font-medium">
+                      None
+                    </span>
+                  )}
                 </div>
                 <div className="text-neutral-300 pl-6 text-[14px] md:text-[15px] font-medium text-left">
                   {topBenefit}
