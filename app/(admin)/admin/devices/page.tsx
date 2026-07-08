@@ -177,8 +177,8 @@ export default function DevicesPage() {
       {/* VIEW SELECTION ROUTER LAYER */}
       <div className="mt-2 animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both">
         {isLoadingData ? (
-          <div className="text-center py-12 bg-[var(--surface)] border border-[#27272a] rounded-xl text-[#a1a1aa] flex justify-center items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin text-[#FFC107]" /> Fetching device records...
+          <div className="text-center py-12 bg-[var(--surface)] border border-[#27272a] rounded-xl text-[#a1a1aa] flex justify-center items-center">
+            <BreakpointLoader size="lg" text="Fetching device records..." />
           </div>
         ) : filteredDevices.length === 0 ? (
           <div className="text-center py-12 bg-[var(--surface)] border border-[#27272a] rounded-xl text-[#a1a1aa]">

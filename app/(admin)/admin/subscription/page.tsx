@@ -7,6 +7,7 @@ import { EditSubscriptionModal } from '@/components/admin/subscription/EditSubsc
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { SubscriptionTable } from '@/components/admin/subscription/SubscriptionTable'
+import { BreakpointLoader } from '@/components/shared/BreakpointLoader'
 
 // Import AlertDialog components
 import {
@@ -103,9 +104,8 @@ export default function SubscriptionPage() {
       {/* MAIN TABLE AREA */}
       <div className="mt-2 animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-[var(--surface)] border border-[#27272a] rounded-xl text-[#a1a1aa] gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-[#FFC107]" />
-            <p className="text-sm font-medium">Loading subscription data...</p>
+          <div className="flex flex-col items-center justify-center py-20 bg-[var(--surface)] border border-[#27272a] rounded-xl text-[#a1a1aa]">
+            <BreakpointLoader size="lg" text="Loading subscription data..." />
           </div>
         ) : (
           <SubscriptionTable
