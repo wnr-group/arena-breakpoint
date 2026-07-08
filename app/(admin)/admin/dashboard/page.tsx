@@ -487,54 +487,6 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
-      {/* System Status */}
-      <Card className="bg-[var(--surface)] border-[#27272a] p-6">
-        <h3 className="text-sm font-black uppercase text-muted-content mb-4">
-          System Status
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="flex items-center gap-3 p-3 bg-[var(--background)] border border-[#27272a] rounded-lg">
-            <div className="p-2 bg-green-500/10 rounded-lg">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-content">Bookings System</p>
-              <p className="text-sm font-bold text-white">Operational</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 p-3 bg-[var(--background)] border border-[#27272a] rounded-lg">
-            <div className="p-2 bg-green-500/10 rounded-lg">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-content">Payment Gateway</p>
-              <p className="text-sm font-bold text-white">Operational</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 p-3 bg-[var(--background)] border border-[#27272a] rounded-lg">
-            <div className="p-2 bg-green-500/10 rounded-lg">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-content">Food Orders</p>
-              <p className="text-sm font-bold text-white">Operational</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 p-3 bg-[var(--background)] border border-[#27272a] rounded-lg">
-            <div className="p-2 bg-green-500/10 rounded-lg">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-content">Database</p>
-              <p className="text-sm font-bold text-white">Connected</p>
-            </div>
-          </div>
-        </div>
-      </Card>
-
       {/* Modals */}
       <TodaysRevenueModal
         open={revenueModalOpen}
