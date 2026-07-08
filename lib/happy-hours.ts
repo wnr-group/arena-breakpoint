@@ -60,6 +60,11 @@ export function isSlotWithinTimeRange(
   const range = parseTimeRange(happyHourTimeRange);
   if (!range) return false;
 
+  // If slot crosses midnight (end < start), it cannot be within a same-day happy hour range
+  if (slotEnd < slotStart) {
+    return false;
+  }
+
   // Strict validation: entire slot must be within happy hour range
   return slotStart >= range.start && slotEnd <= range.end;
 }
