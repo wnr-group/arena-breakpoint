@@ -8,42 +8,42 @@ import Image from 'next/image';
 const testimonials = [
   {
     id: 1,
-    name: "Bryan G.",
-    role: "Server Admin",
-    text: "The DDoS protection from Playhost is a lifesaver. We used to get attacked regularly, but since switching, we haven't had a single minute of downtime.",
-    avatar: "https://i.pravatar.cc/150?u=bryan",
+    name: "Aravind Kumar",
+    role: "College Student",
+    text: "Best gaming cafe in the area! The PS5 setups are incredible and the food is amazing. Tried their chicken sandwich while playing FIFA - perfect combo. Staff is super friendly too!",
+    avatar: "https://i.pravatar.cc/150?u=aravind",
     rating: 5
   },
   {
     id: 2,
-    name: "Michael S.",
-    role: "Game Developer",
-    text: "I've been using Playhost for my game server needs and couldn't be happier. Uptime is fantastic and the support team is always quick to assist.",
-    avatar: "https://i.pravatar.cc/150?u=michael",
+    name: "Priya Lakshmi",
+    role: "Weekend Gamer",
+    text: "Love coming here with friends! The snooker tables are well-maintained and the cafe vibes are great. Their coffee and snacks keep us going for hours. Happy hour deals are a steal!",
+    avatar: "https://i.pravatar.cc/150?u=priya",
     rating: 5
   },
   {
     id: 3,
-    name: "Robert L.",
-    role: "Community Manager",
-    text: "Running a game server used to be a hassle, but Playhost makes it effortless. The control panel is intuitive and maintenance is handled automatically.",
-    avatar: "https://i.pravatar.cc/150?u=robert",
+    name: "Karthi Selvam",
+    role: "Esports Enthusiast",
+    text: "Zero lag gaming experience! Booked a PS5 console for 3 hours and it was flawless. The food menu has great variety - tried the masala fries and cold coffee. Will definitely come back!",
+    avatar: "https://i.pravatar.cc/150?u=karthi",
     rating: 5
   },
   {
     id: 4,
-    name: "Jake M.",
-    role: "Esports Player",
-    text: "I've tried several hosting providers and Playhost is by far the best. Server performance is top-notch — zero lag even with a full lobby.",
-    avatar: "https://i.pravatar.cc/150?u=jake",
+    name: "Divya Bharathi",
+    role: "Birthday Host",
+    text: "Hosted my brother's birthday party here and everyone loved it! Gaming stations were perfect for the group and the food was delicious. Staff helped with everything. Highly recommend for events!",
+    avatar: "https://i.pravatar.cc/150?u=divya",
     rating: 5
   },
   {
     id: 5,
-    name: "Sarah T.",
-    role: "Streamer",
-    text: "Customer support is unparalleled. Whenever I have a question about mod installations, they reply within minutes. Highly recommend to any serious gamer.",
-    avatar: "https://i.pravatar.cc/150?u=sarah",
+    name: "Naveen Raj",
+    role: "Regular Visitor",
+    text: "My go-to spot for weekend gaming sessions! Clean ambiance, comfortable seating, and the food ordering is seamless. Their subscription plans save me so much money. Worth every rupee!",
+    avatar: "https://i.pravatar.cc/150?u=naveen",
     rating: 5
   }
 ];
