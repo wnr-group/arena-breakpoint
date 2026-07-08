@@ -76,10 +76,16 @@ export async function getFoodReports(filters?: ReportFilters) {
 
     let totalRevenue = 0;
     let totalItemsSold = 0;
+    const uniqueBookings = new Set<string>();
 
     (data || []).forEach((item: any) => {
       const itemName = item.item_name;
       const category = item.item_category || "Uncategorized";
+
+      // Track unique booking IDs for totalOrders count
+      if (item.bookings?.booking_number) {
+        uniqueBookings.add(item.bookings.booking_number);
+      }
 
       // Item stats
       if (!itemStats[itemName]) {
@@ -119,13 +125,16 @@ export async function getFoodReports(filters?: ReportFilters) {
     const categoryBreakdown = Object.values(categoryStats)
       .sort((a, b) => b.totalRevenue - a.totalRevenue);
 
+    // Count unique bookings, not individual food items
+    const totalOrders = uniqueBookings.size;
+
     return {
       success: true,
       summary: {
         totalRevenue,
         totalItemsSold,
-        totalOrders: data?.length || 0,
-        averageOrderValue: data?.length ? totalRevenue / data.length : 0
+        totalOrders,
+        averageOrderValue: totalOrders ? totalRevenue / totalOrders : 0
       },
       topItems,
       categoryBreakdown,
