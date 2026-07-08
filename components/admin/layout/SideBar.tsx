@@ -19,9 +19,7 @@ const navItems = [
   { name: "Subscription", href: "/admin/subscription", icon: Crown },
   { name: "Promo Codes", href: "/admin/promo-code", icon: Tag },
   { name: "Happy Hours", href: "/admin/happy-hours", icon: PartyPopper },
-  { name: "Billing", href: "/admin/billing", icon: CreditCard },
   { name: "Reports", href: "/admin/reports", icon: BarChart2 },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 interface SidebarProps {
