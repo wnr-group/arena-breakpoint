@@ -285,7 +285,7 @@ export default function AdminBookingsPage() {
       const slotB = b.booking_device_slots?.[0];
       const dateA = slotA?.slot_date || a.created_at;
       const dateB = slotB?.slot_date || b.created_at;
-      return new Date(dateA).getTime() - new Date(dateB).getTime();
+      return new Date(dateB).getTime() - new Date(dateA).getTime(); // Most recent first
     });
 
     const totalAmount = sorted.reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
@@ -325,7 +325,7 @@ export default function AdminBookingsPage() {
       totalDevice,
       totalFood,
       hasBackToBack,
-      earliestBooking: sorted[0]
+      earliestBooking: sorted[0] // Now returns most recent booking (sorted desc)
     };
   });
 
