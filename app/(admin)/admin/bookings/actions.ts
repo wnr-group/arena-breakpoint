@@ -528,6 +528,8 @@ export async function createWalkInBooking(payload: {
   subtotal: number;
   total: number;
   subscriptionDiscount?: number;
+  happyHourDiscount?: number;
+  happyHourRuleId?: string | null;
 }) {
   try {
     // Convert time format from "10:00 AM" to "10:00:00"
@@ -616,7 +618,8 @@ export async function createWalkInBooking(payload: {
     const deviceCharges = payload.subtotal; // Base station rate calculated by duration
     const deviceSubtotal = deviceCharges + extraPlayersTotal;
     const subscriptionDiscount = payload.subscriptionDiscount || 0;
-    const totalAmount = deviceSubtotal - subscriptionDiscount;
+    const happyHourDiscount = payload.happyHourDiscount || 0;
+    const totalAmount = deviceSubtotal - subscriptionDiscount - happyHourDiscount;
 
     // Step 4: Create booking
     const { data: booking, error: bookingError } = await supabaseAdmin
@@ -631,6 +634,7 @@ export async function createWalkInBooking(payload: {
         device_subtotal: deviceSubtotal,
         food_subtotal: 0,
         subscription_discount: subscriptionDiscount,
+        happy_hour_discount: happyHourDiscount,
         total_amount: totalAmount,
         status: "confirmed", // Walk-in bookings are immediately confirmed
         payment_status: "pending",
@@ -709,6 +713,23 @@ export async function createWalkInBooking(payload: {
         quantity: 1,
         unit_price: -subscriptionDiscount,
         line_total: -subscriptionDiscount,
+        added_by: 'admin',
+        is_paid: false,
+        display_order: displayOrder++
+      });
+    }
+
+    // 6.4: Happy Hour discount line item (if applicable)
+    if (happyHourDiscount > 0) {
+      lineItems.push({
+        booking_id: booking.id,
+        item_type: 'happy_hour_discount',
+        description: 'Happy Hour Discount',
+        quantity: 1,
+        unit_price: -happyHourDiscount,
+        line_total: -happyHourDiscount,
+        reference_type: payload.happyHourRuleId ? 'happy_hour' : null,
+        reference_id: payload.happyHourRuleId || null,
         added_by: 'admin',
         is_paid: false,
         display_order: displayOrder++
@@ -1037,6 +1058,134 @@ export async function markBookingAsPaid(
     };
   } catch (error: any) {
     console.error("Error marking booking as paid:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ============================================
+// FOOD-ONLY WALK-IN BOOKING
+// ============================================
+
+export async function createFoodOnlyWalkInBooking(payload: {
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  customerDob: string | null;
+  customerId: string | null;
+  foodItems: { menuItemId: string; quantity: number; notes: string }[];
+  totalAmount: number;
+}) {
+  try {
+    // Step 1: Get or create customer
+    let customerId = payload.customerId;
+
+    if (!customerId) {
+      const { data: newCustomerId, error: customerError } = await supabaseAdmin
+        .rpc("get_or_create_customer", {
+          p_phone: payload.customerPhone,
+          p_name: payload.customerName,
+          p_email: payload.customerEmail || null,
+          p_dob: payload.customerDob
+        });
+
+      if (customerError) throw customerError;
+      customerId = newCustomerId;
+    }
+
+    // Step 2: Generate booking number
+    const bookingNumber = `BP-${new Date().toISOString().split("T")[0].replace(/-/g, "")}-${Date.now().toString().slice(-3)}`;
+
+    // Step 3: Create booking record (food-only, no device)
+    const { data: booking, error: bookingError } = await supabaseAdmin
+      .from("bookings")
+      .insert({
+        booking_number: bookingNumber,
+        customer_id: customerId,
+        customer_name: payload.customerName,
+        customer_phone: payload.customerPhone,
+        customer_email: payload.customerEmail,
+        booking_source: "walk-in",
+        device_subtotal: 0, // No device booking
+        food_subtotal: payload.totalAmount,
+        subscription_discount: 0,
+        promo_discount: 0,
+        happy_hour_discount: 0,
+        total_amount: payload.totalAmount,
+        amount_paid: payload.totalAmount, // Walk-in pays immediately
+        cash_amount: payload.totalAmount, // Default to cash, can be updated later
+        card_amount: 0,
+        upi_amount: 0,
+        payment_status: "paid",
+        status: "confirmed"
+      })
+      .select()
+      .single();
+
+    if (bookingError) throw bookingError;
+
+    // Step 4: Get menu item details and create food items
+    const { data: menuItems, error: menuError } = await supabaseAdmin
+      .from("menu_items")
+      .select("*")
+      .in("id", payload.foodItems.map(item => item.menuItemId));
+
+    if (menuError) throw menuError;
+
+    const foodItemsToInsert = payload.foodItems.map(item => {
+      const menuItem = menuItems?.find((mi: any) => mi.id === item.menuItemId);
+      return {
+        booking_id: booking.id,
+        menu_item_id: item.menuItemId,
+        item_name: menuItem?.name || "Unknown",
+        item_category: menuItem?.category || "Other",
+        quantity: item.quantity,
+        unit_price: menuItem?.price || 0,
+        line_total: (menuItem?.price || 0) * item.quantity,
+        special_instructions: item.notes || null,
+        status: "preparing" // Start preparing immediately for walk-in
+      };
+    });
+
+    const { error: foodInsertError } = await supabaseAdmin
+      .from("booking_food_items")
+      .insert(foodItemsToInsert);
+
+    if (foodInsertError) throw foodInsertError;
+
+    // Step 5: Create line items for billing
+    const lineItems: any[] = [];
+    let displayOrder = 1;
+
+    // Add food line items
+    foodItemsToInsert.forEach(item => {
+      lineItems.push({
+        booking_id: booking.id,
+        item_type: "food",
+        description: item.item_name,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        line_total: item.line_total,
+        reference_type: "menu_item",
+        reference_id: item.menu_item_id,
+        added_by: "customer",
+        is_paid: true,
+        display_order: displayOrder++
+      });
+    });
+
+    const { error: lineItemsError } = await supabaseAdmin
+      .from("booking_line_items")
+      .insert(lineItems);
+
+    if (lineItemsError) throw lineItemsError;
+
+    return {
+      success: true,
+      bookingId: booking.id,
+      bookingNumber: booking.booking_number
+    };
+  } catch (error: any) {
+    console.error("Error creating food-only walk-in booking:", error);
     return { success: false, error: error.message };
   }
 }

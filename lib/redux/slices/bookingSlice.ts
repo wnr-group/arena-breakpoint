@@ -34,6 +34,9 @@ export interface BookingState {
   subscriptionDiscount: number
   promoDiscount: number
   promoCode: string | null
+  happyHourDiscount: number
+  happyHourRuleId: string | null
+  happyHourRuleName: string | null
   total: number
 
   // Customer details
@@ -73,6 +76,9 @@ const initialState: BookingState = {
   subscriptionDiscount: 0,
   promoDiscount: 0,
   promoCode: null,
+  happyHourDiscount: 0,
+  happyHourRuleId: null,
+  happyHourRuleName: null,
   total: 0,
   phone: null,
   name: null,
@@ -159,12 +165,24 @@ export const bookingSlice = createSlice({
       subtotal: number
       subscriptionDiscount: number
       promoDiscount: number
+      happyHourDiscount?: number
       total: number
     }>) => {
       state.subtotal = action.payload.subtotal
       state.subscriptionDiscount = action.payload.subscriptionDiscount
       state.promoDiscount = action.payload.promoDiscount
+      state.happyHourDiscount = action.payload.happyHourDiscount || 0
       state.total = action.payload.total
+    },
+
+    setHappyHour: (state, action: PayloadAction<{
+      ruleId: string | null
+      ruleName: string | null
+      discount: number
+    }>) => {
+      state.happyHourRuleId = action.payload.ruleId
+      state.happyHourRuleName = action.payload.ruleName
+      state.happyHourDiscount = action.payload.discount
     },
 
     setPromoCode: (state, action: PayloadAction<string | null>) => {
@@ -238,6 +256,7 @@ export const {
   removeAddon,
   setPricing,
   setPromoCode,
+  setHappyHour,
   setCustomerDetails,
   setSubscription,
   setBookingId,

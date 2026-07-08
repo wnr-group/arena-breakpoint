@@ -511,6 +511,8 @@ export async function confirmBooking(payload: {
   subscriptionDiscount?: number;
   promoDiscount?: number;
   promoCode?: string | null;
+  happyHourDiscount?: number;
+  happyHourRuleId?: string | null;
   durationMinutes?: number;
 }) {
   try {
@@ -563,9 +565,10 @@ export async function confirmBooking(payload: {
     // Discounts apply ONLY to device + extra players (NOT food)
     const subscriptionDiscount = payload.subscriptionDiscount || 0;
     const promoDiscount = payload.promoDiscount || 0;
+    const happyHourDiscount = payload.happyHourDiscount || 0;
 
-    // Total = device subtotal + food - discounts
-    const totalAmount = deviceSubtotal + addonsTotal - subscriptionDiscount - promoDiscount;
+    // Total = device subtotal + food - all discounts (stacked)
+    const totalAmount = deviceSubtotal + addonsTotal - subscriptionDiscount - promoDiscount - happyHourDiscount;
 
     // Step 4: Create booking
     const { data: booking, error: bookingError } = await supabaseAdmin
@@ -581,6 +584,7 @@ export async function confirmBooking(payload: {
         food_subtotal: addonsTotal,
         subscription_discount: subscriptionDiscount,
         promo_discount: promoDiscount,
+        happy_hour_discount: payload.happyHourDiscount || 0,
         total_amount: totalAmount,
         amount_paid: totalAmount,  // Customer pays full amount upfront
         cash_amount: 0,  // Online payment, not cash
@@ -669,6 +673,23 @@ export async function confirmBooking(payload: {
         quantity: 1,
         unit_price: -promoDiscount,
         line_total: -promoDiscount,
+        added_by: 'customer',
+        is_paid: true,
+        display_order: displayOrder++
+      });
+    }
+
+    // Add happy hour discount line item if applicable
+    if (happyHourDiscount > 0) {
+      lineItems.push({
+        booking_id: booking.id,
+        item_type: 'happy_hour_discount',
+        description: 'Happy Hour Discount',
+        quantity: 1,
+        unit_price: -happyHourDiscount,
+        line_total: -happyHourDiscount,
+        reference_type: payload.happyHourRuleId ? 'happy_hour' : null,
+        reference_id: payload.happyHourRuleId || null,
         added_by: 'customer',
         is_paid: true,
         display_order: displayOrder++

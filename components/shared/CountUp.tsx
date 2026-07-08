@@ -48,11 +48,14 @@ export function CurrencyCountUp({
   duration?: number;
   className?: string;
 }) {
+  // Round to 2 decimals to avoid floating point precision issues
+  const roundedAmount = Math.round(amount * 100) / 100;
+
   return (
     <CountUp
-      end={amount}
+      end={roundedAmount}
       duration={duration}
-      decimals={0}
+      decimals={2}
       prefix="₹"
       separator={true}
       className={className}

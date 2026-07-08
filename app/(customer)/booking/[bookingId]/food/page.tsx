@@ -187,7 +187,7 @@ export default function FoodOrderPage() {
                 if (returnUrl) {
                   router.push(returnUrl);
                 } else {
-                  router.push(`/my-bookings/${bookingId}`);
+                  router.push(`/retrieve`);
                 }
               }}
               variant="gradient"

@@ -17,6 +17,14 @@ interface AddModalProps {
 const DAYS_ABBR = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 const DAYS_FULL = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
+// Convert 24-hour time (18:00) to 12-hour format (06:00 PM)
+function convertTo12Hour(time24: string): string {
+  const [hours, minutes] = time24.split(':').map(Number)
+  const period = hours >= 12 ? 'PM' : 'AM'
+  const hours12 = hours % 12 || 12
+  return `${hours12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${period}`
+}
+
 export function AddHappyHourModal({ open, setOpen, onFormSuccess }: AddModalProps) {
   const [selectedDays, setSelectedDays] = useState<number[]>([4]) // Default to Friday
   
@@ -71,8 +79,11 @@ export function AddHappyHourModal({ open, setOpen, onFormSuccess }: AddModalProp
         .sort((a, b) => a - b)
         .map(idx => DAYS_FULL[idx])
         .join(', ')
-      
-      const timeRangeString = `${startTime} - ${endTime}`
+
+      // Convert 24-hour time to 12-hour format with AM/PM
+      const startTime12 = convertTo12Hour(startTime)
+      const endTime12 = convertTo12Hour(endTime)
+      const timeRangeString = `${startTime12} - ${endTime12}`
 
       const selectedDeviceObj = devices.find(d => d.id === deviceId)
       const deviceLabel = selectedDeviceObj 

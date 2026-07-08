@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { BookingStatusBadge } from "./BookingStatusBadge";
 import { PaymentStatusBadge } from "./PaymentStatusBadge";
 import { Calendar, Clock, MapPin, DollarSign, Phone, User, Eye, UserCheck, LogOut, UtensilsCrossed, CreditCard, Link2 } from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
 
 interface BookingsGridProps {
   customerGroups: Array<{
@@ -19,8 +20,8 @@ interface BookingsGridProps {
     earliestBooking: any;
   }>;
   onBookingClick: (booking: any) => void;
-  onCheckIn: (bookingId: string, bookingNumber: string) => void;
-  onCheckOut: (bookingId: string, bookingNumber: string) => void;
+  onCheckIn: (bookingId: string, bookingNumber: string, booking: any) => void;
+  onCheckOut: (bookingId: string, bookingNumber: string, booking: any) => void;
   onAddFood: (booking: any) => void;
   onCheckoutBilling: (bookingId: string) => void;
   isPending: boolean;
@@ -40,6 +41,9 @@ export function BookingsGrid({
       {customerGroups.flatMap((group) => {
         return group.bookings.map((booking) => {
           const deviceSlot = booking.booking_device_slots?.[0];
+          const foodItems = booking.booking_food_items || [];
+          const isFoodOnly = !deviceSlot && foodItems.length > 0;
+          const hasDevice = !!deviceSlot;
 
           return (
             <Card
@@ -62,33 +66,68 @@ export function BookingsGrid({
 
               {/* Content */}
               <div className="p-4 space-y-3">
-                {/* Device Type Only */}
-                <div className="flex items-center gap-2 p-2 bg-[var(--background)] rounded-lg border border-[#27272a]/50">
-                  <div className="p-1.5 bg-primary/10 rounded">
-                    <MapPin className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-muted-content">Device</p>
-                    <p className="text-sm font-bold text-white">{deviceSlot?.device_type || "N/A"}</p>
-                  </div>
-                </div>
+                {/* Food Only Booking */}
+                {isFoodOnly ? (
+                  <>
+                    {/* Food Order Badge */}
+                    <div className="flex items-center gap-2 p-2 bg-amber-500/10 rounded-lg border border-amber-500/30">
+                      <div className="p-1.5 bg-amber-500/20 rounded">
+                        <UtensilsCrossed className="h-4 w-4 text-amber-400" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-amber-400">Food Order Only</p>
+                        <p className="text-sm font-bold text-white">{foodItems.length} item(s)</p>
+                      </div>
+                    </div>
 
-                {/* Date & Time */}
-                <div className="flex items-center gap-2 p-2 bg-[var(--background)] rounded-lg border border-[#27272a]/50">
-                  <div className="p-1.5 bg-blue-500/10 rounded">
-                    <Calendar className="h-4 w-4 text-blue-400" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-muted-content">Date & Time</p>
-                    <p className="text-sm font-bold text-white">
-                      {deviceSlot?.slot_date ? new Date(deviceSlot.slot_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : "N/A"}
-                    </p>
-                    <p className="text-[10px] text-muted-content flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {deviceSlot?.slot_start_time || "N/A"} - {deviceSlot?.slot_end_time || "N/A"}
-                    </p>
-                  </div>
-                </div>
+                    {/* Order Date */}
+                    <div className="flex items-center gap-2 p-2 bg-[var(--background)] rounded-lg border border-[#27272a]/50">
+                      <div className="p-1.5 bg-blue-500/10 rounded">
+                        <Calendar className="h-4 w-4 text-blue-400" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-content">Order Date</p>
+                        <p className="text-sm font-bold text-white">
+                          {new Date(booking.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </p>
+                        <p className="text-[10px] text-muted-content flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(booking.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Device Type Only */}
+                    <div className="flex items-center gap-2 p-2 bg-[var(--background)] rounded-lg border border-[#27272a]/50">
+                      <div className="p-1.5 bg-primary/10 rounded">
+                        <MapPin className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-content">Device</p>
+                        <p className="text-sm font-bold text-white">{deviceSlot?.device_type || "N/A"}</p>
+                      </div>
+                    </div>
+
+                    {/* Date & Time */}
+                    <div className="flex items-center gap-2 p-2 bg-[var(--background)] rounded-lg border border-[#27272a]/50">
+                      <div className="p-1.5 bg-blue-500/10 rounded">
+                        <Calendar className="h-4 w-4 text-blue-400" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-content">Date & Time</p>
+                        <p className="text-sm font-bold text-white">
+                          {deviceSlot?.slot_date ? new Date(deviceSlot.slot_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : "N/A"}
+                        </p>
+                        <p className="text-[10px] text-muted-content flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {deviceSlot?.slot_start_time || "N/A"} - {deviceSlot?.slot_end_time || "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Payment Details */}
                 <div className="flex items-center gap-2 p-2 bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg border border-primary/20">
@@ -98,11 +137,11 @@ export function BookingsGrid({
                   <div className="flex-1">
                     <p className="text-xs text-primary/70">Total Amount</p>
                     <p className="text-lg font-black text-primary">
-                      ₹{Number(booking.total_amount).toLocaleString('en-IN')}
+                      ₹{formatCurrency(booking.total_amount)}
                     </p>
                     {booking.payment_status === 'partial' && booking.balance_due && (
                       <p className="text-[10px] text-amber-400 font-bold mt-0.5">
-                        Due: ₹{Number(booking.balance_due).toLocaleString('en-IN')}
+                        Due: ₹{formatCurrency(booking.balance_due)}
                       </p>
                     )}
                   </div>
@@ -113,11 +152,12 @@ export function BookingsGrid({
               {/* Actions */}
               <div className="p-3 bg-[var(--background)]/50 border-t border-[#27272a]/50 flex items-center justify-between gap-2">
                 <div className="flex gap-1">
-                  {booking.status === "confirmed" && (
+                  {/* Only show check-in/check-out for bookings with device slots */}
+                  {!isFoodOnly && booking.status === "confirmed" && (
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => onCheckIn(booking.id, booking.booking_number)}
+                      onClick={() => onCheckIn(booking.id, booking.booking_number, booking)}
                       disabled={isPending}
                       className="h-8 w-8 p-0 text-green-400 hover:text-green-300 hover:bg-green-500/10 rounded-lg"
                       title="Check In"
@@ -125,11 +165,11 @@ export function BookingsGrid({
                       <UserCheck className="h-4 w-4" />
                     </Button>
                   )}
-                  {booking.status === "checked_in" && (
+                  {!isFoodOnly && booking.status === "checked_in" && (
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => onCheckOut(booking.id, booking.booking_number)}
+                      onClick={() => onCheckOut(booking.id, booking.booking_number, booking)}
                       disabled={isPending}
                       className="h-8 w-8 p-0 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg"
                       title="Check Out"
@@ -137,7 +177,8 @@ export function BookingsGrid({
                       <LogOut className="h-4 w-4" />
                     </Button>
                   )}
-                  {(booking.status === "confirmed" || booking.status === "checked_in") && (
+                  {/* Show food button for all bookings, add food button for device bookings */}
+                  {(isFoodOnly || booking.status === "confirmed" || booking.status === "checked_in") && (
                     <>
                       <Button
                         size="sm"

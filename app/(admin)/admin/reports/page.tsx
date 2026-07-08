@@ -23,6 +23,7 @@ import { format } from "date-fns";
 import { ExpensesTab } from "@/components/admin/reports/ExpensesTab";
 import { ProfitTab } from "@/components/admin/reports/ProfitTab";
 import { CountUp, CurrencyCountUp } from "@/components/shared/CountUp";
+import { roundToTwo, formatCurrency } from "@/lib/currency";
 
 export default function AdminReportsPage() {
   const [activeTab, setActiveTab] = useState<"overview" | "food" | "device" | "revenue" | "expenses" | "profit">("overview");
@@ -1032,6 +1033,14 @@ export default function AdminReportsPage() {
                               }}
                             />
                           </div>
+                        </div>
+                        <div className="flex justify-between text-[10px] mt-1">
+                          <span className="text-blue-400">
+                            Device: <CurrencyCountUp amount={day.deviceRevenue} duration={800} />
+                          </span>
+                          <span className="text-amber-400">
+                            Food: <CurrencyCountUp amount={day.foodRevenue} duration={800} />
+                          </span>
                         </div>
                       </div>
                     );

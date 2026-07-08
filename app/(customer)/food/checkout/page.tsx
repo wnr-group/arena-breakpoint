@@ -35,12 +35,17 @@ import {
   ShieldCheck,
   RefreshCw,
   Cake,
-  CheckCircle2, ArrowLeft, Tag
+  CheckCircle2,
+  ArrowLeft,
+  Tag,
+  QrCode,
+  UtensilsCrossed
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/currency";
 
 type Step = "cart" | "phone" | "details" | "success";
 
@@ -117,7 +122,7 @@ export default function FoodCheckoutPage() {
       setPromoDiscount(discount);
       setAppliedPromoCode(result.promo.code);
       toast.success("Promo code applied!", {
-        description: `You saved ₹${discount.toFixed(2)} with code ${result.promo.code}`
+        description: `You saved ₹${formatCurrency(discount)} with code ${result.promo.code}`
       });
     } else {
       toast.error(result.error || "Invalid promo code");
@@ -337,7 +342,7 @@ export default function FoodCheckoutPage() {
                     <button type="button" onClick={() => dispatch(incrementQuantity(item.menu_item_id))} className="h-6 w-6 flex items-center justify-center text-black bg-primary rounded"><Plus className="h-3 w-3" /></button>
                   </div>
 
-                  <span className="text-[13px] font-mono font-black text-primary w-[40px] text-right">₹{item.price * item.quantity}</span>
+                  <span className="text-[13px] font-mono font-black text-primary w-[40px] text-right">₹{formatCurrency(item.price * item.quantity)}</span>
 
                   <button type="button" onClick={() => dispatch(removeFromCart(item.menu_item_id))} className="text-zinc-600 hover:text-red-400">
                     <Trash2 className="h-3.5 w-3.5" />
@@ -355,19 +360,19 @@ export default function FoodCheckoutPage() {
             <Card className="bg-[#121214] border border-zinc-900 p-6 space-y-5 rounded-2xl shadow-2xl glow-box-strong">
               <h3 className="text-sm font-black uppercase text-zinc-200 tracking-wider pb-2 border-b border-zinc-900/60">Order Summary</h3>
               <div className="space-y-3.5 text-xs text-zinc-400">
-                <div className="flex justify-between"><span>Subtotal</span><span className="text-zinc-200 font-mono font-bold">₹{cartTotal}</span></div>
+                <div className="flex justify-between"><span>Subtotal</span><span className="text-zinc-200 font-mono font-bold">₹{formatCurrency(cartTotal)}</span></div>
                 {promoDiscount > 0 && (
                   <div className="flex justify-between text-primary font-bold">
                     <span className="flex items-center gap-1">
                       <Tag className="h-3 w-3" />
                       Promo Discount ({appliedPromoCode}):
                     </span>
-                    <span className="font-mono">-₹{promoDiscount.toFixed(2)}</span>
+                    <span className="font-mono">-₹{formatCurrency(promoDiscount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-baseline font-black text-white pt-4 border-t border-t-zinc-900">
                   <span className="text-xs uppercase text-zinc-400 font-black">Total</span>
-                  <span className="text-2xl text-primary font-mono tracking-tight">₹{finalTotalAmount.toFixed(2)}</span>
+                  <span className="text-2xl text-primary font-mono tracking-tight">₹{formatCurrency(finalTotalAmount)}</span>
                 </div>
               </div>
 
@@ -545,97 +550,97 @@ export default function FoodCheckoutPage() {
 
   if (step === "success") {
     return (
-      <div className="max-w-4xl mx-auto py-8 px-4 space-y-8 animate-in fade-in duration-300 flex flex-col items-center">
-
-
-        <div className="text-center space-y-3 select-none">
-          <div className="flex justify-center">
+      <div className="w-full max-w-2xl mx-auto py-4 px-2 animate-in fade-in duration-500">
+        <Card className="bg-[#111] border border-green-500/20 p-8 shadow-2xl rounded-2xl space-y-6 glow-box-strong">
+          {/* Success Header */}
+          <div className="text-center space-y-4">
             <div className="flex justify-center">
               <div className="w-20 h-20 rounded-full bg-green-500/10 border-2 border-green-500 flex items-center justify-center">
                 <CheckCircle2 className="h-10 w-10 text-green-500" />
               </div>
             </div>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black uppercase text-white tracking-tight">ORDER CONFIRMED!</h3>
+              <p className="text-sm text-zinc-400">Your food is being prepared.</p>
+            </div>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-white font-sans">
-            Order Confirmed!
-          </h1>
-          <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-            Your food is being prepared.
-          </p>
-        </div>
 
-        <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch max-w-3xl">
+          {/* QR Code Section */}
+          <div className="bg-zinc-950 p-6 rounded-xl border border-zinc-900 space-y-4 glow-box-strong">
+            <div className="flex items-center justify-center gap-2 text-xs font-black text-zinc-500 uppercase tracking-wider">
+              <QrCode className="h-4 w-4" />
+              <span>Order QR Code</span>
+            </div>
+            <div className="flex justify-center bg-white p-4 rounded-lg">
+              <QRCodeSVG value={orderNumber || "FO-12345"} size={160} level="H" />
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-zinc-500 mb-1">Order Number</p>
+              <p className="text-lg font-black text-primary font-mono tracking-wider">{orderNumber || "FO-12345"}</p>
+            </div>
+          </div>
 
-          <Card className="bg-[#111113] border border-zinc-900 p-6 md:col-span-2 flex flex-col justify-between min-h-[220px] relative overflow-hidden rounded-xl shadow-2xl glow-box-strong">
-            <div className="w-full space-y-4">
-              <div className="flex justify-between items-start w-full">
-                <div className="space-y-1">
-                  <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest block">Order ID</span>
-                  <span className="text-base font-black text-white font-mono tracking-wide">#{orderNumber || "FO-12345"}</span>
-                </div>
-
-                <div className="space-y-1 text-right">
-                  <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest block">Status</span>
-                  <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-emerald-400 uppercase tracking-wide">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]" /> PAID
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-2 pt-4 border-t border-zinc-900/60 w-full text-xs">
-                <div className="flex justify-between text-zinc-500 font-bold">
-                  <span>Basket Items Count</span>
-                  <span className="text-zinc-300 font-mono">{cartItemCount} items</span>
-                </div>
-                <div className="flex justify-between text-zinc-500 font-medium">
-                  <span>Base Subtotal</span>
-                  <span className="text-zinc-300 font-mono">₹{cartTotal}.00</span>
-                </div>
-                {promoDiscount > 0 && (
-                  <div className="flex justify-between text-primary font-bold">
-                    <span className="flex items-center gap-1">
-                      <Tag className="h-3 w-3" />
-                      Promo Discount ({appliedPromoCode}):
-                    </span>
-                    <span className="font-mono">-₹{promoDiscount.toFixed(2)}</span>
+          {/* Food Items Ordered */}
+          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 glow-box-hover">
+            <h4 className="text-[10px] font-black text-zinc-500 uppercase flex items-center gap-2">
+              <UtensilsCrossed className="h-3.5 w-3.5" />
+              Food Items Ordered
+            </h4>
+            <div className="space-y-2">
+              {cartItems.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between py-2 border-b border-zinc-900 last:border-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-zinc-400">{item.name}</span>
+                    <span className="text-xs text-zinc-600">x{item.quantity}</span>
                   </div>
-                )}
-                <div className="flex justify-between items-baseline font-black text-white pt-2.5 border-t border-zinc-900/40 text-sm">
-                  <span className="text-[10px] uppercase text-zinc-400 font-black tracking-wider">Amount Paid</span>
-                  <span className="text-base text-primary font-mono tracking-tight">₹{finalTotalAmount.toFixed(2)}</span>
+                  <span className="text-sm text-white font-bold">₹{formatCurrency(item.price * item.quantity)}</span>
                 </div>
-              </div>
+              ))}
             </div>
-          </Card>
+          </div>
 
-          <Card className="bg-[#111113] border border-zinc-900 p-5 flex flex-col items-center justify-center text-center space-y-4 rounded-xl shadow-2xl group/qr glow-box-hover">
-            <div className="p-2 bg-gradient-to-b from-zinc-900 to-zinc-950 border-2 border-primary rounded-xl flex flex-col items-center justify-center shadow-[0_0_20px_rgba(255,193,7,0.1)] w-36 h-36 relative overflow-hidden group-hover/qr:shadow-[0_0_25px_rgba(255,193,7,0.2)] transition-all duration-300">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,193,7,0.08)_0%,transparent_70%)] pointer-events-none" />
-              <div className="w-24 h-24 bg-white border border-zinc-800 rounded-lg flex items-center justify-center relative p-1.5">
-                <QRCodeSVG value={orderNumber || "FO-12345"} size={80} level="M" />
+          {/* Order Details */}
+          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 text-sm glow-box-hover">
+            <h4 className="text-[10px] font-black text-zinc-500 uppercase">Order Details</h4>
+            <div className="flex justify-between"><span className="text-zinc-500">Customer:</span> <span className="text-white font-bold">{name}</span></div>
+            <div className="flex justify-between"><span className="text-zinc-500">Phone:</span> <span className="text-primary font-bold">+91 {phone}</span></div>
+            <div className="flex justify-between"><span className="text-zinc-500">Items Count:</span> <span className="text-white font-bold">{cartItemCount} items</span></div>
+            <div className="flex justify-between"><span className="text-zinc-500">Subtotal:</span> <span className="text-white font-bold">₹{formatCurrency(cartTotal)}</span></div>
+            {promoDiscount > 0 && (
+              <div className="flex justify-between text-xs text-green-500">
+                <span className="flex items-center gap-1">
+                  <Tag className="h-3 w-3" />
+                  Promo Discount ({appliedPromoCode}):
+                </span>
+                <span className="font-bold">-₹{formatCurrency(promoDiscount)}</span>
               </div>
+            )}
+            <div className="flex justify-between border-t border-zinc-800 pt-2 font-black">
+              <span className="text-zinc-500">Amount Paid:</span>
+              <span className="text-white">₹{formatCurrency(finalTotalAmount)}</span>
             </div>
-            <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest select-none">Scan to Claim</span>
-          </Card>
-        </div>
+          </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4 w-full px-4">
-          <Button
-            onClick={handleNewOrder}
-            className="w-full sm:flex-1 bg-transparent hover:bg-zinc-900/60 border border-primary/40 text-[11px] font-black text-primary uppercase h-12 rounded-xl transition-all shadow-inner tracking-wider flex items-center justify-center gap-1.5"
-          >
-            Place Another Order
-          </Button>
+          {/* Action Buttons */}
+          <div className="space-y-2 pt-2">
+            <Button variant="gradient" onClick={handleNewOrder} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-2">
+              <ShoppingCart className="h-4 w-4" />
+              ORDER MORE FOOD
+            </Button>
+            <Button onClick={() => router.push("/retrieve")} variant="ghost" className="w-full border-2 border-primary text-zinc-300 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
+              VIEW MY ORDERS
+            </Button>
+            <Button onClick={() => router.push("/")} variant="ghost" className="w-full text-zinc-300 border border-zinc-800 hover:text-zinc-400 font-bold uppercase text-[11px] h-10 rounded-xl">
+              BACK TO HOME
+            </Button>
+          </div>
 
-          <Button
-            onClick={() => router.push("/")}
-            variant="ghost"
-            className="w-full sm:flex-1 text-[11px] font-black uppercase text-zinc-400 hover:text-white h-12 rounded-xl tracking-wider transition-colors flex items-center justify-center"
-          >
-            Back to Home
-          </Button>
-        </div>
-
+          {/* Footer Note */}
+          <div className="pt-2 flex gap-2 items-center text-[10px] text-zinc-600 justify-center border-t border-zinc-950">
+            <ShieldCheck className="h-3.5 w-3.5 text-zinc-700" />
+            <span>Show this QR code at the counter to claim your order</span>
+          </div>
+        </Card>
       </div>
     );
   }

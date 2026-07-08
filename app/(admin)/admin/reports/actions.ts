@@ -140,38 +140,39 @@ export async function getFoodReports(filters?: ReportFilters) {
 // Device Reports
 export async function getDeviceReports(filters?: ReportFilters) {
   try {
-    // Get all device slots from PAID and PARTIAL bookings
-    // Device is typically paid first, so include both
+    // Get all bookings with device revenue from PAID and PARTIAL bookings
     const { data: allData, error } = await supabaseAdmin
-      .from("booking_device_slots")
+      .from("bookings")
       .select(`
         id,
-        device_type,
-        device_station_number,
-        slot_date,
-        slot_start_time,
-        slot_end_time,
-        duration_hours,
-        hourly_rate,
-        slot_total,
-        player_count,
-        extra_players_total,
+        booking_number,
+        customer_name,
+        device_subtotal,
+        subscription_discount,
+        promo_discount,
+        happy_hour_discount,
+        status,
+        payment_status,
         created_at,
-        bookings!inner(
-          booking_number,
-          customer_name,
-          status,
-          payment_status,
-          subscription_discount,
-          promo_discount,
-          device_subtotal,
-          created_at,
-          updated_at,
-          payment_groups(paid_at)
+        updated_at,
+        payment_groups(paid_at),
+        booking_device_slots(
+          id,
+          device_type,
+          device_station_number,
+          slot_date,
+          slot_start_time,
+          slot_end_time,
+          duration_hours,
+          hourly_rate,
+          slot_total,
+          player_count,
+          extra_players_total,
+          created_at
         )
       `)
-      .neq("bookings.status", "cancelled")
-      .in("bookings.payment_status", ["paid", "partial"])
+      .neq("status", "cancelled")
+      .in("payment_status", ["paid", "partial"])
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -179,9 +180,9 @@ export async function getDeviceReports(filters?: ReportFilters) {
     // Filter by payment date (use paid_at if available, otherwise use updated_at as fallback)
     let data = allData;
     if (filters?.dateFrom || filters?.dateTo) {
-      data = (allData || []).filter((slot: any) => {
+      data = (allData || []).filter((booking: any) => {
         // Use paid_at from payment_groups, fallback to booking updated_at
-        const paidAt = slot.bookings?.payment_groups?.paid_at || slot.bookings?.updated_at || slot.bookings?.created_at;
+        const paidAt = booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
         if (!paidAt) return false;
 
         const paidDate = paidAt.split('T')[0];
@@ -191,8 +192,6 @@ export async function getDeviceReports(filters?: ReportFilters) {
         return true;
       });
     }
-
-    if (error) throw error;
 
     // Aggregate by device type
     const deviceTypeStats: Record<string, {
@@ -209,54 +208,77 @@ export async function getDeviceReports(filters?: ReportFilters) {
     let totalHours = 0;
     let totalPlayers = 0;
 
-    // Track booking discounts to apply only once per booking (not per slot)
-    const bookingDiscountsApplied: Record<string, boolean> = {};
-
-    (data || []).forEach((slot: any) => {
-      const deviceType = slot.device_type || "Unknown";
-      const slotRevenue = Number(slot.slot_total) + Number(slot.extra_players_total || 0);
-
-      // Calculate discount for this slot (only apply once per booking)
-      const bookingNumber = slot.bookings?.booking_number;
-      let slotDiscount = 0;
-
-      if (bookingNumber && !bookingDiscountsApplied[bookingNumber]) {
-        const subscriptionDiscount = Number(slot.bookings?.subscription_discount || 0);
-        const promoDiscount = Number(slot.bookings?.promo_discount || 0);
-        slotDiscount = subscriptionDiscount + promoDiscount;
-        bookingDiscountsApplied[bookingNumber] = true;
-      }
+    // Process each booking
+    (data || []).forEach((booking: any) => {
+      const deviceSubtotal = Number(booking.device_subtotal || 0);
+      const subscriptionDiscount = Number(booking.subscription_discount || 0);
+      const promoDiscount = Number(booking.promo_discount || 0);
+      const happyHourDiscount = Number(booking.happy_hour_discount || 0);
+      const totalDiscount = subscriptionDiscount + promoDiscount + happyHourDiscount;
 
       // Revenue after discount (discounts only apply to device revenue, not food)
-      const finalSlotRevenue = Math.max(0, slotRevenue - slotDiscount);
+      const bookingDeviceRevenue = Math.max(0, deviceSubtotal - totalDiscount);
 
-      if (!deviceTypeStats[deviceType]) {
-        deviceTypeStats[deviceType] = {
-          deviceType,
-          totalBookings: 0,
-          totalRevenue: 0,
-          totalHours: 0,
-          averagePlayersPerBooking: 0,
-          extraPlayerRevenue: 0
-        };
+      // Get slots for detailed breakdown by device type
+      const slots = booking.booking_device_slots || [];
+
+      if (slots.length > 0) {
+        // Has slots - distribute revenue proportionally
+        slots.forEach((slot: any) => {
+          const deviceType = slot.device_type || "Unknown";
+          const slotSubtotal = Number(slot.slot_total) + Number(slot.extra_players_total || 0);
+
+          // Proportional revenue for this slot
+          const slotProportion = deviceSubtotal > 0 ? slotSubtotal / deviceSubtotal : 0;
+          const slotRevenue = bookingDeviceRevenue * slotProportion;
+
+          if (!deviceTypeStats[deviceType]) {
+            deviceTypeStats[deviceType] = {
+              deviceType,
+              totalBookings: 0,
+              totalRevenue: 0,
+              totalHours: 0,
+              averagePlayersPerBooking: 0,
+              extraPlayerRevenue: 0
+            };
+          }
+
+          deviceTypeStats[deviceType].totalBookings += 1;
+          deviceTypeStats[deviceType].totalRevenue += slotRevenue;
+          deviceTypeStats[deviceType].totalHours += slot.duration_hours;
+          deviceTypeStats[deviceType].extraPlayerRevenue += Number(slot.extra_players_total || 0);
+
+          totalHours += slot.duration_hours;
+          totalPlayers += slot.player_count || 0;
+        });
+      } else {
+        // No slots - add to "Unknown" category
+        const deviceType = "Unknown";
+        if (!deviceTypeStats[deviceType]) {
+          deviceTypeStats[deviceType] = {
+            deviceType,
+            totalBookings: 0,
+            totalRevenue: 0,
+            totalHours: 0,
+            averagePlayersPerBooking: 0,
+            extraPlayerRevenue: 0
+          };
+        }
+
+        deviceTypeStats[deviceType].totalBookings += 1;
+        deviceTypeStats[deviceType].totalRevenue += bookingDeviceRevenue;
       }
 
-      deviceTypeStats[deviceType].totalBookings += 1;
-      deviceTypeStats[deviceType].totalRevenue += finalSlotRevenue;
-      deviceTypeStats[deviceType].totalHours += slot.duration_hours;
-      deviceTypeStats[deviceType].extraPlayerRevenue += Number(slot.extra_players_total || 0);
-
-      totalRevenue += finalSlotRevenue;
+      totalRevenue += bookingDeviceRevenue;
       totalBookings += 1;
-      totalHours += slot.duration_hours;
-      totalPlayers += slot.player_count || 0;
     });
 
     // Calculate average players per booking for each device type
     Object.keys(deviceTypeStats).forEach(deviceType => {
-      const slots = (data || []).filter((s: any) => s.device_type === deviceType);
-      const totalPlayersForDevice = slots.reduce((sum: number, s: any) => sum + (s.player_count || 0), 0);
-      deviceTypeStats[deviceType].averagePlayersPerBooking = totalPlayersForDevice / slots.length;
+      const allSlots = (data || []).flatMap((b: any) => b.booking_device_slots || []);
+      const deviceSlots = allSlots.filter((s: any) => s.device_type === deviceType);
+      const totalPlayersForDevice = deviceSlots.reduce((sum: number, s: any) => sum + (s.player_count || 0), 0);
+      deviceTypeStats[deviceType].averagePlayersPerBooking = deviceSlots.length > 0 ? totalPlayersForDevice / deviceSlots.length : 0;
     });
 
     const deviceBreakdown = Object.values(deviceTypeStats)
@@ -264,9 +286,12 @@ export async function getDeviceReports(filters?: ReportFilters) {
 
     // Daily utilization (bookings per day)
     const dailyBookings: Record<string, number> = {};
-    (data || []).forEach((slot: any) => {
-      const date = slot.slot_date;
-      dailyBookings[date] = (dailyBookings[date] || 0) + 1;
+    (data || []).forEach((booking: any) => {
+      const slots = booking.booking_device_slots || [];
+      slots.forEach((slot: any) => {
+        const date = slot.slot_date;
+        dailyBookings[date] = (dailyBookings[date] || 0) + 1;
+      });
     });
 
     return {
@@ -301,6 +326,7 @@ export async function getRevenueReports(filters?: ReportFilters) {
         food_subtotal,
         subscription_discount,
         promo_discount,
+        happy_hour_discount,
         total_amount,
         amount_paid,
         cash_amount,
@@ -373,7 +399,8 @@ export async function getRevenueReports(filters?: ReportFilters) {
       const foodSubtotal = Number(booking.food_subtotal || 0);
       const subscriptionDiscount = Number(booking.subscription_discount || 0);
       const promoDiscount = Number(booking.promo_discount || 0);
-      const totalDiscount = subscriptionDiscount + promoDiscount;
+      const happyHourDiscount = Number(booking.happy_hour_discount || 0);
+      const totalDiscount = subscriptionDiscount + promoDiscount + happyHourDiscount;
       const source = booking.booking_source || "online";
 
       // Track revenue by payment date (use paid_at if available, otherwise use updated_at)
@@ -634,6 +661,7 @@ export async function getProfitAndLoss(filters: { dateFrom: string; dateTo: stri
         food_subtotal,
         subscription_discount,
         promo_discount,
+        happy_hour_discount,
         total_amount,
         amount_paid,
         payment_status,
@@ -668,7 +696,8 @@ export async function getProfitAndLoss(filters: { dateFrom: string; dateTo: stri
       const foodSubtotal = Number(b.food_subtotal || 0);
       const subscriptionDiscount = Number(b.subscription_discount || 0);
       const promoDiscount = Number(b.promo_discount || 0);
-      const totalDiscount = subscriptionDiscount + promoDiscount;
+      const happyHourDiscount = Number(b.happy_hour_discount || 0);
+      const totalDiscount = subscriptionDiscount + promoDiscount + happyHourDiscount;
 
       if (b.payment_status === 'partial') {
         // For partial: amount_paid usually covers device first

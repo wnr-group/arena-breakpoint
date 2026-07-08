@@ -19,6 +19,7 @@ import { Search, Filter, Calendar, DollarSign, Users, CheckCircle2, XCircle, Clo
 import { toast } from "sonner";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { CountUp, CurrencyCountUp } from "@/components/shared/CountUp";
+import { roundToTwo, formatCurrency } from "@/lib/currency";
 
 export default function AdminBookingsPage() {
   const router = useRouter();
@@ -125,7 +126,26 @@ export default function AdminBookingsPage() {
     loadStats();
   };
 
-  const handleCheckIn = async (bookingId: string, bookingNumber: string) => {
+  const handleCheckIn = async (bookingId: string, bookingNumber: string, booking: any) => {
+    // Check if checking in early (more than 10 minutes before slot start time)
+    const deviceSlot = booking.booking_device_slots?.[0];
+    if (deviceSlot?.slot_start_time && deviceSlot?.slot_date) {
+      const slotDateTime = new Date(`${deviceSlot.slot_date}T${deviceSlot.slot_start_time}`);
+      const now = new Date();
+      const minutesUntilStart = (slotDateTime.getTime() - now.getTime()) / (1000 * 60);
+
+      if (minutesUntilStart > 10) {
+        const confirmed = window.confirm(
+          `⚠️ Early Check-In Warning\n\n` +
+          `You are checking in ${Math.round(minutesUntilStart)} minutes before the scheduled start time.\n\n` +
+          `Scheduled time: ${deviceSlot.slot_start_time}\n` +
+          `Current time: ${now.toLocaleTimeString()}\n\n` +
+          `Do you want to proceed with early check-in?`
+        );
+        if (!confirmed) return;
+      }
+    }
+
     startTransition(async () => {
       const result = await checkInBooking(bookingId);
       if (result.success) {
@@ -140,7 +160,26 @@ export default function AdminBookingsPage() {
     });
   };
 
-  const handleCheckOut = async (bookingId: string, bookingNumber: string) => {
+  const handleCheckOut = async (bookingId: string, bookingNumber: string, booking: any) => {
+    // Check if checking out early (more than 5 minutes before slot end time)
+    const deviceSlot = booking.booking_device_slots?.[0];
+    if (deviceSlot?.slot_end_time && deviceSlot?.slot_date) {
+      const slotDateTime = new Date(`${deviceSlot.slot_date}T${deviceSlot.slot_end_time}`);
+      const now = new Date();
+      const minutesUntilEnd = (slotDateTime.getTime() - now.getTime()) / (1000 * 60);
+
+      if (minutesUntilEnd > 5) {
+        const confirmed = window.confirm(
+          `⚠️ Early Check-Out Warning\n\n` +
+          `You are checking out ${Math.round(minutesUntilEnd)} minutes before the scheduled end time.\n\n` +
+          `Scheduled end time: ${deviceSlot.slot_end_time}\n` +
+          `Current time: ${now.toLocaleTimeString()}\n\n` +
+          `Do you want to proceed with early check-out?`
+        );
+        if (!confirmed) return;
+      }
+    }
+
     // Check if there are pending payments before checkout
     const billingResult = await getBookingBillingDetails(bookingId);
 
@@ -149,16 +188,16 @@ export default function AdminBookingsPage() {
       return;
     }
 
-    const { booking } = billingResult;
-    const balanceDue = Number(booking.balance_due || 0);
+    const { booking: billingBooking } = billingResult;
+    const balanceDue = Number(billingBooking.balance_due || 0);
 
     // If there's a balance due (pending payment), show warning modal first
-    if (balanceDue > 0 && booking.payment_status !== "paid") {
+    if (balanceDue > 0 && billingBooking.payment_status !== "paid") {
       setPendingPaymentModal({
         open: true,
-        bookingId: booking.id,
+        bookingId: billingBooking.id,
         balanceDue: balanceDue,
-        bookingNumber: booking.booking_number,
+        bookingNumber: billingBooking.booking_number,
         isCheckout: true // Mark this as a checkout attempt
       });
       return;
@@ -288,14 +327,14 @@ export default function AdminBookingsPage() {
       return new Date(dateB).getTime() - new Date(dateA).getTime(); // Most recent first
     });
 
-    const totalAmount = sorted.reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+    const totalAmount = roundToTwo(sorted.reduce((sum, b) => sum + Number(b.total_amount || 0), 0));
     // Calculate actual revenue after discounts
-    const totalDevice = sorted.reduce((sum, b) => {
+    const totalDevice = roundToTwo(sorted.reduce((sum, b) => {
       const deviceSubtotal = Number(b.device_subtotal || 0);
       const discount = Number(b.subscription_discount || 0) + Number(b.promo_discount || 0);
       return sum + Math.max(0, deviceSubtotal - discount);
-    }, 0);
-    const totalFood = sorted.reduce((sum, b) => sum + Number(b.food_subtotal || 0), 0);
+    }, 0));
+    const totalFood = roundToTwo(sorted.reduce((sum, b) => sum + Number(b.food_subtotal || 0), 0));
 
     // Check for back-to-back bookings
     let hasBackToBack = false;
@@ -609,42 +648,65 @@ export default function AdminBookingsPage() {
                         </td>
                         <td className="py-4 px-4">
                           {isSingleBooking ? (
-                            <>
-                              <p className="text-sm font-bold text-data-visible">
-                                {firstSlot?.device_type || "N/A"}
-                              </p>
-                              <p className="text-sm-readable text-secondary-content">
-                                Station #{firstSlot?.device_station_number || "N/A"}
-                              </p>
-                            </>
+                            firstSlot ? (
+                              <>
+                                <p className="text-sm font-bold text-data-visible">
+                                  {firstSlot.device_type}
+                                </p>
+                                <p className="text-sm-readable text-secondary-content">
+                                  Station #{firstSlot.device_station_number}
+                                </p>
+                              </>
+                            ) : (
+                              <div className="flex items-center gap-1.5">
+                                <UtensilsCrossed className="h-4 w-4 text-amber-400" />
+                                <div>
+                                  <p className="text-sm font-bold text-amber-400">Food Only</p>
+                                  <p className="text-[10px] text-secondary-content">
+                                    {firstBooking.booking_food_items?.length || 0} item(s)
+                                  </p>
+                                </div>
+                              </div>
+                            )
                           ) : (
                             <p className="text-sm-readable text-secondary-content">Multiple devices</p>
                           )}
                         </td>
                         <td className="py-4 px-4">
                           {isSingleBooking ? (
-                            <>
-                              <p className="text-sm font-bold text-data-visible">
-                                {firstSlot?.slot_date ? new Date(firstSlot.slot_date).toLocaleDateString() : "N/A"}
-                              </p>
-                              <p className="text-sm-readable text-secondary-content">
-                                {firstSlot?.slot_start_time || "N/A"} - {firstSlot?.slot_end_time || "N/A"}
-                              </p>
-                            </>
+                            firstSlot ? (
+                              <>
+                                <p className="text-sm font-bold text-data-visible">
+                                  {new Date(firstSlot.slot_date).toLocaleDateString()}
+                                </p>
+                                <p className="text-sm-readable text-secondary-content">
+                                  {firstSlot.slot_start_time} - {firstSlot.slot_end_time}
+                                </p>
+                              </>
+                            ) : (
+                              <>
+                                <p className="text-sm font-bold text-data-visible">
+                                  {new Date(firstBooking.created_at).toLocaleDateString()}
+                                </p>
+                                <p className="text-sm-readable text-secondary-content">
+                                  {new Date(firstBooking.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </>
+                            )
                           ) : (
                             <p className="text-sm-readable text-secondary-content italic">Multiple slots</p>
                           )}
                         </td>
                         <td className="py-4 px-4">
-                          <p className="text-sm font-black text-date-visible">₹{group.totalAmount.toLocaleString('en-IN')}</p>
+                          <p className="text-sm font-black text-date-visible">₹{formatCurrency(group.totalAmount)}</p>
                           {isSingleBooking && (
                             <div className="flex flex-col gap-0.5 mt-1">
                               <p className="text-min text-secondary-content">
-                                Games: ₹{group.totalDevice.toLocaleString('en-IN')}
+                                Games: ₹{formatCurrency(group.totalDevice)}
                               </p>
                               {group.totalFood > 0 && (
                                 <p className="text-min text-secondary-content">
-                                  Food: ₹{group.totalFood.toLocaleString('en-IN')}
+                                  Food: ₹{formatCurrency(group.totalFood)}
                                 </p>
                               )}
                             </div>
@@ -657,10 +719,10 @@ export default function AdminBookingsPage() {
                               {firstBooking.payment_status === 'partial' && (
                                 <div className="space-y-0.5">
                                   <p className="text-min text-blue-400">
-                                    Paid: ₹{Number(firstBooking.amount_paid || 0).toLocaleString('en-IN')}
+                                    Paid: ₹{formatCurrency(firstBooking.amount_paid || 0)}
                                   </p>
                                   <p className="text-min text-amber-400 font-semibold">
-                                    Due: ₹{Number(firstBooking.balance_due || 0).toLocaleString('en-IN')}
+                                    Due: ₹{formatCurrency(firstBooking.balance_due || 0)}
                                   </p>
                                 </div>
                               )}
@@ -683,7 +745,7 @@ export default function AdminBookingsPage() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  onClick={() => handleCheckIn(firstBooking.id, firstBooking.booking_number)}
+                                  onClick={() => handleCheckIn(firstBooking.id, firstBooking.booking_number, firstBooking)}
                                   disabled={isPending}
                                   className="h-8 w-8 p-0 text-green-400 hover:text-green-300 hover:bg-green-500/10"
                                   title="Check In"
@@ -695,7 +757,7 @@ export default function AdminBookingsPage() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  onClick={() => handleCheckOut(firstBooking.id, firstBooking.booking_number)}
+                                  onClick={() => handleCheckOut(firstBooking.id, firstBooking.booking_number, firstBooking)}
                                   disabled={isPending}
                                   className="h-8 w-8 p-0 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
                                   title="Check Out"
@@ -773,14 +835,14 @@ export default function AdminBookingsPage() {
                               </p>
                             </td>
                             <td className="py-3 px-4">
-                              <p className="text-sm font-black text-data-visible">₹{Number(booking.total_amount).toLocaleString('en-IN')}</p>
+                              <p className="text-sm font-black text-data-visible">₹{formatCurrency(booking.total_amount)}</p>
                               <div className="flex flex-col gap-0.5 mt-1">
                                 <p className="text-min text-secondary-content">
-                                  Games: ₹{Math.max(0, Number(booking.device_subtotal || 0) - (Number(booking.subscription_discount || 0) + Number(booking.promo_discount || 0))).toLocaleString('en-IN')}
+                                  Games: ₹{formatCurrency(Math.max(0, Number(booking.device_subtotal || 0) - (Number(booking.subscription_discount || 0) + Number(booking.promo_discount || 0))))}
                                 </p>
                                 {booking.food_subtotal > 0 && (
                                   <p className="text-min text-secondary-content">
-                                    Food: ₹{Number(booking.food_subtotal).toLocaleString('en-IN')}
+                                    Food: ₹{formatCurrency(booking.food_subtotal)}
                                   </p>
                                 )}
                               </div>
@@ -797,7 +859,7 @@ export default function AdminBookingsPage() {
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    onClick={() => handleCheckIn(booking.id, booking.booking_number)}
+                                    onClick={() => handleCheckIn(booking.id, booking.booking_number, booking)}
                                     disabled={isPending}
                                     className="h-8 w-8 p-0 text-green-400 hover:text-green-300 hover:bg-green-500/10"
                                     title="Check In"
@@ -809,7 +871,7 @@ export default function AdminBookingsPage() {
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    onClick={() => handleCheckOut(booking.id, booking.booking_number)}
+                                    onClick={() => handleCheckOut(booking.id, booking.booking_number, booking)}
                                     disabled={isPending}
                                     className="h-8 w-8 p-0 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
                                     title="Check Out"

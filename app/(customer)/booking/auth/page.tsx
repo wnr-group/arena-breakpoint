@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ShieldCheck, Phone, ChevronRight, User, Mail, CheckCircle2, QrCode, Cake, UtensilsCrossed, Tag, Loader2 } from 'lucide-react';
+import { ShieldCheck, Phone, ChevronRight, User, Mail, CheckCircle2, QrCode, Cake, UtensilsCrossed, Tag, Loader2, Sparkles } from 'lucide-react';
 import { toast } from "sonner";
 import { checkCustomerExists, confirmBooking } from "../actions";
 import { validatePromoCode, calculatePromoDiscount } from "../promo-actions";
@@ -110,14 +110,20 @@ export default function CustomerDetailsPage() {
           endDate: result.subscription.end_date
         }));
 
-        // Calculate and apply subscription discount
-        const discountAmount = (subtotal * result.subscription.discount_percentage) / 100;
-        const newTotal = subtotal - discountAmount;
+        // Calculate subscription discount on device + extra players only (NOT food/addons)
+        const durationInHours = (selectedDuration || 60) / 60;
+        const deviceCharges = (hourlyRate || 0) * durationInHours;
+        const extraPlayerCharges = (playerCount - includedPlayers) * extraPlayerCharge * durationInHours;
+        const discountableAmount = deviceCharges + extraPlayerCharges;
+
+        const discountAmount = (discountableAmount * result.subscription.discount_percentage) / 100;
+        const newTotal = subtotal - discountAmount - bookingState.happyHourDiscount;
 
         dispatch(setPricing({
           subtotal,
           subscriptionDiscount: discountAmount,
           promoDiscount: 0,
+          happyHourDiscount: bookingState.happyHourDiscount,
           total: newTotal
         }));
 
@@ -216,12 +222,13 @@ export default function CustomerDetailsPage() {
 
       const addonsTotal = addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
       const calculatedSubtotal = deviceCharges + extraPlayerCharges + addonsTotal;
-      const calculatedTotal = calculatedSubtotal - bookingState.subscriptionDiscount - discount;
+      const calculatedTotal = calculatedSubtotal - bookingState.subscriptionDiscount - discount - bookingState.happyHourDiscount;
 
       dispatch(setPricing({
         subtotal: calculatedSubtotal,
         subscriptionDiscount: bookingState.subscriptionDiscount,
         promoDiscount: discount,
+        happyHourDiscount: bookingState.happyHourDiscount,
         total: calculatedTotal,
       }));
       dispatch(setPromoCode(result.promo.code));
@@ -258,12 +265,13 @@ export default function CustomerDetailsPage() {
     const extraPlayerCharges = (playerCount - includedPlayers) * extraPlayerCharge * durationInHours;
     const addonsTotal = addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
     const calculatedSubtotal = deviceCharges + extraPlayerCharges + addonsTotal;
-    const calculatedTotal = calculatedSubtotal - bookingState.subscriptionDiscount;
+    const calculatedTotal = calculatedSubtotal - bookingState.subscriptionDiscount - bookingState.happyHourDiscount;
 
     dispatch(setPricing({
       subtotal: calculatedSubtotal,
       subscriptionDiscount: bookingState.subscriptionDiscount,
       promoDiscount: 0,
+      happyHourDiscount: bookingState.happyHourDiscount,
       total: calculatedTotal,
     }));
     dispatch(setPromoCode(null));
@@ -304,6 +312,8 @@ export default function CustomerDetailsPage() {
       subscriptionDiscount: bookingState.subscriptionDiscount,
       promoDiscount: bookingState.promoDiscount,
       promoCode: bookingState.promoCode,
+      happyHourDiscount: bookingState.happyHourDiscount,
+      happyHourRuleId: bookingState.happyHourRuleId,
       durationMinutes: selectedDuration || 60
     });
 
@@ -609,7 +619,7 @@ export default function CustomerDetailsPage() {
                 const extraPlayerCharges = (playerCount - includedPlayers) * extraPlayerCharge * durationInHours;
                 const addonsTotal = addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
                 const calculatedSubtotal = deviceCharges + extraPlayerCharges + addonsTotal;
-                const calculatedTotal = calculatedSubtotal - bookingState.subscriptionDiscount - bookingState.promoDiscount;
+                const calculatedTotal = calculatedSubtotal - bookingState.subscriptionDiscount - bookingState.promoDiscount - bookingState.happyHourDiscount;
 
                 return (
                   <>
@@ -654,6 +664,16 @@ export default function CustomerDetailsPage() {
                           Promo Discount ({bookingState.promoCode}):
                         </span>
                         <span className="font-bold">-₹{bookingState.promoDiscount.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {bookingState.happyHourDiscount > 0 && (
+                      <div className="flex justify-between text-yellow-400">
+                        <span className="flex items-center gap-1">
+                          <Sparkles className="h-3 w-3" />
+                          Happy Hour Discount{bookingState.happyHourRuleName ? ` (${bookingState.happyHourRuleName})` : ''}:
+                        </span>
+                        <span className="font-bold">-₹{bookingState.happyHourDiscount.toFixed(2)}</span>
                       </div>
                     )}
 
@@ -727,6 +747,12 @@ export default function CustomerDetailsPage() {
             {bookingState.subscriptionDiscount > 0 && (
               <div className="flex justify-between text-xs text-green-500"><span>Subscription Discount ({bookingState.subscriptionDiscountPercentage}%):</span> <span>-₹{bookingState.subscriptionDiscount.toFixed(2)}</span></div>
             )}
+            {bookingState.promoDiscount > 0 && (
+              <div className="flex justify-between text-xs text-primary"><span>Promo Discount ({bookingState.promoCode}):</span> <span>-₹{bookingState.promoDiscount.toFixed(2)}</span></div>
+            )}
+            {bookingState.happyHourDiscount > 0 && (
+              <div className="flex justify-between text-xs text-yellow-400"><span className="flex items-center gap-1"><Sparkles className="h-3 w-3" />Happy Hour Discount:</span> <span>-₹{bookingState.happyHourDiscount.toFixed(2)}</span></div>
+            )}
             <div className="flex justify-between border-t border-zinc-800 pt-2 font-black"><span className="text-zinc-500">Amount Paid:</span> <span className="text-white">₹{total}</span></div>
           </div>
 
@@ -738,7 +764,7 @@ export default function CustomerDetailsPage() {
             </Button>
             <Button onClick={() => {
               dispatch(resetBooking());
-              router.push(`/my-bookings?phone=${mobileNumber}`);
+              router.push(`/retrieve?phone=${mobileNumber}`);
             }} variant="ghost" className="w-full border-2 border-primary text-zinc-300 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
               VIEW MY BOOKINGS
             </Button>

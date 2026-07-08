@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Calendar, Monitor, Utensils, Tag,
-  PartyPopper, CreditCard, BarChart2, Settings, LogOut, ChevronLeft,
+  PartyPopper, BarChart2, LogOut, ChevronLeft,
   User2Icon, Crown, Clock
 } from "lucide-react";
 
@@ -19,9 +19,7 @@ const navItems = [
   { name: "Subscription", href: "/admin/subscription", icon: Crown },
   { name: "Promo Codes", href: "/admin/promo-code", icon: Tag },
   { name: "Happy Hours", href: "/admin/happy-hours", icon: PartyPopper },
-  { name: "Billing", href: "/admin/billing", icon: CreditCard },
   { name: "Reports", href: "/admin/reports", icon: BarChart2 },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 interface SidebarProps {

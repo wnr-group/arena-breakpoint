@@ -3,12 +3,12 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import { setSlot, setPricing, setSlotLockExpiry, setBookingId, setPlayerCount, setDuration } from "@/lib/redux/slices/bookingSlice";
+import { setSlot, setPricing, setSlotLockExpiry, setBookingId, setPlayerCount, setDuration, setHappyHour } from "@/lib/redux/slices/bookingSlice";
 import { checkFlexibleAvailability, initializeSoftLockReservation as createSoftLockTransaction } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
-import { Clock, ChevronRight, X, Plus, Minus, AlertCircle, Loader2 } from 'lucide-react';
+import { Clock, ChevronRight, X, Plus, Minus, AlertCircle, Loader2, Sparkles } from 'lucide-react';
 import { toast } from "sonner";
 import { formatLocalDate } from "@/lib/utils/dates";
 import {
@@ -21,6 +21,8 @@ import {
   isWithinBusinessHours,
   isTimeSlotWithinRange
 } from "@/lib/utils/timeSlots";
+import { useHappyHours } from "@/lib/hooks/useHappyHours";
+import { formatCurrency } from "@/lib/currency";
 
 export default function FlexibleSlotBookingPage() {
   const router = useRouter();
@@ -55,6 +57,9 @@ export default function FlexibleSlotBookingPage() {
   const [mobileStartTimeOpen, setMobileStartTimeOpen] = useState(false);
   const [mobileDurationOpen, setMobileDurationOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  // Happy Hours integration
+  const { checkHappyHour, calculateDiscount, hasActiveRules } = useHappyHours();
 
   const allStartTimes = useMemo(() => generateStartTimes(), []);
   const allDurations = useMemo(() => generateDurationOptions(), []);
@@ -192,7 +197,29 @@ export default function FlexibleSlotBookingPage() {
   const durationHours = selectedDuration / 60;
   const extraPlayersCharge = extraPlayersCount * extraPlayerCharge * durationHours;
   const baselineSubtotal = calculatePrice(hourlyRate || 0, selectedDuration);
-  const aggregatedPayableTotal = baselineSubtotal + extraPlayersCharge + additivesCostAggregated;
+
+  // Check for Happy Hour discount
+  const happyHourInfo = useMemo(() => {
+    if (!calendarDay || !selectedStartTime || !deviceTypeName) {
+      return { rule: null, discount: 0, discountAmount: 0 };
+    }
+
+    const endTime = calculateEndTime(selectedStartTime, selectedDuration);
+    const { rule, discount } = checkHappyHour(
+      deviceTypeName,
+      calendarDay,
+      selectedStartTime,
+      endTime
+    );
+
+    // Happy hour applies to device booking + extra players (NOT addons/food)
+    const discountableAmount = baselineSubtotal + extraPlayersCharge;
+    const discountAmount = rule ? calculateDiscount(discountableAmount, discount) : 0;
+
+    return { rule, discount, discountAmount };
+  }, [calendarDay, selectedStartTime, deviceTypeName, selectedDuration, baselineSubtotal, extraPlayersCharge, checkHappyHour, calculateDiscount]);
+
+  const aggregatedPayableTotal = baselineSubtotal + extraPlayersCharge + additivesCostAggregated - happyHourInfo.discountAmount;
 
   const selectedDurationLabel = useMemo(() => {
     const duration = allDurations.find(d => d.value === selectedDuration);
@@ -254,7 +281,18 @@ export default function FlexibleSlotBookingPage() {
       dispatch(setSlot({ date: dateQueryString, slot: slotLabel, startTime: selectedStartTime, endTime }));
       dispatch(setBookingId(res.bookingId));
       dispatch(setSlotLockExpiry(res.expiresAt));
-      dispatch(setPricing({ subtotal: baselineSubtotal, subscriptionDiscount: 0, promoDiscount: 0, total: aggregatedPayableTotal }));
+      dispatch(setPricing({
+        subtotal: baselineSubtotal,
+        subscriptionDiscount: 0,
+        promoDiscount: 0,
+        happyHourDiscount: happyHourInfo.discountAmount,
+        total: aggregatedPayableTotal
+      }));
+      dispatch(setHappyHour({
+        ruleId: happyHourInfo.rule?.id || null,
+        ruleName: happyHourInfo.rule?.name || null,
+        discount: happyHourInfo.discountAmount
+      }));
       router.push("/booking/auth");
     } else {
       toast.error(res.error);
@@ -266,6 +304,27 @@ export default function FlexibleSlotBookingPage() {
 
   const isTimeAvailable = (time: string) => availableStartTimes.has(time);
   const canProceed = calendarDay && selectedStartTime && endTime && isTimeAvailable(selectedStartTime);
+
+  // Check if a time slot qualifies for happy hour
+  const checkSlotHasHappyHour = (startTime: string): { hasHappyHour: boolean; discount: number; ruleName: string | null } => {
+    if (!calendarDay || !deviceTypeName) {
+      return { hasHappyHour: false, discount: 0, ruleName: null };
+    }
+
+    const endTime = calculateEndTime(startTime, selectedDuration);
+    const { rule, discount } = checkHappyHour(
+      deviceTypeName,
+      calendarDay,
+      startTime,
+      endTime
+    );
+
+    return {
+      hasHappyHour: !!rule,
+      discount: discount,
+      ruleName: rule?.name || null
+    };
+  };
 
   return (
     <div className="max-w-md md:max-w-7xl mx-auto py-2 px-1 pb-28 md:pb-12">
@@ -288,6 +347,19 @@ export default function FlexibleSlotBookingPage() {
           <span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Payment</span>
         </div>
       </div>
+
+      {/* Happy Hour Banner */}
+      {happyHourInfo.rule && (
+        <div className="max-w-md mx-auto mb-4 px-2">
+          <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30 rounded-xl p-3 flex items-center gap-3">
+            <Sparkles className="w-5 h-5 text-yellow-400 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-yellow-200">{happyHourInfo.rule.name}</p>
+              <p className="text-xs text-yellow-300/80">{happyHourInfo.discount}% discount on eligible slots!</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="flex-1 space-y-4 md:space-y-6">
@@ -398,6 +470,15 @@ export default function FlexibleSlotBookingPage() {
                 {extraPlayersCount > 0 && (
                   <div className="flex justify-between"><span>Extra Players ({extraPlayersCount} × {selectedDurationLabel})</span><span className="text-primary font-bold">₹{Math.round(extraPlayersCharge)}.00</span></div>
                 )}
+                {happyHourInfo.rule && happyHourInfo.discountAmount > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+                      Happy Hour ({happyHourInfo.discount}% OFF)
+                    </span>
+                    <span className="text-green-400 font-bold">-₹{Math.round(happyHourInfo.discountAmount)}.00</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-baseline pt-2.5 border-t border-zinc-900 text-white font-black">
                   <span className="text-sm uppercase">Total Payable</span>
                   <span className="text-xl text-primary">₹{Math.round(aggregatedPayableTotal)}.00</span>
@@ -484,19 +565,30 @@ export default function FlexibleSlotBookingPage() {
                   {availableStartTimesForDate.map((time) => {
                     const isAvailable = isTimeAvailable(time);
                     const isSelected = selectedStartTime ? isTimeSlotWithinRange(time, selectedStartTime, selectedDuration) : false;
+                    const happyHourCheck = checkSlotHasHappyHour(time);
                     return (
                       <button
                         key={time}
                         disabled={!isAvailable}
                         onClick={() => setSelectedStartTime(time)}
-                        className={`w-full p-3 border text-left rounded-xl transition-all duration-300 text-sm font-bold ${!isAvailable
+                        className={`w-full p-3 border text-left rounded-xl transition-all duration-300 text-sm font-bold relative ${!isAvailable
                           ? "bg-zinc-950/20 border-zinc-950 text-zinc-800 cursor-not-allowed"
                           : isSelected
                             ? "bg-gradient-to-r from-primary via-yellow-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
-                            : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
+                            : happyHourCheck.hasHappyHour
+                              ? "bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/30 text-yellow-200 hover:border-yellow-500/50 hover:bg-gradient-to-r hover:from-yellow-500/20 hover:to-orange-500/20 hover:shadow-[0_0_15px_rgba(255,193,7,0.3)]"
+                              : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
                           }`}
                       >
-                        {time} - {calculateEndTime(time, 30)}
+                        <div className="flex items-center justify-between">
+                          <span>{time} - {calculateEndTime(time, 30)}</span>
+                          {happyHourCheck.hasHappyHour && !isSelected && (
+                            <span className="flex items-center gap-1 text-xs font-black text-yellow-400">
+                              <Sparkles className="w-3 h-3" />
+                              {happyHourCheck.discount}% OFF
+                            </span>
+                          )}
+                        </div>
                       </button>
                     );
                   })}
@@ -578,6 +670,15 @@ export default function FlexibleSlotBookingPage() {
                 <div className="flex justify-between">
                   <span>Extra Players ({extraPlayersCount} × {selectedDurationLabel})</span>
                   <span className="text-primary font-bold">₹{Math.round(extraPlayersCharge)}.00</span>
+                </div>
+              )}
+              {happyHourInfo.rule && happyHourInfo.discountAmount > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="flex items-center gap-1.5 text-sm">
+                    <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+                    Happy Hour ({happyHourInfo.discount}% OFF)
+                  </span>
+                  <span className="text-green-400 font-bold">-₹{Math.round(happyHourInfo.discountAmount)}.00</span>
                 </div>
               )}
               <div className="flex justify-between items-baseline pt-3 border-t border-zinc-900 text-white font-black">
@@ -679,6 +780,7 @@ export default function FlexibleSlotBookingPage() {
               {availableStartTimesForDate.map((time) => {
                 const isAvailable = isTimeAvailable(time);
                 const isSelected = selectedStartTime ? isTimeSlotWithinRange(time, selectedStartTime, selectedDuration) : false;
+                const happyHourCheck = checkSlotHasHappyHour(time);
                 return (
                   <button
                     key={time}
@@ -694,14 +796,24 @@ export default function FlexibleSlotBookingPage() {
                         });
                       }, 300);
                     }}
-                    className={`p-3 text-center rounded-xl text-xs font-black uppercase transition-all tracking-wider border ${!isAvailable
+                    className={`p-3 text-center rounded-xl text-xs font-black uppercase transition-all tracking-wider border relative ${!isAvailable
                       ? "bg-zinc-950/40 border-zinc-900/40 text-zinc-800 cursor-not-allowed line-through"
                       : isSelected
                         ? "bg-primary border-transparent text-black shadow-[0_0_15px_rgba(255,193,7,0.25)]"
-                        : "bg-zinc-900 border-zinc-800 text-zinc-300 active:border-zinc-700"
+                        : happyHourCheck.hasHappyHour
+                          ? "bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/30 text-yellow-200"
+                          : "bg-zinc-900 border-zinc-800 text-zinc-300 active:border-zinc-700"
                       }`}
                   >
-                    {time} - {calculateEndTime(time, 30)}
+                    <div className="flex flex-col gap-1">
+                      <span>{time} - {calculateEndTime(time, 30)}</span>
+                      {happyHourCheck.hasHappyHour && !isSelected && (
+                        <span className="flex items-center justify-center gap-0.5 text-[9px] font-black text-yellow-400">
+                          <Sparkles className="w-2.5 h-2.5" />
+                          {happyHourCheck.discount}% OFF
+                        </span>
+                      )}
+                    </div>
                   </button>
                 );
               })}

@@ -212,33 +212,52 @@ export default function RetrieveBookingPage() {
             </div>
 
             <div className="grid gap-5">
-              {bookings.map((booking, index) => (
-                <Card
-                  key={booking.id}
-                  className="bg-gradient-to-br from-[#111] via-[#0f0f0f] to-[#111] border-2 border-zinc-900 hover:border-primary/50 p-6 shadow-[0_0_20px_rgba(255,193,7,0.1)] hover:shadow-[0_0_30px_rgba(255,193,7,0.25)] rounded-2xl transition-all cursor-pointer group relative overflow-hidden"
-                  onClick={() => setSelectedBooking(booking)}
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  {/* Hover gradient effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-amber-400/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              {bookings.map((booking, index) => {
+                const hasDeviceSlot = booking.booking_device_slots?.length > 0;
+                const hasFoodItems = booking.booking_food_items?.length > 0;
+                const isFoodOnly = !hasDeviceSlot && hasFoodItems;
 
-                  <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                    <div className="space-y-4 flex-1">
-                      {/* Device Name - Prominent */}
-                      <div className="flex items-center justify-between gap-3 flex-wrap pb-3 border-b border-zinc-800">
-                        <div className="flex items-center gap-2">
-                          <Zap className="h-5 w-5 text-primary" />
-                          <span className="text-lg sm:text-xl font-black text-white">
-                            {booking.booking_device_slots?.[0]?.device_type || 'Device'}
-                          </span>
-                          <span className="text-xs font-bold text-zinc-600 bg-zinc-900 px-2 py-1 rounded">
-                            #{booking.booking_device_slots?.[0]?.device_station_number || 'N/A'}
-                          </span>
+                return (
+                  <Card
+                    key={booking.id}
+                    className="bg-gradient-to-br from-[#111] via-[#0f0f0f] to-[#111] border-2 border-zinc-900 hover:border-primary/50 p-6 shadow-[0_0_20px_rgba(255,193,7,0.1)] hover:shadow-[0_0_30px_rgba(255,193,7,0.25)] rounded-2xl transition-all cursor-pointer group relative overflow-hidden"
+                    onClick={() => setSelectedBooking(booking)}
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    {/* Hover gradient effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-amber-400/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                    <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                      <div className="space-y-4 flex-1">
+                        {/* Title - Device Name OR Food Order */}
+                        <div className="flex items-center justify-between gap-3 flex-wrap pb-3 border-b border-zinc-800">
+                          <div className="flex items-center gap-2">
+                            {isFoodOnly ? (
+                              <>
+                                <UtensilsCrossed className="h-5 w-5 text-orange-400" />
+                                <span className="text-lg sm:text-xl font-black text-white">
+                                  Food Order
+                                </span>
+                                <span className="text-xs font-bold text-orange-400 bg-orange-500/10 px-2 py-1 rounded border border-orange-500/30">
+                                  {booking.booking_food_items.length} items
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <Zap className="h-5 w-5 text-primary" />
+                                <span className="text-lg sm:text-xl font-black text-white">
+                                  {booking.booking_device_slots?.[0]?.device_type || 'Device'}
+                                </span>
+                                <span className="text-xs font-bold text-zinc-600 bg-zinc-900 px-2 py-1 rounded">
+                                  #{booking.booking_device_slots?.[0]?.device_station_number || 'N/A'}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                          <div>
+                            {getStatusBadge(booking.status)}
+                          </div>
                         </div>
-                        <div>
-                          {getStatusBadge(booking.status)}
-                        </div>
-                      </div>
 
                       {/* Booking ID - Small tag */}
                       <div className="flex items-center justify-between">
@@ -248,42 +267,84 @@ export default function RetrieveBookingPage() {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center">
-                            <Calendar className="h-4 w-4 text-primary" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] text-zinc-600 uppercase font-bold">Date</p>
-                            <p className="text-sm text-white font-black">
-                              {booking.booking_device_slots?.[0]?.slot_date ?
-                                new Date(booking.booking_device_slots[0].slot_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) :
-                                'N/A'
-                              }
-                            </p>
-                          </div>
-                        </div>
+                        {isFoodOnly ? (
+                          // Food-only booking info
+                          <>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center">
+                                <UtensilsCrossed className="h-4 w-4 text-orange-400" />
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Items</p>
+                                <p className="text-sm text-white font-black">
+                                  {booking.booking_food_items.length} item{booking.booking_food_items.length > 1 ? 's' : ''}
+                                </p>
+                              </div>
+                            </div>
 
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center">
-                            <Clock className="h-4 w-4 text-primary" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] text-zinc-600 uppercase font-bold">Time</p>
-                            <p className="text-sm text-white font-black">
-                              {booking.booking_device_slots?.[0]?.slot_start_time || 'N/A'}
-                            </p>
-                          </div>
-                        </div>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center">
+                                <Calendar className="h-4 w-4 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Ordered</p>
+                                <p className="text-sm text-white font-black">
+                                  {new Date(booking.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </p>
+                              </div>
+                            </div>
 
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center">
-                            <CreditCard className="h-4 w-4 text-primary" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] text-zinc-600 uppercase font-bold">Amount</p>
-                            <p className="text-sm text-primary font-black">₹{booking.total_amount}</p>
-                          </div>
-                        </div>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center">
+                                <CreditCard className="h-4 w-4 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Amount</p>
+                                <p className="text-sm text-primary font-black">₹{booking.total_amount}</p>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          // Device booking info
+                          <>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center">
+                                <Calendar className="h-4 w-4 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Date</p>
+                                <p className="text-sm text-white font-black">
+                                  {booking.booking_device_slots?.[0]?.slot_date ?
+                                    new Date(booking.booking_device_slots[0].slot_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) :
+                                    'N/A'
+                                  }
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center">
+                                <Clock className="h-4 w-4 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Time</p>
+                                <p className="text-sm text-white font-black">
+                                  {booking.booking_device_slots?.[0]?.slot_start_time || 'N/A'}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center">
+                                <CreditCard className="h-4 w-4 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Amount</p>
+                                <p className="text-sm text-primary font-black">₹{booking.total_amount}</p>
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
 
@@ -299,7 +360,8 @@ export default function RetrieveBookingPage() {
                     </Button>
                   </div>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -535,7 +597,8 @@ export default function RetrieveBookingPage() {
                     // Calculate total
                     const calculatedTotal = calculatedSubtotal -
                       Number(selectedBooking.subscription_discount || 0) -
-                      Number(selectedBooking.promo_discount || 0);
+                      Number(selectedBooking.promo_discount || 0) -
+                      Number(selectedBooking.happy_hour_discount || 0);
 
                     return (
                       <>
@@ -579,6 +642,16 @@ export default function RetrieveBookingPage() {
                           <div className="flex items-center justify-between py-2 text-primary">
                             <span className="font-bold">Promo Discount:</span>
                             <span className="font-black">-₹{Number(selectedBooking.promo_discount).toFixed(2)}</span>
+                          </div>
+                        )}
+
+                        {selectedBooking.happy_hour_discount > 0 && (
+                          <div className="flex items-center justify-between py-2 text-yellow-400">
+                            <span className="font-bold flex items-center gap-1">
+                              <Sparkles className="h-3 w-3" />
+                              Happy Hour Discount:
+                            </span>
+                            <span className="font-black">-₹{Number(selectedBooking.happy_hour_discount).toFixed(2)}</span>
                           </div>
                         )}
 
