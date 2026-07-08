@@ -527,6 +527,7 @@ export async function createWalkInBooking(payload: {
   extraPlayerCharge: number;
   subtotal: number;
   total: number;
+  subscriptionDiscount?: number;
 }) {
   try {
     // Convert time format from "10:00 AM" to "10:00:00"
@@ -610,6 +611,13 @@ export async function createWalkInBooking(payload: {
 
     if (bookingNumberError) throw bookingNumberError;
 
+    const extraPlayersCount = Math.max(0, payload.playerCount - payload.includedPlayers);
+    const extraPlayersTotal = extraPlayersCount * payload.extraPlayerCharge * payload.durationHours;
+    const deviceCharges = payload.subtotal; // Base station rate calculated by duration
+    const deviceSubtotal = deviceCharges + extraPlayersTotal;
+    const subscriptionDiscount = payload.subscriptionDiscount || 0;
+    const totalAmount = deviceSubtotal - subscriptionDiscount;
+
     // Step 4: Create booking
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
@@ -620,9 +628,10 @@ export async function createWalkInBooking(payload: {
         customer_phone: payload.customerPhone,
         customer_email: payload.customerEmail,
         customer_dob: payload.customerDob,
-        device_subtotal: payload.total,
+        device_subtotal: deviceSubtotal,
         food_subtotal: 0,
-        total_amount: payload.total,
+        subscription_discount: subscriptionDiscount,
+        total_amount: totalAmount,
         status: "confirmed", // Walk-in bookings are immediately confirmed
         payment_status: "pending",
         booking_source: "walk-in",
@@ -634,9 +643,6 @@ export async function createWalkInBooking(payload: {
     if (bookingError) throw bookingError;
 
     // Step 5: Create device slot
-    const extraPlayersCount = Math.max(0, payload.playerCount - payload.includedPlayers);
-    const extraPlayersTotal = extraPlayersCount * payload.extraPlayerCharge * payload.durationHours;
-
     const { error: slotError } = await supabaseAdmin
       .from("booking_device_slots")
       .insert({
@@ -656,7 +662,69 @@ export async function createWalkInBooking(payload: {
         extra_players_total: extraPlayersTotal
       });
 
-    if (slotError) throw slotError;
+    if (slotError) {
+      // Rollback booking if slot creation fails
+      await supabaseAdmin.from("bookings").delete().eq("id", booking.id);
+      throw slotError;
+    }
+
+    // Step 6: Create booking line items for audit trail & receipt presentation
+    const lineItems: any[] = [];
+    let displayOrder = 1;
+
+    // 6.1: Device charge line item
+    lineItems.push({
+      booking_id: booking.id,
+      item_type: 'device',
+      description: `Device Booking (${payload.durationHours}h × ₹${payload.hourlyRate})`,
+      quantity: payload.durationHours,
+      unit_price: payload.hourlyRate,
+      line_total: deviceCharges,
+      added_by: 'admin',
+      is_paid: false, // Walk-in starts as pending payment
+      display_order: displayOrder++
+    });
+
+    // 6.2: Extra players line item (if applicable)
+    if (extraPlayersCount > 0) {
+      lineItems.push({
+        booking_id: booking.id,
+        item_type: 'extra_players',
+        description: `Extra Players (${extraPlayersCount} × ₹${payload.extraPlayerCharge} × ${payload.durationHours}h)`,
+        quantity: extraPlayersCount * payload.durationHours,
+        unit_price: payload.extraPlayerCharge,
+        line_total: extraPlayersTotal,
+        added_by: 'admin',
+        is_paid: false,
+        display_order: displayOrder++
+      });
+    }
+
+    // 6.3: Subscription discount line item (if applicable)
+    if (subscriptionDiscount > 0) {
+      lineItems.push({
+        booking_id: booking.id,
+        item_type: 'subscription_discount',
+        description: 'Subscription Discount',
+        quantity: 1,
+        unit_price: -subscriptionDiscount,
+        line_total: -subscriptionDiscount,
+        added_by: 'admin',
+        is_paid: false,
+        display_order: displayOrder++
+      });
+    }
+
+    const { error: lineItemsError } = await supabaseAdmin
+      .from("booking_line_items")
+      .insert(lineItems);
+
+    if (lineItemsError) {
+      // Rollback booking and slots if line items insertion fails
+      await supabaseAdmin.from("booking_device_slots").delete().eq("booking_id", booking.id);
+      await supabaseAdmin.from("bookings").delete().eq("id", booking.id);
+      throw lineItemsError;
+    }
 
     return { success: true, bookingId: booking.id, bookingNumber };
   } catch (err: any) {

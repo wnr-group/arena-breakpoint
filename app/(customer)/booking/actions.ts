@@ -411,6 +411,7 @@ export async function checkCustomerExists(phone: string) {
       if (!subError && subData) {
         activeSubscription = {
           id: subData.id,
+          plan_id: subData.subscription_plan?.id,
           plan_name: subData.subscription_plan?.name,
           discount_percentage: subData.subscription_plan?.discount_percentage,
           end_date: subData.end_date,

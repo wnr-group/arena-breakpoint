@@ -17,6 +17,9 @@ export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBo
   const foodRevenue = bookings.reduce((sum, b) => sum + Number(b.food_subtotal || 0), 0);
   const paidAmount = bookings.filter(b => b.payment_status === 'paid').reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
   const pendingAmount = bookings.filter(b => b.payment_status === 'pending').reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+  const cashRevenue = bookings.reduce((sum, b) => sum + Number(b.cash_amount || 0), 0);
+  const cardRevenue = bookings.reduce((sum, b) => sum + Number(b.card_amount || 0), 0);
+  const upiRevenue = bookings.reduce((sum, b) => sum + Number(b.upi_amount || 0), 0);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -50,6 +53,36 @@ export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBo
           <div className="p-4 bg-[var(--surface)] border border-[#27272a] rounded-lg">
             <p className="text-xs text-muted-content mb-1">Food Revenue</p>
             <p className="text-lg font-black text-white">₹{foodRevenue.toLocaleString('en-IN')}</p>
+          </div>
+        </div>
+
+        {/* Payment Methods Breakdown */}
+        <div className="bg-[var(--surface)] border border-[#27272a] p-4 rounded-lg mb-4 space-y-3">
+          <h5 className="text-xs font-black uppercase text-muted-content tracking-wider flex items-center gap-1.5">
+            Payment Methods
+          </h5>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="p-3 bg-[var(--background)] border border-[#27272a] rounded-lg text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1.5">
+                <span className="text-lg">💵</span>
+                <p className="text-[10px] font-black uppercase text-white">Cash</p>
+              </div>
+              <p className="text-sm font-black text-green-400">₹{cashRevenue.toLocaleString('en-IN')}</p>
+            </div>
+            <div className="p-3 bg-[var(--background)] border border-[#27272a] rounded-lg text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1.5">
+                <span className="text-lg">💳</span>
+                <p className="text-[10px] font-black uppercase text-white">Card</p>
+              </div>
+              <p className="text-sm font-black text-blue-400">₹{cardRevenue.toLocaleString('en-IN')}</p>
+            </div>
+            <div className="p-3 bg-[var(--background)] border border-[#27272a] rounded-lg text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1.5">
+                <span className="text-lg">📱</span>
+                <p className="text-[10px] font-black uppercase text-white">UPI</p>
+              </div>
+              <p className="text-sm font-black text-purple-400">₹{upiRevenue.toLocaleString('en-IN')}</p>
+            </div>
           </div>
         </div>
 

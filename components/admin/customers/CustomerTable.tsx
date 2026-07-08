@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { CustomerRow } from "@/lib/types/customers";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,13 @@ export function CustomerTable({ customers }: CustomerTableProps) {
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
   const [membershipFilter, setMembershipFilter] = useState<"all" | "active" | "inactive" | "none">("all");
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  // Reset current page when filter criteria changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, membershipFilter, sortField, sortOrder]);
 
   const handleCopy = async (text: string, fieldId: string) => {
     try {
@@ -112,6 +119,13 @@ export function CustomerTable({ customers }: CustomerTableProps) {
     return filtered;
   }, [customers, searchQuery, sortField, sortOrder, membershipFilter]);
 
+  const totalPages = Math.ceil(filteredAndSortedCustomers.length / ITEMS_PER_PAGE);
+
+  const paginatedCustomers = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredAndSortedCustomers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredAndSortedCustomers, currentPage]);
+
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return <ArrowUpDown className="h-3 w-3 text-muted-content" />;
     if (sortOrder === "asc") return <ArrowUp className="h-3 w-3 text-primary" />;
@@ -185,7 +199,8 @@ export function CustomerTable({ customers }: CustomerTableProps) {
           No customers found matching your filters.
         </div>
       ) : (
-        <Card className="bg-[#0c0c0e]/40 border-zinc-900 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.6)] w-full overflow-x-auto p-1">
+        <>
+          <Card className="bg-[#0c0c0e]/40 border-zinc-900 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.6)] w-full overflow-x-auto p-1">
           <table className="w-full text-left border-collapse text-sm table-fixed min-w-[1200px]">
             <thead>
               <tr className="border-b border-zinc-900 bg-[var(--background)]/20 text-label-enhanced select-none">
@@ -239,13 +254,13 @@ export function CustomerTable({ customers }: CustomerTableProps) {
               </tr>
             </thead>
         <tbody className="divide-y divide-zinc-900/40 font-medium">
-          {filteredAndSortedCustomers.map((row) => {
+          {paginatedCustomers.map((row) => {
             const hasSub = !!row.subscription_name;
             const isActive = row.subscription_status === "active";
-
+ 
             return (
               <tr key={row.id} className="group hover:bg-[var(--background)]/40 transition-all duration-200 border-l-2 border-transparent hover:border-l-primary">
-
+ 
                 {/* Customer Details Name Block */}
                 <td className="p-4 font-black tracking-wide flex items-center gap-3">
                   <div className="h-9 w-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-muted-content group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-200 shadow-inner flex-shrink-0">
@@ -255,7 +270,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                     {row.name}
                   </span>
                 </td>
-
+ 
                 {/* Phone Terminal Output */}
                 <td className="p-4 text-zinc-300 font-mono tracking-wider">
                   <div className="flex items-center gap-2 group/phone">
@@ -273,7 +288,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                     </button>
                   </div>
                 </td>
-
+ 
                 {/* Date of Birth Block */}
                 <td className="p-4 text-zinc-300 font-mono tracking-wider">
                   <div className="flex items-center gap-2">
@@ -283,7 +298,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                     </span>
                   </div>
                 </td>
-
+ 
                 {/* Email Address Block */}
                 <td className="p-4 text-muted-content font-medium">
                   <div className="flex items-center gap-2 group/email">
@@ -303,7 +318,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                     )}
                   </div>
                 </td>
-
+ 
                 {/* Membership Track */}
                 <td className="p-4 whitespace-nowrap">
                   {hasSub ? (
@@ -315,7 +330,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                     <span className="bg-[var(--background)]/80 text-red-400 border border-zinc-900 text-[9px] font-black px-2.5 py-1 rounded-lg uppercase">No Plan Active</span>
                   )}
                 </td>
-
+ 
                 {/* Expiration Date */}
                 <td className="p-4 text-right font-mono text-[13px]">
                   {row.expiry_date ? (
@@ -324,7 +339,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                     </span>
                   ) : "—"}
                 </td>
-
+ 
                 {/* Our Customer From */}
                 <td className="p-4 text-right font-mono">
                   <div className="flex flex-col items-end">
@@ -342,6 +357,82 @@ export function CustomerTable({ customers }: CustomerTableProps) {
         </tbody>
       </table>
     </Card>
+
+    {/* Pagination Controls */}
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-zinc-900/60 pt-4 px-2 select-none">
+      <div className="text-xs text-secondary-content font-bold">
+        Showing page {currentPage} of {Math.max(1, totalPages)} ({filteredAndSortedCustomers.length} total customers)
+      </div>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+          disabled={currentPage === 1 || totalPages <= 1}
+          className="bg-[var(--surface)] text-white border-zinc-800 hover:bg-zinc-800 disabled:opacity-30 text-xs font-black uppercase h-8"
+        >
+          Previous
+        </Button>
+        <div className="flex items-center gap-1">
+          {totalPages <= 1 ? (
+            <Button
+              variant="default"
+              size="sm"
+              disabled
+              className="h-8 w-8 text-xs font-black p-0 bg-gradient-primary text-[var(--button-text)] shadow-[0_0_12px_rgba(var(--primary-rgb),0.2)] opacity-50"
+            >
+              1
+            </Button>
+          ) : (
+            Array.from({ length: totalPages }).map((_, i) => {
+              const pageNum = i + 1;
+              if (
+                pageNum === 1 ||
+                pageNum === totalPages ||
+                Math.abs(pageNum - currentPage) <= 1
+              ) {
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={currentPage === pageNum ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`h-8 w-8 text-xs font-black p-0 transition-all duration-200 ${
+                      currentPage === pageNum
+                        ? "bg-gradient-primary text-[var(--button-text)] shadow-[0_0_12px_rgba(var(--primary-rgb),0.2)]"
+                        : "bg-[var(--surface)] text-zinc-400 hover:text-white border-zinc-800"
+                    }`}
+                  >
+                    {pageNum}
+                  </Button>
+                );
+              }
+              if (
+                (pageNum === 2 && currentPage > 3) ||
+                (pageNum === totalPages - 1 && currentPage < totalPages - 2)
+              ) {
+                return (
+                  <span key={pageNum} className="text-zinc-600 px-1 text-xs select-none">
+                    ...
+                  </span>
+                );
+              }
+              return null;
+            })
+          )}
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+          disabled={currentPage === totalPages || totalPages <= 1}
+          className="bg-[var(--surface)] text-white border-zinc-800 hover:bg-zinc-800 disabled:opacity-30 text-xs font-black uppercase h-8"
+        >
+          Next
+        </Button>
+      </div>
+    </div>
+        </>
       )}
     </div>
   );

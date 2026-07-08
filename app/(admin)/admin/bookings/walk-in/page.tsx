@@ -68,6 +68,7 @@ export default function WalkInBookingPage() {
   const [customerDob, setCustomerDob] = useState("");
   const [showFullRegistrationFields, setShowFullRegistrationFields] = useState(false);
   const [checkingProfile, setCheckingProfile] = useState(false);
+  const [activeSubscription, setActiveSubscription] = useState<any>(null);
 
   // Submission
   const [submitting, setSubmitting] = useState(false);
@@ -185,9 +186,19 @@ export default function WalkInBookingPage() {
       if (result.customer.date_of_birth) {
         setCustomerDob(formatDateForDisplay(result.customer.date_of_birth));
       }
-      toast.success("Profile Authenticated", { description: `Welcome back, ${result.customer.name}! Adjust players if required on final step.` });
+
+      if (result.subscription) {
+        setActiveSubscription(result.subscription);
+        toast.success("Profile Authenticated", {
+          description: `Welcome back, ${result.customer.name}! Active subscription: ${result.subscription.plan_name} (${result.subscription.discount_percentage}% off)`
+        });
+      } else {
+        setActiveSubscription(null);
+        toast.success("Profile Authenticated", { description: `Welcome back, ${result.customer.name}! Adjust players if required on final step.` });
+      }
       setStep(4);
     } else {
+      setActiveSubscription(null);
       toast.info("New Profile Detected", { description: "Please complete registration parameters below." });
       setShowFullRegistrationFields(true);
     }
@@ -215,7 +226,11 @@ export default function WalkInBookingPage() {
     const durationHours = selectedDuration / 60;
     const extraPlayerCharge = extraPlayersCount * (Number(selectedDeviceType?.extra_player_charge) || 0) * durationHours;
     const baseRate = calculatePrice(Number(selectedDeviceType?.regular_hourly_rate) || 0, selectedDuration);
-    const total = baseRate + extraPlayerCharge;
+    const subtotal = baseRate + extraPlayerCharge;
+    const subscriptionDiscount = activeSubscription
+      ? (subtotal * activeSubscription.discount_percentage) / 100
+      : 0;
+    const total = subtotal - subscriptionDiscount;
 
     // Validate DOB
     if (!isValidDateDDMMYYYY(customerDob)) {
@@ -252,7 +267,8 @@ export default function WalkInBookingPage() {
       includedPlayers: selectedDeviceType.included_players,
       extraPlayerCharge: Number(selectedDeviceType.extra_player_charge),
       subtotal: baseRate,
-      total
+      total,
+      subscriptionDiscount
     });
 
     setSubmitting(false);
@@ -269,7 +285,11 @@ export default function WalkInBookingPage() {
   const durationHours = selectedDuration / 60;
   const extraPlayerCharge = extraPlayersCount * (Number(selectedDeviceType?.extra_player_charge) || 0) * durationHours;
   const baseRate = calculatePrice(Number(selectedDeviceType?.regular_hourly_rate) || 0, selectedDuration);
-  const totalAmount = baseRate + extraPlayerCharge;
+  const subtotal = baseRate + extraPlayerCharge;
+  const subscriptionDiscount = activeSubscription
+    ? (subtotal * activeSubscription.discount_percentage) / 100
+    : 0;
+  const totalAmount = subtotal - subscriptionDiscount;
 
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = handleDobInput(e.target.value);
@@ -564,7 +584,10 @@ export default function WalkInBookingPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setShowFullRegistrationFields(false)}
+                    onClick={() => {
+                      setShowFullRegistrationFields(false);
+                      setActiveSubscription(null);
+                    }}
                     className="px-3 h-8 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[10px] font-black uppercase text-muted-content hover:text-primary rounded-lg tracking-wider flex items-center gap-1.5 transition-colors"
                   >
                     <RefreshCw className="h-3 w-3" /> Change Number
@@ -666,6 +689,22 @@ export default function WalkInBookingPage() {
                   <span className="text-primary font-bold">{selectedStartTime} - {endTime} ({selectedDurationLabel})</span>
                 </div>
               </div>
+
+              {/* Active Subscription Banner (if any) */}
+              {activeSubscription && (
+                <div className="bg-gradient-to-r from-primary/10 via-amber-500/10 to-primary/10 p-4 border border-primary/30 rounded-xl space-y-2 animate-in slide-in-from-top-2 duration-200">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center">
+                      <ShieldCheck className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-primary uppercase tracking-wider">{activeSubscription.plan_name} Active</h4>
+                      <p className="text-[10px] text-zinc-400">Customer gets {activeSubscription.discount_percentage}% off on this booking!</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-[var(--background)]/40 p-4 border border-zinc-900 rounded-xl space-y-3">
                 <Label className="text-[10px] font-black uppercase text-muted-content tracking-wider block">
                   Assign Player Allocation Count
@@ -711,6 +750,14 @@ export default function WalkInBookingPage() {
                   <div className="flex justify-between animate-in slide-in-from-top-2 duration-150">
                     <span className="text-secondary-content">Extra Player Charge Layer ({extraPlayersCount}):</span>
                     <span className="text-primary font-bold">₹{Math.round(extraPlayerCharge)}.00</span>
+                  </div>
+                )}
+                {subscriptionDiscount > 0 && (
+                  <div className="flex justify-between text-green-500 animate-in slide-in-from-top-2 duration-150">
+                    <span className="flex items-center gap-1">
+                      Subscription Discount ({activeSubscription.discount_percentage}%):
+                    </span>
+                    <span className="font-bold">-₹{Math.round(subscriptionDiscount)}.00</span>
                   </div>
                 )}
                 <div className="flex justify-between items-baseline pt-3 border-t border-zinc-900 font-black text-lg">

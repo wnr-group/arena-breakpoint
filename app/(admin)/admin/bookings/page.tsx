@@ -439,11 +439,10 @@ export default function AdminBookingsPage() {
             <button
               key={tab.id}
               onClick={() => handleFilterChange(tab.id)}
-              className={`px-4 py-2 text-min font-black uppercase border rounded-lg transition-all whitespace-nowrap ${
-                activeStatusFilter === tab.id
+              className={`px-4 py-2 text-min font-black uppercase border rounded-lg transition-all whitespace-nowrap ${activeStatusFilter === tab.id
                   ? "bg-primary text-black border-transparent"
                   : "bg-[var(--surface)] border-[#27272a] text-secondary-content hover:border-zinc-700"
-              }`}
+                }`}
             >
               {tab.label}
               <span className={`ml-2 text-min ${activeStatusFilter === tab.id ? "text-black/70" : "text-secondary-content"}`}>
@@ -458,22 +457,20 @@ export default function AdminBookingsPage() {
           <div className="flex bg-[var(--surface)] border border-[#27272a] rounded-lg overflow-hidden">
             <button
               onClick={() => setViewMode("list")}
-              className={`p-2 transition-colors ${
-                viewMode === "list"
+              className={`p-2 transition-colors ${viewMode === "list"
                   ? "bg-primary text-black"
                   : "text-secondary-content hover:text-white"
-              }`}
+                }`}
               title="List View"
             >
               <List className="h-4 w-4" />
             </button>
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-2 transition-colors ${
-                viewMode === "grid"
+              className={`p-2 transition-colors ${viewMode === "grid"
                   ? "bg-primary text-black"
                   : "text-secondary-content hover:text-white"
-              }`}
+                }`}
               title="Grid View"
             >
               <Grid3x3 className="h-4 w-4" />

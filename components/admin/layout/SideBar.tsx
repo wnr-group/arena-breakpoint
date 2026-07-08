@@ -72,7 +72,7 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
                 <h1 className="text-lg font-black tracking-tight text-primary drop-shadow-[0_0_10px_rgba(184,134,11,0.3)] whitespace-nowrap">
                   Break Point Arena
                 </h1>
-                <p className="text-[10px] text-[#a1a1aa] mt-0.5 font-medium">Operational Command</p>
+                <p className="text-[10px] text-[#a1a1aa] mt-0.5 font-medium">Admin Panel</p>
               </div>
             </div>
           ) : (
