@@ -46,7 +46,8 @@ export function parseTimeRange(timeRange: string): { start: number; end: number 
 }
 
 /**
- * Check if entire booking slot is within happy hour time range
+ * Check if booking slot qualifies for happy hour discount
+ * A slot qualifies if it STARTS during happy hour time range
  */
 export function isSlotWithinTimeRange(
   slotStartTime: string,
@@ -54,13 +55,13 @@ export function isSlotWithinTimeRange(
   happyHourTimeRange: string
 ): boolean {
   const slotStart = parseTimeToMinutes(slotStartTime);
-  const slotEnd = parseTimeToMinutes(slotEndTime);
 
   const range = parseTimeRange(happyHourTimeRange);
   if (!range) return false;
 
-  // Strict validation: entire slot must be within happy hour range
-  return slotStart >= range.start && slotEnd <= range.end;
+  // Flexible validation: slot must START within happy hour range
+  // This allows longer bookings that extend beyond happy hour end time
+  return slotStart >= range.start && slotStart < range.end;
 }
 
 /**
