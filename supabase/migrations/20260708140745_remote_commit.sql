@@ -2,6 +2,10 @@ drop extension if exists "pg_net";
 
 set check_function_bodies = off;
 
+-- Drop existing functions to allow return type change
+DROP FUNCTION IF EXISTS public.decrement_menu_item_quantity(uuid, integer);
+DROP FUNCTION IF EXISTS public.increment_menu_item_quantity(uuid, integer);
+
 CREATE OR REPLACE FUNCTION public.decrement_menu_item_quantity(item_id uuid, decrement_by integer)
  RETURNS void
  LANGUAGE plpgsql

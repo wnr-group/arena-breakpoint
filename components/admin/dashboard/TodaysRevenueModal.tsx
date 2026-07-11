@@ -13,10 +13,41 @@ interface TodaysRevenueModalProps {
 }
 
 export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBookingClick }: TodaysRevenueModalProps) {
-  const deviceRevenue = bookings.reduce((sum, b) => sum + Number(b.device_subtotal || 0), 0);
-  const foodRevenue = bookings.reduce((sum, b) => sum + Number(b.food_subtotal || 0), 0);
-  const paidAmount = bookings.filter(b => b.payment_status === 'paid').reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
-  const pendingAmount = bookings.filter(b => b.payment_status === 'pending').reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+  // Calculate device and food revenue based on actual amount paid
+  let deviceRevenue = 0;
+  let foodRevenue = 0;
+
+  bookings.forEach(b => {
+    const amountPaid = Number(b.amount_paid || 0);
+    const deviceSubtotal = Number(b.device_subtotal || 0);
+    const foodSubtotal = Number(b.food_subtotal || 0);
+    const subscriptionDiscount = Number(b.subscription_discount || 0);
+    const promoDiscount = Number(b.promo_discount || 0);
+    const happyHourDiscount = Number(b.happy_hour_discount || 0);
+    const totalDiscount = subscriptionDiscount + promoDiscount + happyHourDiscount;
+
+    // Discounts apply only to device revenue
+    const deviceAfterDiscount = Math.max(0, deviceSubtotal - totalDiscount);
+
+    if (b.payment_status === 'partial') {
+      // For partial: amount_paid covers device first, then food
+      deviceRevenue += Math.min(amountPaid, deviceAfterDiscount);
+      foodRevenue += Math.max(0, amountPaid - deviceAfterDiscount);
+    } else {
+      // Fully paid
+      const expectedTotal = deviceAfterDiscount + foodSubtotal;
+      if (expectedTotal > 0) {
+        // Proportional split
+        deviceRevenue += (deviceAfterDiscount / expectedTotal) * amountPaid;
+        foodRevenue += (foodSubtotal / expectedTotal) * amountPaid;
+      } else {
+        deviceRevenue += amountPaid;
+      }
+    }
+  });
+
+  const paidAmount = bookings.filter(b => b.payment_status === 'paid').reduce((sum, b) => sum + Number(b.amount_paid || 0), 0);
+  const partialAmount = bookings.filter(b => b.payment_status === 'partial').reduce((sum, b) => sum + Number(b.amount_paid || 0), 0);
   const cashRevenue = bookings.reduce((sum, b) => sum + Number(b.cash_amount || 0), 0);
   const cardRevenue = bookings.reduce((sum, b) => sum + Number(b.card_amount || 0), 0);
   const upiRevenue = bookings.reduce((sum, b) => sum + Number(b.upi_amount || 0), 0);
@@ -40,9 +71,12 @@ export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBo
           </div>
 
           <div className="p-4 bg-[var(--surface)] border border-[#27272a] rounded-lg">
-            <p className="text-xs text-muted-content mb-1">Paid</p>
+            <p className="text-xs text-muted-content mb-1">Payment Status</p>
             <p className="text-2xl font-black text-primary">₹{paidAmount.toLocaleString('en-IN')}</p>
-            <p className="text-label mt-1">{bookings.filter(b => b.payment_status === 'paid').length} bookings</p>
+            <p className="text-label mt-1">
+              {bookings.filter(b => b.payment_status === 'paid').length} paid
+              {partialAmount > 0 && ` • ₹${partialAmount.toLocaleString('en-IN')} partial`}
+            </p>
           </div>
 
           <div className="p-4 bg-[var(--surface)] border border-[#27272a] rounded-lg">
@@ -110,8 +144,8 @@ export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBo
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-black text-white">₹{Number(booking.total_amount).toLocaleString('en-IN')}</p>
-                      <p className={`text-[9px] uppercase mt-1 ${booking.payment_status === 'paid' ? 'text-green-500' : 'text-amber-500'}`}>
+                      <p className="text-sm font-black text-white">₹{Number(booking.amount_paid || 0).toLocaleString('en-IN')}</p>
+                      <p className={`text-[9px] uppercase mt-1 ${booking.payment_status === 'paid' ? 'text-green-500' : booking.payment_status === 'partial' ? 'text-blue-500' : 'text-amber-500'}`}>
                         {booking.payment_status}
                       </p>
                     </div>

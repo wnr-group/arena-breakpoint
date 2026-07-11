@@ -57,23 +57,26 @@ export async function getDashboardStats() {
     if (upcomingError) throw upcomingError;
 
     // Calculate today's revenue based on payment date (same as reports page)
+    // Only count actual amount paid, not calculated total
     let todaysRevenue = 0;
-    
+
     const { data: paymentsToday, error: paymentsError } = await supabaseAdmin
       .from("bookings")
       .select(`
-        total_amount,
+        amount_paid,
+        payment_status,
         created_at,
         updated_at,
         payment_groups(paid_at)
       `)
-      .in("status", ["confirmed", "checked_in", "completed"]);
+      .in("payment_status", ["paid", "partial"])
+      .neq("status", "cancelled");
 
     if (!paymentsError && paymentsToday) {
       paymentsToday.forEach((booking: any) => {
         const paidAt = booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
         if (paidAt && paidAt.split('T')[0] === today) {
-          todaysRevenue += Number(booking.total_amount || 0);
+          todaysRevenue += Number(booking.amount_paid || 0);
         }
       });
     }
@@ -177,19 +180,23 @@ export async function getQuickStats() {
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    // This week's revenue
+    // This week's revenue - only count amount paid
     const { data: weekBookings, error: weekError } = await supabaseAdmin
       .from("bookings")
-      .select("total_amount, created_at")
-      .gte("created_at", sevenDaysAgo)
-      .in("status", ["confirmed", "checked_in", "completed"]);
+      .select("amount_paid, payment_status, created_at, updated_at, payment_groups(paid_at)")
+      .in("payment_status", ["paid", "partial"])
+      .neq("status", "cancelled");
 
     if (weekError) throw weekError;
 
-    const thisWeekRevenue = (weekBookings || []).reduce(
-      (sum: number, b: any) => sum + Number(b.total_amount || 0),
-      0
-    );
+    // Filter by payment date (paid_at) being within last 7 days
+    const thisWeekRevenue = (weekBookings || [])
+      .filter((b: any) => {
+        const paidAt = b.payment_groups?.paid_at || b.updated_at || b.created_at;
+        if (!paidAt) return false;
+        return paidAt.split('T')[0] >= sevenDaysAgo;
+      })
+      .reduce((sum: number, b: any) => sum + Number(b.amount_paid || 0), 0);
 
     // Today's food orders
     const { data: foodOrders, error: foodError } = await supabaseAdmin
@@ -247,8 +254,12 @@ export async function getTodaysRevenueDetails() {
         customer_name,
         customer_phone,
         total_amount,
+        amount_paid,
         device_subtotal,
         food_subtotal,
+        subscription_discount,
+        promo_discount,
+        happy_hour_discount,
         cash_amount,
         card_amount,
         upi_amount,
@@ -265,7 +276,8 @@ export async function getTodaysRevenueDetails() {
         ),
         payment_groups(paid_at)
       `)
-      .in("status", ["confirmed", "checked_in", "completed"]);
+      .in("payment_status", ["paid", "partial"])
+      .neq("status", "cancelled");
 
     if (error) throw error;
 

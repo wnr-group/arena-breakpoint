@@ -531,10 +531,11 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                     // Calculate subtotal
                     const calculatedSubtotal = Number(booking.device_subtotal) + Number(booking.food_subtotal);
 
-                    // Calculate total
+                    // Calculate total (subtract all discounts)
                     const calculatedTotal = calculatedSubtotal -
                       Number(booking.subscription_discount || 0) -
-                      Number(booking.promo_discount || 0);
+                      Number(booking.promo_discount || 0) -
+                      Number(booking.happy_hour_discount || 0);
 
                     return (
                       <>
@@ -591,6 +592,16 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                           <div className="flex items-center justify-between py-2 border-b border-zinc-800 text-primary">
                             <span className="font-medium">Promo Discount:</span>
                             <span className="font-bold">-₹{Number(booking.promo_discount).toFixed(2)}</span>
+                          </div>
+                        )}
+
+                        {booking.happy_hour_discount > 0 && (
+                          <div className="flex items-center justify-between py-2 border-b border-zinc-800 text-amber-400">
+                            <span className="font-medium flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              Happy Hour Discount:
+                            </span>
+                            <span className="font-bold">-₹{Number(booking.happy_hour_discount).toFixed(2)}</span>
                           </div>
                         )}
 

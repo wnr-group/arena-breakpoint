@@ -1,11 +1,13 @@
 /**
- * Seed Admin User Script
+ * Seed Staff User Script
  *
- * Creates admin user in Supabase Auth
- * Email: admin@breakpointarena.com
- * Password: Admin@123
+ * Creates staff user in Supabase Auth
+ * Email: staff@breakpointarena.com
+ * Password: Staff@123
  *
- * Run: npx tsx scripts/seed-admin.ts
+ * Staff has access to all pages EXCEPT Reports
+ *
+ * Run: npx tsx scripts/seed-staff.ts
  */
 
 import { createClient } from '@supabase/supabase-js'
@@ -20,11 +22,11 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   },
 })
 
-async function seedAdmin() {
-  console.log('🌱 Seeding admin user...')
+async function seedStaff() {
+  console.log('🌱 Seeding staff user...')
 
-  const email = 'admin@breakpointarena.com'
-  const password = 'Admin@123'
+  const email = 'staff@breakpointarena.com'
+  const password = 'Staff@123'
 
   try {
     // Check if user already exists
@@ -32,38 +34,39 @@ async function seedAdmin() {
     const userExists = existingUsers?.users.some(user => user.email === email)
 
     if (userExists) {
-      console.log('✅ Admin user already exists:', email)
+      console.log('✅ Staff user already exists:', email)
       return
     }
 
-    // Create admin user with full access (including Reports)
+    // Create staff user
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
       user_metadata: {
-        full_name: 'Arena Admin',
-        role: 'admin',
+        full_name: 'Arena Staff',
+        role: 'staff',
       },
       app_metadata: {
-        role: 'admin',
+        role: 'staff',
         provider: 'email',
       },
     })
 
     if (error) {
-      console.error('❌ Error creating admin user:', error.message)
+      console.error('❌ Error creating staff user:', error.message)
       process.exit(1)
     }
 
-    console.log('✅ Admin user created successfully!')
+    console.log('✅ Staff user created successfully!')
     console.log('📧 Email:', email)
     console.log('🔑 Password:', password)
     console.log('👤 User ID:', data.user?.id)
+    console.log('🚫 Restricted: Cannot access Reports page')
   } catch (error) {
     console.error('❌ Unexpected error:', error)
     process.exit(1)
   }
 }
 
-seedAdmin()
+seedStaff()

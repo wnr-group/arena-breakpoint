@@ -328,10 +328,10 @@ export default function AdminBookingsPage() {
     });
 
     const totalAmount = roundToTwo(sorted.reduce((sum, b) => sum + Number(b.total_amount || 0), 0));
-    // Calculate actual revenue after discounts
+    // Calculate actual revenue after discounts (including happy hour)
     const totalDevice = roundToTwo(sorted.reduce((sum, b) => {
       const deviceSubtotal = Number(b.device_subtotal || 0);
-      const discount = Number(b.subscription_discount || 0) + Number(b.promo_discount || 0);
+      const discount = Number(b.subscription_discount || 0) + Number(b.promo_discount || 0) + Number(b.happy_hour_discount || 0);
       return sum + Math.max(0, deviceSubtotal - discount);
     }, 0));
     const totalFood = roundToTwo(sorted.reduce((sum, b) => sum + Number(b.food_subtotal || 0), 0));
@@ -838,7 +838,7 @@ export default function AdminBookingsPage() {
                               <p className="text-sm font-black text-data-visible">₹{formatCurrency(booking.total_amount)}</p>
                               <div className="flex flex-col gap-0.5 mt-1">
                                 <p className="text-min text-secondary-content">
-                                  Games: ₹{formatCurrency(Math.max(0, Number(booking.device_subtotal || 0) - (Number(booking.subscription_discount || 0) + Number(booking.promo_discount || 0))))}
+                                  Games: ₹{formatCurrency(Math.max(0, Number(booking.device_subtotal || 0) - (Number(booking.subscription_discount || 0) + Number(booking.promo_discount || 0) + Number(booking.happy_hour_discount || 0))))}
                                 </p>
                                 {booking.food_subtotal > 0 && (
                                   <p className="text-min text-secondary-content">

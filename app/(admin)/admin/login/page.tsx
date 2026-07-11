@@ -44,7 +44,10 @@ function LoginForm() {
       }
 
       if (data.session) {
-        toast.success('Welcome back!', {
+        const userRole = data.user?.user_metadata?.role || data.user?.app_metadata?.role || 'admin'
+        const roleName = userRole === 'admin' ? 'Admin' : 'Staff'
+
+        toast.success(`Welcome back, ${roleName}!`, {
           description: 'Redirecting to dashboard...',
         })
         router.push(redirectTo)

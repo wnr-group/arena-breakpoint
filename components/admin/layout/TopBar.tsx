@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Grid, Menu, LogOut } from "lucide-react";
+import { Search, Grid, Menu, LogOut, Shield, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { NotificationBell } from "./NotificationBell";
+import { SoundSettings } from "./SoundSettings";
+import { getUserRole, type UserRole } from "@/lib/auth/roles";
 
 interface TopbarProps {
   onToggleSidebar?: () => void;
@@ -18,6 +20,7 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
   const router = useRouter();
   const [userEmail, setUserEmail] = useState<string>("");
   const [userName, setUserName] = useState<string>("Admin User");
+  const [userRole, setUserRole] = useState<UserRole>(null);
 
   useEffect(() => {
     const getUser = async () => {
@@ -30,6 +33,10 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
                            "Admin User";
         setUserName(displayName);
       }
+
+      // Get user role
+      const role = await getUserRole();
+      setUserRole(role);
     };
     getUser();
   }, []);
@@ -92,6 +99,8 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
 
           <NotificationBell />
 
+          <SoundSettings />
+
           <button className="p-1 md:p-2 hover:text-white transition-all duration-300 group hover:rotate-90 hidden xs:block">
             <Grid className="h-5 w-5" />
           </button>
@@ -115,9 +124,24 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
         {/* User Account Frame Section */}
         <div className="flex items-center gap-2 md:gap-3 cursor-pointer group select-none">
           <div className="text-right transition-transform duration-300 group-hover:-translate-x-0.5 hidden md:block">
-            <p className="text-sm font-bold text-white group-hover:text-primary transition-colors leading-tight">
-              {userName}
-            </p>
+            <div className="flex items-center gap-2 justify-end">
+              <p className="text-sm font-bold text-white group-hover:text-primary transition-colors leading-tight">
+                {userName}
+              </p>
+              {userRole && (
+                <span
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                    userRole === 'admin'
+                      ? 'bg-gradient-to-r from-primary/20 to-amber-500/20 text-primary border border-primary/30'
+                      : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                  }`}
+                  title={userRole === 'admin' ? 'Full access including Reports' : 'Limited access - no Reports'}
+                >
+                  {userRole === 'admin' ? <Shield className="h-2.5 w-2.5" /> : <User className="h-2.5 w-2.5" />}
+                  {userRole}
+                </span>
+              )}
+            </div>
             <p className="text-[10px] text-[#a1a1aa] tracking-wide mt-0.5 leading-none truncate max-w-[160px]" title={userEmail}>
               {userEmail || "Arena Manager"}
             </p>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import {
   DollarSign, TrendingUp, ShoppingBag, Gamepad2,
-  UtensilsCrossed, BarChart3, CalendarDays, Receipt
+  UtensilsCrossed, BarChart3, CalendarDays, Receipt, ShieldAlert
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -24,8 +25,11 @@ import { ExpensesTab } from "@/components/admin/reports/ExpensesTab";
 import { ProfitTab } from "@/components/admin/reports/ProfitTab";
 import { CountUp, CurrencyCountUp } from "@/components/shared/CountUp";
 import { roundToTwo, formatCurrency } from "@/lib/currency";
+import { checkReportsAccess } from "@/lib/auth/roles";
 
 export default function AdminReportsPage() {
+  const router = useRouter();
+  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "food" | "device" | "revenue" | "expenses" | "profit">("overview");
   const [loading, setLoading] = useState(true);
 
@@ -63,9 +67,27 @@ export default function AdminReportsPage() {
   // Revenue data
   const [revenueData, setRevenueData] = useState<any>(null);
 
+  // Check access on mount
   useEffect(() => {
-    loadData();
-  }, [activeTab]);
+    checkReportsAccess().then((access) => {
+      setHasAccess(access);
+      if (!access) {
+        toast.error("Access Denied", {
+          description: "You don't have permission to view reports. Redirecting...",
+          icon: <ShieldAlert className="h-5 w-5" />,
+        });
+        setTimeout(() => {
+          router.push("/admin/dashboard");
+        }, 2000);
+      }
+    });
+  }, [router]);
+
+  useEffect(() => {
+    if (hasAccess) {
+      loadData();
+    }
+  }, [activeTab, hasAccess]);
 
   const loadData = async () => {
     setLoading(true);
@@ -184,6 +206,38 @@ export default function AdminReportsPage() {
     { id: "revenue", label: "Revenue Reports", icon: DollarSign },
     { id: "expenses", label: "Expenses", icon: Receipt }
   ];
+
+  // Show loading while checking access
+  if (hasAccess === null) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <BreakpointLoader size="lg" text="Checking permissions..." />
+      </div>
+    );
+  }
+
+  // Show access denied if user is staff
+  if (!hasAccess) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <Card className="bg-[var(--surface)] border-red-500/20 p-12 max-w-md text-center">
+          <div className="space-y-4">
+            <ShieldAlert className="h-16 w-16 text-red-500 mx-auto" />
+            <h2 className="text-2xl font-black text-white uppercase">Access Denied</h2>
+            <p className="text-secondary-content">
+              You don't have permission to view reports. Only admins can access this page.
+            </p>
+            <Button
+              onClick={() => router.push("/admin/dashboard")}
+              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase"
+            >
+              Go to Dashboard
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">

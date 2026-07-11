@@ -10,41 +10,50 @@ export interface ReportFilters {
 // Food Reports
 export async function getFoodReports(filters?: ReportFilters) {
   try {
-    // Get all food items from PAID and PARTIAL bookings
-    // Note: For partial, only include if food item status is "served" or "paid"
-    const { data: allData, error } = await supabaseAdmin
-      .from("booking_food_items")
+    // Get all bookings with food items - only from PAID bookings or PARTIAL bookings where food is actually paid
+    // We need to get the full booking data to calculate how much of the payment went to food
+    const { data: allBookings, error } = await supabaseAdmin
+      .from("bookings")
       .select(`
         id,
-        item_name,
-        item_category,
-        quantity,
-        unit_price,
-        line_total,
+        booking_number,
+        customer_name,
+        device_subtotal,
+        food_subtotal,
+        subscription_discount,
+        promo_discount,
+        happy_hour_discount,
+        total_amount,
+        amount_paid,
         status,
+        payment_status,
         created_at,
-        bookings!inner(
-          booking_number,
-          customer_name,
+        updated_at,
+        payment_groups(paid_at),
+        booking_food_items(
+          id,
+          item_name,
+          item_category,
+          quantity,
+          unit_price,
+          line_total,
           status,
-          payment_status,
-          created_at,
-          updated_at,
-          payment_groups(paid_at)
+          created_at
         )
       `)
-      .neq("bookings.status", "cancelled")
-      .in("bookings.payment_status", ["paid", "partial"])
+      .neq("status", "cancelled")
+      .in("payment_status", ["paid", "partial"])
+      .gt("food_subtotal", 0)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
 
     // Filter by payment date (use paid_at if available, otherwise use updated_at as fallback)
-    let data = allData;
+    let data = allBookings;
     if (filters?.dateFrom || filters?.dateTo) {
-      data = (allData || []).filter((item: any) => {
+      data = (allBookings || []).filter((booking: any) => {
         // Use paid_at from payment_groups, fallback to booking updated_at
-        const paidAt = item.bookings?.payment_groups?.paid_at || item.bookings?.updated_at || item.bookings?.created_at;
+        const paidAt = booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
         if (!paidAt) return false;
 
         const paidDate = paidAt.split('T')[0];
@@ -54,8 +63,6 @@ export async function getFoodReports(filters?: ReportFilters) {
         return true;
       });
     }
-
-    if (error) throw error;
 
     // Aggregate by item
     const itemStats: Record<string, {
@@ -78,44 +85,83 @@ export async function getFoodReports(filters?: ReportFilters) {
     let totalItemsSold = 0;
     const uniqueBookings = new Set<string>();
 
-    (data || []).forEach((item: any) => {
-      const itemName = item.item_name;
-      const category = item.item_category || "Uncategorized";
+    (data || []).forEach((booking: any) => {
+      const amountPaid = Number(booking.amount_paid || 0);
+      const deviceSubtotal = Number(booking.device_subtotal || 0);
+      const foodSubtotal = Number(booking.food_subtotal || 0);
+      const subscriptionDiscount = Number(booking.subscription_discount || 0);
+      const promoDiscount = Number(booking.promo_discount || 0);
+      const happyHourDiscount = Number(booking.happy_hour_discount || 0);
+      const totalDiscount = subscriptionDiscount + promoDiscount + happyHourDiscount;
 
-      // Track unique booking IDs for totalOrders count
-      if (item.bookings?.booking_number) {
-        uniqueBookings.add(item.bookings.booking_number);
+      // Calculate how much of the payment went to food
+      // Discounts apply only to device revenue, not food
+      const deviceAfterDiscount = Math.max(0, deviceSubtotal - totalDiscount);
+
+      let foodRevenuePaid = 0;
+      if (booking.payment_status === 'partial') {
+        // For partial: amount_paid usually covers device first, then food
+        foodRevenuePaid = Math.max(0, amountPaid - deviceAfterDiscount);
+      } else {
+        // Fully paid - split based on actual amount paid proportionally
+        const expectedTotal = deviceAfterDiscount + foodSubtotal;
+        if (expectedTotal > 0) {
+          foodRevenuePaid = (foodSubtotal / expectedTotal) * amountPaid;
+        } else {
+          foodRevenuePaid = 0;
+        }
       }
 
-      // Item stats
-      if (!itemStats[itemName]) {
-        itemStats[itemName] = {
-          itemName,
-          category,
-          totalQuantity: 0,
-          totalRevenue: 0,
-          orderCount: 0
-        };
+      // If no food revenue was actually paid, skip this booking
+      if (foodRevenuePaid <= 0) {
+        return;
       }
-      itemStats[itemName].totalQuantity += item.quantity;
-      itemStats[itemName].totalRevenue += Number(item.line_total);
-      itemStats[itemName].orderCount += 1;
 
-      // Category stats
-      if (!categoryStats[category]) {
-        categoryStats[category] = {
-          category,
-          totalQuantity: 0,
-          totalRevenue: 0,
-          itemCount: 0
-        };
-      }
-      categoryStats[category].totalQuantity += item.quantity;
-      categoryStats[category].totalRevenue += Number(item.line_total);
-      categoryStats[category].itemCount = Object.values(itemStats).filter(i => i.category === category).length;
+      // Track unique booking for totalOrders count
+      uniqueBookings.add(booking.booking_number);
 
-      totalRevenue += Number(item.line_total);
-      totalItemsSold += item.quantity;
+      // Calculate the proportion of food payment to food subtotal
+      // This tells us what percentage of food items were actually paid for
+      const foodPaymentRatio = foodSubtotal > 0 ? Math.min(1, foodRevenuePaid / foodSubtotal) : 0;
+
+      // Process each food item in the booking
+      (booking.booking_food_items || []).forEach((item: any) => {
+        const itemName = item.item_name;
+        const category = item.item_category || "Uncategorized";
+
+        // Proportional revenue for this item based on what was actually paid
+        const itemRevenue = Number(item.line_total) * foodPaymentRatio;
+
+        // Item stats
+        if (!itemStats[itemName]) {
+          itemStats[itemName] = {
+            itemName,
+            category,
+            totalQuantity: 0,
+            totalRevenue: 0,
+            orderCount: 0
+          };
+        }
+        itemStats[itemName].totalQuantity += item.quantity;
+        itemStats[itemName].totalRevenue += itemRevenue;
+        itemStats[itemName].orderCount += 1;
+
+        // Category stats
+        if (!categoryStats[category]) {
+          categoryStats[category] = {
+            category,
+            totalQuantity: 0,
+            totalRevenue: 0,
+            itemCount: 0
+          };
+        }
+        categoryStats[category].totalQuantity += item.quantity;
+        categoryStats[category].totalRevenue += itemRevenue;
+        categoryStats[category].itemCount = Object.values(itemStats).filter(i => i.category === category).length;
+
+        totalRevenue += itemRevenue;
+        totalItemsSold += item.quantity;
+      });
     });
 
     const topItems = Object.values(itemStats)
@@ -125,7 +171,7 @@ export async function getFoodReports(filters?: ReportFilters) {
     const categoryBreakdown = Object.values(categoryStats)
       .sort((a, b) => b.totalRevenue - a.totalRevenue);
 
-    // Count unique bookings, not individual food items
+    // Count unique bookings with paid food
     const totalOrders = uniqueBookings.size;
 
     return {
@@ -138,7 +184,20 @@ export async function getFoodReports(filters?: ReportFilters) {
       },
       topItems,
       categoryBreakdown,
-      recentOrders: data?.slice(0, 20) || []
+      recentOrders: (data || []).slice(0, 20).flatMap((b: any) =>
+        (b.booking_food_items || []).map((item: any) => ({
+          ...item,
+          bookings: {
+            booking_number: b.booking_number,
+            customer_name: b.customer_name,
+            status: b.status,
+            payment_status: b.payment_status,
+            created_at: b.created_at,
+            updated_at: b.updated_at,
+            payment_groups: b.payment_groups
+          }
+        }))
+      ).slice(0, 20)
     };
   } catch (err: any) {
     console.error("Get food reports error:", err);
@@ -157,9 +216,11 @@ export async function getDeviceReports(filters?: ReportFilters) {
         booking_number,
         customer_name,
         device_subtotal,
+        food_subtotal,
         subscription_discount,
         promo_discount,
         happy_hour_discount,
+        amount_paid,
         status,
         payment_status,
         created_at,
@@ -219,14 +280,31 @@ export async function getDeviceReports(filters?: ReportFilters) {
 
     // Process each booking
     (data || []).forEach((booking: any) => {
+      const amountPaid = Number(booking.amount_paid || 0);
       const deviceSubtotal = Number(booking.device_subtotal || 0);
+      const foodSubtotal = Number(booking.food_subtotal || 0);
       const subscriptionDiscount = Number(booking.subscription_discount || 0);
       const promoDiscount = Number(booking.promo_discount || 0);
       const happyHourDiscount = Number(booking.happy_hour_discount || 0);
       const totalDiscount = subscriptionDiscount + promoDiscount + happyHourDiscount;
 
-      // Revenue after discount (discounts only apply to device revenue, not food)
-      const bookingDeviceRevenue = Math.max(0, deviceSubtotal - totalDiscount);
+      // Calculate how much of the payment went to device revenue
+      // Discounts apply only to device revenue, not food
+      const deviceAfterDiscount = Math.max(0, deviceSubtotal - totalDiscount);
+
+      let bookingDeviceRevenue = 0;
+      if (booking.payment_status === 'partial') {
+        // For partial: amount_paid usually covers device first
+        bookingDeviceRevenue = Math.min(amountPaid, deviceAfterDiscount);
+      } else {
+        // Fully paid - split based on actual amount paid proportionally
+        const expectedTotal = deviceAfterDiscount + foodSubtotal;
+        if (expectedTotal > 0) {
+          bookingDeviceRevenue = (deviceAfterDiscount / expectedTotal) * amountPaid;
+        } else {
+          bookingDeviceRevenue = amountPaid;
+        }
+      }
 
       // Get slots for detailed breakdown by device type
       const slots = booking.booking_device_slots || [];
@@ -416,18 +494,30 @@ export async function getRevenueReports(filters?: ReportFilters) {
       const paidAt = booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
       const revenueDate = paidAt.split('T')[0];
 
-      // Calculate actual revenue based on payment status
-      let revenue, deviceRev, foodRev;
+      // Calculate actual revenue based on what was actually paid (amount_paid)
+      // Revenue = what customer actually paid, not the calculated total_amount
+      const revenue = amountPaid;
+
+      // Break down device vs food revenue
+      // Discounts apply to device booking, not food
+      const deviceAfterDiscount = Math.max(0, deviceSubtotal - totalDiscount);
+
+      let deviceRev, foodRev;
       if (booking.payment_status === 'partial') {
         // For partial: amount_paid usually covers device first
-        revenue = amountPaid;
-        deviceRev = Math.min(amountPaid, deviceSubtotal);
-        foodRev = Math.max(0, amountPaid - deviceSubtotal);
+        deviceRev = Math.min(amountPaid, deviceAfterDiscount);
+        foodRev = Math.max(0, amountPaid - deviceAfterDiscount);
       } else {
-        // Fully paid - deduct discounts from device revenue (discounts don't apply to food)
-        revenue = Number(booking.total_amount);
-        deviceRev = Math.max(0, deviceSubtotal - totalDiscount);
-        foodRev = foodSubtotal;
+        // Fully paid - split based on actual breakdown
+        const expectedTotal = deviceAfterDiscount + foodSubtotal;
+        if (expectedTotal > 0) {
+          // Proportional split
+          deviceRev = (deviceAfterDiscount / expectedTotal) * amountPaid;
+          foodRev = (foodSubtotal / expectedTotal) * amountPaid;
+        } else {
+          deviceRev = amountPaid;
+          foodRev = 0;
+        }
       }
 
       totalRevenue += revenue;
@@ -708,16 +798,23 @@ export async function getProfitAndLoss(filters: { dateFrom: string; dateTo: stri
       const happyHourDiscount = Number(b.happy_hour_discount || 0);
       const totalDiscount = subscriptionDiscount + promoDiscount + happyHourDiscount;
 
+      // Discounts apply only to device revenue, not food
+      const deviceAfterDiscount = Math.max(0, deviceSubtotal - totalDiscount);
+
       if (b.payment_status === 'partial') {
         // For partial: amount_paid usually covers device first
-        deviceRevenue += Math.min(amountPaid, deviceSubtotal);
-        foodRevenue += Math.max(0, amountPaid - deviceSubtotal);
+        deviceRevenue += Math.min(amountPaid, deviceAfterDiscount);
+        foodRevenue += Math.max(0, amountPaid - deviceAfterDiscount);
       } else {
-        // Fully paid - deduct discounts from device revenue (discounts don't apply to food)
-        // Revenue = subtotals - discounts
-        const deviceRevenueBeforeDiscount = deviceSubtotal;
-        deviceRevenue += Math.max(0, deviceRevenueBeforeDiscount - totalDiscount);
-        foodRevenue += foodSubtotal;
+        // Fully paid - split based on actual amount paid proportionally
+        const expectedTotal = deviceAfterDiscount + foodSubtotal;
+        if (expectedTotal > 0) {
+          deviceRevenue += (deviceAfterDiscount / expectedTotal) * amountPaid;
+          foodRevenue += (foodSubtotal / expectedTotal) * amountPaid;
+        } else {
+          deviceRevenue += amountPaid;
+          foodRevenue += 0;
+        }
       }
     });
 

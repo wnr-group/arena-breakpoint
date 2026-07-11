@@ -4,10 +4,16 @@ import { useEffect, useRef } from 'react'
 import { useNotifications, Notification } from '@/lib/contexts/NotificationContext'
 import { Gamepad2, UtensilsCrossed, X } from 'lucide-react'
 import { toast as sonnerToast } from 'sonner'
+import { playNotificationSound, preloadNotificationSound } from '@/lib/utils/notificationSound'
 
 export function NotificationToastManager() {
   const { notifications } = useNotifications()
   const shownNotificationsRef = useRef<Set<string>>(new Set())
+
+  useEffect(() => {
+    // Preload notification sound on mount
+    preloadNotificationSound()
+  }, [])
 
   useEffect(() => {
     // Show toast for new unread notifications
@@ -15,6 +21,8 @@ export function NotificationToastManager() {
       if (!notification.read && !shownNotificationsRef.current.has(notification.id)) {
         shownNotificationsRef.current.add(notification.id)
         showNotificationToast(notification)
+        // Play notification sound
+        playNotificationSound()
       }
     })
   }, [notifications])

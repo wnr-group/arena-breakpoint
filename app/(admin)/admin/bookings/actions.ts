@@ -45,6 +45,7 @@ export async function getAllBookings(filters?: BookingFilters) {
         food_subtotal,
         subscription_discount,
         promo_discount,
+        happy_hour_discount,
         status,
         payment_status,
         created_at,
@@ -100,11 +101,25 @@ export async function getAllBookings(filters?: BookingFilters) {
 
     if (error) throw error;
 
-    // Calculate balance_due for each booking
-    const bookingsWithBalance = (data || []).map((booking: any) => ({
-      ...booking,
-      balance_due: Number(booking.total_amount || 0) - Number(booking.amount_paid || 0)
-    }));
+    // Calculate correct total_amount and balance_due for each booking
+    const bookingsWithBalance = (data || []).map((booking: any) => {
+      const deviceSubtotal = Number(booking.device_subtotal || 0);
+      const foodSubtotal = Number(booking.food_subtotal || 0);
+      const subscriptionDiscount = Number(booking.subscription_discount || 0);
+      const promoDiscount = Number(booking.promo_discount || 0);
+      const happyHourDiscount = Number(booking.happy_hour_discount || 0);
+      const amountPaid = Number(booking.amount_paid || 0);
+
+      // Calculate correct total (don't trust stored value)
+      const correctTotal = deviceSubtotal + foodSubtotal - subscriptionDiscount - promoDiscount - happyHourDiscount;
+      const balanceDue = correctTotal - amountPaid;
+
+      return {
+        ...booking,
+        total_amount: correctTotal, // Override with calculated value
+        balance_due: balanceDue
+      };
+    });
 
     return { success: true, bookings: bookingsWithBalance };
   } catch (err: any) {
@@ -178,13 +193,22 @@ export async function getBookingDetails(bookingId: string) {
     // Calculate unpaid items
     const unpaidItems = lineItems?.filter((item: any) => !item.is_paid) || [];
 
-    // Calculate balance_due
-    const balanceDue = Number(data.total_amount || 0) - Number(data.amount_paid || 0);
+    // Calculate correct total_amount (don't trust stored value)
+    const deviceSubtotal = Number(data.device_subtotal || 0);
+    const foodSubtotal = Number(data.food_subtotal || 0);
+    const subscriptionDiscount = Number(data.subscription_discount || 0);
+    const promoDiscount = Number(data.promo_discount || 0);
+    const happyHourDiscount = Number(data.happy_hour_discount || 0);
+    const amountPaid = Number(data.amount_paid || 0);
+
+    const correctTotal = deviceSubtotal + foodSubtotal - subscriptionDiscount - promoDiscount - happyHourDiscount;
+    const balanceDue = correctTotal - amountPaid;
 
     return {
       success: true,
       booking: {
         ...data,
+        total_amount: correctTotal, // Override with calculated value
         line_items: lineItems || [],
         unpaid_items: unpaidItems,
         balance_due: balanceDue
@@ -416,7 +440,7 @@ export async function addFoodToBooking(
 
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
-      .select("food_subtotal, device_subtotal, subscription_discount, promo_discount, amount_paid")
+      .select("food_subtotal, device_subtotal, subscription_discount, promo_discount, happy_hour_discount, amount_paid")
       .eq("id", bookingId)
       .single();
 
@@ -426,10 +450,11 @@ export async function addFoodToBooking(
     const deviceSubtotal = Number(booking.device_subtotal || 0);
     const subscriptionDiscount = Number(booking.subscription_discount || 0);
     const promoDiscount = Number(booking.promo_discount || 0);
+    const happyHourDiscount = Number(booking.happy_hour_discount || 0);
     const amountPaid = Number(booking.amount_paid || 0);
 
-    // Total = device + food - discounts (discounts don't apply to food)
-    const newTotal = deviceSubtotal + newFoodSubtotal - subscriptionDiscount - promoDiscount;
+    // Total = device + food - all discounts (discounts don't apply to food)
+    const newTotal = deviceSubtotal + newFoodSubtotal - subscriptionDiscount - promoDiscount - happyHourDiscount;
 
     // Get current display_order for line items
     const { data: existingLineItems } = await supabaseAdmin
@@ -768,10 +793,10 @@ export async function updatePlayerCount(slotId: string, newPlayerCount: number, 
       return { success: false, error: `Player count cannot exceed ${maxPlayers}` };
     }
 
-    // Get current slot details
+    // Get current slot details and booking info
     const { data: slot, error: slotError } = await supabaseAdmin
       .from("booking_device_slots")
-      .select("*, bookings!inner(id, device_subtotal, total_amount)")
+      .select("*, bookings!inner(id, device_subtotal, food_subtotal, subscription_discount, promo_discount, happy_hour_discount)")
       .eq("id", slotId)
       .single();
 
@@ -804,9 +829,15 @@ export async function updatePlayerCount(slotId: string, newPlayerCount: number, 
 
     if (updateSlotError) throw updateSlotError;
 
-    // Update booking total amounts
-    const newDeviceSubtotal = slot.bookings.device_subtotal + difference;
-    const newTotalAmount = slot.bookings.total_amount + difference;
+    // Recalculate booking amounts properly
+    const newDeviceSubtotal = Number(slot.bookings.device_subtotal) + difference;
+    const foodSubtotal = Number(slot.bookings.food_subtotal || 0);
+    const subscriptionDiscount = Number(slot.bookings.subscription_discount || 0);
+    const promoDiscount = Number(slot.bookings.promo_discount || 0);
+    const happyHourDiscount = Number(slot.bookings.happy_hour_discount || 0);
+
+    // Recalculate total: (device + food) - all discounts
+    const newTotalAmount = newDeviceSubtotal + foodSubtotal - subscriptionDiscount - promoDiscount - happyHourDiscount;
 
     const { error: updateBookingError } = await supabaseAdmin
       .from("bookings")
@@ -917,6 +948,7 @@ export async function getBookingBillingDetails(bookingId: string) {
         food_subtotal,
         subscription_discount,
         promo_discount,
+        happy_hour_discount,
         payment_status,
         status,
         booking_device_slots(
@@ -950,15 +982,26 @@ export async function getBookingBillingDetails(bookingId: string) {
 
     if (lineItemsError) throw lineItemsError;
 
+    // Calculate correct total_amount (don't trust stored value)
+    const deviceSubtotal = Number(data.device_subtotal || 0);
+    const foodSubtotal = Number(data.food_subtotal || 0);
+    const subscriptionDiscount = Number(data.subscription_discount || 0);
+    const promoDiscount = Number(data.promo_discount || 0);
+    const happyHourDiscount = Number(data.happy_hour_discount || 0);
+    const amountPaid = Number(data.amount_paid || 0);
+
+    const correctTotal = deviceSubtotal + foodSubtotal - subscriptionDiscount - promoDiscount - happyHourDiscount;
+
     // Calculate unpaid amount
     const unpaidItems = lineItems?.filter((item: any) => !item.is_paid) || [];
     const unpaidAmount = unpaidItems.reduce((sum: number, item: any) => sum + Number(item.line_total), 0);
-    const balanceDue = Number(data.total_amount) - Number(data.amount_paid || 0);
+    const balanceDue = correctTotal - amountPaid;
 
     return {
       success: true,
       booking: {
         ...data,
+        total_amount: correctTotal, // Override with calculated value
         line_items: lineItems,
         unpaid_items: unpaidItems,
         unpaid_amount: unpaidAmount,

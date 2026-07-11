@@ -3,11 +3,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Calendar, Monitor, Utensils, Tag,
   PartyPopper, BarChart2, LogOut, ChevronLeft,
   User2Icon, Crown, Clock
 } from "lucide-react";
+import { getUserRole, type UserRole } from "@/lib/auth/roles";
 
 const navItems = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -30,6 +32,21 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const [userRole, setUserRole] = useState<UserRole>(null);
+
+  useEffect(() => {
+    // Get user role on mount
+    getUserRole().then(setUserRole);
+  }, []);
+
+  // Filter nav items based on role
+  const filteredNavItems = navItems.filter(item => {
+    // Hide Reports if user is staff
+    if (item.href === "/admin/reports" && userRole === "staff") {
+      return false;
+    }
+    return true;
+  });
 
   // Only dismiss the panel drawer on mobile devices (< 768px tailwind breakpoint)
   const handleNavigationClick = () => {
@@ -99,7 +116,7 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
 
         {/* NAVIGATION LINKS CONTAINER */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-hidden">
-          {navItems.map((item, index) => {
+          {filteredNavItems.map((item, index) => {
             const isActive = pathname === item.href;
             return (
               <Link
