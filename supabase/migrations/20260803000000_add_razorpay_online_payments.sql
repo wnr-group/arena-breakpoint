@@ -134,7 +134,7 @@ CREATE TABLE IF NOT EXISTS public.payment_orders (
   customer_phone TEXT NOT NULL,
 
   status TEXT NOT NULL DEFAULT 'created'
-    CHECK (status IN ('created', 'paid', 'fulfilled', 'failed', 'refunded')),
+    CHECK (status IN ('created', 'paid', 'fulfilled', 'failed', 'refunding', 'refunded')),
 
   booking_id UUID REFERENCES public.bookings(id) ON DELETE SET NULL,
   razorpay_payment_id TEXT,
@@ -143,17 +143,41 @@ CREATE TABLE IF NOT EXISTS public.payment_orders (
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   paid_at TIMESTAMPTZ,
-  fulfilled_at TIMESTAMPTZ
+  -- Set when a caller takes ownership of turning this order into a booking.
+  -- Fulfilment is a multi-statement job that cannot sit inside one transaction,
+  -- so this is the lease that stops the webhook and the browser callback from
+  -- both building a booking for the same payment.
+  fulfilling_at TIMESTAMPTZ,
+  fulfilled_at TIMESTAMPTZ,
+  refunded_at TIMESTAMPTZ
 );
+
+-- Re-runnable: the CREATE TABLE above is skipped when the table already exists,
+-- so columns and constraints added later must be applied separately.
+ALTER TABLE public.payment_orders
+  ADD COLUMN IF NOT EXISTS fulfilling_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS refunded_at TIMESTAMPTZ;
+
+ALTER TABLE public.payment_orders DROP CONSTRAINT IF EXISTS payment_orders_status_check;
+ALTER TABLE public.payment_orders
+  ADD CONSTRAINT payment_orders_status_check
+  CHECK (status IN ('created', 'paid', 'fulfilled', 'failed', 'refunding', 'refunded'));
 
 CREATE INDEX IF NOT EXISTS idx_payment_orders_status ON public.payment_orders(status);
 CREATE INDEX IF NOT EXISTS idx_payment_orders_phone ON public.payment_orders(customer_phone);
 CREATE INDEX IF NOT EXISTS idx_payment_orders_booking ON public.payment_orders(booking_id)
   WHERE booking_id IS NOT NULL;
 
+-- Finds orders that took money but never produced a booking - the queue an
+-- operator needs to work through after an incident.
+CREATE INDEX IF NOT EXISTS idx_payment_orders_stranded
+  ON public.payment_orders(paid_at)
+  WHERE status IN ('paid', 'refunding') AND booking_id IS NULL;
+
 COMMENT ON TABLE public.payment_orders IS 'Razorpay orders awaiting payment. Holds the server-authoritative price so the client cannot tamper with the amount charged or the booking created.';
 COMMENT ON COLUMN public.payment_orders.quote IS 'Server-validated pricing breakdown; the booking is built from this, never from client input.';
-COMMENT ON COLUMN public.payment_orders.status IS 'created -> paid (signature verified) -> fulfilled (booking created). failed/refunded are terminal.';
+COMMENT ON COLUMN public.payment_orders.status IS 'created -> paid (payment confirmed) -> fulfilled (booking created). refunding -> refunded covers a payment taken for a booking we could not build. failed/refunded/refunding are terminal for automated retries.';
+COMMENT ON COLUMN public.payment_orders.fulfilling_at IS 'Lease timestamp. Held by whichever caller is currently building the booking; lets a stranded order be safely resumed once the lease expires.';
 
 -- ================================================
 -- 6. PAYMENT ORDERS: RLS - service role only
@@ -262,7 +286,9 @@ BEGIN
   LIMIT 1;
 
   -- No free station: return zero rows so the caller can refund.
-  IF v_device IS NULL THEN
+  -- FOUND reflects whether the SELECT matched, which is what we actually mean;
+  -- `v_device IS NULL` only holds when every field came back NULL.
+  IF NOT FOUND THEN
     RETURN;
   END IF;
 

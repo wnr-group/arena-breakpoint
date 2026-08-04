@@ -93,15 +93,25 @@ async function claimPromoCode(promoCodeId: string | null) {
 
 async function decrementInventory(items: Array<{ id: string; quantity: number }>) {
   for (const item of items) {
-    const { error } = await supabaseAdmin.rpc('decrement_menu_item_quantity', {
-      item_id: item.id,
-      decrement_by: item.quantity,
-    })
+    const { data: decremented, error } = await supabaseAdmin.rpc(
+      'decrement_menu_item_quantity',
+      {
+        item_id: item.id,
+        decrement_by: item.quantity,
+      }
+    )
 
     // Stock was validated at quote time; a failure here is an audit concern, not
-    // a reason to fail an order the customer has already paid for.
+    // a reason to fail an order the customer has already paid for. The RPC
+    // reports insufficient stock by returning false rather than erroring, so both
+    // outcomes have to be checked or an oversell passes silently.
     if (error) {
       console.error('Inventory decrement failed for item', item.id, error)
+    } else if (decremented === false) {
+      console.warn(
+        `Insufficient stock for menu item ${item.id} (wanted ${item.quantity}) - ` +
+          `sold between pricing and fulfilment. Order honoured; stock needs review.`
+      )
     }
   }
 }

@@ -396,11 +396,15 @@ export default function RetrieveBookingPage() {
                       <span className={`text-[10px] sm:text-xs font-black uppercase px-2 sm:px-3 py-1 sm:py-1.5 rounded-full ${
                         selectedBooking.payment_status === 'paid'
                           ? 'bg-green-500/20 text-green-400 border border-green-500/40'
-                          : selectedBooking.payment_status === 'pending'
+                          : selectedBooking.payment_status === 'partial'
                           ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                          : selectedBooking.payment_status === 'pending'
+                          ? 'bg-red-500/20 text-red-400 border border-red-500/40'
                           : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
                       }`}>
-                        {selectedBooking.payment_status}
+                        {selectedBooking.payment_status === 'partial'
+                          ? 'Balance Due'
+                          : selectedBooking.payment_status}
                       </span>
                     </div>
                   </div>
@@ -661,6 +665,34 @@ export default function RetrieveBookingPage() {
                             ₹{calculatedTotal.toFixed(2)}
                           </span>
                         </div>
+
+                        {/* Paid vs owed. Only money actually received is shown as
+                            paid - anything added to the tab afterwards stays a
+                            balance until it is settled at the counter. */}
+                        {(() => {
+                          const paid = Number(selectedBooking.amount_paid || 0);
+                          const balanceDue = Math.max(0, calculatedTotal - paid);
+
+                          return (
+                            <>
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-zinc-500 font-bold uppercase">
+                                  Paid{Number(selectedBooking.online_amount || 0) > 0 ? " (Online)" : ""}:
+                                </span>
+                                <span className="text-green-400 font-black">₹{paid.toFixed(2)}</span>
+                              </div>
+
+                              {balanceDue > 0.01 && (
+                                <div className="flex items-center justify-between text-sm bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
+                                  <span className="text-amber-400 font-bold uppercase">Balance Due:</span>
+                                  <span className="text-amber-300 font-black">
+                                    ₹{balanceDue.toFixed(2)}
+                                  </span>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
                       </>
                     );
                   })()}

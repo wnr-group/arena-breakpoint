@@ -51,6 +51,7 @@ export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBo
   const cashRevenue = bookings.reduce((sum, b) => sum + Number(b.cash_amount || 0), 0);
   const cardRevenue = bookings.reduce((sum, b) => sum + Number(b.card_amount || 0), 0);
   const upiRevenue = bookings.reduce((sum, b) => sum + Number(b.upi_amount || 0), 0);
+  const onlineRevenue = bookings.reduce((sum, b) => sum + Number(b.online_amount || 0), 0);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -95,7 +96,7 @@ export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBo
           <h5 className="text-xs font-black uppercase text-muted-content tracking-wider flex items-center gap-1.5">
             Payment Methods
           </h5>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <div className="p-3 bg-[var(--background)] border border-[#27272a] rounded-lg text-center">
               <div className="flex items-center justify-center gap-1.5 mb-1.5">
                 <span className="text-lg">💵</span>
@@ -116,6 +117,13 @@ export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBo
                 <p className="text-[10px] font-black uppercase text-white">UPI</p>
               </div>
               <p className="text-sm font-black text-purple-400">₹{upiRevenue.toLocaleString('en-IN')}</p>
+            </div>
+            <div className="p-3 bg-[var(--background)] border border-[#27272a] rounded-lg text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1.5">
+                <span className="text-lg">🌐</span>
+                <p className="text-[10px] font-black uppercase text-white">Online</p>
+              </div>
+              <p className="text-sm font-black text-amber-400">₹{onlineRevenue.toLocaleString('en-IN')}</p>
             </div>
           </div>
         </div>

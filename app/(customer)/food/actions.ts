@@ -105,7 +105,9 @@ export async function addFoodOrderToBooking(
     // First, get the booking to ensure it exists
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
-      .select("id, food_subtotal, device_subtotal, total_amount")
+      .select(
+        "id, food_subtotal, device_subtotal, total_amount, amount_paid, subscription_discount, promo_discount, happy_hour_discount"
+      )
       .eq("id", bookingId)
       .single();
 
@@ -147,13 +149,67 @@ export async function addFoodOrderToBooking(
       }
     }
 
-    // Calculate new totals
+    // Calculate new totals. Discounts apply to the device charge only, never to
+    // food, but they still have to come off the total - leaving them out would
+    // bill the customer for a discount they already received.
     const additionalAmount = foodItems.reduce(
       (sum, item) => sum + item.line_total,
       0
     );
     const newFoodSubtotal = Number(booking.food_subtotal || 0) + additionalAmount;
-    const newTotal = Number(booking.device_subtotal || 0) + newFoodSubtotal;
+    const amountPaid = Number(booking.amount_paid || 0);
+    const newTotal =
+      Number(booking.device_subtotal || 0) +
+      newFoodSubtotal -
+      Number(booking.subscription_discount || 0) -
+      Number(booking.promo_discount || 0) -
+      Number(booking.happy_hour_discount || 0);
+
+    // Mirror the admin add-food flow: record the audit trail so this food shows
+    // up in the billing breakdown as unpaid.
+    const { data: existingLineItems } = await supabaseAdmin
+      .from("booking_line_items")
+      .select("display_order")
+      .eq("booking_id", bookingId)
+      .order("display_order", { ascending: false })
+      .limit(1);
+
+    const startingOrder = (existingLineItems?.[0]?.display_order || 0) + 1;
+
+    const { error: lineItemsError } = await supabaseAdmin
+      .from("booking_line_items")
+      .insert(
+        items.map((item, index) => ({
+          booking_id: bookingId,
+          item_type: "food",
+          description: item.name,
+          quantity: item.quantity,
+          unit_price: item.price,
+          line_total: item.price * item.quantity,
+          reference_id: item.menu_item_id,
+          reference_type: "menu_item",
+          added_by: "customer",
+          is_paid: false, // Goes on the tab; settled at the counter.
+          display_order: startingOrder + index,
+        }))
+      );
+
+    if (lineItemsError) {
+      console.error("Failed to insert booking line items:", lineItemsError);
+    }
+
+    // This food has NOT been paid for - it is settled at the counter. A booking
+    // whose device charge was paid online is still sitting at 'paid', so without
+    // this it would keep showing "Paid" to both the customer and the front desk
+    // while money is owed, and staff could check the session out for free.
+    let newPaymentStatus: "pending" | "partial" | "paid";
+    if (amountPaid >= newTotal - 0.01) {
+      newPaymentStatus = "paid";
+    } else if (amountPaid > 0) {
+      newPaymentStatus = "partial";
+    } else {
+      newPaymentStatus = "pending";
+    }
 
     // Update booking totals
     const { error: updateError } = await supabaseAdmin
@@ -161,6 +217,7 @@ export async function addFoodOrderToBooking(
       .update({
         food_subtotal: newFoodSubtotal,
         total_amount: newTotal,
+        payment_status: newPaymentStatus,
         updated_at: new Date().toISOString(),
       })
       .eq("id", bookingId);
@@ -172,6 +229,8 @@ export async function addFoodOrderToBooking(
       foodItems: createdItems,
       newFoodSubtotal,
       newTotal,
+      paymentStatus: newPaymentStatus,
+      balanceDue: Math.max(0, newTotal - amountPaid),
     };
   } catch (err: any) {
     console.error("Add food to booking error:", err);

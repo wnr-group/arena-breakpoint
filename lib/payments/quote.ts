@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { findApplicableHappyHour, type HappyHourRule } from '@/lib/happy-hours'
 import { calculateEndTime, formatTo24Hour } from '@/lib/utils/timeSlots'
+import { escapeLikePattern } from '@/lib/utils/sqlPattern'
 import { countAvailableDevicesForRange, toRequestedRange } from './availability'
 
 /**
@@ -119,15 +120,28 @@ function normaliseCustomer(input: {
 
 /** Priced from `menu_items` - the client's price field is ignored entirely. */
 async function priceItems(
-  requested: Array<{ id: string; quantity: number }>
+  rawRequested: Array<{ id: string; quantity: number }>
 ): Promise<{ items: QuotedAddon[]; total: number } | { error: string }> {
-  if (requested.length === 0) return { items: [], total: 0 }
+  if (rawRequested.length === 0) return { items: [], total: 0 }
 
-  for (const item of requested) {
+  for (const item of rawRequested) {
+    if (!item?.id || typeof item.id !== 'string') {
+      return { error: 'Invalid item in your order.' }
+    }
     if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
       return { error: 'Invalid item quantity' }
     }
   }
+
+  // Collapse repeats before pricing. The same id sent twice would otherwise pass
+  // the stock check independently on each line - two lots of 3 against a stock of
+  // 4 both look fine - and then decrement inventory twice at fulfilment.
+  const byId = new Map<string, number>()
+  for (const item of rawRequested) {
+    byId.set(item.id, (byId.get(item.id) || 0) + item.quantity)
+  }
+
+  const requested = Array.from(byId, ([id, quantity]) => ({ id, quantity }))
 
   const { data, error } = await supabaseAdmin
     .from('menu_items')
@@ -195,7 +209,9 @@ async function resolvePromoDiscount(
     .select(
       'id, code, discount_type, discount_value, is_active, valid_from, valid_until, max_uses, uses_count'
     )
-    .ilike('code', code.trim())
+    // Escaped: an unescaped `%` here would match an arbitrary code, handing out a
+    // discount to anyone who never knew one.
+    .ilike('code', escapeLikePattern(code.trim()))
     .single()
 
   if (error || !promo || !promo.is_active) return none
@@ -349,12 +365,17 @@ export async function quoteDeviceBooking(
       return { success: false, error: 'Please select a valid booking duration.' }
     }
 
-    const slotStartTime24 = formatTo24Hour(input.slotStartTime)
-    if (!/^\d{2}:\d{2}$/.test(slotStartTime24)) {
+    // Validate the 12-hour input itself: formatTo24Hour() falls back to '00:00'
+    // for anything it cannot parse, so checking only its output would wave
+    // through garbage as a midnight booking. Hours are bounded to 1-12 and
+    // minutes to 0-59 - '25:99 PM' parses but is not a time.
+    const slotStartTime12 = (input.slotStartTime || '').trim()
+    if (!/^(0?[1-9]|1[0-2]):[0-5]\d\s*(AM|PM)$/i.test(slotStartTime12)) {
       return { success: false, error: 'Please select a valid start time.' }
     }
 
-    const slotEndTime12 = calculateEndTime(input.slotStartTime, durationMinutes)
+    const slotStartTime24 = formatTo24Hour(slotStartTime12)
+    const slotEndTime12 = calculateEndTime(slotStartTime12, durationMinutes)
     const slotEndTime24 = formatTo24Hour(slotEndTime12)
 
     // --- Device type: rates come from the database, never the client ---
@@ -420,7 +441,7 @@ export async function quoteDeviceBooking(
       deviceType.display_name,
       deviceType.name,
       bookingDate,
-      input.slotStartTime,
+      slotStartTime12,
       slotEndTime12,
       discountableBase
     )
@@ -447,8 +468,8 @@ export async function quoteDeviceBooking(
         deviceTypeName: deviceType.display_name,
 
         selectedDate: input.selectedDate,
-        slotLabel: `${input.slotStartTime} - ${slotEndTime12}`,
-        slotStartTime12: input.slotStartTime,
+        slotLabel: `${slotStartTime12} - ${slotEndTime12}`,
+        slotStartTime12,
         slotEndTime12,
         slotStartTime24,
         slotEndTime24,

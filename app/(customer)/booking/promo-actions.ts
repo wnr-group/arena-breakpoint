@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { escapeLikePattern } from "@/lib/utils/sqlPattern";
 
 export async function validatePromoCode(code: string) {
   try {
@@ -15,7 +16,9 @@ export async function validatePromoCode(code: string) {
     const { data: promo, error: promoError } = await supabaseAdmin
       .from("promo_codes")
       .select("*")
-      .ilike("code", code.trim())
+      // Escaped: `%` in a LIKE pattern would otherwise match an arbitrary code,
+      // and this action returns promo.code, so it would leak them one by one.
+      .ilike("code", escapeLikePattern(code.trim()))
       .single();
 
     if (promoError || !promo) {
@@ -49,6 +52,16 @@ export async function validatePromoCode(code: string) {
       return {
         success: false,
         error: "This promo code has expired",
+      };
+    }
+
+    // Redemption cap. Mirrors resolvePromoDiscount() in lib/payments/quote.ts -
+    // if this preview accepted a code the quote then drops, the customer would be
+    // charged more than the summary screen showed them.
+    if (promo.max_uses !== null && Number(promo.uses_count) >= Number(promo.max_uses)) {
+      return {
+        success: false,
+        error: "This promo code has been fully redeemed",
       };
     }
 

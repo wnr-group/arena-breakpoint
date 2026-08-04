@@ -6,7 +6,10 @@ import {
   verifyRazorpaySignature,
 } from '@/lib/razorpay/client'
 import {
+  beginRefund,
   claimPaidOrder,
+  claimStrandedOrder,
+  FULFILMENT_LEASE_MS,
   getBookingByPaymentId,
   getBookingForOrder,
   getPaymentOrder,
@@ -43,13 +46,6 @@ export type SettleResult =
     }
 
 /**
- * How long a claimed-but-unfulfilled order is left alone before another caller
- * may resume it. Long enough that an in-flight fulfilment is never duplicated,
- * short enough that Razorpay's webhook retries still land inside the day.
- */
-const STRANDED_CLAIM_MS = 3 * 60 * 1000
-
-/**
  * Turns a confirmed payment into a booking.
  *
  * Callers must have already established that the payment is genuine - either via
@@ -60,6 +56,10 @@ const STRANDED_CLAIM_MS = 3 * 60 * 1000
  *     priced. Nothing is burned yet, so a gateway blip cannot kill a real payment.
  *  3. Atomic claim - guarantees one payment fulfils at most one booking.
  *  4. Fulfilment - if it fails after the money moved, refund automatically.
+ *
+ * Every path into step 4 goes through a conditional update that takes the
+ * `fulfilling_at` lease, so the webhook and the browser callback racing each
+ * other can never both build a booking for one payment.
  */
 async function settlePayment(
   razorpayOrderId: string,
@@ -107,11 +107,34 @@ async function settlePayment(
 
     // Claimed but never fulfilled, and no booking exists for this payment: a
     // previous attempt died between the claim and the booking. The money is with
-    // us, so resume fulfilment from the stored quote rather than stranding it.
+    // us, so resume fulfilment from the stored quote rather than stranding it -
+    // but only after re-taking the lease, or a webhook retry landing alongside a
+    // browser callback would produce two bookings for one payment.
+    let resumed
+    try {
+      resumed = await claimStrandedOrder(razorpayOrderId)
+    } catch (err) {
+      console.error('Failed to claim stranded payment order:', err)
+      return {
+        success: false,
+        error: 'We could not confirm your payment. Please contact support.',
+        retryable: true,
+      }
+    }
+
+    if (!resumed) {
+      // Another caller took the lease between our read and our claim.
+      return {
+        success: false,
+        error: 'This payment is already being processed. Please check "Retrieve Booking" shortly.',
+        retryable: true,
+      }
+    }
+
     console.warn(
       `Resuming stranded payment order ${razorpayOrderId} (claimed at ${existing.paid_at}, no booking).`
     )
-    order = existing
+    order = resumed
   } else if (existing.status !== 'created') {
     return { success: false, error: 'This payment can no longer be used.' }
   } else {
@@ -170,9 +193,31 @@ async function settlePayment(
 
   if (!result.success) {
     if (result.refundRequired) {
+      // Leave `paid` BEFORE touching Razorpay. If the refund succeeded and the
+      // bookkeeping write then failed, an order still sitting in `paid` would be
+      // resumed by the next webhook retry - handing out a booking for money we
+      // had already returned. `refunding` is terminal for automated retries, so
+      // the worst case is an order an operator has to close out by hand.
+      const claim = await beginRefund(razorpayOrderId, result.error)
+
+      if (claim === 'error') {
+        // Could not record the intent, so do not move money either. Retryable so
+        // the webhook comes back and refunds rather than leaving the customer
+        // charged for a booking that does not exist.
+        console.error(
+          `Could not begin refund for order ${razorpayOrderId} - payment ${razorpayPaymentId} still held.`
+        )
+        return { success: false, error: result.error, retryable: true }
+      }
+
+      if (claim === 'not_owned') {
+        // Another caller is already refunding, or already has.
+        return { success: false, error: result.error }
+      }
+
       try {
         await refundPayment(razorpayPaymentId, Number(order.amount))
-        await markOrderRefunded(razorpayOrderId, result.error)
+        await markOrderRefunded(razorpayOrderId)
       } catch (refundError) {
         // Never hide this: a customer has paid for something they did not get.
         console.error(
@@ -205,9 +250,10 @@ async function settlePayment(
 /**
  * Resolves an order a previous call already claimed.
  *
- * Returns the booking that payment produced, or `null` when the claim is stranded
- * - no booking exists and enough time has passed that no attempt can still be in
- * flight - which tells the caller it is safe to resume fulfilment.
+ * Returns the booking that payment produced, or `null` when the claim looks
+ * stranded - no booking exists and the fulfilment lease has expired - which tells
+ * the caller it is worth trying to resume. The caller still has to win the lease
+ * before acting on that; this check only avoids the attempt in the common case.
  */
 async function alreadyHandled(
   order: PaymentOrderRow,
@@ -235,8 +281,10 @@ async function alreadyHandled(
     return settled(byPayment)
   }
 
-  const claimedAt = order.paid_at ? new Date(order.paid_at).getTime() : 0
-  const inFlight = !claimedAt || Date.now() - claimedAt < STRANDED_CLAIM_MS
+  // Fall back to paid_at for rows claimed before the lease column existed.
+  const leaseAt = order.fulfilling_at || order.paid_at
+  const leaseMs = leaseAt ? new Date(leaseAt).getTime() : 0
+  const inFlight = !leaseMs || Date.now() - leaseMs < FULFILMENT_LEASE_MS
 
   if (inFlight) {
     return {
@@ -326,14 +374,26 @@ async function confirmWithGateway(
       return { outcome: 'rejected', error: 'Your payment amount did not match this order.' }
     }
 
-    if (status && status !== 'captured' && status !== 'authorized') {
-      return { outcome: 'rejected', error: 'Your payment did not go through. Please try again.' }
+    // Only captured money is ours. An `authorized` payment is a hold that voids
+    // itself after a few days if it is never captured, so fulfilling one would
+    // give away a booking for money that quietly goes back to the customer.
+    // Rejected as retryable: with auto-capture on this settles within moments and
+    // the payment.captured webhook fulfils it. If these persist, auto-capture is
+    // off - see PRODUCTION_ENV.md section 3b.
+    if (status === 'authorized') {
+      console.error(
+        `Razorpay payment ${razorpayPaymentId} is authorized but NOT captured. ` +
+          `Enable automatic payment capture in the Razorpay dashboard.`
+      )
+      return {
+        outcome: 'rejected',
+        error: 'Your payment is still being confirmed. Please try again in a moment.',
+        retryable: true,
+      }
     }
 
-    if (status === 'authorized') {
-      console.warn(
-        `Razorpay payment ${razorpayPaymentId} is authorized but not captured - enable auto-capture.`
-      )
+    if (status && status !== 'captured') {
+      return { outcome: 'rejected', error: 'Your payment did not go through. Please try again.' }
     }
   } catch (err) {
     console.error('Could not fetch Razorpay payment for verification:', err)

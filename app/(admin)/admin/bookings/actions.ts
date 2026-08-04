@@ -41,6 +41,8 @@ export async function getAllBookings(filters?: BookingFilters) {
         cash_amount,
         card_amount,
         upi_amount,
+        online_amount,
+        razorpay_payment_id,
         device_subtotal,
         food_subtotal,
         subscription_discount,
@@ -1030,7 +1032,9 @@ export async function markBookingAsPaid(
     // Get booking details including current payment status
     const { data: booking, error: fetchError } = await supabaseAdmin
       .from("bookings")
-      .select("total_amount, amount_paid, cash_amount, card_amount, upi_amount, booking_number")
+      .select(
+        "total_amount, amount_paid, cash_amount, card_amount, upi_amount, online_amount, booking_number"
+      )
       .eq("id", bookingId)
       .single();
 
@@ -1046,10 +1050,14 @@ export async function markBookingAsPaid(
       throw new Error(`Payment split (₹${totalSplit}) does not match balance due (₹${balanceDue})`);
     }
 
-    // Add the new payment to existing split amounts
+    // Add the new payment to existing split amounts.
+    // online_amount is carried through untouched: a customer who part-paid via
+    // Razorpay and settles the rest at the counter must keep that record, and
+    // check_payment_split asserts cash + card + upi + online = amount_paid.
     const newCashAmount = Number(booking.cash_amount || 0) + paymentSplit.cashAmount;
     const newCardAmount = Number(booking.card_amount || 0) + paymentSplit.cardAmount;
     const newUpiAmount = Number(booking.upi_amount || 0) + paymentSplit.upiAmount;
+    const onlineAmount = Number(booking.online_amount || 0);
     const newAmountPaid = currentAmountPaid + totalSplit;
 
     // Determine if fully paid or still partial
@@ -1064,6 +1072,7 @@ export async function markBookingAsPaid(
         cash_amount: newCashAmount,
         card_amount: newCardAmount,
         upi_amount: newUpiAmount,
+        online_amount: onlineAmount,
         // payment_method will be set automatically by trigger
       })
       .eq("id", bookingId);

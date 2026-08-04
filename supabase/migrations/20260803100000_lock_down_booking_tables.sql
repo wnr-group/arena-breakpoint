@@ -103,6 +103,19 @@ REVOKE ALL ON public.booking_line_items   FROM anon;
 REVOKE ALL ON public.customers            FROM anon;
 REVOKE ALL ON public.promo_codes          FROM anon;
 
+-- Same for `authenticated`. A staff login is a real Supabase JWT that reaches
+-- PostgREST directly, and legacy blanket grants plus surviving permissive
+-- policies (e.g. "Allow admin manage promo_codes" FOR ALL TO authenticated)
+-- would otherwise let a logged-in browser write these tables straight from the
+-- console. Every admin mutation already goes through a "use server" action on the
+-- service role, so nothing legitimate needs write access here.
+REVOKE ALL ON public.bookings             FROM authenticated;
+REVOKE ALL ON public.booking_device_slots FROM authenticated;
+REVOKE ALL ON public.booking_food_items   FROM authenticated;
+REVOKE ALL ON public.booking_line_items   FROM authenticated;
+REVOKE ALL ON public.customers            FROM authenticated;
+REVOKE ALL ON public.promo_codes          FROM authenticated;
+
 -- Staff read what the admin UI needs; all writes go through the service role.
 GRANT SELECT ON public.bookings             TO authenticated;
 GRANT SELECT ON public.booking_device_slots TO authenticated;
