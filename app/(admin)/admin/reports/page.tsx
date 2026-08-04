@@ -1004,7 +1004,7 @@ export default function AdminReportsPage() {
                 <h3 className="text-sm font-black uppercase text-muted-content mb-4">
                   Revenue by Payment Method
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
                   {/* Cash */}
                   <div className="p-4 bg-[var(--background)] border border-[#27272a] rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
@@ -1044,6 +1044,20 @@ export default function AdminReportsPage() {
                     </h4>
                     <p className="text-xs text-data-placeholder">
                       <CountUp end={revenueData.summary.upiPercentage} duration={900} decimals={1} suffix="% of total" />
+                    </p>
+                  </div>
+
+                  {/* Online (Razorpay) */}
+                  <div className="p-4 bg-[var(--background)] border border-[#27272a] rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">🌐</span>
+                      <p className="text-xs font-black uppercase text-white">Online</p>
+                    </div>
+                    <h4 className="text-xl font-black text-primary mb-1">
+                      <CurrencyCountUp amount={revenueData.summary.totalOnline} duration={1100} />
+                    </h4>
+                    <p className="text-xs text-data-placeholder">
+                      <CountUp end={revenueData.summary.onlinePercentage} duration={900} decimals={1} suffix="% of total" />
                     </p>
                   </div>
                 </div>

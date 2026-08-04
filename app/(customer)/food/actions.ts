@@ -105,7 +105,9 @@ export async function addFoodOrderToBooking(
     // First, get the booking to ensure it exists
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
-      .select("id, food_subtotal, device_subtotal, total_amount")
+      .select(
+        "id, food_subtotal, device_subtotal, total_amount, amount_paid, subscription_discount, promo_discount, happy_hour_discount"
+      )
       .eq("id", bookingId)
       .single();
 
@@ -147,13 +149,67 @@ export async function addFoodOrderToBooking(
       }
     }
 
-    // Calculate new totals
+    // Calculate new totals. Discounts apply to the device charge only, never to
+    // food, but they still have to come off the total - leaving them out would
+    // bill the customer for a discount they already received.
     const additionalAmount = foodItems.reduce(
       (sum, item) => sum + item.line_total,
       0
     );
     const newFoodSubtotal = Number(booking.food_subtotal || 0) + additionalAmount;
-    const newTotal = Number(booking.device_subtotal || 0) + newFoodSubtotal;
+    const amountPaid = Number(booking.amount_paid || 0);
+    const newTotal =
+      Number(booking.device_subtotal || 0) +
+      newFoodSubtotal -
+      Number(booking.subscription_discount || 0) -
+      Number(booking.promo_discount || 0) -
+      Number(booking.happy_hour_discount || 0);
+
+    // Mirror the admin add-food flow: record the audit trail so this food shows
+    // up in the billing breakdown as unpaid.
+    const { data: existingLineItems } = await supabaseAdmin
+      .from("booking_line_items")
+      .select("display_order")
+      .eq("booking_id", bookingId)
+      .order("display_order", { ascending: false })
+      .limit(1);
+
+    const startingOrder = (existingLineItems?.[0]?.display_order || 0) + 1;
+
+    const { error: lineItemsError } = await supabaseAdmin
+      .from("booking_line_items")
+      .insert(
+        items.map((item, index) => ({
+          booking_id: bookingId,
+          item_type: "food",
+          description: item.name,
+          quantity: item.quantity,
+          unit_price: item.price,
+          line_total: item.price * item.quantity,
+          reference_id: item.menu_item_id,
+          reference_type: "menu_item",
+          added_by: "customer",
+          is_paid: false, // Goes on the tab; settled at the counter.
+          display_order: startingOrder + index,
+        }))
+      );
+
+    if (lineItemsError) {
+      console.error("Failed to insert booking line items:", lineItemsError);
+    }
+
+    // This food has NOT been paid for - it is settled at the counter. A booking
+    // whose device charge was paid online is still sitting at 'paid', so without
+    // this it would keep showing "Paid" to both the customer and the front desk
+    // while money is owed, and staff could check the session out for free.
+    let newPaymentStatus: "pending" | "partial" | "paid";
+    if (amountPaid >= newTotal - 0.01) {
+      newPaymentStatus = "paid";
+    } else if (amountPaid > 0) {
+      newPaymentStatus = "partial";
+    } else {
+      newPaymentStatus = "pending";
+    }
 
     // Update booking totals
     const { error: updateError } = await supabaseAdmin
@@ -161,6 +217,7 @@ export async function addFoodOrderToBooking(
       .update({
         food_subtotal: newFoodSubtotal,
         total_amount: newTotal,
+        payment_status: newPaymentStatus,
         updated_at: new Date().toISOString(),
       })
       .eq("id", bookingId);
@@ -172,6 +229,8 @@ export async function addFoodOrderToBooking(
       foodItems: createdItems,
       newFoodSubtotal,
       newTotal,
+      paymentStatus: newPaymentStatus,
+      balanceDue: Math.max(0, newTotal - amountPaid),
     };
   } catch (err: any) {
     console.error("Add food to booking error:", err);
@@ -179,178 +238,9 @@ export async function addFoodOrderToBooking(
   }
 }
 
-export async function createStandaloneFoodOrder(
-  phone: string,
-  name: string,
-  email: string | null,
-  date_of_birth: string,
-  items: Array<{
-    menu_item_id: string;
-    name: string;
-    category: string;
-    quantity: number;
-    price: number;
-  }>,
-  promoCode?: string | null,
-  promoDiscount?: number
-) {
-  try {
-    // Get or create customer
-    const { data: customerId, error: customerError } = await supabaseAdmin.rpc(
-      "get_or_create_customer",
-      {
-        p_phone: phone,
-        p_name: name,
-        p_email: email,
-        p_dob: date_of_birth,
-      }
-    );
-
-    if (customerError) throw customerError;
-
-    // Generate booking number
-    const { data: bookingNumber, error: bookingNumberError } =
-      await supabaseAdmin.rpc("generate_booking_number");
-
-    if (bookingNumberError) throw bookingNumberError;
-
-    // Calculate total
-    const totalAmount = items.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
-
-    // Fetch promo code if provided
-    let promoCodeId = null;
-    let finalPromoDiscount = 0;
-    if (promoCode) {
-      const { data: promoData } = await supabaseAdmin
-        .from("promo_codes")
-        .select("id")
-        .ilike("code", promoCode.trim())
-        .single();
-      
-      if (promoData) {
-        promoCodeId = promoData.id;
-        finalPromoDiscount = promoDiscount || 0;
-      }
-    }
-
-    const finalTotal = Math.max(0, totalAmount - finalPromoDiscount);
-
-    // Create food-only booking
-    const { data: booking, error: bookingError } = await supabaseAdmin
-      .from("bookings")
-      .insert({
-        booking_number: bookingNumber,
-        customer_id: customerId,
-        customer_phone: phone,
-        customer_name: name,
-        customer_email: email,
-        customer_dob: date_of_birth,
-        device_subtotal: 0,
-        food_subtotal: totalAmount,
-        promo_discount: finalPromoDiscount,
-        promo_code_id: promoCodeId,
-        total_amount: finalTotal,
-        amount_paid: finalTotal,
-        cash_amount: 0,  // Online payment, not cash
-        card_amount: finalTotal,  // Assume card/online payment
-        upi_amount: 0,  // Not UPI unless specified
-        status: "confirmed",
-        payment_status: "paid",
-        locked_by: "customer",
-      })
-      .select("id, booking_number")
-      .single();
-
-    if (bookingError) throw bookingError;
-
-    // Create food items
-    const foodItems = items.map((item) => ({
-      booking_id: booking.id,
-      menu_item_id: item.menu_item_id,
-      item_name: item.name,
-      item_category: item.category,
-      quantity: item.quantity,
-      unit_price: item.price,
-      line_total: item.price * item.quantity,
-      status: "pending",
-    }));
-
-    const { error: foodError } = await supabaseAdmin
-      .from("booking_food_items")
-      .insert(foodItems);
-
-    if (foodError) throw foodError;
-
-    // Create line items for the booking audit trail
-    const lineItems: any[] = [];
-    let displayOrder = 1;
-
-    for (const item of items) {
-      lineItems.push({
-        booking_id: booking.id,
-        item_type: 'food',
-        description: item.name,
-        quantity: item.quantity,
-        unit_price: item.price,
-        line_total: item.price * item.quantity,
-        added_by: 'customer',
-        is_paid: true,
-        display_order: displayOrder++
-      });
-    }
-
-    if (finalPromoDiscount > 0) {
-      lineItems.push({
-        booking_id: booking.id,
-        item_type: 'promo_discount',
-        description: promoCode ? `Promo Code Discount (${promoCode})` : 'Promo Code Discount',
-        quantity: 1,
-        unit_price: -finalPromoDiscount,
-        line_total: -finalPromoDiscount,
-        added_by: 'customer',
-        is_paid: true,
-        display_order: displayOrder++
-      });
-    }
-
-    const { error: lineItemsError } = await supabaseAdmin
-      .from("booking_line_items")
-      .insert(lineItems);
-
-    if (lineItemsError) {
-      console.error("Failed to insert booking line items:", lineItemsError);
-    }
-
-    // Update inventory
-    for (const item of items) {
-      const { data: success, error: inventoryError } = await supabaseAdmin.rpc(
-        "decrement_menu_item_quantity",
-        {
-          item_id: item.menu_item_id,
-          decrement_by: item.quantity,
-        }
-      );
-
-      if (inventoryError || !success) {
-        console.error("Inventory update error:", inventoryError || "Insufficient stock");
-        // Log for monitoring but don't fail the order
-      }
-    }
-
-    return {
-      success: true,
-      bookingId: booking.id,
-      bookingNumber: booking.booking_number,
-      totalAmount: finalTotal,
-    };
-  } catch (err: any) {
-    console.error("Create standalone food order error:", err);
-    return { success: false, error: err.message };
-  }
-}
+// NOTE: createStandaloneFoodOrder() was removed when customer food orders moved
+// behind Razorpay. Standalone orders are now created by lib/payments/fulfil.ts,
+// which only runs after a payment is verified.
 
 export async function getMenuCategories(): Promise<{
   success: boolean;

@@ -11,7 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShieldCheck, Phone, ChevronRight, User, Mail, CheckCircle2, QrCode, Cake, UtensilsCrossed, Tag, Loader2, Sparkles } from 'lucide-react';
 import { toast } from "sonner";
-import { checkCustomerExists, confirmBooking } from "../actions";
+import { checkCustomerExists } from "../actions";
+import { createDeviceBookingPaymentOrder, confirmDeviceBookingPayment } from "../payment-actions";
+import {
+  openRazorpayCheckout,
+  loadRazorpayCheckout,
+  RazorpayDismissedError,
+  RazorpayFailedError,
+} from "@/lib/razorpay/checkout";
 import { validatePromoCode, calculatePromoDiscount } from "../promo-actions";
 import { QRCodeSVG } from "qrcode.react";
 import { generateDurationOptions } from "@/lib/utils/timeSlots";
@@ -23,7 +30,7 @@ export default function CustomerDetailsPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const bookingState = useAppSelector((state) => state.booking);
-  const { deviceTypeName, selectedSlot, deviceTypeId, selectedDate, slotStartTime, slotEndTime, selectedDuration, hourlyRate, addons, total, subtotal, playerCount, includedPlayers, extraPlayerCharge } = bookingState;
+  const { deviceTypeName, selectedSlot, deviceTypeId, selectedDate, slotStartTime, slotEndTime, selectedDuration, hourlyRate, addons, subtotal, playerCount, includedPlayers, extraPlayerCharge } = bookingState;
 
   const [step, setStep] = useState<Step>("phone");
   const [mobileNumber, setMobileNumber] = useState("");
@@ -36,6 +43,18 @@ export default function CustomerDetailsPage() {
   const [mounted, setMounted] = useState(false);
   const [bookingNumber, setBookingNumber] = useState<string>("");
   const [bookingId, setBookingId] = useState<string>("");
+  const [amountPaid, setAmountPaid] = useState<number>(0);
+  // Authoritative breakdown returned by the pricing server action. Once we have
+  // it, it wins over anything computed on this screen.
+  const [serverSummary, setServerSummary] = useState<{
+    deviceSubtotal: number;
+    addonsTotal: number;
+    subscriptionDiscount: number;
+    promoDiscount: number;
+    happyHourDiscount: number;
+    happyHourRuleName: string | null;
+    totalAmount: number;
+  } | null>(null);
   const [promoCode, setPromoCodeInput] = useState("");
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   const allDurations = useMemo(() => generateDurationOptions(), []);
@@ -55,10 +74,109 @@ export default function CustomerDetailsPage() {
     }
   }, [step]);
 
+  // Warm up the Razorpay SDK once the customer reaches the summary, so tapping
+  // "Pay & Confirm" opens the checkout immediately.
+  useEffect(() => {
+    if (step === "summary") {
+      loadRazorpayCheckout().catch(() => {
+        /* Surfaced on the pay attempt instead of interrupting the summary. */
+      });
+    }
+  }, [step]);
+
   const selectedDurationLabel = useMemo(() => {
     const duration = allDurations.find(d => d.value === selectedDuration);
     return duration?.label || (selectedDuration ? `${selectedDuration} mins` : "--");
   }, [selectedDuration, allDurations]);
+
+  // The price this screen is showing. The server re-prices independently before
+  // charging anything; this exists so we can compare the two and never charge a
+  // number the customer was not shown.
+  const displayedPricing = useMemo(() => {
+    let durationInHours = 0;
+
+    if (selectedDuration && selectedDuration > 0) {
+      durationInHours = selectedDuration / 60;
+    } else if (slotStartTime && slotEndTime) {
+      const parseTime = (timeStr: string) => {
+        const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (!match) return 0;
+        const [, hours, minutes, period] = match;
+        let hour = parseInt(hours);
+        if (period.toUpperCase() === "PM" && hour !== 12) hour += 12;
+        if (period.toUpperCase() === "AM" && hour === 12) hour = 0;
+        return hour * 60 + parseInt(minutes);
+      };
+      durationInHours = (parseTime(slotEndTime) - parseTime(slotStartTime)) / 60;
+    }
+
+    const deviceCharges = (hourlyRate || 0) * durationInHours;
+    const extraPlayerCharges =
+      Math.max(0, playerCount - includedPlayers) * extraPlayerCharge * durationInHours;
+    const addonsTotal = addons.reduce((sum, addon) => sum + addon.price * addon.quantity, 0);
+    const subtotalAmount = deviceCharges + extraPlayerCharges + addonsTotal;
+    const total =
+      subtotalAmount -
+      bookingState.subscriptionDiscount -
+      bookingState.promoDiscount -
+      bookingState.happyHourDiscount;
+
+    return {
+      durationInHours,
+      deviceCharges,
+      extraPlayerCharges,
+      addonsTotal,
+      subtotal: subtotalAmount,
+      total,
+    };
+  }, [
+    selectedDuration,
+    slotStartTime,
+    slotEndTime,
+    hourlyRate,
+    playerCount,
+    includedPlayers,
+    extraPlayerCharge,
+    addons,
+    bookingState.subscriptionDiscount,
+    bookingState.promoDiscount,
+    bookingState.happyHourDiscount,
+  ]);
+
+  // What the customer is actually shown. Line items stay as computed here (they
+  // come from the same rates the server uses), but discounts and the total defer
+  // to the server the moment it has told us what it will charge.
+  const effectivePricing = useMemo(() => {
+    if (!serverSummary) {
+      return {
+        ...displayedPricing,
+        subscriptionDiscount: bookingState.subscriptionDiscount,
+        promoDiscount: bookingState.promoDiscount,
+        happyHourDiscount: bookingState.happyHourDiscount,
+        happyHourRuleName: bookingState.happyHourRuleName,
+        isServerPriced: false,
+      };
+    }
+
+    return {
+      ...displayedPricing,
+      addonsTotal: serverSummary.addonsTotal,
+      subtotal: serverSummary.deviceSubtotal + serverSummary.addonsTotal,
+      total: serverSummary.totalAmount,
+      subscriptionDiscount: serverSummary.subscriptionDiscount,
+      promoDiscount: serverSummary.promoDiscount,
+      happyHourDiscount: serverSummary.happyHourDiscount,
+      happyHourRuleName: serverSummary.happyHourRuleName,
+      isServerPriced: true,
+    };
+  }, [
+    displayedPricing,
+    serverSummary,
+    bookingState.subscriptionDiscount,
+    bookingState.promoDiscount,
+    bookingState.happyHourDiscount,
+    bookingState.happyHourRuleName,
+  ]);
 
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = handleDobInput(e.target.value);
@@ -279,6 +397,18 @@ export default function CustomerDetailsPage() {
     toast.info("Promo code removed");
   };
 
+  const showBookingSuccess = (
+    resultBookingNumber: string,
+    resultBookingId: string,
+    paid: number
+  ) => {
+    setBookingNumber(resultBookingNumber);
+    setBookingId(resultBookingId);
+    setAmountPaid(paid);
+    dispatch(clearSlotTimer()); // Clear timer and booking state after successful confirmation
+    setStep("success");
+  };
+
   const handleConfirmBooking = async () => {
     setIsSubmitting(true);
 
@@ -290,44 +420,97 @@ export default function CustomerDetailsPage() {
       dobForDB = existingCustomerData.date_of_birth;
     }
 
-    const result = await confirmBooking({
-      phone: mobileNumber,
-      name: customerName || existingCustomerData?.name,
-      email: customerEmail || existingCustomerData?.email || "",
-      date_of_birth: dobForDB,
-      deviceTypeId: deviceTypeId!,
-      deviceTypeName: deviceTypeName!,
-      selectedDate: selectedDate!,
-      selectedSlot: selectedSlot!,
-      slotStartTime: slotStartTime!,
-      slotEndTime: slotEndTime!,
-      selectedDuration: selectedDuration!,
-      hourlyRate: hourlyRate!,
-      addons: addons,
-      subtotal: subtotal,
-      total: total,
-      playerCount: playerCount,
-      includedPlayers: includedPlayers,
-      extraPlayerCharge: extraPlayerCharge,
-      subscriptionDiscount: bookingState.subscriptionDiscount,
-      promoDiscount: bookingState.promoDiscount,
-      promoCode: bookingState.promoCode,
-      happyHourDiscount: bookingState.happyHourDiscount,
-      happyHourRuleId: bookingState.happyHourRuleId,
-      durationMinutes: selectedDuration || 60
-    });
+    try {
+      // The server re-prices the booking from the database; the amount charged
+      // never comes from this screen.
+      const order = await createDeviceBookingPaymentOrder({
+        phone: mobileNumber,
+        name: customerName || existingCustomerData?.name,
+        email: customerEmail || existingCustomerData?.email || "",
+        dateOfBirth: dobForDB,
+        deviceTypeId: deviceTypeId!,
+        selectedDate: selectedDate!,
+        slotStartTime: slotStartTime!,
+        durationMinutes: selectedDuration || 60,
+        playerCount: playerCount,
+        addons: addons.map((addon) => ({ id: addon.id, quantity: addon.quantity })),
+        promoCode: bookingState.promoCode,
+      });
 
-    if (result.success) {
-      setBookingNumber(result.bookingNumber || "");
-      setBookingId(result.bookingId || "");
-      toast.success("Booking Confirmed!", { description: "Your slot has been reserved successfully." });
-      dispatch(clearSlotTimer()); // Clear timer and booking state after successful confirmation
-      setStep("success");
-    } else {
-      toast.error("Booking Failed", { description: result.error || "Something went wrong. Please try again." });
+      if (!order.success) {
+        toast.error("Booking Failed", {
+          description: order.error || "Something went wrong. Please try again.",
+        });
+        return;
+      }
+
+      if (order.summary) {
+        setServerSummary(order.summary);
+      }
+
+      // Nothing left to pay after discounts - the booking is already created.
+      if (order.freeBooking) {
+        toast.success("Booking Confirmed!", { description: "Your slot has been reserved successfully." });
+        showBookingSuccess(order.bookingNumber || "", order.bookingId || "", 0);
+        return;
+      }
+
+      // The server prices independently, so it can legitimately disagree with
+      // this screen - an expired promo, a rate change, a happy hour that just
+      // ended. Never open checkout on a number the customer has not seen: show
+      // them the corrected breakdown and let them decide to pay it.
+      if (
+        order.summary &&
+        Math.abs(order.summary.totalAmount - displayedPricing.total) > 0.01
+      ) {
+        toast.warning("Price Updated", {
+          description: `This booking now comes to ₹${order.summary.totalAmount.toFixed(
+            2
+          )}. Please review and confirm.`,
+        });
+        return;
+      }
+
+      const response = await openRazorpayCheckout({
+        keyId: order.keyId!,
+        orderId: order.orderId!,
+        amount: order.amount!,
+        name: "Break Point Arena",
+        description: `${deviceTypeName || "Gaming Session"} • ${selectedSlot || ""}`.trim(),
+        prefill: {
+          name: customerName || existingCustomerData?.name || "",
+          email: customerEmail || existingCustomerData?.email || "",
+          contact: mobileNumber,
+        },
+      });
+
+      const confirmed = await confirmDeviceBookingPayment(response);
+
+      if (confirmed.success) {
+        toast.success("Payment Successful!", { description: "Your slot has been reserved." });
+        showBookingSuccess(
+          confirmed.bookingNumber || "",
+          confirmed.bookingId || "",
+          confirmed.amountPaid ?? order.amount ?? 0
+        );
+      } else {
+        toast.error("Booking Failed", {
+          description: confirmed.error || "Something went wrong. Please contact support.",
+        });
+      }
+    } catch (err) {
+      if (err instanceof RazorpayDismissedError) {
+        toast.info("Payment Cancelled", { description: "Your slot has not been booked." });
+      } else if (err instanceof RazorpayFailedError) {
+        toast.error("Payment Failed", { description: err.message });
+      } else {
+        toast.error("Payment Error", {
+          description: err instanceof Error ? err.message : "Something went wrong. Please try again.",
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
   };
 
   const handleNewBooking = () => {
@@ -594,32 +777,19 @@ export default function CustomerDetailsPage() {
             <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Price Breakdown</h4>
             <div className="space-y-2 text-sm">
               {(() => {
-                // Calculate duration - fallback to calculating from times if selectedDuration is missing
-                let durationInHours = 0;
-
-                if (selectedDuration && selectedDuration > 0) {
-                  durationInHours = selectedDuration / 60;
-                } else if (slotStartTime && slotEndTime) {
-                  // Fallback: calculate from start/end times
-                  const parseTime = (timeStr: string) => {
-                    const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-                    if (!match) return 0;
-                    let [, hours, minutes, period] = match;
-                    let hour = parseInt(hours);
-                    if (period.toUpperCase() === "PM" && hour !== 12) hour += 12;
-                    if (period.toUpperCase() === "AM" && hour === 12) hour = 0;
-                    return hour * 60 + parseInt(minutes);
-                  };
-                  const startMins = parseTime(slotStartTime);
-                  const endMins = parseTime(slotEndTime);
-                  durationInHours = (endMins - startMins) / 60;
-                }
-
-                const deviceCharges = hourlyRate! * durationInHours;
-                const extraPlayerCharges = (playerCount - includedPlayers) * extraPlayerCharge * durationInHours;
-                const addonsTotal = addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
-                const calculatedSubtotal = deviceCharges + extraPlayerCharges + addonsTotal;
-                const calculatedTotal = calculatedSubtotal - bookingState.subscriptionDiscount - bookingState.promoDiscount - bookingState.happyHourDiscount;
+                const {
+                  durationInHours,
+                  deviceCharges,
+                  extraPlayerCharges,
+                  addonsTotal,
+                  subtotal: calculatedSubtotal,
+                  total: calculatedTotal,
+                  subscriptionDiscount,
+                  promoDiscount,
+                  happyHourDiscount,
+                  happyHourRuleName,
+                  isServerPriced,
+                } = effectivePricing;
 
                 return (
                   <>
@@ -647,33 +817,33 @@ export default function CustomerDetailsPage() {
                       <span className="text-white font-bold">₹{calculatedSubtotal.toFixed(2)}</span>
                     </div>
 
-                    {bookingState.subscriptionDiscount > 0 && (
+                    {subscriptionDiscount > 0 && (
                       <div className="flex justify-between text-green-500">
                         <span className="flex items-center gap-1">
                           <CheckCircle2 className="h-3 w-3" />
                           Subscription Discount ({bookingState.subscriptionDiscountPercentage}%):
                         </span>
-                        <span className="font-bold">-₹{bookingState.subscriptionDiscount.toFixed(2)}</span>
+                        <span className="font-bold">-₹{subscriptionDiscount.toFixed(2)}</span>
                       </div>
                     )}
 
-                    {bookingState.promoDiscount > 0 && (
+                    {promoDiscount > 0 && (
                       <div className="flex justify-between text-primary">
                         <span className="flex items-center gap-1">
                           <Tag className="h-3 w-3" />
                           Promo Discount ({bookingState.promoCode}):
                         </span>
-                        <span className="font-bold">-₹{bookingState.promoDiscount.toFixed(2)}</span>
+                        <span className="font-bold">-₹{promoDiscount.toFixed(2)}</span>
                       </div>
                     )}
 
-                    {bookingState.happyHourDiscount > 0 && (
+                    {happyHourDiscount > 0 && (
                       <div className="flex justify-between text-yellow-400">
                         <span className="flex items-center gap-1">
                           <Sparkles className="h-3 w-3" />
-                          Happy Hour Discount{bookingState.happyHourRuleName ? ` (${bookingState.happyHourRuleName})` : ''}:
+                          Happy Hour Discount{happyHourRuleName ? ` (${happyHourRuleName})` : ''}:
                         </span>
-                        <span className="font-bold">-₹{bookingState.happyHourDiscount.toFixed(2)}</span>
+                        <span className="font-bold">-₹{happyHourDiscount.toFixed(2)}</span>
                       </div>
                     )}
 
@@ -681,6 +851,12 @@ export default function CustomerDetailsPage() {
                       <span className="text-white">Total Amount:</span>
                       <span className="text-primary text-lg">₹{calculatedTotal.toFixed(2)}</span>
                     </div>
+
+                    {isServerPriced && (
+                      <p className="text-[10px] text-zinc-600 pt-1">
+                        Confirmed price — this is exactly what you will be charged.
+                      </p>
+                    )}
                   </>
                 );
               })()}
@@ -688,7 +864,7 @@ export default function CustomerDetailsPage() {
           </div>
           <div className="space-y-2">
             <Button variant="gradient" onClick={handleConfirmBooking} disabled={isSubmitting} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
-              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "CONFIRM BOOKING"} <CheckCircle2 className="h-4 w-4" />
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "PAY & CONFIRM"} <CheckCircle2 className="h-4 w-4" />
             </Button>
             <Button type="button" onClick={() => customerExists ? setStep("phone") : setStep("details")} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
               ← BACK
@@ -744,16 +920,27 @@ export default function CustomerDetailsPage() {
             {playerCount > includedPlayers && (
               <div className="flex justify-between text-xs"><span className="text-zinc-600">Extra Players:</span> <span className="text-zinc-400">+₹{((playerCount - includedPlayers) * extraPlayerCharge * ((selectedDuration || 60) / 60)).toFixed(2)}</span></div>
             )}
-            {bookingState.subscriptionDiscount > 0 && (
-              <div className="flex justify-between text-xs text-green-500"><span>Subscription Discount ({bookingState.subscriptionDiscountPercentage}%):</span> <span>-₹{bookingState.subscriptionDiscount.toFixed(2)}</span></div>
+            {effectivePricing.subscriptionDiscount > 0 && (
+              <div className="flex justify-between text-xs text-green-500"><span>Subscription Discount ({bookingState.subscriptionDiscountPercentage}%):</span> <span>-₹{effectivePricing.subscriptionDiscount.toFixed(2)}</span></div>
             )}
-            {bookingState.promoDiscount > 0 && (
-              <div className="flex justify-between text-xs text-primary"><span>Promo Discount ({bookingState.promoCode}):</span> <span>-₹{bookingState.promoDiscount.toFixed(2)}</span></div>
+            {effectivePricing.promoDiscount > 0 && (
+              <div className="flex justify-between text-xs text-primary"><span>Promo Discount ({bookingState.promoCode}):</span> <span>-₹{effectivePricing.promoDiscount.toFixed(2)}</span></div>
             )}
-            {bookingState.happyHourDiscount > 0 && (
-              <div className="flex justify-between text-xs text-yellow-400"><span className="flex items-center gap-1"><Sparkles className="h-3 w-3" />Happy Hour Discount:</span> <span>-₹{bookingState.happyHourDiscount.toFixed(2)}</span></div>
+            {effectivePricing.happyHourDiscount > 0 && (
+              <div className="flex justify-between text-xs text-yellow-400"><span className="flex items-center gap-1"><Sparkles className="h-3 w-3" />Happy Hour Discount:</span> <span>-₹{effectivePricing.happyHourDiscount.toFixed(2)}</span></div>
             )}
-            <div className="flex justify-between border-t border-zinc-800 pt-2 font-black"><span className="text-zinc-500">Amount Paid:</span> <span className="text-white">₹{total}</span></div>
+            {/* Only ever reflects money the server confirmed as captured -
+                amountPaid comes back from payment verification, not this screen. */}
+            <div className="flex justify-between border-t border-zinc-800 pt-2 font-black">
+              <span className="text-zinc-500">{amountPaid > 0 ? "Amount Paid:" : "Amount Due:"}</span>
+              <span className="text-white">₹{amountPaid.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-zinc-500 text-xs">Payment Status:</span>
+              <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-green-500/15 text-green-400 border border-green-500/40">
+                {amountPaid > 0 ? "Paid Online" : "No Payment Due"}
+              </span>
+            </div>
           </div>
 
           {/* Action Buttons */}

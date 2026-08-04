@@ -27,6 +27,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhY
 # Razorpay Configuration (Test or Live)
 NEXT_PUBLIC_RAZORPAY_KEY_ID=your-razorpay-key-id
 RAZORPAY_KEY_SECRET=your-razorpay-key-secret
+RAZORPAY_WEBHOOK_SECRET=your-razorpay-webhook-secret
 
 # MSG91 Configuration
 MSG91_AUTH_KEY=your-msg91-auth-key
@@ -76,6 +77,28 @@ Go to your Vercel project settings:
 - Get your production keys from Razorpay dashboard
 - Get your MSG91 credentials and template IDs
 - Update the environment variables
+
+#### 3a. Razorpay webhook (REQUIRED — do not skip)
+
+Online payments are only half-safe without this. If a customer pays and closes
+the tab before the browser can call back, the webhook is what creates their
+booking. Skip it and that money is taken with nothing to show for it.
+
+1. Razorpay Dashboard → Settings → Webhooks → **Add New Webhook**
+2. URL: `https://your-production-domain.com/api/payment/webhook`
+3. Active Events: **`payment.captured`**
+4. Set a secret, then put the same value in `RAZORPAY_WEBHOOK_SECRET`
+5. Verify: the endpoint must return `503 {"error":"Webhook not configured"}`
+   when the secret is missing, and `400` on a bad signature. If you get a 503 in
+   production, the safety net is off.
+
+#### 3b. Enable auto-capture (REQUIRED)
+
+Razorpay Dashboard → Settings → Payment Capture → **Automatic**.
+
+Fulfilment only accepts `captured` payments. With manual capture, payments sit
+as `authorized`, no booking is ever created, and the authorisation voids after
+about 5 days.
 
 ### 4. Update Auth Redirect URLs in Supabase
 Go to: https://supabase.com/dashboard/project/zryhbmawjiubeiksatmf/auth/url-configuration

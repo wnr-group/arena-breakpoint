@@ -656,7 +656,21 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                                   <span className="font-semibold">₹{Number(booking.upi_amount).toLocaleString('en-IN')}</span>
                                 </div>
                               )}
+                              {Number(booking.online_amount || 0) > 0 && (
+                                <div className="flex justify-between">
+                                  <span>Online (Razorpay):</span>
+                                  <span className="font-semibold">₹{Number(booking.online_amount).toLocaleString('en-IN')}</span>
+                                </div>
+                              )}
                             </div>
+                            {/* Gateway reference, so staff can reconcile against the
+                                Razorpay dashboard when a customer queries a charge. */}
+                            {booking.razorpay_payment_id && (
+                              <div className="flex items-center justify-between gap-2 text-[11px] text-blue-300/60 border-t border-blue-500/20 pt-2">
+                                <span className="uppercase font-bold shrink-0">Payment ID</span>
+                                <span className="font-mono truncate">{booking.razorpay_payment_id}</span>
+                              </div>
+                            )}
                           </div>
                         )}
 

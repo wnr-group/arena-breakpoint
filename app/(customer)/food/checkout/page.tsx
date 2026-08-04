@@ -16,9 +16,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   addFoodOrderToBooking,
-  createStandaloneFoodOrder,
   validateMenuItems
 } from "../actions";
+import {
+  createFoodOrderPaymentOrder,
+  confirmFoodOrderPayment
+} from "../payment-actions";
+import {
+  openRazorpayCheckout,
+  loadRazorpayCheckout,
+  RazorpayDismissedError,
+  RazorpayFailedError,
+} from "@/lib/razorpay/checkout";
 import { checkCustomerExists } from "../../booking/actions";
 import { validatePromoCode, calculatePromoDiscount } from "../../booking/promo-actions";
 import {
@@ -70,6 +79,14 @@ export default function FoodCheckoutPage() {
   const [email, setEmail] = useState("");
   const [customerDob, setCustomerDob] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
+  const [amountPaid, setAmountPaid] = useState<number>(0);
+  // Authoritative breakdown from the pricing server action; wins over anything
+  // this screen computed once we have it.
+  const [serverSummary, setServerSummary] = useState<{
+    itemsTotal: number;
+    promoDiscount: number;
+    totalAmount: number;
+  } | null>(null);
   const [mounted, setMounted] = useState(false);
 
   // Promo Code States
@@ -86,6 +103,16 @@ export default function FoodCheckoutPage() {
   }, [bookingContext.customerPhone, bookingContext.customerName]);
 
 
+  // Warm up the Razorpay SDK once the customer starts checking out, so tapping
+  // "Pay" opens the checkout immediately. Not needed for the pay-at-counter tab.
+  useEffect(() => {
+    if ((step === "phone" || step === "details") && !bookingContext.bookingId) {
+      loadRazorpayCheckout().catch(() => {
+        /* Surfaced on the pay attempt instead of interrupting checkout. */
+      });
+    }
+  }, [step, bookingContext.bookingId]);
+
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = handleDobInput(e.target.value);
     setCustomerDob(formatted);
@@ -98,6 +125,12 @@ export default function FoodCheckoutPage() {
   const finalTotalAmount = useMemo(() => {
     return Math.max(0, cartTotal - promoDiscount);
   }, [cartTotal, promoDiscount]);
+
+  // What the customer is shown. Defers to the server's price the moment it has
+  // told us what it will charge.
+  const effectiveItemsTotal = serverSummary?.itemsTotal ?? cartTotal;
+  const effectivePromoDiscount = serverSummary?.promoDiscount ?? promoDiscount;
+  const effectiveTotal = serverSummary?.totalAmount ?? finalTotalAmount;
 
   const cartItemCount = useMemo(() => {
     return cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -226,9 +259,10 @@ export default function FoodCheckoutPage() {
       return;
     }
 
-    let result;
+    // Food added to an active device session goes on the customer's tab and is
+    // settled at the counter - no online payment for that path.
     if (bookingContext.bookingId) {
-      result = await addFoodOrderToBooking(
+      const result = await addFoodOrderToBooking(
         bookingContext.bookingId,
         cartItems.map((item) => ({
           menu_item_id: item.menu_item_id,
@@ -238,36 +272,106 @@ export default function FoodCheckoutPage() {
           price: item.price,
         }))
       );
-    } else {
-      result = await createStandaloneFoodOrder(
-        targetPhone,
-        targetName,
-        targetEmail,
-        dob,
-        cartItems.map((item) => ({
-          menu_item_id: item.menu_item_id,
-          name: item.name,
-          category: item.category,
-          quantity: item.quantity,
-          price: item.price,
-        })),
-        appliedPromoCode,
-        promoDiscount
-      );
+
+      if (result.success) {
+        if (bookingContext.bookingNumber) {
+          setOrderNumber(bookingContext.bookingNumber);
+        }
+        toast.success("Order Placed Successfully!", {
+          description: "Added to your session tab - pay at the counter.",
+        });
+        setStep("success");
+      } else {
+        toast.error("Order Failed", { description: result.error });
+      }
+
+      setIsSubmitting(false);
+      return;
     }
 
-    if (result.success) {
-      if ('bookingNumber' in result && result.bookingNumber) {
-        setOrderNumber(result.bookingNumber);
-      } else if (bookingContext.bookingNumber) {
-        setOrderNumber(bookingContext.bookingNumber);
+    try {
+      // The server re-prices the cart from the menu; this screen never dictates
+      // the amount charged.
+      const order = await createFoodOrderPaymentOrder({
+        phone: targetPhone,
+        name: targetName,
+        email: targetEmail,
+        dateOfBirth: dob,
+        items: cartItems.map((item) => ({
+          id: item.menu_item_id,
+          quantity: item.quantity,
+        })),
+        promoCode: appliedPromoCode,
+      });
+
+      if (!order.success) {
+        toast.error("Order Failed", { description: order.error });
+        return;
       }
-      toast.success("Order Placed Successfully!");
-      setStep("success");
-    } else {
-      toast.error("Order Failed", { description: result.error });
+
+      if (order.summary) {
+        setServerSummary(order.summary);
+      }
+
+      if (order.freeOrder) {
+        setOrderNumber(order.bookingNumber || "");
+        setAmountPaid(0);
+        toast.success("Order Placed Successfully!");
+        setStep("success");
+        return;
+      }
+
+      // The server prices the cart from the menu, so it can legitimately disagree
+      // with this screen - a price change, an expired promo, an item pulled from
+      // sale. Never open checkout on a number the customer has not seen.
+      if (
+        order.summary &&
+        Math.abs(order.summary.totalAmount - finalTotalAmount) > 0.01
+      ) {
+        toast.warning("Price Updated", {
+          description: `Your order now comes to ₹${formatCurrency(
+            order.summary.totalAmount
+          )}. Please review and confirm.`,
+        });
+        return;
+      }
+
+      const response = await openRazorpayCheckout({
+        keyId: order.keyId!,
+        orderId: order.orderId!,
+        amount: order.amount!,
+        name: "Break Point Arena",
+        description: `Food & Drinks (${cartItems.length} item${cartItems.length > 1 ? "s" : ""})`,
+        prefill: {
+          name: targetName,
+          email: targetEmail || "",
+          contact: targetPhone,
+        },
+      });
+
+      const confirmed = await confirmFoodOrderPayment(response);
+
+      if (confirmed.success) {
+        setOrderNumber(confirmed.bookingNumber || "");
+        setAmountPaid(confirmed.amountPaid ?? order.amount ?? 0);
+        toast.success("Payment Successful!", { description: "Your order is being prepared." });
+        setStep("success");
+      } else {
+        toast.error("Order Failed", { description: confirmed.error });
+      }
+    } catch (err) {
+      if (err instanceof RazorpayDismissedError) {
+        toast.info("Payment Cancelled", { description: "Your order has not been placed." });
+      } else if (err instanceof RazorpayFailedError) {
+        toast.error("Payment Failed", { description: err.message });
+      } else {
+        toast.error("Payment Error", {
+          description: err instanceof Error ? err.message : "Something went wrong. Please try again.",
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   const handleNewOrder = () => {
@@ -360,20 +464,25 @@ export default function FoodCheckoutPage() {
             <Card className="bg-[#121214] border border-zinc-900 p-6 space-y-5 rounded-2xl shadow-2xl glow-box-strong">
               <h3 className="text-sm font-black uppercase text-zinc-200 tracking-wider pb-2 border-b border-zinc-900/60">Order Summary</h3>
               <div className="space-y-3.5 text-xs text-zinc-400">
-                <div className="flex justify-between"><span>Subtotal</span><span className="text-zinc-200 font-mono font-bold">₹{formatCurrency(cartTotal)}</span></div>
-                {promoDiscount > 0 && (
+                <div className="flex justify-between"><span>Subtotal</span><span className="text-zinc-200 font-mono font-bold">₹{formatCurrency(effectiveItemsTotal)}</span></div>
+                {effectivePromoDiscount > 0 && (
                   <div className="flex justify-between text-primary font-bold">
                     <span className="flex items-center gap-1">
                       <Tag className="h-3 w-3" />
                       Promo Discount ({appliedPromoCode}):
                     </span>
-                    <span className="font-mono">-₹{formatCurrency(promoDiscount)}</span>
+                    <span className="font-mono">-₹{formatCurrency(effectivePromoDiscount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-baseline font-black text-white pt-4 border-t border-t-zinc-900">
                   <span className="text-xs uppercase text-zinc-400 font-black">Total</span>
-                  <span className="text-2xl text-primary font-mono tracking-tight">₹{formatCurrency(finalTotalAmount)}</span>
+                  <span className="text-2xl text-primary font-mono tracking-tight">₹{formatCurrency(effectiveTotal)}</span>
                 </div>
+                {serverSummary && (
+                  <p className="text-[10px] text-zinc-600">
+                    Confirmed price — this is exactly what you will be charged.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5 pt-1">
@@ -539,7 +648,7 @@ export default function FoodCheckoutPage() {
 
             <div className="pt-4 space-y-2">
               <Button variant="gradient" type="submit" disabled={isSubmitting} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
-                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "PLACE FOOD ORDER"} <ChevronRight className="h-4 w-4 stroke-[3]" />
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "PAY & PLACE ORDER"} <ChevronRight className="h-4 w-4 stroke-[3]" />
               </Button>
             </div>
           </form>
@@ -605,19 +714,38 @@ export default function FoodCheckoutPage() {
             <div className="flex justify-between"><span className="text-zinc-500">Customer:</span> <span className="text-white font-bold">{name}</span></div>
             <div className="flex justify-between"><span className="text-zinc-500">Phone:</span> <span className="text-primary font-bold">+91 {phone}</span></div>
             <div className="flex justify-between"><span className="text-zinc-500">Items Count:</span> <span className="text-white font-bold">{cartItemCount} items</span></div>
-            <div className="flex justify-between"><span className="text-zinc-500">Subtotal:</span> <span className="text-white font-bold">₹{formatCurrency(cartTotal)}</span></div>
-            {promoDiscount > 0 && (
+            <div className="flex justify-between"><span className="text-zinc-500">Subtotal:</span> <span className="text-white font-bold">₹{formatCurrency(effectiveItemsTotal)}</span></div>
+            {effectivePromoDiscount > 0 && (
               <div className="flex justify-between text-xs text-green-500">
                 <span className="flex items-center gap-1">
                   <Tag className="h-3 w-3" />
                   Promo Discount ({appliedPromoCode}):
                 </span>
-                <span className="font-bold">-₹{formatCurrency(promoDiscount)}</span>
+                <span className="font-bold">-₹{formatCurrency(effectivePromoDiscount)}</span>
               </div>
             )}
+            {/* On-tab orders are settled at the counter, so they are explicitly
+                NOT presented as paid. Only amountPaid - which comes back from
+                server-side payment verification - counts as money received. */}
             <div className="flex justify-between border-t border-zinc-800 pt-2 font-black">
-              <span className="text-zinc-500">Amount Paid:</span>
-              <span className="text-white">₹{formatCurrency(finalTotalAmount)}</span>
+              <span className="text-zinc-500">
+                {bookingContext.bookingId ? "Added To Tab:" : "Amount Paid:"}
+              </span>
+              <span className="text-white">
+                ₹{formatCurrency(bookingContext.bookingId ? effectiveTotal : amountPaid)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-zinc-500 text-xs">Payment Status:</span>
+              {bookingContext.bookingId ? (
+                <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/40">
+                  Pay At Counter
+                </span>
+              ) : (
+                <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-green-500/15 text-green-400 border border-green-500/40">
+                  {amountPaid > 0 ? "Paid Online" : "No Payment Due"}
+                </span>
+              )}
             </div>
           </div>
 
