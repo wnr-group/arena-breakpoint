@@ -11,7 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShieldCheck, Phone, ChevronRight, User, Mail, CheckCircle2, QrCode, Cake, UtensilsCrossed, Tag, Loader2, Sparkles } from 'lucide-react';
 import { toast } from "sonner";
-import { checkCustomerExists, confirmBooking } from "../actions";
+import { checkCustomerExists } from "../actions";
+import { createDeviceBookingPaymentOrder, confirmDeviceBookingPayment } from "../payment-actions";
+import {
+  openRazorpayCheckout,
+  loadRazorpayCheckout,
+  RazorpayDismissedError,
+  RazorpayFailedError,
+} from "@/lib/razorpay/checkout";
 import { validatePromoCode, calculatePromoDiscount } from "../promo-actions";
 import { QRCodeSVG } from "qrcode.react";
 import { generateDurationOptions } from "@/lib/utils/timeSlots";
@@ -23,7 +30,7 @@ export default function CustomerDetailsPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const bookingState = useAppSelector((state) => state.booking);
-  const { deviceTypeName, selectedSlot, deviceTypeId, selectedDate, slotStartTime, slotEndTime, selectedDuration, hourlyRate, addons, total, subtotal, playerCount, includedPlayers, extraPlayerCharge } = bookingState;
+  const { deviceTypeName, selectedSlot, deviceTypeId, selectedDate, slotStartTime, slotEndTime, selectedDuration, hourlyRate, addons, subtotal, playerCount, includedPlayers, extraPlayerCharge } = bookingState;
 
   const [step, setStep] = useState<Step>("phone");
   const [mobileNumber, setMobileNumber] = useState("");
@@ -36,6 +43,7 @@ export default function CustomerDetailsPage() {
   const [mounted, setMounted] = useState(false);
   const [bookingNumber, setBookingNumber] = useState<string>("");
   const [bookingId, setBookingId] = useState<string>("");
+  const [amountPaid, setAmountPaid] = useState<number>(0);
   const [promoCode, setPromoCodeInput] = useState("");
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   const allDurations = useMemo(() => generateDurationOptions(), []);
@@ -52,6 +60,16 @@ export default function CustomerDetailsPage() {
       if (document.documentElement) {
         document.documentElement.scrollTop = 0;
       }
+    }
+  }, [step]);
+
+  // Warm up the Razorpay SDK once the customer reaches the summary, so tapping
+  // "Pay & Confirm" opens the checkout immediately.
+  useEffect(() => {
+    if (step === "summary") {
+      loadRazorpayCheckout().catch(() => {
+        /* Surfaced on the pay attempt instead of interrupting the summary. */
+      });
     }
   }, [step]);
 
@@ -279,6 +297,18 @@ export default function CustomerDetailsPage() {
     toast.info("Promo code removed");
   };
 
+  const showBookingSuccess = (
+    resultBookingNumber: string,
+    resultBookingId: string,
+    paid: number
+  ) => {
+    setBookingNumber(resultBookingNumber);
+    setBookingId(resultBookingId);
+    setAmountPaid(paid);
+    dispatch(clearSlotTimer()); // Clear timer and booking state after successful confirmation
+    setStep("success");
+  };
+
   const handleConfirmBooking = async () => {
     setIsSubmitting(true);
 
@@ -290,44 +320,77 @@ export default function CustomerDetailsPage() {
       dobForDB = existingCustomerData.date_of_birth;
     }
 
-    const result = await confirmBooking({
-      phone: mobileNumber,
-      name: customerName || existingCustomerData?.name,
-      email: customerEmail || existingCustomerData?.email || "",
-      date_of_birth: dobForDB,
-      deviceTypeId: deviceTypeId!,
-      deviceTypeName: deviceTypeName!,
-      selectedDate: selectedDate!,
-      selectedSlot: selectedSlot!,
-      slotStartTime: slotStartTime!,
-      slotEndTime: slotEndTime!,
-      selectedDuration: selectedDuration!,
-      hourlyRate: hourlyRate!,
-      addons: addons,
-      subtotal: subtotal,
-      total: total,
-      playerCount: playerCount,
-      includedPlayers: includedPlayers,
-      extraPlayerCharge: extraPlayerCharge,
-      subscriptionDiscount: bookingState.subscriptionDiscount,
-      promoDiscount: bookingState.promoDiscount,
-      promoCode: bookingState.promoCode,
-      happyHourDiscount: bookingState.happyHourDiscount,
-      happyHourRuleId: bookingState.happyHourRuleId,
-      durationMinutes: selectedDuration || 60
-    });
+    try {
+      // The server re-prices the booking from the database; the amount charged
+      // never comes from this screen.
+      const order = await createDeviceBookingPaymentOrder({
+        phone: mobileNumber,
+        name: customerName || existingCustomerData?.name,
+        email: customerEmail || existingCustomerData?.email || "",
+        dateOfBirth: dobForDB,
+        deviceTypeId: deviceTypeId!,
+        selectedDate: selectedDate!,
+        slotStartTime: slotStartTime!,
+        durationMinutes: selectedDuration || 60,
+        playerCount: playerCount,
+        addons: addons.map((addon) => ({ id: addon.id, quantity: addon.quantity })),
+        promoCode: bookingState.promoCode,
+      });
 
-    if (result.success) {
-      setBookingNumber(result.bookingNumber || "");
-      setBookingId(result.bookingId || "");
-      toast.success("Booking Confirmed!", { description: "Your slot has been reserved successfully." });
-      dispatch(clearSlotTimer()); // Clear timer and booking state after successful confirmation
-      setStep("success");
-    } else {
-      toast.error("Booking Failed", { description: result.error || "Something went wrong. Please try again." });
+      if (!order.success) {
+        toast.error("Booking Failed", {
+          description: order.error || "Something went wrong. Please try again.",
+        });
+        return;
+      }
+
+      // Nothing left to pay after discounts - the booking is already created.
+      if (order.freeBooking) {
+        toast.success("Booking Confirmed!", { description: "Your slot has been reserved successfully." });
+        showBookingSuccess(order.bookingNumber || "", order.bookingId || "", 0);
+        return;
+      }
+
+      const response = await openRazorpayCheckout({
+        keyId: order.keyId!,
+        orderId: order.orderId!,
+        amount: order.amount!,
+        name: "Break Point Arena",
+        description: `${deviceTypeName || "Gaming Session"} • ${selectedSlot || ""}`.trim(),
+        prefill: {
+          name: customerName || existingCustomerData?.name || "",
+          email: customerEmail || existingCustomerData?.email || "",
+          contact: mobileNumber,
+        },
+      });
+
+      const confirmed = await confirmDeviceBookingPayment(response);
+
+      if (confirmed.success) {
+        toast.success("Payment Successful!", { description: "Your slot has been reserved." });
+        showBookingSuccess(
+          confirmed.bookingNumber || "",
+          confirmed.bookingId || "",
+          confirmed.amountPaid ?? order.amount ?? 0
+        );
+      } else {
+        toast.error("Booking Failed", {
+          description: confirmed.error || "Something went wrong. Please contact support.",
+        });
+      }
+    } catch (err) {
+      if (err instanceof RazorpayDismissedError) {
+        toast.info("Payment Cancelled", { description: "Your slot has not been booked." });
+      } else if (err instanceof RazorpayFailedError) {
+        toast.error("Payment Failed", { description: err.message });
+      } else {
+        toast.error("Payment Error", {
+          description: err instanceof Error ? err.message : "Something went wrong. Please try again.",
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
   };
 
   const handleNewBooking = () => {
@@ -688,7 +751,7 @@ export default function CustomerDetailsPage() {
           </div>
           <div className="space-y-2">
             <Button variant="gradient" onClick={handleConfirmBooking} disabled={isSubmitting} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
-              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "CONFIRM BOOKING"} <CheckCircle2 className="h-4 w-4" />
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "PAY & CONFIRM"} <CheckCircle2 className="h-4 w-4" />
             </Button>
             <Button type="button" onClick={() => customerExists ? setStep("phone") : setStep("details")} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
               ← BACK
@@ -753,7 +816,7 @@ export default function CustomerDetailsPage() {
             {bookingState.happyHourDiscount > 0 && (
               <div className="flex justify-between text-xs text-yellow-400"><span className="flex items-center gap-1"><Sparkles className="h-3 w-3" />Happy Hour Discount:</span> <span>-₹{bookingState.happyHourDiscount.toFixed(2)}</span></div>
             )}
-            <div className="flex justify-between border-t border-zinc-800 pt-2 font-black"><span className="text-zinc-500">Amount Paid:</span> <span className="text-white">₹{total}</span></div>
+            <div className="flex justify-between border-t border-zinc-800 pt-2 font-black"><span className="text-zinc-500">Amount Paid:</span> <span className="text-white">₹{amountPaid.toFixed(2)}</span></div>
           </div>
 
           {/* Action Buttons */}

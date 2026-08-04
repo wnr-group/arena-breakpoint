@@ -419,6 +419,7 @@ export async function getRevenueReports(filters?: ReportFilters) {
         cash_amount,
         card_amount,
         upi_amount,
+        online_amount,
         payment_status,
         booking_source,
         status,
@@ -464,6 +465,7 @@ export async function getRevenueReports(filters?: ReportFilters) {
     let totalCash = 0;
     let totalCard = 0;
     let totalUpi = 0;
+    let totalOnline = 0;
 
     // Revenue by source
     const sourceBreakdown: Record<string, {
@@ -528,6 +530,7 @@ export async function getRevenueReports(filters?: ReportFilters) {
       totalCash += Number(booking.cash_amount || 0);
       totalCard += Number(booking.card_amount || 0);
       totalUpi += Number(booking.upi_amount || 0);
+      totalOnline += Number(booking.online_amount || 0);
 
       // Count paid and partial bookings
       if (booking.payment_status === 'paid') {
@@ -582,9 +585,11 @@ export async function getRevenueReports(filters?: ReportFilters) {
         totalCash,
         totalCard,
         totalUpi,
+        totalOnline,
         cashPercentage: totalRevenue ? (totalCash / totalRevenue) * 100 : 0,
         cardPercentage: totalRevenue ? (totalCard / totalRevenue) * 100 : 0,
         upiPercentage: totalRevenue ? (totalUpi / totalRevenue) * 100 : 0,
+        onlinePercentage: totalRevenue ? (totalOnline / totalRevenue) * 100 : 0,
         foodRevenuePercentage: totalRevenue ? (foodRevenue / totalRevenue) * 100 : 0
       },
       sourceBreakdown: sourceBreakdownArray,

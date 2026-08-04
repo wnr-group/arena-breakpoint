@@ -1,71 +1,102 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyRazorpaySignature } from '@/lib/razorpay/client'
-import { supabaseAdmin } from '@/lib/supabase/server'
-import { sendBookingConfirmation } from '@/lib/msg91/client'
+import crypto from 'crypto'
+import { settleWebhookPayment } from '@/lib/payments/verify'
+
+/**
+ * Razorpay webhook - the safety net for the customer payment flows.
+ *
+ * If a customer pays and then closes the tab before the browser can call back,
+ * the booking would otherwise never be created even though the money moved. This
+ * endpoint fulfils those orders independently.
+ *
+ * Fulfilment is idempotent (see `claimPaidOrder`), so the webhook and the browser
+ * callback racing each other is harmless - whichever arrives first wins and the
+ * other reports the same booking.
+ *
+ * Setup: Razorpay Dashboard -> Settings -> Webhooks
+ *   URL:     https://<your-domain>/api/payment/webhook
+ *   Events:  payment.captured
+ *   Secret:  must match RAZORPAY_WEBHOOK_SECRET
+ */
+
+const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET
+
+function isValidWebhookSignature(rawBody: string, signature: string): boolean {
+  const expected = crypto
+    .createHmac('sha256', webhookSecret!)
+    .update(rawBody)
+    .digest('hex')
+
+  const expectedBuffer = Buffer.from(expected, 'utf8')
+  const receivedBuffer = Buffer.from(signature, 'utf8')
+
+  if (expectedBuffer.length !== receivedBuffer.length) return false
+
+  return crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
+}
 
 export async function POST(request: NextRequest) {
+  if (!webhookSecret) {
+    console.error('Razorpay webhook received but RAZORPAY_WEBHOOK_SECRET is not set')
+    return NextResponse.json({ error: 'Webhook not configured' }, { status: 503 })
+  }
+
+  // The signature covers the raw bytes, so the body must be read as text and not
+  // re-serialised from a parsed object.
+  const rawBody = await request.text()
+  const signature = request.headers.get('x-razorpay-signature')
+
+  if (!signature || !isValidWebhookSignature(rawBody, signature)) {
+    console.error('Razorpay webhook signature verification failed')
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+  }
+
+  let event: any
   try {
-    const body = await request.json()
-    const signature = request.headers.get('x-razorpay-signature')
+    event = JSON.parse(rawBody)
+  } catch {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
+  }
 
-    if (!signature) {
-      return NextResponse.json(
-        { error: 'Missing signature' },
-        { status: 400 }
-      )
+  // Only captured payments create bookings. Other events are acknowledged so
+  // Razorpay stops retrying them.
+  if (event?.event !== 'payment.captured') {
+    return NextResponse.json({ received: true, ignored: event?.event ?? 'unknown' })
+  }
+
+  const payment = event?.payload?.payment?.entity
+  const orderId = payment?.order_id
+  const paymentId = payment?.id
+
+  if (!orderId || !paymentId) {
+    return NextResponse.json({ error: 'Missing order or payment id' }, { status: 400 })
+  }
+
+  try {
+    const result = await settleWebhookPayment(orderId, paymentId)
+
+    if (!result.success) {
+      console.error(`Webhook fulfilment failed for order ${orderId}: ${result.error}`)
+
+      // Transient failures (database unreachable, capture not propagated yet, a
+      // fulfilment still in flight) earn a 5xx so Razorpay redelivers the event.
+      if (result.retryable) {
+        return NextResponse.json({ received: true, fulfilled: false, retry: true }, { status: 503 })
+      }
+
+      // Anything terminal - deliberately rejected, already refunded - is
+      // acknowledged so Razorpay stops retrying it.
+      return NextResponse.json({ received: true, fulfilled: false })
     }
 
-    // Verify signature
-    const isValid = verifyRazorpaySignature(
-      body.order_id,
-      body.payment_id,
-      signature
-    )
-
-    if (!isValid) {
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 400 }
-      )
-    }
-
-    // Payment verified, update booking
-    const { data: booking, error: bookingError } = await supabaseAdmin
-      .from('bookings')
-      .update({
-        status: 'confirmed',
-        payment_id: body.payment_id,
-        payment_status: 'paid',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('booking_id', body.order_id)
-      .select()
-      .single()
-
-    if (bookingError || !booking) {
-      console.error('Failed to update booking:', bookingError)
-      return NextResponse.json(
-        { error: 'Booking not found' },
-        { status: 404 }
-      )
-    }
-
-    // Send confirmation SMS
-    await sendBookingConfirmation({
-      phone: booking.phone,
-      bookingId: booking.booking_id,
-      deviceName: booking.device_name,
-      date: booking.slot_date,
-      time: booking.slot_time,
-      qrCodeUrl: `${process.env.NEXT_PUBLIC_APP_URL}/booking/${booking.booking_id}`,
+    return NextResponse.json({
+      received: true,
+      fulfilled: true,
+      bookingNumber: result.bookingNumber,
     })
-
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Payment webhook error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+  } catch (err) {
+    console.error('Razorpay webhook error:', err)
+    // A 500 tells Razorpay to retry, which is what we want for a transient fault.
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

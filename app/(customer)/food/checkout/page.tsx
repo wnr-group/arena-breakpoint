@@ -16,9 +16,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   addFoodOrderToBooking,
-  createStandaloneFoodOrder,
   validateMenuItems
 } from "../actions";
+import {
+  createFoodOrderPaymentOrder,
+  confirmFoodOrderPayment
+} from "../payment-actions";
+import {
+  openRazorpayCheckout,
+  loadRazorpayCheckout,
+  RazorpayDismissedError,
+  RazorpayFailedError,
+} from "@/lib/razorpay/checkout";
 import { checkCustomerExists } from "../../booking/actions";
 import { validatePromoCode, calculatePromoDiscount } from "../../booking/promo-actions";
 import {
@@ -70,6 +79,7 @@ export default function FoodCheckoutPage() {
   const [email, setEmail] = useState("");
   const [customerDob, setCustomerDob] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
+  const [amountPaid, setAmountPaid] = useState<number>(0);
   const [mounted, setMounted] = useState(false);
 
   // Promo Code States
@@ -85,6 +95,16 @@ export default function FoodCheckoutPage() {
     if (bookingContext.customerDob) setCustomerDob(bookingContext.customerDob);
   }, [bookingContext.customerPhone, bookingContext.customerName]);
 
+
+  // Warm up the Razorpay SDK once the customer starts checking out, so tapping
+  // "Pay" opens the checkout immediately. Not needed for the pay-at-counter tab.
+  useEffect(() => {
+    if ((step === "phone" || step === "details") && !bookingContext.bookingId) {
+      loadRazorpayCheckout().catch(() => {
+        /* Surfaced on the pay attempt instead of interrupting checkout. */
+      });
+    }
+  }, [step, bookingContext.bookingId]);
 
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = handleDobInput(e.target.value);
@@ -226,9 +246,10 @@ export default function FoodCheckoutPage() {
       return;
     }
 
-    let result;
+    // Food added to an active device session goes on the customer's tab and is
+    // settled at the counter - no online payment for that path.
     if (bookingContext.bookingId) {
-      result = await addFoodOrderToBooking(
+      const result = await addFoodOrderToBooking(
         bookingContext.bookingId,
         cartItems.map((item) => ({
           menu_item_id: item.menu_item_id,
@@ -238,36 +259,87 @@ export default function FoodCheckoutPage() {
           price: item.price,
         }))
       );
-    } else {
-      result = await createStandaloneFoodOrder(
-        targetPhone,
-        targetName,
-        targetEmail,
-        dob,
-        cartItems.map((item) => ({
-          menu_item_id: item.menu_item_id,
-          name: item.name,
-          category: item.category,
-          quantity: item.quantity,
-          price: item.price,
-        })),
-        appliedPromoCode,
-        promoDiscount
-      );
+
+      if (result.success) {
+        if (bookingContext.bookingNumber) {
+          setOrderNumber(bookingContext.bookingNumber);
+        }
+        toast.success("Order Placed Successfully!", {
+          description: "Added to your session tab - pay at the counter.",
+        });
+        setStep("success");
+      } else {
+        toast.error("Order Failed", { description: result.error });
+      }
+
+      setIsSubmitting(false);
+      return;
     }
 
-    if (result.success) {
-      if ('bookingNumber' in result && result.bookingNumber) {
-        setOrderNumber(result.bookingNumber);
-      } else if (bookingContext.bookingNumber) {
-        setOrderNumber(bookingContext.bookingNumber);
+    try {
+      // The server re-prices the cart from the menu; this screen never dictates
+      // the amount charged.
+      const order = await createFoodOrderPaymentOrder({
+        phone: targetPhone,
+        name: targetName,
+        email: targetEmail,
+        dateOfBirth: dob,
+        items: cartItems.map((item) => ({
+          id: item.menu_item_id,
+          quantity: item.quantity,
+        })),
+        promoCode: appliedPromoCode,
+      });
+
+      if (!order.success) {
+        toast.error("Order Failed", { description: order.error });
+        return;
       }
-      toast.success("Order Placed Successfully!");
-      setStep("success");
-    } else {
-      toast.error("Order Failed", { description: result.error });
+
+      if (order.freeOrder) {
+        setOrderNumber(order.bookingNumber || "");
+        setAmountPaid(0);
+        toast.success("Order Placed Successfully!");
+        setStep("success");
+        return;
+      }
+
+      const response = await openRazorpayCheckout({
+        keyId: order.keyId!,
+        orderId: order.orderId!,
+        amount: order.amount!,
+        name: "Break Point Arena",
+        description: `Food & Drinks (${cartItems.length} item${cartItems.length > 1 ? "s" : ""})`,
+        prefill: {
+          name: targetName,
+          email: targetEmail || "",
+          contact: targetPhone,
+        },
+      });
+
+      const confirmed = await confirmFoodOrderPayment(response);
+
+      if (confirmed.success) {
+        setOrderNumber(confirmed.bookingNumber || "");
+        setAmountPaid(confirmed.amountPaid ?? order.amount ?? 0);
+        toast.success("Payment Successful!", { description: "Your order is being prepared." });
+        setStep("success");
+      } else {
+        toast.error("Order Failed", { description: confirmed.error });
+      }
+    } catch (err) {
+      if (err instanceof RazorpayDismissedError) {
+        toast.info("Payment Cancelled", { description: "Your order has not been placed." });
+      } else if (err instanceof RazorpayFailedError) {
+        toast.error("Payment Failed", { description: err.message });
+      } else {
+        toast.error("Payment Error", {
+          description: err instanceof Error ? err.message : "Something went wrong. Please try again.",
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   const handleNewOrder = () => {
@@ -539,7 +611,7 @@ export default function FoodCheckoutPage() {
 
             <div className="pt-4 space-y-2">
               <Button variant="gradient" type="submit" disabled={isSubmitting} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
-                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "PLACE FOOD ORDER"} <ChevronRight className="h-4 w-4 stroke-[3]" />
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "PAY & PLACE ORDER"} <ChevronRight className="h-4 w-4 stroke-[3]" />
               </Button>
             </div>
           </form>
@@ -616,8 +688,12 @@ export default function FoodCheckoutPage() {
               </div>
             )}
             <div className="flex justify-between border-t border-zinc-800 pt-2 font-black">
-              <span className="text-zinc-500">Amount Paid:</span>
-              <span className="text-white">₹{formatCurrency(finalTotalAmount)}</span>
+              <span className="text-zinc-500">
+                {bookingContext.bookingId ? "Added To Tab:" : "Amount Paid:"}
+              </span>
+              <span className="text-white">
+                ₹{formatCurrency(bookingContext.bookingId ? finalTotalAmount : amountPaid)}
+              </span>
             </div>
           </div>
 
