@@ -51,7 +51,7 @@ export function SoundSettings() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="p-2 hover:text-white transition-colors duration-300 relative"
+          className="p-2 hover:text-[#111115] transition-colors duration-300 relative"
           aria-label="Sound settings"
         >
           {soundEnabled ? (
@@ -64,11 +64,11 @@ export function SoundSettings() {
 
       <DropdownMenuContent
         align="end"
-        className="w-72 bg-[var(--background)] border-[#27272a] p-4"
+        className="w-72 bg-[var(--background)] border-[#e4e4e7] p-4"
       >
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-black uppercase text-white">
+            <h3 className="text-sm font-black uppercase text-[#111115]">
               Sound Settings
             </h3>
           </div>
@@ -117,7 +117,7 @@ export function SoundSettings() {
             </>
           )}
 
-          <p className="text-[10px] text-muted-content pt-2 border-t border-[#27272a]">
+          <p className="text-[10px] text-muted-content pt-2 border-t border-[#e4e4e7]">
             Sounds play for new bookings, food orders, and notifications
           </p>
         </div>

@@ -29,7 +29,7 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn(
-        "bg-[#121212] group/calendar p-4 [--cell-size:2.2rem] select-none text-white",
+        "bg-white group/calendar p-4 [--cell-size:2.2rem] select-none text-[#111115]",
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
         String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
         className
@@ -53,16 +53,16 @@ function Calendar({
         ),
         button_previous: cn(
           buttonVariants({ variant: buttonVariant }),
-          "h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-800 rounded-lg p-0 aria-disabled:opacity-30",
+          "h-8 w-8 text-[#52525b] hover:text-[#111115] hover:bg-[#e4e4e7] border border-[#e4e4e7] rounded-lg p-0 aria-disabled:opacity-30",
           defaultClassNames.button_previous
         ),
         button_next: cn(
           buttonVariants({ variant: buttonVariant }),
-          "h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-800 rounded-lg p-0 aria-disabled:opacity-30",
+          "h-8 w-8 text-[#52525b] hover:text-[#111115] hover:bg-[#e4e4e7] border border-[#e4e4e7] rounded-lg p-0 aria-disabled:opacity-30",
           defaultClassNames.button_next
         ),
         month_caption: cn(
-          "flex h-8 w-full items-center justify-center px-8 font-black text-sm uppercase tracking-wide text-white",
+          "flex h-8 w-full items-center justify-center px-8 font-black text-sm uppercase tracking-wide text-[#111115]",
           defaultClassNames.month_caption
         ),
         dropdowns: cn(
@@ -70,27 +70,27 @@ function Calendar({
           defaultClassNames.dropdowns
         ),
         dropdown_root: cn(
-          "border-zinc-800 shadow-sm relative rounded-md border bg-zinc-950",
+          "border-[#e4e4e7] shadow-sm relative rounded-md border bg-white",
           defaultClassNames.dropdown_root
         ),
         dropdown: cn(
-          "bg-zinc-900 absolute inset-0 opacity-0 cursor-pointer",
+          "bg-[#f4f4f5] absolute inset-0 opacity-0 cursor-pointer",
           defaultClassNames.dropdown
         ),
         caption_label: cn(
-          "select-none font-black text-sm uppercase tracking-wider text-zinc-200",
+          "select-none font-black text-sm uppercase tracking-wider text-[#111115]",
           captionLayout === "label"
             ? "text-sm"
-            : "[&>svg]:text-zinc-500 flex h-8 items-center gap-1 rounded-md pl-2 pr-1 text-sm [&>svg]:size-3.5",
+            : "[&>svg]:text-[#52525b] flex h-8 items-center gap-1 rounded-md pl-2 pr-1 text-sm [&>svg]:size-3.5",
           defaultClassNames.caption_label
         ),
         
         // 💡 FIXED PROPERTY NAME: Changed from 'table' to 'month_grid' to satisfy react-day-picker v9 typings
         month_grid: "w-full border-collapse space-y-1",
         
-        weekdays: cn("flex justify-between border-b border-zinc-900 pb-2 mb-1", defaultClassNames.weekdays),
+        weekdays: cn("flex justify-between border-b border-[#e4e4e7] pb-2 mb-1", defaultClassNames.weekdays),
         weekday: cn(
-          "text-zinc-500 flex-1 select-none rounded-md text-[10px] font-black uppercase text-center tracking-widest",
+          "text-[#52525b] flex-1 select-none rounded-md text-[10px] font-black uppercase text-center tracking-widest",
           defaultClassNames.weekday
         ),
         week: cn("mt-1 flex w-full justify-between gap-1", defaultClassNames.week),
@@ -99,7 +99,7 @@ function Calendar({
           defaultClassNames.week_number_header
         ),
         week_number: cn(
-          "text-zinc-600 select-none text-[0.8rem]",
+          "text-[#52525b] select-none text-[0.8rem]",
           defaultClassNames.week_number
         ),
         day: cn(
@@ -110,7 +110,7 @@ function Calendar({
           "bg-primary/20 rounded-l-md",
           defaultClassNames.range_start
         ),
-        range_middle: cn("bg-zinc-900 text-white rounded-none", defaultClassNames.range_middle),
+        range_middle: cn("bg-[#e4e4e7] text-[#111115] rounded-none", defaultClassNames.range_middle),
         range_end: cn("bg-primary/20 rounded-r-md", defaultClassNames.range_end),
         
         // Custom interactive visual matching your exact amber styling rules
@@ -119,11 +119,11 @@ function Calendar({
           defaultClassNames.today
         ),
         outside: cn(
-          "text-zinc-700 aria-selected:text-zinc-500 pointer-events-none",
+          "text-[#a1a1aa] aria-selected:text-[#71717a] pointer-events-none",
           defaultClassNames.outside
         ),
         disabled: cn(
-          "text-zinc-800 opacity-40 pointer-events-none cursor-not-allowed",
+          "text-[#a1a1aa] opacity-40 pointer-events-none cursor-not-allowed",
           defaultClassNames.disabled
         ),
         hidden: cn("invisible", defaultClassNames.hidden),
@@ -206,10 +206,10 @@ function CalendarDayButton({
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
       className={cn(
-        // Custom data selectors matching the Break Point Arena amber/gold look
+        // Custom data selectors matching the Arena OS amber/gold look
         "data-[selected-single=true]:bg-primary data-[selected-single=true]:text-black data-[selected-single=true]:font-black text-xs transition-all duration-200",
         "data-[range-start=true]:bg-primary data-[range-start=true]:text-black data-[range-end=true]:bg-primary data-[range-end=true]:text-black",
-        "hover:bg-primary/20 hover:text-white rounded-md",
+        "hover:bg-primary/20 hover:text-[#111115] rounded-md",
         defaultClassNames.day,
         className
       )}

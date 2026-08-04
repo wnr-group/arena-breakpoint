@@ -119,10 +119,10 @@ export function AddHappyHourModal({ open, setOpen, onFormSuccess }: AddModalProp
 
   return (
     <Dialog open={open} onOpenChange={(val) => !isSubmitting && setOpen(val)}>
-      <DialogContent className="bg-[#1e1e1e] border border-[#333] text-white w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto p-4 md:p-6 rounded-xl shadow-2xl">
+      <DialogContent className="bg-white border border-[#e4e4e7] text-[#111115] w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto p-4 md:p-6 rounded-xl shadow-2xl">
         <DialogHeader className="mb-2 md:mb-4">
           <DialogTitle className="text-primary text-xl md:text-2xl font-bold">Add Happy Hour</DialogTitle>
-          <DialogDescription className="text-[#a1a1aa] text-sm">
+          <DialogDescription className="text-[#52525b] text-sm">
             Define new peak-time promotional pricing rules.
           </DialogDescription>
         </DialogHeader>
@@ -131,19 +131,19 @@ export function AddHappyHourModal({ open, setOpen, onFormSuccess }: AddModalProp
           
           {/* Row 1: Promotion Name (Full Width) */}
           <div className="space-y-2">
-            <label className="text-[10px] md:text-xs font-semibold text-[#a1a1aa] uppercase tracking-wider">Promotion Name</label>
+            <label className="text-[10px] md:text-xs font-semibold text-[#52525b] uppercase tracking-wider">Promotion Name</label>
             <input 
               type="text" 
               name="promotionName"
               placeholder="e.g. Flash Friday" 
-              className="w-full bg-[var(--surface)] border border-[#333] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[var(--primary)] transition-colors text-sm" 
+              className="w-full bg-[var(--surface)] border border-[#e4e4e7] text-[#111115] rounded-lg px-4 py-3 focus:outline-none focus:border-[var(--primary)] transition-colors text-sm"
               required 
             />
           </div>
 
           {/* Row 2: Select Days (Dedicated Single-Row Container) */}
           <div className="space-y-2">
-            <label className="text-[10px] md:text-xs font-semibold text-[#a1a1aa] uppercase tracking-wider">Select Days</label>
+            <label className="text-[10px] md:text-xs font-semibold text-[#52525b] uppercase tracking-wider">Select Days</label>
             <div className="flex flex-row justify-between sm:justify-start gap-1 sm:gap-2 mt-1 w-full overflow-x-auto pb-1 no-scrollbar">
               {DAYS_ABBR.map((day, idx) => (
                 <button 
@@ -153,7 +153,7 @@ export function AddHappyHourModal({ open, setOpen, onFormSuccess }: AddModalProp
                   className={`flex-1 sm:flex-initial w-9 h-9 min-w-8 flex items-center justify-center rounded-lg text-xs md:text-sm font-medium transition-colors border ${
                     selectedDays.includes(idx) 
                       ? 'border-[var(--primary)] text-primary bg-gradient-primary/10' 
-                      : 'border-[#333] text-[#a1a1aa] bg-[var(--surface)] hover:border-gray-500'
+                      : 'border-[#e4e4e7] text-[#52525b] bg-[var(--surface)] hover:border-gray-500'
                   }`}
                 >
                   {day}
@@ -165,7 +165,7 @@ export function AddHappyHourModal({ open, setOpen, onFormSuccess }: AddModalProp
           {/* Row 3: Discount & Status Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
             <div className="space-y-2">
-              <label className="text-[10px] md:text-xs font-semibold text-[#a1a1aa] uppercase tracking-wider">Discount (%)</label>
+              <label className="text-[10px] md:text-xs font-semibold text-[#52525b] uppercase tracking-wider">Discount (%)</label>
               <div className="relative">
                 <input 
                   type="number" 
@@ -173,18 +173,18 @@ export function AddHappyHourModal({ open, setOpen, onFormSuccess }: AddModalProp
                   defaultValue={20} 
                   min={0}
                   max={100}
-                  className="w-full bg-[var(--surface)] border border-[#333] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[var(--primary)] transition-colors text-sm" 
+                  className="w-full bg-[var(--surface)] border border-[#e4e4e7] text-[#111115] rounded-lg px-4 py-3 focus:outline-none focus:border-[var(--primary)] transition-colors text-sm"
                   required
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#a1a1aa] text-sm">%</span>
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#52525b] text-sm">%</span>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] md:text-xs font-semibold text-[#a1a1aa] uppercase tracking-wider">Status</label>
+              <label className="text-[10px] md:text-xs font-semibold text-[#52525b] uppercase tracking-wider">Status</label>
               <select 
                 name="status"
-                className="w-full bg-[var(--surface)] border border-[#333] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[var(--primary)] appearance-none text-sm"
+                className="w-full bg-[var(--surface)] border border-[#e4e4e7] text-[#111115] rounded-lg px-4 py-3 focus:outline-none focus:border-[var(--primary)] appearance-none text-sm"
                 required
                 defaultValue="SCHEDULED"
               >
@@ -198,29 +198,29 @@ export function AddHappyHourModal({ open, setOpen, onFormSuccess }: AddModalProp
           {/* Row 4: Time Range & Applies To Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
             <div className="space-y-2">
-              <label className="text-[10px] md:text-xs font-semibold text-[#a1a1aa] uppercase tracking-wider">Time Range</label>
+              <label className="text-[10px] md:text-xs font-semibold text-[#52525b] uppercase tracking-wider">Time Range</label>
               <div className="flex items-center gap-2">
                 <input 
                   type="time" 
                   name="startTime"
-                  className="w-full bg-[var(--surface)] border border-[#333] text-white rounded-lg px-3 py-3 focus:outline-none focus:border-[var(--primary)] text-sm [&::-webkit-calendar-picker-indicator]:invert" 
+                  className="w-full bg-[var(--surface)] border border-[#e4e4e7] text-[#111115] rounded-lg px-3 py-3 focus:outline-none focus:border-[var(--primary)] text-sm"
                   required 
                 />
-                <span className="text-[#a1a1aa] text-sm">to</span>
+                <span className="text-[#52525b] text-sm">to</span>
                 <input 
                   type="time" 
                   name="endTime"
-                  className="w-full bg-[var(--surface)] border border-[#333] text-white rounded-lg px-3 py-3 focus:outline-none focus:border-[var(--primary)] text-sm [&::-webkit-calendar-picker-indicator]:invert" 
+                  className="w-full bg-[var(--surface)] border border-[#e4e4e7] text-[#111115] rounded-lg px-3 py-3 focus:outline-none focus:border-[var(--primary)] text-sm"
                   required 
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] md:text-xs font-semibold text-[#a1a1aa] uppercase tracking-wider">Applies To</label>
+              <label className="text-[10px] md:text-xs font-semibold text-[#52525b] uppercase tracking-wider">Applies To</label>
               <select 
                 name="device"
-                className="w-full bg-[var(--surface)] border border-[#333] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[var(--primary)] appearance-none text-sm"
+                className="w-full bg-[var(--surface)] border border-[#e4e4e7] text-[#111115] rounded-lg px-4 py-3 focus:outline-none focus:border-[var(--primary)] appearance-none text-sm"
                 required
                 defaultValue=""
               >
@@ -240,13 +240,13 @@ export function AddHappyHourModal({ open, setOpen, onFormSuccess }: AddModalProp
           </div>
 
           {/* Footer Buttons */}
-          <DialogFooter className="mt-8 flex flex-col-reverse md:flex-row gap-3 sm:justify-end border-t border-[#333] pt-6">
+          <DialogFooter className="mt-8 flex flex-col-reverse md:flex-row gap-3 sm:justify-end border-t border-[#e4e4e7] pt-6">
             <Button 
               type="button" 
               variant="ghost" 
               onClick={() => setOpen(false)} 
               disabled={isSubmitting}
-              className="w-full md:w-auto text-white bg-[#2a2a2a] hover:bg-[#333] font-semibold"
+              className="w-full md:w-auto text-[#111115] bg-[#e4e4e7] hover:bg-[#d4d4d8] font-semibold"
             >
               CANCEL
             </Button>

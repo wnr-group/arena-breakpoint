@@ -133,7 +133,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
   };
   if (customers.length === 0) {
     return (
-      <div className="p-12 text-center text-sm-enhanced border border-zinc-900 rounded-2xl bg-[#09090b]">
+      <div className="p-12 text-center text-sm-enhanced border border-[#e4e4e7] rounded-2xl bg-white">
         No customer profile matches found in records registry.
       </div>
     );
@@ -150,12 +150,12 @@ export function CustomerTable({ customers }: CustomerTableProps) {
             placeholder="Search by name, phone, or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-[var(--background)] border-zinc-800 text-white text-sm h-10"
+            className="pl-10 bg-[var(--background)] border-[#e4e4e7] text-[#111115] text-sm h-10"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-content hover:text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-content hover:text-[#111115]"
             >
               <X className="h-4 w-4" />
             </button>
@@ -179,7 +179,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 className={`text-min-enhanced font-black uppercase h-8 transition-all duration-300 ${
                   membershipFilter === filter.value
                     ? "bg-gradient-primary text-[var(--button-text)] glow-box"
-                    : "bg-[var(--surface)] text-muted-content hover:bg-[var(--surface-hover)] hover:text-white border border-[#27272a]"
+                    : "bg-[var(--surface)] text-muted-content hover:bg-[var(--surface-hover)] hover:text-[#111115] border border-[#e4e4e7]"
                 }`}
               >
                 {filter.label}
@@ -195,15 +195,15 @@ export function CustomerTable({ customers }: CustomerTableProps) {
       </div>
 
       {filteredAndSortedCustomers.length === 0 ? (
-        <div className="p-12 text-center text-sm font-semibold text-muted-content border border-zinc-900 rounded-2xl bg-[#09090b]">
+        <div className="p-12 text-center text-sm font-semibold text-muted-content border border-[#e4e4e7] rounded-2xl bg-white">
           No customers found matching your filters.
         </div>
       ) : (
         <>
-          <Card className="bg-[#0c0c0e]/40 border-zinc-900 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.6)] w-full overflow-x-auto p-1">
+          <Card className="bg-white border-[#e4e4e7] rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.6)] w-full overflow-x-auto p-1">
           <table className="w-full text-left border-collapse text-sm table-fixed min-w-[1200px]">
             <thead>
-              <tr className="border-b border-zinc-900 bg-[var(--background)]/20 text-label-enhanced select-none">
+              <tr className="border-b border-[#e4e4e7] bg-[#f4f4f5] text-label-enhanced select-none">
                 <th className="p-4 w-[20%]">
                   <button
                     onClick={() => handleSort("name")}
@@ -259,26 +259,26 @@ export function CustomerTable({ customers }: CustomerTableProps) {
             const isActive = row.subscription_status === "active";
  
             return (
-              <tr key={row.id} className="group hover:bg-[var(--background)]/40 transition-all duration-200 border-l-2 border-transparent hover:border-l-primary">
+              <tr key={row.id} className="group hover:bg-[#e4e4e7] transition-all duration-200 border-l-2 border-transparent hover:border-l-primary">
  
                 {/* Customer Details Name Block */}
                 <td className="p-4 font-black tracking-wide flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-muted-content group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-200 shadow-inner flex-shrink-0">
+                  <div className="h-9 w-9 rounded-xl bg-[#e4e4e7] border border-[#e4e4e7] flex items-center justify-center text-muted-content group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-200 shadow-inner flex-shrink-0">
                     <User className="h-4 w-4 text-primary transition-colors" />
                   </div>
-                  <span className="text-zinc-200 group-hover:text-primary transition-colors font-black text-[15px] tracking-normal truncate">
+                  <span className="text-[#111115] group-hover:text-primary transition-colors font-black text-[15px] tracking-normal truncate">
                     {row.name}
                   </span>
                 </td>
  
                 {/* Phone Terminal Output */}
-                <td className="p-4 text-zinc-300 font-mono tracking-wider">
+                <td className="p-4 text-[#52525b] font-mono tracking-wider">
                   <div className="flex items-center gap-2 group/phone">
                     <Phone className="h-4 w-4 text-primary flex-shrink-0" />
-                    <span className="font-bold text-zinc-300 text-sm">{row.phone}</span>
+                    <span className="font-bold text-[#52525b] text-sm">{row.phone}</span>
                     <button
                       onClick={() => handleCopy(row.phone, `phone-${row.id}`)}
-                      className="ml-auto opacity-0 group-hover/phone:opacity-100 transition-opacity p-1 hover:bg-zinc-800 rounded"
+                      className="ml-auto opacity-0 group-hover/phone:opacity-100 transition-opacity p-1 hover:bg-[#e4e4e7] rounded"
                     >
                       {copiedField === `phone-${row.id}` ? (
                         <Check className="h-3.5 w-3.5 text-green-400" />
@@ -290,10 +290,10 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 </td>
  
                 {/* Date of Birth Block */}
-                <td className="p-4 text-zinc-300 font-mono tracking-wider">
+                <td className="p-4 text-[#52525b] font-mono tracking-wider">
                   <div className="flex items-center gap-2">
                     <Cake className="h-4 w-4 text-primary flex-shrink-0" />
-                    <span className="font-bold text-zinc-300 text-[13px]">
+                    <span className="font-bold text-[#52525b] text-[13px]">
                       {row.date_of_birth ? format(new Date(row.date_of_birth), "dd MMM yyyy") : "—"}
                     </span>
                   </div>
@@ -307,7 +307,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                     {row.email && (
                       <button
                         onClick={() => handleCopy(row.email!, `email-${row.id}`)}
-                        className="ml-auto opacity-0 group-hover/email:opacity-100 transition-opacity p-1 hover:bg-zinc-800 rounded flex-shrink-0"
+                        className="ml-auto opacity-0 group-hover/email:opacity-100 transition-opacity p-1 hover:bg-[#e4e4e7] rounded flex-shrink-0"
                       >
                         {copiedField === `email-${row.id}` ? (
                           <Check className="h-3.5 w-3.5 text-green-400" />
@@ -322,12 +322,12 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 {/* Membership Track */}
                 <td className="p-4 whitespace-nowrap">
                   {hasSub ? (
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 border text-[9px] font-black uppercase rounded-lg tracking-widest ${isActive ? "bg-green-500/10 text-green-400 border-green-500/30" : "bg-zinc-900 text-secondary-content border-zinc-800"}`}>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 border text-[9px] font-black uppercase rounded-lg tracking-widest ${isActive ? "bg-green-500/10 text-green-400 border-green-500/30" : "bg-[#e4e4e7] text-secondary-content border-[#e4e4e7]"}`}>
                       {isActive ? <ShieldCheck className="h-3 w-3" /> : <ShieldAlert className="h-3 w-3" />}
                       {row.subscription_name}
                     </span>
                   ) : (
-                    <span className="bg-[var(--background)]/80 text-red-400 border border-zinc-900 text-[9px] font-black px-2.5 py-1 rounded-lg uppercase">No Plan Active</span>
+                    <span className="bg-[var(--background)]/80 text-red-400 border border-[#e4e4e7] text-[9px] font-black px-2.5 py-1 rounded-lg uppercase">No Plan Active</span>
                   )}
                 </td>
  
@@ -343,7 +343,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 {/* Our Customer From */}
                 <td className="p-4 text-right font-mono">
                   <div className="flex flex-col items-end">
-                    <span className="text-[13px] text-white font-bold">
+                    <span className="text-[13px] text-[#111115] font-bold">
                       {row.created_at ? format(new Date(row.created_at), "dd MMM yy") : "N/A"}
                     </span>
                     <span className="text-label-enhanced">
@@ -359,7 +359,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
     </Card>
 
     {/* Pagination Controls */}
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-zinc-900/60 pt-4 px-2 select-none">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#e4e4e7]/60 pt-4 px-2 select-none">
       <div className="text-xs text-secondary-content font-bold">
         Showing page {currentPage} of {Math.max(1, totalPages)} ({filteredAndSortedCustomers.length} total customers)
       </div>
@@ -369,7 +369,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
           size="sm"
           onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
           disabled={currentPage === 1 || totalPages <= 1}
-          className="bg-[var(--surface)] text-white border-zinc-800 hover:bg-zinc-800 disabled:opacity-30 text-xs font-black uppercase h-8"
+          className="bg-[var(--surface)] text-[#111115] border-[#e4e4e7] hover:bg-[#e4e4e7] disabled:opacity-30 text-xs font-black uppercase h-8"
         >
           Previous
         </Button>
@@ -400,7 +400,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                     className={`h-8 w-8 text-xs font-black p-0 transition-all duration-200 ${
                       currentPage === pageNum
                         ? "bg-gradient-primary text-[var(--button-text)] shadow-[0_0_12px_rgba(var(--primary-rgb),0.2)]"
-                        : "bg-[var(--surface)] text-zinc-400 hover:text-white border-zinc-800"
+                        : "bg-[var(--surface)] text-[#52525b] hover:text-[#111115] border-[#e4e4e7]"
                     }`}
                   >
                     {pageNum}
@@ -426,7 +426,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
           size="sm"
           onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
           disabled={currentPage === totalPages || totalPages <= 1}
-          className="bg-[var(--surface)] text-white border-zinc-800 hover:bg-zinc-800 disabled:opacity-30 text-xs font-black uppercase h-8"
+          className="bg-[var(--surface)] text-[#111115] border-[#e4e4e7] hover:bg-[#e4e4e7] disabled:opacity-30 text-xs font-black uppercase h-8"
         >
           Next
         </Button>

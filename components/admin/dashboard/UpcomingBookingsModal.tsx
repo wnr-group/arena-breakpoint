@@ -33,7 +33,7 @@ export function UpcomingBookingsModal({ open, onClose, bookings, onBookingClick 
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="bg-[var(--background)] border-primary/30 max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-black uppercase text-white flex items-center gap-2">
+          <DialogTitle className="text-xl font-black uppercase text-[#111115] flex items-center gap-2">
             <Calendar className="h-5 w-5 text-amber-500" />
             Upcoming Bookings
           </DialogTitle>
@@ -42,7 +42,7 @@ export function UpcomingBookingsModal({ open, onClose, bookings, onBookingClick 
         {/* Summary */}
         <div className="p-4 bg-gradient-to-br from-amber-500/10 to-amber-600/5 border border-amber-500/20 rounded-lg mb-4">
           <p className="text-xs text-amber-400 mb-1">Next 2 Hours</p>
-          <p className="text-2xl font-black text-white">{bookings.length} Upcoming Bookings</p>
+          <p className="text-2xl font-black text-[#111115]">{bookings.length} Upcoming Bookings</p>
         </div>
 
         {/* Bookings List */}
@@ -56,14 +56,14 @@ export function UpcomingBookingsModal({ open, onClose, bookings, onBookingClick 
                 <div
                   key={slot.id}
                   className={`p-4 bg-[var(--surface)] border rounded-lg hover:border-amber-500/50 transition-colors cursor-pointer ${
-                    isStartingSoon ? 'border-amber-500/30' : 'border-[#27272a]'
+                    isStartingSoon ? 'border-amber-500/30' : 'border-[#e4e4e7]'
                   }`}
                   onClick={() => onBookingClick(slot.bookings?.id)}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <p className="text-sm font-bold text-white">{slot.bookings?.customer_name}</p>
+                        <p className="text-sm font-bold text-[#111115]">{slot.bookings?.customer_name}</p>
                         <BookingStatusBadge status={slot.bookings?.status} size="sm" />
                       </div>
                       <p className="text-xs text-secondary-content font-mono flex items-center gap-2">
@@ -85,7 +85,7 @@ export function UpcomingBookingsModal({ open, onClose, bookings, onBookingClick 
                     <div className="flex items-center gap-2">
                       <MapPin className="h-3.5 w-3.5 text-secondary-content" />
                       <div>
-                        <p className="text-xs text-white font-bold">{slot.device_type}</p>
+                        <p className="text-xs text-[#111115] font-bold">{slot.device_type}</p>
                         <p className="text-label">Station #{slot.device_station_number}</p>
                       </div>
                     </div>
@@ -93,7 +93,7 @@ export function UpcomingBookingsModal({ open, onClose, bookings, onBookingClick 
                     <div className="flex items-center gap-2">
                       <User className="h-3.5 w-3.5 text-secondary-content" />
                       <div>
-                        <p className="text-xs text-white font-bold">{slot.player_count} Players</p>
+                        <p className="text-xs text-[#111115] font-bold">{slot.player_count} Players</p>
                         <p className="text-label">Booked</p>
                       </div>
                     </div>
@@ -101,7 +101,7 @@ export function UpcomingBookingsModal({ open, onClose, bookings, onBookingClick 
                     <div className="flex items-center gap-2 col-span-2">
                       <Clock className="h-3.5 w-3.5 text-secondary-content" />
                       <div>
-                        <p className="text-xs text-white font-bold">
+                        <p className="text-xs text-[#111115] font-bold">
                           {slot.slot_start_time.substring(0, 5)} - {slot.slot_end_time.substring(0, 5)}
                         </p>
                         <p className="text-label">

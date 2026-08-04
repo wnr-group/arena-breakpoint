@@ -83,12 +83,12 @@ export default function SubscriptionPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-8 bg-[var(--background)] min-h-screen text-white animate-in fade-in duration-700">
+    <div className="flex flex-col gap-6 p-4 sm:p-8 bg-[var(--background)] min-h-screen text-[#111115] animate-in fade-in duration-700">
       {/* HEADER PANEL */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
         <div className="space-y-1 animate-in slide-in-from-left-4 duration-500">
-          <h1 className="text-2xl font-bold tracking-tight text-white">Subscription Management</h1>
-          <p className="text-[#a1a1aa] text-sm">
+          <h1 className="text-2xl font-bold tracking-tight text-[#111115]">Subscription Management</h1>
+          <p className="text-[#52525b] text-sm">
             Configure and monitor Subscription plans for gaming and refreshments.
           </p>
         </div>
@@ -103,7 +103,7 @@ export default function SubscriptionPage() {
       {/* MAIN TABLE AREA */}
       <div className="mt-2 animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-[var(--surface)] border border-[#27272a] rounded-xl text-[#a1a1aa] gap-3">
+          <div className="flex flex-col items-center justify-center py-20 bg-[var(--surface)] border border-[#e4e4e7] rounded-xl text-[#52525b] gap-3">
             <Loader2 className="h-8 w-8 animate-spin text-[#FFC107]" />
             <p className="text-sm font-medium">Loading subscription data...</p>
           </div>
@@ -130,12 +130,12 @@ export default function SubscriptionPage() {
 
       {/* DELETE CONFIRMATION ALERT DIALOG */}
       <AlertDialog open={!!planToDelete} onOpenChange={open => !open && setPlanToDelete(null)}>
-        <AlertDialogContent className="bg-[var(--surface)] border border-[#27272a] text-white">
+        <AlertDialogContent className="bg-[var(--surface)] border border-[#e4e4e7] text-[#111115]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-bold">
               Remove Subscription Plan?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-[#a1a1aa] text-sm">
+            <AlertDialogDescription className="text-[#52525b] text-sm">
               Are you sure you want to delete this subscription plan? This drops the plan completely
               from your database configuration mapping.
             </AlertDialogDescription>
@@ -143,7 +143,7 @@ export default function SubscriptionPage() {
           <AlertDialogFooter className="mt-4">
             <AlertDialogCancel
               disabled={isPending}
-              className="bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800"
+              className="bg-[#e4e4e7] text-[#111115] border-[#e4e4e7] hover:bg-[#e4e4e7]"
             >
               Cancel
             </AlertDialogCancel>

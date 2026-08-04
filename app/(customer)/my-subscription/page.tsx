@@ -70,9 +70,9 @@ function MySubscriptionPageContent() {
   // Loading State
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-[#0d0a14] flex flex-col items-center justify-center text-amber-500">
+      <main className="min-h-screen bg-white flex flex-col items-center justify-center text-amber-500">
         <Loader2 className="w-12 h-12 animate-spin mb-4" />
-        <p className="text-neutral-400 font-medium">Loading your arena pass...</p>
+        <p className="text-[#52525b] font-medium">Loading your arena pass...</p>
       </main>
     )
   }
@@ -98,10 +98,10 @@ function MySubscriptionPageContent() {
 
   return (
     <main
-      className="min-h-screen bg-[#0d0a14] text-white font-sans relative overflow-hidden pt-5"
+      className="min-h-screen bg-white text-[#111115] font-sans relative overflow-hidden pt-5"
     >
       {/* Animated background */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-[#0d0a14] to-[#0d0a14] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-white to-white pointer-events-none" />
       <div className="absolute top-20 left-1/4 w-[600px] h-[600px] bg-gradient-to-r from-primary/10 to-amber-500/10 rounded-full blur-[150px] animate-pulse pointer-events-none" />
       <div className="absolute bottom-20 right-1/4 w-[500px] h-[500px] bg-gradient-to-l from-orange-600/10 to-primary/10 rounded-full blur-[150px] animate-pulse pointer-events-none" style={{ animationDelay: '1.5s' }} />
 
@@ -114,10 +114,10 @@ function MySubscriptionPageContent() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
           <div className="max-w-2xl">
-            <h1 className="text-3xl md:text-[42px] font-black tracking-tight leading-tight mb-3 text-transparent bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text">
+            <h1 className="text-3xl md:text-[42px] font-black tracking-tight leading-tight mb-3 text-transparent bg-gradient-to-r from-[#111115] via-amber-600 to-[#111115] bg-clip-text">
               Your Subscription
             </h1>
-            <p className="text-zinc-400 text-sm md:text-base leading-relaxed">
+            <p className="text-[#52525b] text-sm md:text-base leading-relaxed">
               Manage your elite gaming access and monitor your exclusive benefits across the Break
               Point Arena ecosystem.
             </p>
@@ -152,15 +152,15 @@ function MySubscriptionPageContent() {
         {!subscription ? (
           <div className="space-y-6 max-w-xl mx-auto">
             {/* Search Card */}
-            <Card className="bg-[#111] border border-zinc-900 p-6 shadow-xl rounded-2xl glow-box-hover">
+            <Card className="bg-[#f4f4f5] border border-[#e4e4e7] p-6 shadow-xl rounded-2xl glow-box-hover">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="search-phone" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Phone className="h-3 w-3 text-zinc-600" /> MOBILE NUMBER
+                  <Label htmlFor="search-phone" className="text-[11px] font-black text-[#52525b] uppercase tracking-wider flex items-center gap-1.5">
+                    <Phone className="h-3 w-3 text-[#52525b]" /> MOBILE NUMBER
                   </Label>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-600 border-r border-zinc-900 pr-2">+91</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-[#52525b] border-r border-[#e4e4e7] pr-2">+91</span>
                       <Input
                         id="search-phone"
                         type="tel"
@@ -169,7 +169,7 @@ function MySubscriptionPageContent() {
                         value={phone}
                         onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                         onKeyDown={(e) => e.key === "Enter" && fetchSubscription(phone)}
-                        className="bg-zinc-950 border-zinc-900 h-12 pl-12 text-sm text-white focus-visible:ring-primary font-mono tracking-wide"
+                        className="bg-white border-[#e4e4e7] h-12 pl-12 text-sm text-[#111115] focus-visible:ring-primary font-mono tracking-wide"
                       />
                     </div>
                     <Button
@@ -186,12 +186,12 @@ function MySubscriptionPageContent() {
 
             {hasSearched ? (
               /* EMPTY STATE: If searched and user has no active subscription */
-              <div className="bg-[#111111] border border-neutral-800 rounded-md p-10 text-center flex flex-col items-center glow-box-hover animate-in fade-in duration-300">
-                <div className="w-16 h-16 bg-neutral-900 rounded-full flex items-center justify-center mb-4">
-                  <AlertCircle className="w-8 h-8 text-neutral-500" />
+              <div className="bg-[#f4f4f5] border border-[#e4e4e7] rounded-md p-10 text-center flex flex-col items-center glow-box-hover animate-in fade-in duration-300">
+                <div className="w-16 h-16 bg-[#e4e4e7] rounded-full flex items-center justify-center mb-4">
+                  <AlertCircle className="w-8 h-8 text-[#52525b]" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">No Active Subscription</h3>
-                <p className="text-neutral-400 text-sm max-w-md mb-6">
+                <h3 className="text-xl font-bold text-[#111115] mb-2">No Active Subscription</h3>
+                <p className="text-[#52525b] text-sm max-w-md mb-6">
                   No active membership found for +91 {phone}. Subscribe to unlock elite benefits and arena discounts.
                 </p>
                 <button
@@ -207,12 +207,12 @@ function MySubscriptionPageContent() {
               </div>
             ) : (
               /* WELCOME STATE: Before searching */
-              <div className="bg-[#111111] border border-neutral-800 rounded-md p-10 text-center flex flex-col items-center glow-box-hover animate-in fade-in duration-300">
-                <div className="w-16 h-16 bg-neutral-900 rounded-full flex items-center justify-center mb-4">
+              <div className="bg-[#f4f4f5] border border-[#e4e4e7] rounded-md p-10 text-center flex flex-col items-center glow-box-hover animate-in fade-in duration-300">
+                <div className="w-16 h-16 bg-[#e4e4e7] rounded-full flex items-center justify-center mb-4">
                   <Gamepad2 className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">View Your Benefits</h3>
-                <p className="text-neutral-400 text-sm max-w-md mb-6">
+                <h3 className="text-xl font-bold text-[#111115] mb-2">View Your Benefits</h3>
+                <p className="text-[#52525b] text-sm max-w-md mb-6">
                   Enter your mobile number above to retrieve your active membership details and access elite arena rewards.
                 </p>
                 <button
@@ -232,7 +232,7 @@ function MySubscriptionPageContent() {
           /* Centered Standalone Active Subscription Card Layout */
           <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
             {/* DYNAMIC ACTIVE SUBSCRIPTION CARD */}
-            <div className="bg-gradient-to-br from-zinc-900 via-[#131313] to-zinc-900 border border-primary/30 rounded-2xl p-6 md:p-10 relative overflow-hidden group hover:border-primary/60 transition-all duration-300 shadow-[0_4px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_4px_45px_rgba(255,193,7,0.15)]">
+            <div className="bg-gradient-to-br from-[#f4f4f5] via-[#ebebeb] to-[#f4f4f5] border border-primary/30 rounded-2xl p-6 md:p-10 relative overflow-hidden group hover:border-primary/60 transition-all duration-300 shadow-[0_4px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_4px_45px_rgba(255,193,7,0.15)]">
               {/* Animated gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-amber-400/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
@@ -245,7 +245,7 @@ function MySubscriptionPageContent() {
                   <h3 className="text-primary text-xs font-black tracking-[0.2em] uppercase mb-2 drop-shadow-[0_0_10px_rgba(255,193,7,0.3)]">
                     Elite Membership
                   </h3>
-                  <h2 className="text-2xl md:text-3.5xl font-black text-transparent bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text">
+                  <h2 className="text-2xl md:text-3.5xl font-black text-transparent bg-gradient-to-r from-[#111115] via-amber-600 to-[#111115] bg-clip-text">
                     {subscription.plan?.name || 'Unknown Plan'}
                   </h2>
                 </div>
@@ -261,20 +261,20 @@ function MySubscriptionPageContent() {
               <div className="mb-8 relative z-10">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-3 gap-2">
                   <div>
-                    <div className="text-zinc-500 text-xs font-black uppercase tracking-wider mb-1">
+                    <div className="text-[#52525b] text-xs font-black uppercase tracking-wider mb-1">
                       Validity Status
                     </div>
-                    <div className="text-white font-black text-base md:text-lg">
+                    <div className="text-[#111115] font-black text-base md:text-lg">
                       Valid until {formatDate(subscription.end_date)}{' '}
                       <span className="text-transparent bg-gradient-to-r from-primary to-amber-300 bg-clip-text text-sm ml-1 block sm:inline">
                         ({daysRemaining} days remaining)
                       </span>
                     </div>
                   </div>
-                  <div className="text-zinc-500 text-xs font-black uppercase tracking-wider">{progressPercentage}% Complete</div>
+                  <div className="text-[#52525b] text-xs font-black uppercase tracking-wider">{progressPercentage}% Complete</div>
                 </div>
                 {/* Bar with gaming effect */}
-                <div className="w-full bg-zinc-900 rounded-full h-3 overflow-hidden border border-zinc-800 shadow-inner">
+                <div className="w-full bg-[#e4e4e7] rounded-full h-3 overflow-hidden border border-[#e4e4e7] shadow-inner">
                   <div
                     className="bg-gradient-to-r from-primary via-amber-400 to-primary h-3 rounded-full transition-all duration-1000 ease-out relative overflow-hidden"
                     style={{ width: `${progressPercentage}%` }}
@@ -287,12 +287,12 @@ function MySubscriptionPageContent() {
 
               {/* Perks Row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
-                <div className="bg-gradient-to-br from-zinc-950 to-zinc-900 border border-primary/20 rounded-xl p-4 flex items-center group/card hover:border-primary/40 hover:shadow-[0_0_20px_rgba(255,193,7,0.1)] transition-all duration-300">
+                <div className="bg-gradient-to-br from-[#f4f4f5] to-[#ebebeb] border border-primary/20 rounded-xl p-4 flex items-center group/card hover:border-primary/40 hover:shadow-[0_0_20px_rgba(255,193,7,0.1)] transition-all duration-300">
                   <div className="bg-gradient-to-br from-primary/20 to-amber-500/20 p-3 rounded-lg mr-4 shadow-[0_0_15px_rgba(255,193,7,0.2)]">
                     <Percent className="w-5 h-5 text-primary drop-shadow-[0_0_8px_rgba(255,193,7,0.5)]" />
                   </div>
                   <div>
-                    <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1">
+                    <div className="text-[#52525b] text-xs font-bold uppercase tracking-wider mb-1">
                       Loyalty Discount
                     </div>
                     <div className="text-transparent bg-gradient-to-r from-primary via-amber-300 to-primary bg-clip-text font-black text-lg drop-shadow-[0_0_10px_rgba(255,193,7,0.3)]">
@@ -300,13 +300,13 @@ function MySubscriptionPageContent() {
                     </div>
                   </div>
                 </div>
-                <div className="bg-gradient-to-br from-zinc-950 to-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center hover:border-zinc-700 transition-all duration-300">
+                <div className="bg-gradient-to-br from-[#f4f4f5] to-[#ebebeb] border border-[#e4e4e7] rounded-xl p-4 flex items-center hover:border-[#d4d4d8] transition-all duration-300">
                   <div className="bg-amber-500/10 p-3 rounded-lg mr-4">
                     <Gamepad2 className="w-5 h-5 text-amber-500" />
                   </div>
                   <div>
-                    <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1">Arena Pass</div>
-                    <div className="text-white font-black text-lg">All Access</div>
+                    <div className="text-[#52525b] text-xs font-bold uppercase tracking-wider mb-1">Arena Pass</div>
+                    <div className="text-[#111115] font-black text-lg">All Access</div>
                   </div>
                 </div>
               </div>

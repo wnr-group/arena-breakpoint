@@ -61,7 +61,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             </div>
             <p className="text-xs font-black uppercase text-green-400">Revenue</p>
           </div>
-          <p className="text-3xl font-black text-white">
+          <p className="text-3xl font-black text-[#111115]">
             <CurrencyCountUp amount={data.revenue} duration={1500} />
           </p>
           <p className="text-xs text-secondary-content mt-2">
@@ -77,7 +77,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             </div>
             <p className="text-xs font-black uppercase text-red-400">Expenses</p>
           </div>
-          <p className="text-3xl font-black text-white">
+          <p className="text-3xl font-black text-[#111115]">
             <CurrencyCountUp amount={data.totalExpenses} duration={1400} />
           </p>
           <p className="text-sm-enhanced text-secondary-content mt-2">
@@ -116,7 +116,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             </div>
             <p className="text-stat-label text-orange-400">OpEx</p>
           </div>
-          <p className="text-2xl font-black text-white">
+          <p className="text-2xl font-black text-[#111115]">
             <CurrencyCountUp amount={data.opexExpenses} duration={1200} />
           </p>
           <p className="text-sm-enhanced text-secondary-content mt-2">Operational expenses</p>
@@ -130,7 +130,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             </div>
             <p className="text-stat-label text-blue-400">CapEx</p>
           </div>
-          <p className="text-2xl font-black text-white">
+          <p className="text-2xl font-black text-[#111115]">
             <CurrencyCountUp amount={data.capexExpenses} duration={1200} />
           </p>
           <p className="text-sm-enhanced text-secondary-content mt-2">Capital investments</p>
@@ -164,7 +164,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             </div>
             <p className="text-stat-label text-purple-400">Margin</p>
           </div>
-          <p className="text-2xl font-black text-white">
+          <p className="text-2xl font-black text-[#111115]">
             <CountUp end={data.profitMargin} duration={1000} decimals={1} suffix="%" />
           </p>
           <p className="text-sm-enhanced text-secondary-content mt-2">Net profit margin</p>
@@ -173,8 +173,8 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
 
       {/* Revenue Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="bg-[var(--surface)] border-[#27272a] p-6">
-          <h3 className="text-sm font-black uppercase text-white mb-4 flex items-center gap-2">
+        <Card className="bg-[var(--surface)] border-[#e4e4e7] p-6">
+          <h3 className="text-sm font-black uppercase text-[#111115] mb-4 flex items-center gap-2">
             <div className="w-1 h-4 bg-gradient-to-b from-primary to-primary rounded-full" />
             Revenue Breakdown
           </h3>
@@ -182,11 +182,11 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <p className="text-xs text-secondary-content">Device Bookings</p>
-                <p className="text-sm font-black text-white">
+                <p className="text-sm font-black text-[#111115]">
                   <CurrencyCountUp amount={data.deviceRevenue} duration={1100} />
                 </p>
               </div>
-              <div className="h-2 bg-zinc-900 rounded-full overflow-hidden">
+              <div className="h-2 bg-[#e4e4e7] rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-primary to-primary transition-all duration-[1500ms] ease-out"
                   style={{ width: `${data.revenue > 0 ? (data.deviceRevenue / data.revenue) * 100 : 0}%` }}
@@ -196,18 +196,18 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <p className="text-xs text-secondary-content">Food Sales</p>
-                <p className="text-sm font-black text-white">
+                <p className="text-sm font-black text-[#111115]">
                   <CurrencyCountUp amount={data.foodRevenue} duration={1100} />
                 </p>
               </div>
-              <div className="h-2 bg-zinc-900 rounded-full overflow-hidden">
+              <div className="h-2 bg-[#e4e4e7] rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-[1500ms] ease-out"
                   style={{ width: `${data.revenue > 0 ? (data.foodRevenue / data.revenue) * 100 : 0}%` }}
                 />
               </div>
             </div>
-            <div className="pt-2 border-t border-zinc-800">
+            <div className="pt-2 border-t border-[#e4e4e7]">
               <div className="flex justify-between items-center">
                 <p className="text-xs font-black text-primary uppercase">Total Revenue</p>
                 <p className="text-lg font-black text-primary">
@@ -219,8 +219,8 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
         </Card>
 
         {/* Profit Chart Placeholder */}
-        <Card className="bg-[var(--surface)] border-[#27272a] p-6">
-          <h3 className="text-sm font-black uppercase text-white mb-4 flex items-center gap-2">
+        <Card className="bg-[var(--surface)] border-[#e4e4e7] p-6">
+          <h3 className="text-sm font-black uppercase text-[#111115] mb-4 flex items-center gap-2">
             <div className="w-1 h-4 bg-gradient-to-b from-green-500 to-red-500 rounded-full" />
             Profit Overview
           </h3>
@@ -256,12 +256,12 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
       </div>
 
       {/* Insights */}
-      <Card className="bg-gradient-to-br from-[#111] via-zinc-950 to-[#111] border-primary/20 p-6">
-        <h3 className="text-sm font-black uppercase text-white mb-4">Insights</h3>
+      <Card className="bg-gradient-to-br from-[#f4f4f5] via-[#f4f4f5] to-[#f4f4f5] border-primary/20 p-6">
+        <h3 className="text-sm font-black uppercase text-[#111115] mb-4">Insights</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <p className="text-xs text-secondary-content mb-1">Average Revenue per Booking</p>
-            <p className="text-xl font-black text-white">
+            <p className="text-xl font-black text-[#111115]">
               <CurrencyCountUp
                 amount={data.bookingCount > 0 ? data.revenue / data.bookingCount : 0}
                 duration={1000}
@@ -270,7 +270,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
           </div>
           <div>
             <p className="text-xs text-secondary-content mb-1">Device Revenue %</p>
-            <p className="text-xl font-black text-white">
+            <p className="text-xl font-black text-[#111115]">
               <CountUp
                 end={data.revenue > 0 ? (data.deviceRevenue / data.revenue) * 100 : 0}
                 duration={1000}
@@ -281,7 +281,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
           </div>
           <div>
             <p className="text-xs text-secondary-content mb-1">Food Revenue %</p>
-            <p className="text-xl font-black text-white">
+            <p className="text-xl font-black text-[#111115]">
               <CountUp
                 end={data.revenue > 0 ? (data.foodRevenue / data.revenue) * 100 : 0}
                 duration={1000}

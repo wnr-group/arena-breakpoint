@@ -91,7 +91,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-[var(--background)] border-2 border-zinc-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-[var(--background)] border-2 border-[#e4e4e7] text-[#111115] max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
             <Receipt className="h-5 w-5 text-primary" />
@@ -106,18 +106,18 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
         ) : billing ? (
           <div className="space-y-6 py-4">
             {/* Booking Info */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+            <div className="bg-[#e4e4e7] border border-[#e4e4e7] rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-bold text-secondary-content">Booking Number</span>
                 <span className="text-base font-black text-primary font-mono">{billing.booking_number}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-bold text-secondary-content">Customer</span>
-                <span className="text-sm font-bold text-white">{billing.customer_name}</span>
+                <span className="text-sm font-bold text-[#111115]">{billing.customer_name}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-bold text-secondary-content">Phone</span>
-                <span className="text-sm font-bold text-white">{billing.customer_phone}</span>
+                <span className="text-sm font-bold text-[#111115]">{billing.customer_phone}</span>
               </div>
             </div>
 
@@ -137,7 +137,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-base font-bold text-white">Status:</span>
+                  <span className="text-base font-bold text-[#111115]">Status:</span>
                   <Badge className={`${isPaid
                       ? 'bg-green-500/20 text-green-400 border-green-500/40'
                       : 'bg-red-500/20 text-red-400 border-red-500/40'
@@ -149,7 +149,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
                 {/* Amount Paid and Balance Due */}
                 {!isPaid && (
                   <>
-                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-zinc-700">
+                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-[#e4e4e7]">
                       <div>
                         <p className="text-xs text-secondary-content uppercase mb-1">Amount Paid</p>
                         <p className="text-lg font-black text-green-400">₹{Number(billing.amount_paid || 0).toFixed(2)}</p>
@@ -160,14 +160,14 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
                       </div>
                     </div>
 
-                    <div className="mt-4 p-4 bg-red-950/50 border border-red-900/50 rounded-lg">
+                    <div className="mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
                       <div className="flex items-start gap-3">
                         <XCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
                         <div>
                           <p className="text-sm font-bold text-red-400">
                             {billing.unpaid_items?.length || 0} Unpaid Item(s)
                           </p>
-                          <p className="text-xs text-red-300 mt-1">
+                          <p className="text-xs text-red-700 mt-1">
                             ₹{Number(billing.unpaid_amount || 0).toFixed(2)} pending payment
                           </p>
                         </div>
@@ -179,7 +179,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
             </div>
 
             {/* Billing Breakdown - Using Line Items */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
+            <div className="bg-[#e4e4e7] border border-[#e4e4e7] rounded-xl p-5 space-y-4">
               <h3 className="text-xs font-black uppercase tracking-wider text-secondary-content flex items-center gap-2">
                 <DollarSign className="h-4 w-4" />
                 Billing Breakdown
@@ -197,7 +197,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
                           key={item.id}
                           className={`flex items-center justify-between py-2 px-3 rounded-lg ${isUnpaid
                               ? 'bg-amber-500/10 border-l-4 border-amber-500'
-                              : 'border-b border-zinc-800'
+                              : 'border-b border-[#e4e4e7]'
                             }`}
                         >
                           <div className="flex items-center gap-2 flex-1">
@@ -209,7 +209,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
                                   ? 'text-green-500'
                                   : 'text-primary'
                                 : isUnpaid
-                                  ? 'text-amber-300'
+                                  ? 'text-amber-700'
                                   : 'text-muted-content'
                               }`}>
                               {item.description}
@@ -228,8 +228,8 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
                                 ? 'text-green-500'
                                 : 'text-primary'
                               : isUnpaid
-                                ? 'text-amber-300'
-                                : 'text-white'
+                                ? 'text-amber-700'
+                                : 'text-[#111115]'
                             }`}>
                             {isDiscount ? '-' : ''}₹{Math.abs(Number(item.line_total)).toFixed(2)}
                           </span>
@@ -238,7 +238,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
                     })}
 
                     <div className="flex items-center justify-between pt-4 border-t-2 border-primary/20">
-                      <span className="text-base font-black text-white uppercase">Total Amount:</span>
+                      <span className="text-base font-black text-[#111115] uppercase">Total Amount:</span>
                       <span className="text-2xl font-black text-primary">
                         ₹{Number(billing.total_amount).toFixed(2)}
                       </span>
@@ -254,22 +254,22 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
             <div className="space-y-3">
               {!isPaid && (
                 <>
-                  <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                  <div className="bg-[#e4e4e7] border border-[#e4e4e7] rounded-xl p-4">
                     <Label className="text-xs font-black uppercase text-secondary-content mb-2 block">
                       Payment Method (Offline)
                     </Label>
                     <Select value={paymentMethod} onValueChange={(value: 'cash' | 'card' | 'upi') => setPaymentMethod(value)}>
-                      <SelectTrigger className="w-full bg-zinc-800 border-zinc-700 text-white h-11">
+                      <SelectTrigger className="w-full bg-[#e4e4e7] border-[#e4e4e7] text-[#111115] h-11">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-zinc-900 border-zinc-700">
-                        <SelectItem value="cash" className="text-white hover:bg-zinc-800">
+                      <SelectContent className="bg-[#e4e4e7] border-[#e4e4e7]">
+                        <SelectItem value="cash" className="text-[#111115] hover:bg-[#e4e4e7]">
                           💵 Cash
                         </SelectItem>
-                        <SelectItem value="card" className="text-white hover:bg-zinc-800">
+                        <SelectItem value="card" className="text-[#111115] hover:bg-[#e4e4e7]">
                           💳 Card
                         </SelectItem>
-                        <SelectItem value="upi" className="text-white hover:bg-zinc-800">
+                        <SelectItem value="upi" className="text-[#111115] hover:bg-[#e4e4e7]">
                           📱 UPI
                         </SelectItem>
                       </SelectContent>
@@ -296,7 +296,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
                 disabled={isProcessing || !isPaid}
                 className={`w-full font-black uppercase text-sm h-12 rounded-xl ${isPaid
                     ? 'bg-primary hover:bg-primary-hover text-black'
-                    : 'bg-zinc-800 text-muted-content cursor-not-allowed'
+                    : 'bg-[#e4e4e7] text-muted-content cursor-not-allowed'
                   }`}
               >
                 {isProcessing ? (
@@ -310,7 +310,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
               <Button
                 onClick={onClose}
                 variant="ghost"
-                className="w-full border border-zinc-800 text-muted-content hover:text-white font-bold uppercase text-xs h-10 rounded-xl"
+                className="w-full border border-[#e4e4e7] text-muted-content hover:text-[#111115] font-bold uppercase text-xs h-10 rounded-xl"
               >
                 Cancel
               </Button>

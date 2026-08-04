@@ -56,7 +56,7 @@ export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBo
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="bg-[var(--background)] border-primary/30 max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-black uppercase text-white flex items-center gap-2">
+          <DialogTitle className="text-xl font-black uppercase text-[#111115] flex items-center gap-2">
             <DollarSign className="h-5 w-5 text-green-500" />
             Today's Revenue
           </DialogTitle>
@@ -66,11 +66,11 @@ export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBo
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="p-4 bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/20 rounded-lg">
             <p className="text-xs text-green-400 mb-1">Total Revenue</p>
-            <p className="text-2xl font-black text-white">₹{totalRevenue.toLocaleString('en-IN')}</p>
+            <p className="text-2xl font-black text-[#111115]">₹{totalRevenue.toLocaleString('en-IN')}</p>
             <p className="text-label mt-1">{bookings.length} bookings</p>
           </div>
 
-          <div className="p-4 bg-[var(--surface)] border border-[#27272a] rounded-lg">
+          <div className="p-4 bg-[var(--surface)] border border-[#e4e4e7] rounded-lg">
             <p className="text-xs text-muted-content mb-1">Payment Status</p>
             <p className="text-2xl font-black text-primary">₹{paidAmount.toLocaleString('en-IN')}</p>
             <p className="text-label mt-1">
@@ -79,41 +79,41 @@ export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBo
             </p>
           </div>
 
-          <div className="p-4 bg-[var(--surface)] border border-[#27272a] rounded-lg">
+          <div className="p-4 bg-[var(--surface)] border border-[#e4e4e7] rounded-lg">
             <p className="text-xs text-muted-content mb-1">Device Revenue</p>
-            <p className="text-lg font-black text-white">₹{deviceRevenue.toLocaleString('en-IN')}</p>
+            <p className="text-lg font-black text-[#111115]">₹{deviceRevenue.toLocaleString('en-IN')}</p>
           </div>
 
-          <div className="p-4 bg-[var(--surface)] border border-[#27272a] rounded-lg">
+          <div className="p-4 bg-[var(--surface)] border border-[#e4e4e7] rounded-lg">
             <p className="text-xs text-muted-content mb-1">Food Revenue</p>
-            <p className="text-lg font-black text-white">₹{foodRevenue.toLocaleString('en-IN')}</p>
+            <p className="text-lg font-black text-[#111115]">₹{foodRevenue.toLocaleString('en-IN')}</p>
           </div>
         </div>
 
         {/* Payment Methods Breakdown */}
-        <div className="bg-[var(--surface)] border border-[#27272a] p-4 rounded-lg mb-4 space-y-3">
+        <div className="bg-[var(--surface)] border border-[#e4e4e7] p-4 rounded-lg mb-4 space-y-3">
           <h5 className="text-xs font-black uppercase text-muted-content tracking-wider flex items-center gap-1.5">
             Payment Methods
           </h5>
           <div className="grid grid-cols-3 gap-2">
-            <div className="p-3 bg-[var(--background)] border border-[#27272a] rounded-lg text-center">
+            <div className="p-3 bg-[var(--background)] border border-[#e4e4e7] rounded-lg text-center">
               <div className="flex items-center justify-center gap-1.5 mb-1.5">
                 <span className="text-lg">💵</span>
-                <p className="text-[10px] font-black uppercase text-white">Cash</p>
+                <p className="text-[10px] font-black uppercase text-[#111115]">Cash</p>
               </div>
               <p className="text-sm font-black text-green-400">₹{cashRevenue.toLocaleString('en-IN')}</p>
             </div>
-            <div className="p-3 bg-[var(--background)] border border-[#27272a] rounded-lg text-center">
+            <div className="p-3 bg-[var(--background)] border border-[#e4e4e7] rounded-lg text-center">
               <div className="flex items-center justify-center gap-1.5 mb-1.5">
                 <span className="text-lg">💳</span>
-                <p className="text-[10px] font-black uppercase text-white">Card</p>
+                <p className="text-[10px] font-black uppercase text-[#111115]">Card</p>
               </div>
               <p className="text-sm font-black text-blue-400">₹{cardRevenue.toLocaleString('en-IN')}</p>
             </div>
-            <div className="p-3 bg-[var(--background)] border border-[#27272a] rounded-lg text-center">
+            <div className="p-3 bg-[var(--background)] border border-[#e4e4e7] rounded-lg text-center">
               <div className="flex items-center justify-center gap-1.5 mb-1.5">
                 <span className="text-lg">📱</span>
-                <p className="text-[10px] font-black uppercase text-white">UPI</p>
+                <p className="text-[10px] font-black uppercase text-[#111115]">UPI</p>
               </div>
               <p className="text-sm font-black text-purple-400">₹{upiRevenue.toLocaleString('en-IN')}</p>
             </div>
@@ -129,7 +129,7 @@ export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBo
               return (
                 <div
                   key={booking.id}
-                  className="p-3 bg-[var(--surface)] border border-[#27272a] rounded-lg hover:border-primary/50 transition-colors cursor-pointer"
+                  className="p-3 bg-[var(--surface)] border border-[#e4e4e7] rounded-lg hover:border-primary/50 transition-colors cursor-pointer"
                   onClick={() => onBookingClick(booking.id)}
                 >
                   <div className="flex items-start justify-between">
@@ -138,13 +138,13 @@ export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBo
                         <p className="text-sm font-bold text-primary font-mono">{booking.booking_number}</p>
                         <BookingStatusBadge status={booking.status} size="sm" />
                       </div>
-                      <p className="text-xs text-white">{booking.customer_name}</p>
+                      <p className="text-xs text-[#111115]">{booking.customer_name}</p>
                       <p className="text-label mt-1">
                         {slot?.device_type} • {slot?.slot_start_time?.substring(0, 5)} - {slot?.slot_end_time?.substring(0, 5)}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-black text-white">₹{Number(booking.amount_paid || 0).toLocaleString('en-IN')}</p>
+                      <p className="text-sm font-black text-[#111115]">₹{Number(booking.amount_paid || 0).toLocaleString('en-IN')}</p>
                       <p className={`text-[9px] uppercase mt-1 ${booking.payment_status === 'paid' ? 'text-green-500' : booking.payment_status === 'partial' ? 'text-blue-500' : 'text-amber-500'}`}>
                         {booking.payment_status}
                       </p>

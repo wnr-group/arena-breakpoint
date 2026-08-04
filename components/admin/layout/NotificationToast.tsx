@@ -36,7 +36,7 @@ function showNotificationToast(notification: Notification) {
   sonnerToast.custom(
     (t) => (
       <div
-        className="w-full bg-gradient-to-br from-[#111] via-zinc-950 to-[#111] border-2 border-primary/40 rounded-xl p-4 shadow-[0_0_40px_rgba(184,134,11,0.3)] cursor-pointer hover:border-primary/60 transition-all"
+        className="w-full bg-white border-2 border-primary/40 rounded-xl p-4 shadow-[0_0_40px_rgba(184,134,11,0.3)] cursor-pointer hover:border-primary/60 transition-all"
         onClick={() => {
           window.open(`/admin/bookings?id=${notification.bookingId}`, '_blank')
           sonnerToast.dismiss(t)
@@ -54,7 +54,7 @@ function showNotificationToast(notification: Notification) {
           </div>
 
           <div className="flex-1 min-w-0">
-            <h4 className="text-sm font-black text-white mb-1">{notification.title}</h4>
+            <h4 className="text-sm font-black text-[#111115] mb-1">{notification.title}</h4>
             <p className="text-xs text-muted-content">{notification.message}</p>
           </div>
 
@@ -63,7 +63,7 @@ function showNotificationToast(notification: Notification) {
               e.stopPropagation()
               sonnerToast.dismiss(t)
             }}
-            className="text-secondary-content hover:text-white transition-colors flex-shrink-0"
+            className="text-secondary-content hover:text-[#111115] transition-colors flex-shrink-0"
           >
             <X className="h-4 w-4" />
           </button>

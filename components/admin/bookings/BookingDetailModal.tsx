@@ -255,7 +255,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
   return (
     <>
       <Dialog open={open && !openFoodModalDirectly} onOpenChange={onClose}>
-        <DialogContent className="bg-[var(--surface)] border-[#27272a] text-white max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-[var(--surface)] border-[#e4e4e7] text-[#111115] max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center justify-between">
               BOOKING DETAILS
@@ -270,7 +270,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
           ) : booking ? (
             <div className="space-y-6 mt-4">
               {/* QR Code and Booking Number */}
-              <Card className="bg-[var(--background)] border-[#27272a] p-6">
+              <Card className="bg-[var(--background)] border-[#e4e4e7] p-6">
                 <div className="flex flex-col md:flex-row gap-6 items-center">
                   <div className="bg-white p-4 rounded-xl">
                     <QRCodeSVG value={booking.booking_number} size={140} level="H" />
@@ -308,8 +308,8 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Customer Information */}
-                <Card className="bg-[var(--background)] border-[#27272a] p-5 space-y-4">
-                  <h3 className="text-section-header border-b border-[#27272a] pb-3 mb-2">
+                <Card className="bg-[var(--background)] border-[#e4e4e7] p-5 space-y-4">
+                  <h3 className="text-section-header border-b border-[#e4e4e7] pb-3 mb-2">
                     Customer Information
                   </h3>
                   <div className="space-y-3">
@@ -317,14 +317,14 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                       <User className="h-4 w-4 text-primary mt-0.5" />
                       <div className="flex-1">
                         <p className="text-label-enhanced text-muted-content mb-1">Customer</p>
-                        <p className="text-base font-bold text-white">{booking.customer_name}</p>
+                        <p className="text-base font-bold text-[#111115]">{booking.customer_name}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
                       <Phone className="h-4 w-4 text-primary mt-0.5" />
                       <div className="flex-1">
                         <p className="text-label-enhanced text-muted-content mb-1">Phone</p>
-                        <p className="text-base font-mono text-white font-semibold">{booking.customer_phone}</p>
+                        <p className="text-base font-mono text-[#111115] font-semibold">{booking.customer_phone}</p>
                       </div>
                     </div>
                     {booking.customer_email && (
@@ -332,7 +332,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                         <Mail className="h-4 w-4 text-primary mt-0.5" />
                         <div className="flex-1">
                           <p className="text-label-enhanced text-muted-content mb-1">Email</p>
-                          <p className="text-base text-white break-all font-semibold">{booking.customer_email}</p>
+                          <p className="text-base text-[#111115] break-all font-semibold">{booking.customer_email}</p>
                         </div>
                       </div>
                     )}
@@ -340,8 +340,8 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                 </Card>
 
                 {/* Device Slot Information */}
-                <Card className="bg-[var(--background)] border-[#27272a] p-5 space-y-4">
-                  <h3 className="text-section-header border-b border-[#27272a] pb-3 mb-2">
+                <Card className="bg-[var(--background)] border-[#e4e4e7] p-5 space-y-4">
+                  <h3 className="text-section-header border-b border-[#e4e4e7] pb-3 mb-2">
                     Device & Slot Details
                   </h3>
                   <div className="space-y-3">
@@ -349,7 +349,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                       <MapPin className="h-4 w-4 text-primary mt-0.5" />
                       <div className="flex-1">
                         <p className="text-label-enhanced text-muted-content mb-1">Device</p>
-                        <p className="text-base font-bold text-white">
+                        <p className="text-base font-bold text-[#111115]">
                           {deviceSlot?.device_type} #{deviceSlot?.device_station_number}
                         </p>
                       </div>
@@ -358,7 +358,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                       <Calendar className="h-4 w-4 text-primary mt-0.5" />
                       <div className="flex-1">
                         <p className="text-label-enhanced text-muted-content mb-1">Date</p>
-                        <p className="text-base text-white font-semibold">
+                        <p className="text-base text-[#111115] font-semibold">
                           {deviceSlot?.slot_date ? new Date(deviceSlot.slot_date).toLocaleDateString() : "N/A"}
                         </p>
                       </div>
@@ -367,7 +367,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                       <Clock className="h-4 w-4 text-primary mt-0.5" />
                       <div className="flex-1">
                         <p className="text-label-enhanced text-muted-content mb-1">Time Slot</p>
-                        <p className="text-base text-white font-semibold">
+                        <p className="text-base text-[#111115] font-semibold">
                           {deviceSlot?.slot_start_time} - {deviceSlot?.slot_end_time}
                         </p>
                         <p className="text-sm-enhanced text-secondary-content mt-1">
@@ -381,8 +381,8 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
 
               {/* Game Orders */}
               {booking.booking_device_slots && booking.booking_device_slots.length > 0 && (
-                <Card className="bg-[var(--background)] border-[#27272a] p-5 space-y-4">
-                  <h3 className="text-[10px] font-black text-secondary-content uppercase tracking-wider border-b border-[#27272a] pb-2 flex items-center gap-2">
+                <Card className="bg-[var(--background)] border-[#e4e4e7] p-5 space-y-4">
+                  <h3 className="text-[10px] font-black text-secondary-content uppercase tracking-wider border-b border-[#e4e4e7] pb-2 flex items-center gap-2">
                     <Gamepad2 className="h-4 w-4" />
                     Game Orders
                   </h3>
@@ -396,26 +396,26 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                       const canEdit = booking.status !== "cancelled" && booking.status !== "completed";
 
                       return (
-                        <div key={slot.id} className="bg-[var(--surface)] border border-[#27272a] rounded-lg p-4 space-y-3">
+                        <div key={slot.id} className="bg-[var(--surface)] border border-[#e4e4e7] rounded-lg p-4 space-y-3">
                           {/* Game/Device Info */}
                           <div className="flex justify-between items-start">
                             <div>
-                              <p className="text-sm font-black text-white">{slot.device_type}</p>
+                              <p className="text-sm font-black text-[#111115]">{slot.device_type}</p>
                               <p className="text-sm font-semibold text-secondary-content">
                                 {slot.duration_hours}h × ₹{Number(slot.hourly_rate).toLocaleString('en-IN')}/hr
                               </p>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-black text-white">₹{Number(slot.slot_total).toLocaleString('en-IN')}</p>
+                              <p className="text-sm font-black text-[#111115]">₹{Number(slot.slot_total).toLocaleString('en-IN')}</p>
                               <p className="text-[9px] text-data-placeholder uppercase">Base Rate</p>
                             </div>
                           </div>
 
                           {/* Player Count Control */}
-                          <div className="pt-2 border-t border-[#27272a]/50 space-y-2">
+                          <div className="pt-2 border-t border-[#e4e4e7]/50 space-y-2">
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-sm font-bold text-white uppercase">Player Count</p>
+                                <p className="text-sm font-bold text-[#111115] uppercase">Player Count</p>
                                 <p className="text-min-enhanced text-secondary-content">
                                   {includedPlayers} included • Max {maxPlayers}
                                 </p>
@@ -430,7 +430,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                                   >
                                     <Minus className="h-3 w-3 bg-primary hover:bg-primary-hover text-black font-black" />
                                   </Button>
-                                  <span className="text-lg font-black text-white w-8 text-center">
+                                  <span className="text-lg font-black text-[#111115] w-8 text-center">
                                     {currentPlayerCount}
                                   </span>
                                   <Button
@@ -443,13 +443,13 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                                   </Button>
                                 </div>
                               ) : (
-                                <span className="text-lg font-black text-white">{currentPlayerCount}</span>
+                                <span className="text-lg font-black text-[#111115]">{currentPlayerCount}</span>
                               )}
                             </div>
 
                             {/* Extra Players Charge */}
                             {extraPlayers > 0 && (
-                              <div className="flex justify-between items-center pt-2 border-t border-[#27272a]/30">
+                              <div className="flex justify-between items-center pt-2 border-t border-[#e4e4e7]/30">
                                 <div>
                                   <p className="text-sm font-bold text-primary">Extra Players</p>
                                   <p className="text-sm text-secondary-content font-medium">
@@ -471,8 +471,8 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
               )}
 
               {/* Food Items */}
-              <Card className="bg-[var(--background)] border-[#27272a] p-5 space-y-4">
-                <div className="flex justify-between items-center border-b border-[#27272a] pb-3 mb-2">
+              <Card className="bg-[var(--background)] border-[#e4e4e7] p-5 space-y-4">
+                <div className="flex justify-between items-center border-b border-[#e4e4e7] pb-3 mb-2">
                   <h3 className="text-section-header flex items-center gap-2">
                     <UtensilsCrossed className="h-5 w-5 text-primary" />
                     Food & Beverage Orders
@@ -491,9 +491,9 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                 {booking.booking_food_items && booking.booking_food_items.length > 0 ? (
                   <div className="space-y-3">
                     {booking.booking_food_items.map((item: any) => (
-                      <div key={item.id} className="flex justify-between items-center p-4 bg-[var(--surface)] border border-[#27272a] rounded-lg hover:border-primary/30 transition-colors">
+                      <div key={item.id} className="flex justify-between items-center p-4 bg-[var(--surface)] border border-[#e4e4e7] rounded-lg hover:border-primary/30 transition-colors">
                         <div className="flex-1">
-                          <p className="text-lg font-bold text-white mb-1">{item.item_name}</p>
+                          <p className="text-lg font-bold text-[#111115] mb-1">{item.item_name}</p>
                           <p className="text-sm-enhanced text-secondary-content">Qty: <span className="font-bold">{item.quantity}</span> × ₹{Number(item.unit_price).toLocaleString('en-IN')}</p>
                         </div>
                         <div className="text-right">
@@ -509,7 +509,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
               </Card>
 
               {/* Payment Summary - Detailed Breakdown */}
-              <Card className="bg-gradient-to-br from-[#0a0a0a] via-zinc-950 to-[#0a0a0a] border-2 border-primary/30 p-6 shadow-[0_0_30px_rgba(184,134,11,0.2)]">
+              <Card className="bg-gradient-to-br from-[#f4f4f5] via-[#f4f4f5] to-[#f4f4f5] border-2 border-primary/30 p-6 shadow-[0_0_30px_rgba(184,134,11,0.2)]">
                 <h3 className="text-section-header text-primary mb-5 flex items-center gap-2">
                   <DollarSign className="h-5 w-5" />
                   Payment Summary
@@ -539,29 +539,29 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
 
                     return (
                       <>
-                        <div className="flex items-center justify-between py-3 border-b border-zinc-800">
+                        <div className="flex items-center justify-between py-3 border-b border-[#e4e4e7]">
                           <span className="text-secondary-content font-semibold text-base">
                             Device Booking ({durationHours}h × ₹{hourlyRate}):
                           </span>
-                          <span className="text-white font-bold text-lg">₹{deviceCharges.toFixed(2)}</span>
+                          <span className="text-[#111115] font-bold text-lg">₹{deviceCharges.toFixed(2)}</span>
                         </div>
 
                         {extraPlayersTotal > 0 && (
-                          <div className="flex items-center justify-between py-3 border-b border-zinc-800">
+                          <div className="flex items-center justify-between py-3 border-b border-[#e4e4e7]">
                             <span className="text-secondary-content font-semibold text-base">Extra Players:</span>
-                            <span className="text-white font-bold text-lg">₹{extraPlayersTotal.toFixed(2)}</span>
+                            <span className="text-[#111115] font-bold text-lg">₹{extraPlayersTotal.toFixed(2)}</span>
                           </div>
                         )}
 
                         {booking.food_subtotal > 0 && (
-                          <div className="flex items-center justify-between py-3 border-b border-zinc-800">
+                          <div className="flex items-center justify-between py-3 border-b border-[#e4e4e7]">
                             <span className="text-secondary-content font-semibold text-base">Food & Beverages:</span>
-                            <span className="text-white font-bold text-lg">₹{Number(booking.food_subtotal).toFixed(2)}</span>
+                            <span className="text-[#111115] font-bold text-lg">₹{Number(booking.food_subtotal).toFixed(2)}</span>
                           </div>
                         )}
 
                         {booking.booking_food_items && booking.booking_food_items.length > 0 && (
-                          <div className="ml-4 space-y-2 py-3 border-b border-zinc-800">
+                          <div className="ml-4 space-y-2 py-3 border-b border-[#e4e4e7]">
                             {booking.booking_food_items.map((item: any) => (
                               <div key={item.id} className="flex items-center justify-between text-sm">
                                 <span className="text-secondary-content font-medium">
@@ -573,13 +573,13 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                           </div>
                         )}
 
-                        <div className="flex items-center justify-between py-3 border-b-2 border-zinc-700">
-                          <span className="text-white font-bold text-lg">Subtotal:</span>
-                          <span className="text-white font-black text-xl">₹{calculatedSubtotal.toFixed(2)}</span>
+                        <div className="flex items-center justify-between py-3 border-b-2 border-[#e4e4e7]">
+                          <span className="text-[#111115] font-bold text-lg">Subtotal:</span>
+                          <span className="text-[#111115] font-black text-xl">₹{calculatedSubtotal.toFixed(2)}</span>
                         </div>
 
                         {booking.subscription_discount > 0 && (
-                          <div className="flex items-center justify-between py-2 border-b border-zinc-800 text-green-500">
+                          <div className="flex items-center justify-between py-2 border-b border-[#e4e4e7] text-green-500">
                             <span className="font-medium flex items-center gap-1">
                               <CheckCircle2 className="h-3 w-3" />
                               Subscription Discount:
@@ -589,14 +589,14 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                         )}
 
                         {booking.promo_discount > 0 && (
-                          <div className="flex items-center justify-between py-2 border-b border-zinc-800 text-primary">
+                          <div className="flex items-center justify-between py-2 border-b border-[#e4e4e7] text-primary">
                             <span className="font-medium">Promo Discount:</span>
                             <span className="font-bold">-₹{Number(booking.promo_discount).toFixed(2)}</span>
                           </div>
                         )}
 
                         {booking.happy_hour_discount > 0 && (
-                          <div className="flex items-center justify-between py-2 border-b border-zinc-800 text-amber-400">
+                          <div className="flex items-center justify-between py-2 border-b border-[#e4e4e7] text-amber-400">
                             <span className="font-medium flex items-center gap-1">
                               <Clock className="h-3 w-3" />
                               Happy Hour Discount:
@@ -606,7 +606,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                         )}
 
                         <div className="flex items-center justify-between pt-5 border-t-2 border-primary/20">
-                          <span className="text-white font-black text-xl uppercase">Total Amount:</span>
+                          <span className="text-[#111115] font-black text-xl uppercase">Total Amount:</span>
                           <span className="text-3xl font-black bg-gradient-to-r from-primary via-amber-300 to-primary bg-clip-text text-transparent">
                             ₹{calculatedTotal.toFixed(2)}
                           </span>
@@ -621,7 +621,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                               ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
                               : booking.payment_status === 'pending'
                               ? 'bg-red-500/20 text-red-400 border border-red-500/40'
-                              : 'bg-zinc-800 text-secondary-content border border-zinc-700'
+                              : 'bg-[#e4e4e7] text-secondary-content border border-[#e4e4e7]'
                           }`}>
                             {booking.payment_status}
                           </span>
@@ -632,12 +632,12 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                           <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg space-y-2">
                             <div className="flex items-center justify-between text-sm">
                               <span className="text-blue-400 font-bold uppercase">Amount Paid:</span>
-                              <span className="text-blue-300 font-black">
+                              <span className="text-blue-700 font-black">
                                 ₹{Number(booking.amount_paid || 0).toLocaleString('en-IN')}
                               </span>
                             </div>
                             {/* Show payment method breakdown */}
-                            <div className="space-y-1 text-xs text-blue-300/70 pl-2 border-l-2 border-blue-500/30">
+                            <div className="space-y-1 text-xs text-blue-700/70 pl-2 border-l-2 border-blue-500/30">
                               {Number(booking.cash_amount || 0) > 0 && (
                                 <div className="flex justify-between">
                                   <span>Cash:</span>
@@ -665,18 +665,18 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                           <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg space-y-2">
                             <div className="flex items-center justify-between">
                               <span className="text-amber-400 font-bold text-sm uppercase">Balance Due:</span>
-                              <span className="text-amber-300 font-black text-lg">
+                              <span className="text-amber-700 font-black text-lg">
                                 ₹{Number(booking.balance_due).toLocaleString('en-IN')}
                               </span>
                             </div>
                             {booking.payment_status === 'partial' && booking.unpaid_items && booking.unpaid_items.length > 0 && (
                               <div className="border-t border-amber-500/20 pt-2 space-y-1">
-                                <p className="text-xs text-amber-300/80 font-bold uppercase">
+                                <p className="text-xs text-amber-700/80 font-bold uppercase">
                                   Unpaid Items:
                                 </p>
                                 <div className="space-y-1 pl-2">
                                   {booking.unpaid_items.map((item: any, idx: number) => (
-                                    <div key={idx} className="flex justify-between text-xs text-amber-300/70">
+                                    <div key={idx} className="flex justify-between text-xs text-amber-700/70">
                                       <span>{item.description || item.item_type}</span>
                                       <span className="font-semibold">₹{Number(item.line_total).toLocaleString('en-IN')}</span>
                                     </div>
@@ -684,7 +684,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                                 </div>
                               </div>
                             )}
-                            <p className="text-xs text-amber-300/60 border-t border-amber-500/20 pt-2">
+                            <p className="text-xs text-amber-700/60 border-t border-amber-500/20 pt-2">
                               Payment must be collected before checkout
                             </p>
                           </div>
@@ -696,7 +696,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
               </Card>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3 pt-6 border-t-2 border-[#27272a]">
+              <div className="flex flex-wrap gap-3 pt-6 border-t-2 border-[#e4e4e7]">
                 {booking.status === "confirmed" && (
                   <Button
                     onClick={handleCheckIn}
@@ -771,7 +771,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
           }
         }
       }}>
-        <DialogContent className="bg-[var(--surface)] border-[#27272a] text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-[var(--surface)] border-[#e4e4e7] text-[#111115] max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-black uppercase tracking-tight">
               Add Food & Beverages
@@ -779,7 +779,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
           </DialogHeader>
 
           {/* Search and Filter Controls */}
-          <div className="space-y-3 mt-4 pb-4 border-b border-[#27272a]">
+          <div className="space-y-3 mt-4 pb-4 border-b border-[#e4e4e7]">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-content" />
               <Input
@@ -787,7 +787,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                 placeholder="Search food items..."
                 value={foodSearchQuery}
                 onChange={(e) => setFoodSearchQuery(e.target.value)}
-                className="pl-10 bg-[var(--background)] border-[#27272a] text-white placeholder:text-muted-content focus:border-primary/50"
+                className="pl-10 bg-[var(--background)] border-[#e4e4e7] text-[#111115] placeholder:text-muted-content focus:border-primary/50"
               />
             </div>
 
@@ -800,7 +800,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                   className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
                     selectedCategory === category
                       ? "bg-primary text-black"
-                      : "bg-[var(--background)] text-muted-content hover:text-white border border-[#27272a] hover:border-primary/30"
+                      : "bg-[var(--background)] text-muted-content hover:text-[#111115] border border-[#e4e4e7] hover:border-primary/30"
                   }`}
                 >
                   {category}
@@ -823,14 +823,14 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
 
               return (
                 <div key={category} className="space-y-3">
-                  <h4 className="text-label-enhanced border-b border-[#27272a] pb-2">
+                  <h4 className="text-label-enhanced border-b border-[#e4e4e7] pb-2">
                     {category}
                   </h4>
                   <div className="space-y-3">
                     {categoryItems.map((item: any) => (
-                      <div key={item.id} className="flex justify-between items-center p-4 bg-[var(--background)] border border-[#27272a] rounded-lg hover:border-primary/30 transition-colors">
+                      <div key={item.id} className="flex justify-between items-center p-4 bg-[var(--background)] border border-[#e4e4e7] rounded-lg hover:border-primary/30 transition-colors">
                         <div className="flex-1">
-                          <p className="text-lg font-bold text-white">{item.name}</p>
+                          <p className="text-lg font-bold text-[#111115]">{item.name}</p>
                           <div className="flex items-center gap-2">
                             <p className="text-sm-enhanced text-primary font-bold">₹{Number(item.price).toLocaleString('en-IN')}</p>
                             <span className="text-xs text-muted-content">
@@ -852,7 +852,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                           >
                             <Minus className="h-4 w-4 " />
                           </Button>
-                          <span className="text-lg font-black text-white w-10 text-center">
+                          <span className="text-lg font-black text-[#111115] w-10 text-center">
                             {selectedFoodItems[item.id] || 0}
                           </span>
                           <Button
@@ -902,7 +902,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
               )}
           </div>
 
-          <div className="flex justify-end gap-2 pt-4 border-t border-[#27272a] mt-4">
+          <div className="flex justify-end gap-2 pt-4 border-t border-[#e4e4e7] mt-4">
             <Button
               variant="ghost"
               onClick={() => {
@@ -914,7 +914,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                   onClose();
                 }
               }}
-              className="border-[#27272a] text-muted-content hover:text-white"
+              className="border-[#e4e4e7] text-muted-content hover:text-[#111115]"
             >
               Cancel
             </Button>
@@ -932,7 +932,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
 
       {/* Cancel Confirmation Dialog */}
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-        <AlertDialogContent className="bg-[var(--surface)] border-[#27272a] text-white">
+        <AlertDialogContent className="bg-[var(--surface)] border-[#e4e4e7] text-[#111115]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-bold">Cancel Booking?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-content">
@@ -941,7 +941,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800">
+            <AlertDialogCancel className="bg-[#e4e4e7] text-[#111115] border-[#e4e4e7] hover:bg-[#e4e4e7]">
               Keep Booking
             </AlertDialogCancel>
             <AlertDialogAction
@@ -958,7 +958,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
 
       {/* Mark as Paid Modal */}
       <Dialog open={markAsPaidModalOpen} onOpenChange={setMarkAsPaidModalOpen}>
-        <DialogContent className="bg-[var(--surface)] border-[#27272a] text-white max-w-md">
+        <DialogContent className="bg-[var(--surface)] border-[#e4e4e7] text-[#111115] max-w-md">
           <DialogHeader>
             <DialogTitle className="text-xl font-black uppercase tracking-tight">
               Mark as Paid
@@ -970,7 +970,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
             <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-bold text-amber-400 uppercase">Balance Due:</span>
-                <span className="text-2xl font-black text-amber-300">
+                <span className="text-2xl font-black text-amber-700">
                   ₹{Number(booking?.balance_due || 0).toLocaleString('en-IN')}
                 </span>
               </div>
@@ -981,14 +981,14 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
               <p className="text-sm font-bold text-muted-content uppercase">Payment Split:</p>
 
               {/* Quick Select Method */}
-              <div className="grid grid-cols-3 gap-2 pb-2 border-b border-zinc-800/80">
+              <div className="grid grid-cols-3 gap-2 pb-2 border-b border-[#e4e4e7]/80">
                 <Button
                   type="button"
                   onClick={() => setPaymentSplit({ cashAmount: Number(booking?.balance_due || 0), cardAmount: 0, upiAmount: 0 })}
                   className={`h-9 text-xs font-black uppercase rounded-lg border transition-all ${
                     paymentSplit.cashAmount === Number(booking?.balance_due || 0)
                       ? 'bg-green-600 hover:bg-green-700 border-transparent text-white shadow-[0_0_12px_rgba(34,197,94,0.15)]'
-                      : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white'
+                      : 'bg-[#e4e4e7] border-[#e4e4e7] text-[#52525b] hover:bg-[#d4d4d8] hover:text-[#111115]'
                   }`}
                 >
                   💵 Cash
@@ -999,7 +999,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                   className={`h-9 text-xs font-black uppercase rounded-lg border transition-all ${
                     paymentSplit.cardAmount === Number(booking?.balance_due || 0)
                       ? 'bg-blue-600 hover:bg-blue-700 border-transparent text-white shadow-[0_0_12px_rgba(59,130,246,0.15)]'
-                      : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white'
+                      : 'bg-[#e4e4e7] border-[#e4e4e7] text-[#52525b] hover:bg-[#d4d4d8] hover:text-[#111115]'
                   }`}
                 >
                   💳 Card
@@ -1010,7 +1010,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                   className={`h-9 text-xs font-black uppercase rounded-lg border transition-all ${
                     paymentSplit.upiAmount === Number(booking?.balance_due || 0)
                       ? 'bg-purple-600 hover:bg-purple-700 border-transparent text-white shadow-[0_0_12px_rgba(168,85,247,0.15)]'
-                      : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white'
+                      : 'bg-[#e4e4e7] border-[#e4e4e7] text-[#52525b] hover:bg-[#d4d4d8] hover:text-[#111115]'
                   }`}
                 >
                   📱 UPI
@@ -1019,7 +1019,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
 
               {/* Cash */}
               <div className="space-y-1">
-                <Label htmlFor="cash" className="text-xs font-bold text-zinc-400 uppercase">Cash</Label>
+                <Label htmlFor="cash" className="text-xs font-bold text-[#52525b] uppercase">Cash</Label>
                 <Input
                   id="cash"
                   type="number"
@@ -1027,13 +1027,13 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                   step="0.01"
                   value={paymentSplit.cashAmount}
                   onChange={(e) => setPaymentSplit({ ...paymentSplit, cashAmount: parseFloat(e.target.value) || 0 })}
-                  className="bg-[var(--background)] border-[#27272a] text-white h-11"
+                  className="bg-[var(--background)] border-[#e4e4e7] text-[#111115] h-11"
                 />
               </div>
 
               {/* Card */}
               <div className="space-y-1">
-                <Label htmlFor="card" className="text-xs font-bold text-zinc-400 uppercase">Card</Label>
+                <Label htmlFor="card" className="text-xs font-bold text-[#52525b] uppercase">Card</Label>
                 <Input
                   id="card"
                   type="number"
@@ -1041,13 +1041,13 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                   step="0.01"
                   value={paymentSplit.cardAmount}
                   onChange={(e) => setPaymentSplit({ ...paymentSplit, cardAmount: parseFloat(e.target.value) || 0 })}
-                  className="bg-[var(--background)] border-[#27272a] text-white h-11"
+                  className="bg-[var(--background)] border-[#e4e4e7] text-[#111115] h-11"
                 />
               </div>
 
               {/* UPI */}
               <div className="space-y-1">
-                <Label htmlFor="upi" className="text-xs font-bold text-zinc-400 uppercase">UPI</Label>
+                <Label htmlFor="upi" className="text-xs font-bold text-[#52525b] uppercase">UPI</Label>
                 <Input
                   id="upi"
                   type="number"
@@ -1055,14 +1055,14 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                   step="0.01"
                   value={paymentSplit.upiAmount}
                   onChange={(e) => setPaymentSplit({ ...paymentSplit, upiAmount: parseFloat(e.target.value) || 0 })}
-                  className="bg-[var(--background)] border-[#27272a] text-white h-11"
+                  className="bg-[var(--background)] border-[#e4e4e7] text-[#111115] h-11"
                 />
               </div>
 
               {/* Total Split Display */}
-              <div className="bg-[var(--background)] border border-[#27272a] rounded-lg p-3">
+              <div className="bg-[var(--background)] border border-[#e4e4e7] rounded-lg p-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-zinc-400">Total Split:</span>
+                  <span className="text-sm font-bold text-[#52525b]">Total Split:</span>
                   <span className={`text-lg font-black ${
                     Math.abs((paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount) - Number(booking?.balance_due || 0)) < 0.01
                       ? 'text-green-400'
@@ -1075,12 +1075,12 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4 border-t border-[#27272a]">
+          <div className="flex justify-end gap-2 pt-4 border-t border-[#e4e4e7]">
             <Button
               variant="ghost"
               onClick={() => setMarkAsPaidModalOpen(false)}
               disabled={actionLoading}
-              className="border-[#27272a] text-muted-content hover:text-white"
+              className="border-[#e4e4e7] text-muted-content hover:text-[#111115]"
             >
               Cancel
             </Button>

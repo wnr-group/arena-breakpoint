@@ -67,7 +67,7 @@ export function FoodCard({
       animate={getAnimate()}
       exit={getExit()}
       onClick={handleClick}
-      className="group relative rounded-xl overflow-hidden cursor-pointer flex flex-col sm:block bg-[#121212] sm:bg-transparent border border-white/5 sm:border-0 h-full sm:h-auto aspect-auto sm:aspect-[301/401]"
+      className="group relative rounded-xl overflow-hidden cursor-pointer flex flex-col sm:block bg-white sm:bg-transparent border border-[#e4e4e7] sm:border-0 h-full sm:h-auto aspect-auto sm:aspect-[301/401]"
     >
       {/*  Image Layer */}
       <div className="relative w-full aspect-square sm:aspect-auto sm:absolute sm:inset-0 sm:z-0 overflow-hidden">
@@ -96,22 +96,22 @@ export function FoodCard({
       <div className="relative z-20 flex flex-col flex-grow p-3 sm:p-4 sm:absolute sm:bottom-0 sm:left-0 sm:right-0 sm:flex-none sm:block sm:transition-transform sm:duration-500 sm:ease-[cubic-bezier(.25,.46,.45,.94)] sm:group-hover:-translate-y-12">
         {/* Title */}
         <h4
-          className="text-white font-bold text-[13px] sm:text-base leading-snug sm:leading-tight mb-1 sm:mb-1 transition-colors duration-300 sm:group-hover:text-primary line-clamp-1"
+          className="text-[#111115] sm:text-white font-bold text-[13px] sm:text-base leading-snug sm:leading-tight mb-1 sm:mb-1 transition-colors duration-300 sm:group-hover:text-primary line-clamp-1"
           style={{ fontFamily: "'Oxanium', sans-serif" }}
         >
           {food.title}
         </h4>
 
         {/* Description  */}
-        <p className="text-[#a1a1aa] text-[10px] sm:text-[11px] leading-snug mb-2 sm:mb-3 line-clamp-2">
+        <p className="text-[#52525b] sm:text-[#a1a1aa] text-[10px] sm:text-[11px] leading-snug mb-2 sm:mb-3 line-clamp-2">
           {food.description}
         </p>
 
         {/* Price & Mobile ADD Button */}
         <div className="flex items-center justify-between mt-auto sm:mt-0 sm:block">
-          <span className="text-[#ADB7BE] text-[11px] sm:text-[12px] font-medium block">
+          <span className="text-[#52525b] sm:text-[#ADB7BE] text-[11px] sm:text-[12px] font-medium block">
             <span className="hidden sm:inline">Price </span>
-            <span className="text-white font-bold text-[14px] sm:text-[15px]">{food.price}</span>
+            <span className="text-[#111115] sm:text-white font-bold text-[14px] sm:text-[15px]">{food.price}</span>
           </span>
 
           {/* BUY Button  */}

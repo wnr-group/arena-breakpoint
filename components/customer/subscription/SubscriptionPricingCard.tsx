@@ -185,7 +185,7 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
 
   if (plans.length === 0) {
     return (
-      <div className="text-center text-neutral-400 py-24 min-h-100 flex items-center justify-center">
+      <div className="text-center text-[#52525b] py-24 min-h-100 flex items-center justify-center">
         No subscription plans are currently available.
       </div>
     )

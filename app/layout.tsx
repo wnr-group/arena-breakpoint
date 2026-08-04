@@ -12,8 +12,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Break Point Arena - Gaming Café',
-  description: 'Book your gaming slot at Break Point Arena',
+  title: 'Arena OS - Gaming Café',
+  description: 'Book your gaming slot at Arena OS',
   manifest: '/manifest.json',
   icons: {
     icon: [

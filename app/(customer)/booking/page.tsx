@@ -64,16 +64,16 @@ export default function GamingStationPage() {
     <div className="space-y-6 animate-in fade-in duration-200 pb-12">
       <div className="pt-15 pb-4 px-4">
         <div className="space-y-1 relative z-0">
-          <nav className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">
+          <nav className="text-[10px] font-black uppercase tracking-widest text-[#52525b] mb-2">
             <Link href="/" className="hover:text-primary transition-colors">
               HOME
             </Link>
-            <span className="mx-1.5 text-zinc-700">›</span>
+            <span className="mx-1.5 text-[#52525b]">›</span>
             <span className="text-primary">SELECT DEVICE</span>
           </nav>
 
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <h2 className="text-xl font-black uppercase text-white tracking-tight">
+            <h2 className="text-xl font-black uppercase text-[#111115] tracking-tight">
               CHOOSE YOUR GAMING STATION
             </h2>
             <Button
@@ -86,7 +86,7 @@ export default function GamingStationPage() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between border-b border-zinc-900 pb-4">
+      <div className="flex items-center justify-between border-b border-[#e4e4e7] pb-4">
         <div className="flex flex-wrap gap-2">
           {["All Devices", "Console", "PC", "Snooker"].map((tag) => (
             <button
@@ -94,7 +94,7 @@ export default function GamingStationPage() {
               onClick={() => setActiveFilter(tag)}
               className={`px-4 py-2.5 text-xs font-black uppercase border rounded-xl transition-all whitespace-nowrap ${activeFilter === tag
                   ? "bg-gradient-primary text-[var(--button-text)] border-primary"
-                  : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                  : "bg-[#e4e4e7] border-[#e4e4e7] text-[#3f3f46] hover:border-[#e4e4e7]"
                 }`}
             >
               {tag}
@@ -115,9 +115,9 @@ export default function GamingStationPage() {
           .map((deviceType) => {
             const isAvail = deviceType.available_devices_count > 0;
             return (
-              <Card key={deviceType.id} className="bg-[#111] border border-zinc-900 overflow-hidden flex flex-col justify-between rounded-xl shadow-lg group glow-box-hover">
+              <Card key={deviceType.id} className="bg-[#f4f4f5] border border-[#e4e4e7] overflow-hidden flex flex-col justify-between rounded-xl shadow-lg group glow-box-hover">
 
-                <div className="relative w-full aspect-video overflow-hidden bg-zinc-950 border-b border-zinc-900">
+                <div className="relative w-full aspect-video overflow-hidden bg-[#f4f4f5] border-b border-[#e4e4e7]">
                   {deviceType.image_url ? (
                     <img
                       src={deviceType.image_url}
@@ -125,7 +125,7 @@ export default function GamingStationPage() {
                       className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-zinc-800">
+                    <div className="w-full h-full flex items-center justify-center text-[#a1a1aa]">
                       <Sparkles className="h-8 w-8 opacity-20" />
                     </div>
                   )}
@@ -140,7 +140,7 @@ export default function GamingStationPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-start gap-2">
                       <div className="flex-1">
-                        <h4 className="font-black text-sm text-white uppercase tracking-tight">
+                        <h4 className="font-black text-sm text-[#111115] uppercase tracking-tight">
                           {deviceType.display_name}
                         </h4>
                         <p className="text-min text-secondary-content font-bold mt-0.5 flex items-center gap-1">
@@ -150,11 +150,11 @@ export default function GamingStationPage() {
                       </div>
                       <div className="text-right flex-shrink-0 flex items-baseline gap-1 mt-1">
                         <span className="text-lg font-black text-primary">₹{Number(deviceType.regular_hourly_rate)}</span>
-                        <span className="text-xs text-zinc-300 font-bold">/hr</span>
+                        <span className="text-xs text-[#3f3f46] font-bold">/hr</span>
                       </div>
                     </div>
 
-                    <p className="text-description leading-relaxed line-clamp-2 font-medium bg-zinc-950/40 p-2 rounded border border-zinc-900/60 glow-box-hover">
+                    <p className="text-description leading-relaxed line-clamp-2 font-medium bg-[#f4f4f5]/40 p-2 rounded border border-[#e4e4e7]/60 glow-box-hover">
                       {deviceType.description || "Premium gaming experience with top-tier equipment."}
                     </p>
                   </div>
@@ -169,7 +169,7 @@ export default function GamingStationPage() {
                         SELECT {deviceType.display_name.toUpperCase()}
                       </Button>
                     ) : (
-                      <Button disabled className="w-full text-xs font-black uppercase py-5 bg-zinc-900 border border-zinc-800 text-zinc-600 rounded-lg cursor-not-allowed">
+                      <Button disabled className="w-full text-xs font-black uppercase py-5 bg-[#e4e4e7] border border-[#e4e4e7] text-[#52525b] rounded-lg cursor-not-allowed">
                         FULLY BOOKED
                       </Button>
                     )}

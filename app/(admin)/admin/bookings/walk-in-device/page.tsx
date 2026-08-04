@@ -358,7 +358,7 @@ export default function WalkInBookingPage() {
   }, [selectedDuration, allDurations]);
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-white p-4 md:p-8">
+    <div className="min-h-screen bg-[var(--background)] text-[#111115] p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -398,7 +398,7 @@ export default function WalkInBookingPage() {
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${step >= s.num
                     ? "bg-primary text-black"
-                    : "bg-zinc-900 text-muted-content border border-zinc-800"
+                    : "bg-[#e4e4e7] text-muted-content border border-[#e4e4e7]"
                     }`}
                 >
                   {s.num}
@@ -409,7 +409,7 @@ export default function WalkInBookingPage() {
                 </span>
               </div>
               {idx < 3 && (
-                <div className={`h-0.5 flex-1 mx-2 ${step > s.num ? "bg-primary" : "bg-zinc-900"}`} />
+                <div className={`h-0.5 flex-1 mx-2 ${step > s.num ? "bg-primary" : "bg-[#e4e4e7]"}`} />
               )}
             </div>
           ))}
@@ -431,8 +431,8 @@ export default function WalkInBookingPage() {
                     <Card
                       key={deviceType.id}
                       className={`bg-[var(--surface)] border p-4 cursor-pointer transition-all ${isAvailable
-                        ? "border-zinc-900 hover:border-primary"
-                        : "border-zinc-900 opacity-50 cursor-not-allowed"
+                        ? "border-[#e4e4e7] hover:border-primary"
+                        : "border-[#e4e4e7] opacity-50 cursor-not-allowed"
                         }`}
                       onClick={() => isAvailable && handleSelectDeviceType(deviceType)}
                     >
@@ -469,7 +469,7 @@ export default function WalkInBookingPage() {
             <div>
               <h2 className="text-xl font-black uppercase text-muted-content">Select Date & Time</h2>
               <p className="text-sm text-muted-content mt-1">
-                Selected Device: <span className="text-white font-bold">{selectedDeviceType.display_name}</span>
+                Selected Device: <span className="text-[#111115] font-bold">{selectedDeviceType.display_name}</span>
               </p>
             </div>
 
@@ -477,7 +477,7 @@ export default function WalkInBookingPage() {
               {/* Date Picker */}
               <div className="space-y-3">
                 <h3 className="text-xs font-black text-secondary-content uppercase tracking-widest pl-1">📅 Select Date</h3>
-                <Card className="bg-[#111] border border-zinc-900 p-4 w-full flex justify-center rounded-2xl">
+                <Card className="bg-[#f4f4f5] border border-[#e4e4e7] p-4 w-full flex justify-center rounded-2xl">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
@@ -501,7 +501,7 @@ export default function WalkInBookingPage() {
                         onClick={() => setSelectedDuration(duration.value)}
                         className={`w-full p-3 border text-left rounded-xl transition-all duration-300 ${isSelected
                           ? "bg-gradient-to-r from-primary via-yellow-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
-                          : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
+                          : "bg-[#f4f4f5] border-[#e4e4e7] text-[#52525b] hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
                           }`}
                       >
                         <div className="flex justify-between items-center">
@@ -526,7 +526,7 @@ export default function WalkInBookingPage() {
                   </div>
                 ) : availableStartTimesForDate.length === 0 ? (
                   <div className="h-96 flex flex-col items-center justify-center gap-2 text-center px-4">
-                    <Clock className="h-8 w-8 text-zinc-700" />
+                    <Clock className="h-8 w-8 text-[#52525b]" />
                     <p className="text-sm text-muted-content font-bold">No time slots available</p>
                     <p className="text-xs text-muted-content">Try selecting a different date or duration</p>
                   </div>
@@ -553,10 +553,10 @@ export default function WalkInBookingPage() {
                             }, 100);
                           }}
                           className={`w-full p-3 border text-left rounded-xl transition-all duration-300 text-sm font-bold ${!isAvailable
-                            ? "bg-zinc-950/20 border-zinc-950 text-zinc-800 cursor-not-allowed"
+                            ? "bg-black/5 border-[#e4e4e7] text-[#a1a1aa] cursor-not-allowed"
                             : isSelected
                               ? "bg-gradient-to-r from-primary via-yellow-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
-                              : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
+                              : "bg-[#f4f4f5] border-[#e4e4e7] text-[#52525b] hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
                             }`}
                         >
                           <div className="flex items-center justify-between">
@@ -601,9 +601,9 @@ export default function WalkInBookingPage() {
 
             {/* Phase 1: Primary Mobile Verification */}
             {!showFullRegistrationFields ? (
-              <Card className="bg-[var(--surface)] border border-zinc-900 p-6 space-y-6 rounded-2xl shadow-2xl animate-in fade-in duration-200">
-                <div className="border-b border-zinc-900 pb-4 space-y-1">
-                  <h3 className="text-lg font-black uppercase text-white tracking-tight">WALK-IN PROFILE IDENTIFICATION</h3>
+              <Card className="bg-[var(--surface)] border border-[#e4e4e7] p-6 space-y-6 rounded-2xl shadow-2xl animate-in fade-in duration-200">
+                <div className="border-b border-[#e4e4e7] pb-4 space-y-1">
+                  <h3 className="text-lg font-black uppercase text-[#111115] tracking-tight">WALK-IN PROFILE IDENTIFICATION</h3>
                   <p className="text-xs text-secondary-content font-medium">Verify the customer's mobile number to load profiles automatically.</p>
                 </div>
 
@@ -613,7 +613,7 @@ export default function WalkInBookingPage() {
                       <Phone className="h-3.5 w-3.5 text-muted-content" /> Mobile Number <span className="text-red-500">*</span>
                     </Label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-muted-content border-r border-zinc-900 pr-2">+91</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-muted-content border-r border-[#e4e4e7] pr-2">+91</span>
                       <Input
                         id="phone"
                         type="tel"
@@ -622,7 +622,7 @@ export default function WalkInBookingPage() {
                         placeholder="Enter 10-digit number"
                         value={customerPhone}
                         onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, ""))}
-                        className="bg-[var(--background)] border-zinc-900 h-12 pl-12 text-sm text-white font-mono tracking-wider focus-visible:ring-primary rounded-xl"
+                        className="bg-[var(--background)] border-[#e4e4e7] h-12 pl-12 text-sm text-[#111115] font-mono tracking-wider focus-visible:ring-primary rounded-xl"
                       />
                     </div>
                   </div>
@@ -632,19 +632,19 @@ export default function WalkInBookingPage() {
                   </Button>
                 </form>
 
-                <div className="pt-2 flex gap-2 items-center text-[10px] text-muted-content justify-center border-t border-zinc-950">
-                  <ShieldCheck className="h-4 w-4 text-zinc-700" /><span>Instant index lookup map layers running safely.</span>
+                <div className="pt-2 flex gap-2 items-center text-[10px] text-muted-content justify-center border-t border-[#e4e4e7]">
+                  <ShieldCheck className="h-4 w-4 text-[#52525b]" /><span>Instant index lookup map layers running safely.</span>
                 </div>
               </Card>
             ) : (
               /* Phase 2: Supplemental Registration Form (Triggered for new entries) */
-              <Card className="bg-[var(--surface)] border border-zinc-900 p-6 space-y-6 rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200">
-                <div className="border-b border-zinc-900 pb-4 space-y-1">
-                  <h3 className="text-lg font-black uppercase text-white tracking-tight">WALK-IN ACCOUNT SIGNUP</h3>
+              <Card className="bg-[var(--surface)] border border-[#e4e4e7] p-6 space-y-6 rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200">
+                <div className="border-b border-[#e4e4e7] pb-4 space-y-1">
+                  <h3 className="text-lg font-black uppercase text-[#111115] tracking-tight">WALK-IN ACCOUNT SIGNUP</h3>
                   <p className="text-xs text-secondary-content font-medium">Please generate contact tokens to instantiate profile logs.</p>
                 </div>
 
-                <div className="bg-[var(--background)] p-3.5 border border-zinc-900 rounded-xl flex items-center justify-between gap-4 text-xs select-none">
+                <div className="bg-[var(--background)] p-3.5 border border-[#e4e4e7] rounded-xl flex items-center justify-between gap-4 text-xs select-none">
                   <div className="space-y-0.5">
                     <span className="text-[8px] font-black text-muted-content uppercase tracking-widest block">Customer Phone Number:</span>
                     <span className="text-primary font-mono font-black tracking-wider">+91 {customerPhone}</span>
@@ -655,7 +655,7 @@ export default function WalkInBookingPage() {
                       setShowFullRegistrationFields(false);
                       setActiveSubscription(null);
                     }}
-                    className="px-3 h-8 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[10px] font-black uppercase text-muted-content hover:text-primary rounded-lg tracking-wider flex items-center gap-1.5 transition-colors"
+                    className="px-3 h-8 bg-[#e4e4e7] hover:bg-[#d4d4d8] border border-[#e4e4e7] text-[10px] font-black uppercase text-muted-content hover:text-primary rounded-lg tracking-wider flex items-center gap-1.5 transition-colors"
                   >
                     <RefreshCw className="h-3 w-3" /> Change Number
                   </button>
@@ -673,7 +673,7 @@ export default function WalkInBookingPage() {
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="Enter customer's full name"
-                      className="bg-[var(--background)] border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl"
+                      className="bg-[var(--background)] border-[#e4e4e7] h-12 text-sm text-[#111115] focus-visible:ring-primary rounded-xl"
                     />
                   </div>
 
@@ -689,7 +689,7 @@ export default function WalkInBookingPage() {
                       maxLength={10}
                       value={customerDob}
                       onChange={handleDobChange}
-                      className="bg-[var(--background)] border-zinc-900 h-12 text-sm text-white font-mono tracking-wider focus-visible:ring-primary rounded-xl placeholder:text-zinc-700"
+                      className="bg-[var(--background)] border-[#e4e4e7] h-12 text-sm text-[#111115] font-mono tracking-wider focus-visible:ring-primary rounded-xl placeholder:text-[#a1a1aa]"
                     />
                   </div>
 
@@ -703,7 +703,7 @@ export default function WalkInBookingPage() {
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
                       placeholder="customer@domain.com"
-                      className="bg-[var(--background)] border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl"
+                      className="bg-[var(--background)] border-[#e4e4e7] h-12 text-sm text-[#111115] focus-visible:ring-primary rounded-xl"
                     />
                   </div>
 
@@ -724,34 +724,34 @@ export default function WalkInBookingPage() {
           <div className="space-y-6 max-w-2xl mx-auto">
             <h2 className="text-xl font-black uppercase text-muted-content">Confirm Booking</h2>
 
-            <Card className="bg-[var(--surface)] border border-zinc-900 p-6 space-y-6 rounded-2xl">
+            <Card className="bg-[var(--surface)] border border-[#e4e4e7] p-6 space-y-6 rounded-2xl">
 
 
               {/* Summary Breakdown Fields Matrix */}
               <div className="space-y-4 text-sm pt-2">
-                <div className="flex justify-between border-b border-zinc-900/60 pb-2">
+                <div className="flex justify-between border-b border-[#e4e4e7] pb-2">
                   <span className="text-secondary-content">Customer Name:</span>
-                  <span className="text-white font-bold">{customerName}</span>
+                  <span className="text-[#111115] font-bold">{customerName}</span>
                 </div>
-                <div className="flex justify-between border-b border-zinc-900/60 pb-2">
+                <div className="flex justify-between border-b border-[#e4e4e7] pb-2">
                   <span className="text-secondary-content">Phone Number:</span>
-                  <span className="text-white font-bold">{customerPhone}</span>
+                  <span className="text-[#111115] font-bold">{customerPhone}</span>
                 </div>
                 {customerEmail && (
-                  <div className="flex justify-between border-b border-zinc-900/60 pb-2">
+                  <div className="flex justify-between border-b border-[#e4e4e7] pb-2">
                     <span className="text-secondary-content">Email:</span>
-                    <span className="text-white font-bold">{customerEmail}</span>
+                    <span className="text-[#111115] font-bold">{customerEmail}</span>
                   </div>
                 )}
-                <div className="flex justify-between border-b border-zinc-900/60 pb-2">
+                <div className="flex justify-between border-b border-[#e4e4e7] pb-2">
                   <span className="text-secondary-content">Device Configuration:</span>
-                  <span className="text-white font-bold uppercase">{selectedDeviceType.display_name}</span>
+                  <span className="text-[#111115] font-bold uppercase">{selectedDeviceType.display_name}</span>
                 </div>
-                <div className="flex justify-between border-b border-zinc-900/60 pb-2">
+                <div className="flex justify-between border-b border-[#e4e4e7] pb-2">
                   <span className="text-secondary-content">Target Date:</span>
-                  <span className="text-white font-bold">{selectedDate.toDateString()}</span>
+                  <span className="text-[#111115] font-bold">{selectedDate.toDateString()}</span>
                 </div>
-                <div className="flex justify-between border-b border-zinc-900/60 pb-2">
+                <div className="flex justify-between border-b border-[#e4e4e7] pb-2">
                   <span className="text-secondary-content">Selected Time Window:</span>
                   <span className="text-primary font-bold">{selectedStartTime} - {endTime} ({selectedDurationLabel})</span>
                 </div>
@@ -766,17 +766,17 @@ export default function WalkInBookingPage() {
                     </div>
                     <div>
                       <h4 className="text-xs font-black text-primary uppercase tracking-wider">{activeSubscription.plan_name} Active</h4>
-                      <p className="text-[10px] text-zinc-400">Customer gets {activeSubscription.discount_percentage}% off on this booking!</p>
+                      <p className="text-[10px] text-[#52525b]">Customer gets {activeSubscription.discount_percentage}% off on this booking!</p>
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="bg-[var(--background)]/40 p-4 border border-zinc-900 rounded-xl space-y-3">
+              <div className="bg-[var(--background)]/40 p-4 border border-[#e4e4e7] rounded-xl space-y-3">
                 <Label className="text-[10px] font-black uppercase text-muted-content tracking-wider block">
                   Assign Player Allocation Count
                 </Label>
-                <div className="flex items-center justify-between bg-[var(--background)] border border-zinc-900/60 rounded-lg p-3">
+                <div className="flex items-center justify-between bg-[var(--background)] border border-[#e4e4e7] rounded-lg p-3">
                   <p className="text-xs text-secondary-content font-medium">
                     {selectedDeviceType.included_players} included • Max {selectedDeviceType.max_players}
                   </p>
@@ -785,11 +785,11 @@ export default function WalkInBookingPage() {
                       type="button"
                       onClick={() => playerCount > 1 && setPlayerCount(playerCount - 1)}
                       disabled={playerCount <= 1}
-                      className="w-7 h-7 rounded-md bg-zinc-900 border border-zinc-800 text-white disabled:opacity-30 flex items-center justify-center transition-colors"
+                      className="w-7 h-7 rounded-md bg-[#e4e4e7] border border-[#e4e4e7] text-[#111115] disabled:opacity-30 flex items-center justify-center transition-colors"
                     >
                       <Minus className="h-3 w-3" />
                     </button>
-                    <span className="text-base font-black text-white w-6 text-center font-mono">{playerCount}</span>
+                    <span className="text-base font-black text-[#111115] w-6 text-center font-mono">{playerCount}</span>
                     <button
                       type="button"
                       onClick={() => {
@@ -808,10 +808,10 @@ export default function WalkInBookingPage() {
                 </div>
               </div>
 
-              <div className="space-y-2 text-sm border-t border-zinc-900 pt-4 bg-[var(--background)]/20 p-3 rounded-xl">
+              <div className="space-y-2 text-sm border-t border-[#e4e4e7] pt-4 bg-[var(--background)]/20 p-3 rounded-xl">
                 <div className="flex justify-between">
                   <span className="text-secondary-content">Base Station Rate:</span>
-                  <span className="text-white font-bold">₹{baseRate}.00</span>
+                  <span className="text-[#111115] font-bold">₹{baseRate}.00</span>
                 </div>
                 {extraPlayersCount > 0 && (
                   <div className="flex justify-between animate-in slide-in-from-top-2 duration-150">
@@ -835,16 +835,16 @@ export default function WalkInBookingPage() {
                     <span className="font-bold">-₹{Math.round(happyHourInfo.discountAmount)}.00</span>
                   </div>
                 )}
-                <div className="flex justify-between items-baseline pt-3 border-t border-zinc-900 font-black text-lg">
-                  <span className="text-white uppercase text-xs tracking-wider">Gross Total Amount:</span>
+                <div className="flex justify-between items-baseline pt-3 border-t border-[#e4e4e7] font-black text-lg">
+                  <span className="text-[#111115] uppercase text-xs tracking-wider">Gross Total Amount:</span>
                   <span className="text-primary text-2xl font-mono">₹{Math.round(totalAmount)}.00</span>
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-zinc-900/60">
+              <div className="flex gap-3 pt-4 border-t border-[#e4e4e7]">
                 <Button
                   onClick={() => setStep(3)}
-                  className="flex-1 border-zinc-800 bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black h-12 rounded-xl text-xs uppercase"
+                  className="flex-1 border-[#e4e4e7] bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black h-12 rounded-xl text-xs uppercase"
                 >
                   Back to Registration
                 </Button>

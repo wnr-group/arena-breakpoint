@@ -148,7 +148,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
                   return (
                     <div
                       key={time}
-                      className={`flex-1 border-r border-zinc-800/50 p-2 ${isHourStart ? 'bg-primary/5' : 'bg-transparent'}`}
+                      className={`flex-1 border-r border-[#e4e4e7]/50 p-2 ${isHourStart ? 'bg-primary/5' : 'bg-transparent'}`}
                     >
                       {isHourStart && (
                         <div className="text-[9px] font-black text-muted-content uppercase">
@@ -169,11 +169,11 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
               </div>
             ) : (
               deviceKeys.map((deviceKey) => (
-                <div key={deviceKey} className="flex border-b border-zinc-800/50 hover:bg-primary/5 transition-colors relative group">
+                <div key={deviceKey} className="flex border-b border-[#e4e4e7]/50 hover:bg-primary/5 transition-colors relative group">
                   {/* Device label */}
-                  <div className="w-40 flex-shrink-0 border-r border-zinc-800/50 p-3 flex items-center sticky left-0 bg-gradient-to-r from-[var(--background)] to-[var(--surface)] z-10 group-hover:from-primary/10 group-hover:to-primary/5">
+                  <div className="w-40 flex-shrink-0 border-r border-[#e4e4e7]/50 p-3 flex items-center sticky left-0 bg-gradient-to-r from-[var(--background)] to-[var(--surface)] z-10 group-hover:from-primary/10 group-hover:to-primary/5">
                     <div>
-                      <p className="text-xs font-black text-white">{deviceKey.split(' #')[0]}</p>
+                      <p className="text-xs font-black text-[#111115]">{deviceKey.split(' #')[0]}</p>
                       <p className="text-label">Station #{deviceKey.split('#')[1]}</p>
                     </div>
                   </div>
@@ -183,7 +183,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
                     {/* Grid lines */}
                     <div className="absolute inset-0 flex">
                       {timeSlots.map((time) => (
-                        <div key={time} className="flex-1 border-r border-[#27272a]/30" />
+                        <div key={time} className="flex-1 border-r border-[#e4e4e7]/30" />
                       ))}
                     </div>
 
@@ -201,11 +201,11 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
                     {deviceGroups[deviceKey].map((booking) => {
                       const position = getBookingPosition(booking.slot_start_time, booking.slot_end_time);
                       const statusColors = {
-                        confirmed: 'bg-blue-500/20 border-blue-500/50 text-blue-300',
-                        checked_in: 'bg-green-500/20 border-green-500/50 text-green-300',
-                        completed: 'bg-zinc-700/20 border-zinc-600/50 text-muted-content',
+                        confirmed: 'bg-blue-500/20 border-blue-500/50 text-blue-700',
+                        checked_in: 'bg-green-500/20 border-green-500/50 text-green-700',
+                        completed: 'bg-[#d4d4d8]/20 border-zinc-600/50 text-muted-content',
                         cancelled: 'bg-red-500/20 border-red-500/50 text-red-400',
-                        locked: 'bg-amber-500/20 border-amber-500/50 text-amber-300'
+                        locked: 'bg-amber-500/20 border-amber-500/50 text-amber-700'
                       };
                       const colorClass = statusColors[booking.status as keyof typeof statusColors] || statusColors.confirmed;
 
@@ -240,7 +240,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
       </div>
 
       {/* Legend */}
-      <div className="p-3 border-t border-[#27272a] flex items-center gap-4 bg-[var(--background)]">
+      <div className="p-3 border-t border-[#e4e4e7] flex items-center gap-4 bg-[var(--background)]">
         <span className="text-[10px] font-black text-secondary-content uppercase">Status:</span>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
@@ -252,7 +252,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
             <span className="text-[10px] text-muted-content">Checked In</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-zinc-700/20 border border-zinc-600/50" />
+            <div className="w-3 h-3 rounded bg-[#d4d4d8]/20 border border-zinc-600/50" />
             <span className="text-[10px] text-muted-content">Completed</span>
           </div>
           <div className="flex items-center gap-1.5">

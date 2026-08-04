@@ -31,7 +31,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => {
             ) : (
               // Inactive Links (Slate-blueish gray matching your screenshot)
               <span
-                className="text-slate-400 hover:text-white cursor-pointer transition-colors duration-200"
+                className="text-[#52525b] hover:text-[#111115] cursor-pointer transition-colors duration-200"
                 onClick={() => item.href && router.push(item.href)}
               >
                 {item.label}
@@ -39,7 +39,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => {
             )}
 
             {/* Separator */}
-            {!isLast && <ChevronRight className="w-4 h-4 text-neutral-600" />}
+            {!isLast && <ChevronRight className="w-4 h-4 text-[#a1a1aa]" />}
           </React.Fragment>
         )
       })}

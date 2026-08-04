@@ -161,7 +161,7 @@ export default function AdminDashboardPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-black uppercase text-white tracking-tight">
+          <h1 className="text-2xl font-black uppercase text-[#111115] tracking-tight">
             DASHBOARD
           </h1>
           <p className="text-description font-medium mt-1">
@@ -177,7 +177,7 @@ export default function AdminDashboardPage() {
             onClick={handleRefresh}
             disabled={loading}
             variant="outline"
-            className="border-[#27272a] text-white hover:bg-[var(--surface)] font-black uppercase text-xs h-10 px-4"
+            className="border-[#e4e4e7] text-[#111115] hover:bg-[var(--surface)] font-black uppercase text-xs h-10 px-4"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -203,7 +203,7 @@ export default function AdminDashboardPage() {
               <p className="text-stat-label text-green-400 mb-1">
                 Today's Revenue
               </p>
-              <h3 className="text-2xl font-black text-white mb-1">
+              <h3 className="text-2xl font-black text-[#111115] mb-1">
                 <CurrencyCountUp amount={stats?.todaysRevenue || 0} duration={1200} />
               </h3>
               <p className="text-min-enhanced text-secondary-content">
@@ -225,7 +225,7 @@ export default function AdminDashboardPage() {
               <p className="text-stat-label text-blue-400 mb-1">
                 Active Sessions
               </p>
-              <h3 className="text-2xl font-black text-white mb-1">
+              <h3 className="text-2xl font-black text-[#111115] mb-1">
                 <CountUp end={stats?.activeSessions || 0} duration={800} />
               </h3>
               <p className="text-min-enhanced text-secondary-content">
@@ -247,7 +247,7 @@ export default function AdminDashboardPage() {
               <p className="text-stat-label text-amber-400 mb-1">
                 Upcoming
               </p>
-              <h3 className="text-2xl font-black text-white mb-1">
+              <h3 className="text-2xl font-black text-[#111115] mb-1">
                 <CountUp end={stats?.upcomingBookings || 0} duration={800} />
               </h3>
               <p className="text-min-enhanced text-secondary-content">
@@ -269,7 +269,7 @@ export default function AdminDashboardPage() {
               <p className="text-stat-label text-amber-400 mb-1">
                 Available Devices
               </p>
-              <h3 className="text-2xl font-black text-white mb-1">
+              <h3 className="text-2xl font-black text-[#111115] mb-1">
                 <CountUp end={stats?.availableDevices || 0} duration={800} />
               </h3>
               <p className="text-min-enhanced text-secondary-content">
@@ -282,13 +282,13 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        <Card className="bg-[var(--surface)] border-[#27272a] p-5">
+        <Card className="bg-[var(--surface)] border-[#e4e4e7] p-5">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-stat-label mb-1">
                 This Week
               </p>
-              <h3 className="text-2xl font-black text-white mb-1">
+              <h3 className="text-2xl font-black text-[#111115] mb-1">
                 <CurrencyCountUp amount={quickStats?.thisWeekRevenue || 0} duration={1200} />
               </h3>
               <div className="flex items-center gap-1 text-[10px] text-green-500">
@@ -296,7 +296,7 @@ export default function AdminDashboardPage() {
                 <span>Last 7 days</span>
               </div>
             </div>
-            <div className="p-2 bg-zinc-900 rounded-lg">
+            <div className="p-2 bg-[#e4e4e7] rounded-lg">
               <TrendingUp className="h-5 w-5 text-muted-content" />
             </div>
           </div>
@@ -305,14 +305,14 @@ export default function AdminDashboardPage() {
 
       {/* Secondary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-[var(--surface)] border-[#27272a] p-5">
+        <Card className="bg-[var(--surface)] border-[#e4e4e7] p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-label-enhanced">
               Today's Food Orders
             </p>
             <UtensilsCrossed className="h-4 w-4 text-muted-content" />
           </div>
-          <h4 className="text-2xl font-black text-white">
+          <h4 className="text-2xl font-black text-[#111115]">
             {quickStats?.todaysFoodOrders || 0}
           </h4>
           <p className="text-min-enhanced text-secondary-content mt-1">
@@ -320,14 +320,14 @@ export default function AdminDashboardPage() {
           </p>
         </Card>
 
-        <Card className="bg-[var(--surface)] border-[#27272a] p-5">
+        <Card className="bg-[var(--surface)] border-[#e4e4e7] p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-label-enhanced">
               Peak Hour Today
             </p>
             <Clock className="h-4 w-4 text-muted-content" />
           </div>
-          <h4 className="text-2xl font-black text-white">
+          <h4 className="text-2xl font-black text-[#111115]">
             {quickStats?.peakHour || "N/A"}
           </h4>
           <p className="text-min-enhanced text-secondary-content mt-1">
@@ -335,7 +335,7 @@ export default function AdminDashboardPage() {
           </p>
         </Card>
 
-        <Card className="bg-[var(--surface)] border-[#27272a] p-5">
+        <Card className="bg-[var(--surface)] border-[#e4e4e7] p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-label-enhanced">
               Quick Actions
@@ -365,7 +365,7 @@ export default function AdminDashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Today's Schedule */}
-        <Card className="bg-[var(--surface)] border-[#27272a] p-6">
+        <Card className="bg-[var(--surface)] border-[#e4e4e7] p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-section-header">
               Today's Schedule
@@ -374,7 +374,7 @@ export default function AdminDashboardPage() {
               onClick={() => router.push("/admin/bookings")}
               variant="ghost"
               size="sm"
-              className="text-min-enhanced text-secondary-content hover:text-white"
+              className="text-min-enhanced text-secondary-content hover:text-[#111115]"
             >
               View All
               <ArrowRight className="h-3 w-3 ml-1" />
@@ -386,10 +386,10 @@ export default function AdminDashboardPage() {
               todaysSchedule.map((slot: any) => (
                 <div
                   key={slot.id}
-                  className="flex items-center justify-between p-3 bg-[var(--background)] border border-[#27272a] rounded-lg"
+                  className="flex items-center justify-between p-3 bg-[var(--background)] border border-[#e4e4e7] rounded-lg"
                 >
                   <div className="flex items-center gap-3 flex-1">
-                    <div className="flex flex-col items-center justify-center w-16 h-16 bg-zinc-900 rounded-lg">
+                    <div className="flex flex-col items-center justify-center w-16 h-16 bg-[#e4e4e7] rounded-lg">
                       <span className="text-xs font-black text-primary">
                         {slot.slot_start_time.substring(0, 5)}
                       </span>
@@ -398,7 +398,7 @@ export default function AdminDashboardPage() {
                       </span>
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-bold text-white">
+                      <p className="text-sm font-bold text-[#111115]">
                         {slot.bookings?.customer_name || "Unknown"}
                       </p>
                       <p className="text-min-enhanced text-secondary-content">
@@ -416,7 +416,7 @@ export default function AdminDashboardPage() {
               ))
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Calendar className="h-12 w-12 text-zinc-800 mb-3" />
+                <Calendar className="h-12 w-12 text-[#d4d4d8] mb-3" />
                 <p className="text-sm-enhanced">No bookings scheduled for today</p>
               </div>
             )}
@@ -424,7 +424,7 @@ export default function AdminDashboardPage() {
         </Card>
 
         {/* Recent Bookings */}
-        <Card className="bg-[var(--surface)] border-[#27272a] p-6">
+        <Card className="bg-[var(--surface)] border-[#e4e4e7] p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-section-header">
               Recent Bookings
@@ -433,7 +433,7 @@ export default function AdminDashboardPage() {
               onClick={() => router.push("/admin/bookings")}
               variant="ghost"
               size="sm"
-              className="text-min-enhanced text-secondary-content hover:text-white"
+              className="text-min-enhanced text-secondary-content hover:text-[#111115]"
             >
               View All
               <ArrowRight className="h-3 w-3 ml-1" />
@@ -447,12 +447,12 @@ export default function AdminDashboardPage() {
                 return (
                   <div
                     key={booking.id}
-                    className="flex items-center justify-between p-3 bg-[var(--background)] border border-[#27272a] rounded-lg hover:border-zinc-700 transition-colors cursor-pointer"
+                    className="flex items-center justify-between p-3 bg-[var(--background)] border border-[#e4e4e7] rounded-lg hover:border-[#e4e4e7] transition-colors cursor-pointer"
                     onClick={() => router.push("/admin/bookings")}
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <p className="text-sm font-bold text-white">
+                        <p className="text-sm font-bold text-[#111115]">
                           {booking.booking_number}
                         </p>
                         <BookingStatusBadge status={booking.status} />
@@ -479,7 +479,7 @@ export default function AdminDashboardPage() {
               })
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <AlertCircle className="h-12 w-12 text-zinc-800 mb-3" />
+                <AlertCircle className="h-12 w-12 text-[#d4d4d8] mb-3" />
                 <p className="text-sm-enhanced">No recent bookings</p>
               </div>
             )}
@@ -488,48 +488,48 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* System Status */}
-      <Card className="bg-[var(--surface)] border-[#27272a] p-6">
+      <Card className="bg-[var(--surface)] border-[#e4e4e7] p-6">
         <h3 className="text-sm font-black uppercase text-muted-content mb-4">
           System Status
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="flex items-center gap-3 p-3 bg-[var(--background)] border border-[#27272a] rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-[var(--background)] border border-[#e4e4e7] rounded-lg">
             <div className="p-2 bg-green-500/10 rounded-lg">
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             </div>
             <div>
               <p className="text-xs text-muted-content">Bookings System</p>
-              <p className="text-sm font-bold text-white">Operational</p>
+              <p className="text-sm font-bold text-[#111115]">Operational</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-3 bg-[var(--background)] border border-[#27272a] rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-[var(--background)] border border-[#e4e4e7] rounded-lg">
             <div className="p-2 bg-green-500/10 rounded-lg">
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             </div>
             <div>
               <p className="text-xs text-muted-content">Payment Gateway</p>
-              <p className="text-sm font-bold text-white">Operational</p>
+              <p className="text-sm font-bold text-[#111115]">Operational</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-3 bg-[var(--background)] border border-[#27272a] rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-[var(--background)] border border-[#e4e4e7] rounded-lg">
             <div className="p-2 bg-green-500/10 rounded-lg">
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             </div>
             <div>
               <p className="text-xs text-muted-content">Food Orders</p>
-              <p className="text-sm font-bold text-white">Operational</p>
+              <p className="text-sm font-bold text-[#111115]">Operational</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-3 bg-[var(--background)] border border-[#27272a] rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-[var(--background)] border border-[#e4e4e7] rounded-lg">
             <div className="p-2 bg-green-500/10 rounded-lg">
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             </div>
             <div>
               <p className="text-xs text-muted-content">Database</p>
-              <p className="text-sm font-bold text-white">Connected</p>
+              <p className="text-sm font-bold text-[#111115]">Connected</p>
             </div>
           </div>
         </div>

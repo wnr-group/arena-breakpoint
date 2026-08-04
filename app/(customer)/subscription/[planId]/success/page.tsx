@@ -70,14 +70,14 @@ export default function SubscriptionActivatedPage() {
     return (
       <main className="min-h-screen bg-[var(--background)] flex flex-col items-center justify-center text-[var(--primary)]">
         <Loader2 className="w-12 h-12 animate-spin mb-4" />
-        <p className="text-neutral-400 font-medium">Finalizing your activation...</p>
+        <p className="text-[#52525b] font-medium">Finalizing your activation...</p>
       </main>
     )
   }
 
   if (!plan) {
     return (
-      <main className="min-h-screen bg-[var(--background)] flex items-center justify-center text-white">
+      <main className="min-h-screen bg-[var(--background)] flex items-center justify-center text-[#111115]">
         <p>Could not load subscription details.</p>
       </main>
     )
@@ -85,7 +85,7 @@ export default function SubscriptionActivatedPage() {
 
   return (
     <main
-      className="min-h-screen bg-[var(--background)] text-white font-sans relative overflow-hidden flex flex-col items-center  px-4 sm:px-6 lg:px-8 pt-5"
+      className="min-h-screen bg-[var(--background)] text-[#111115] font-sans relative overflow-hidden flex flex-col items-center  px-4 sm:px-6 lg:px-8 pt-5"
     >
       {/* Background Ambient Glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-200 h-150 bg-[var(--primary)]/5 rounded-full blur-[150px] pointer-events-none z-0" />
@@ -108,10 +108,10 @@ export default function SubscriptionActivatedPage() {
             <CheckCircle2 className="w-12 h-12 text-[var(--primary)]" />
           </div>
 
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-[#111115] mb-4 tracking-tight">
             Subscription Activated!
           </h1>
-          <p className="text-neutral-400 text-[15px] md:text-base max-w-lg mx-auto leading-relaxed">
+          <p className="text-[#52525b] text-[15px] md:text-base max-w-lg mx-auto leading-relaxed">
             Your membership benefits are now active. Welcome to the inner circle of elite
             competitive gaming.
           </p>
@@ -120,29 +120,29 @@ export default function SubscriptionActivatedPage() {
         {/* Main Dashboard Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-16">
           {/* Left Column: Subscription Details */}
-          <div className="lg:col-span-2 bg-[var(--surface)] border border-neutral-800 rounded-md p-8 flex flex-col justify-between shadow-2xl glow-box-strong">
+          <div className="lg:col-span-2 bg-[var(--surface)] border border-[#e4e4e7] rounded-md p-8 flex flex-col justify-between shadow-2xl glow-box-strong">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-8">
               <div>
-                <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">
+                <p className="text-xs font-bold text-[#52525b] uppercase tracking-wider mb-2">
                   Subscription ID
                 </p>
                 <p className="text-[var(--primary)] font-bold text-lg">{displaySubId}</p>
               </div>
               <div>
-                <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">
+                <p className="text-xs font-bold text-[#52525b] uppercase tracking-wider mb-2">
                   Current Plan
                 </p>
                 <p className="text-[var(--primary)] font-bold text-lg">{plan.name}</p>
               </div>
 
               <div>
-                <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">
+                <p className="text-xs font-bold text-[#52525b] uppercase tracking-wider mb-2">
                   Valid Until
                 </p>
-                <p className="text-white font-bold text-[17px]">{formatDate(plan.validity)}</p>
+                <p className="text-[#111115] font-bold text-[17px]">{formatDate(plan.validity)}</p>
               </div>
               <div>
-                <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">
+                <p className="text-xs font-bold text-[#52525b] uppercase tracking-wider mb-2">
                   Membership Status
                 </p>
                 <div className="flex items-center text-[var(--primary)] font-bold text-[17px]">
@@ -154,7 +154,7 @@ export default function SubscriptionActivatedPage() {
 
             <div className="bg-[var(--surface-hover)] border border-[var(--primary)]/20 rounded-md p-4 flex items-center glow-box-hover">
               <CheckCircle className="w-5 h-5 text-[var(--primary)] mr-3 shrink-0" />
-              <p className="text-neutral-300 text-sm font-medium">
+              <p className="text-[#52525b] text-sm font-medium">
                 Your {plan.discount_percentage}% elite discount has been applied to your membership
                 summary.
               </p>
@@ -162,9 +162,9 @@ export default function SubscriptionActivatedPage() {
           </div>
 
           {/* Right Column: Next Steps */}
-          <div className="lg:col-span-1 bg-[var(--surface)] border border-neutral-800 rounded-md p-8 flex flex-col shadow-2xl glow-box-hover">
-            <h3 className="text-xl font-bold text-white mb-3">Next Steps</h3>
-            <p className="text-neutral-400 text-sm leading-relaxed mb-8">
+          <div className="lg:col-span-1 bg-[var(--surface)] border border-[#e4e4e7] rounded-md p-8 flex flex-col shadow-2xl glow-box-hover">
+            <h3 className="text-xl font-bold text-[#111115] mb-3">Next Steps</h3>
+            <p className="text-[#52525b] text-sm leading-relaxed mb-8">
               Ready to dominate? Book your exclusive gaming slot at the arena now.
             </p>
 
@@ -196,7 +196,7 @@ export default function SubscriptionActivatedPage() {
                   }
                 }}
                 disabled={isBookingSlot || isViewingDetails || isBrowsingFood}
-                className="w-full bg-transparent border border-neutral-700 hover:border-[var(--primary)] text-white font-bold text-[15px] py-4 rounded-xl flex items-center justify-center transition-all hover:text-[var(--primary)] disabled:opacity-50 disabled:pointer-events-none"
+                className="w-full bg-transparent border border-[#e4e4e7] hover:border-[var(--primary)] text-[#111115] font-bold text-[15px] py-4 rounded-xl flex items-center justify-center transition-all hover:text-[var(--primary)] disabled:opacity-50 disabled:pointer-events-none"
               >
                 {isViewingDetails ? (
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
@@ -212,7 +212,7 @@ export default function SubscriptionActivatedPage() {
                   router.push("/food")
                 }}
                 disabled={isBookingSlot || isViewingDetails || isBrowsingFood}
-                className="w-full text-neutral-400 hover:text-white font-medium text-sm py-3 mt-2 flex items-center justify-center transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                className="w-full text-[#52525b] hover:text-[#111115] font-medium text-sm py-3 mt-2 flex items-center justify-center transition-colors disabled:opacity-50 disabled:pointer-events-none"
               >
                 {isBrowsingFood ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

@@ -16,7 +16,7 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="bg-[#121212] border-t border-white/5 pt-12 md:pt-16 pb-6 md:pb-8 overflow-hidden relative mt-auto">
+    <footer className="bg-white border-t border-[#e4e4e7] pt-12 md:pt-16 pb-6 md:pb-8 overflow-hidden relative mt-auto">
 
       {/* Subtle background glow to match the dark theme */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-[#FFC107]/5 blur-[100px] pointer-events-none" />
@@ -33,30 +33,30 @@ export default function Footer() {
             <div className="flex items-center gap-3 mb-6">
               <Image
                 src="/bp_logo.png"
-                alt="Breakpoint Arena Logo"
+                alt="Arena OS Logo"
                 width={40}
                 height={40}
                 className="w-10 h-10 object-contain rounded-md"
               />
-              <span className="text-2xl font-bold text-white tracking-wide" style={{ fontFamily: "'Oxanium', sans-serif" }}>
-                BREAK POINT ARENA
+              <span className="text-2xl font-bold text-[#111115] tracking-wide" style={{ fontFamily: "'Oxanium', sans-serif" }}>
+                ARENA OS
               </span>
             </div>
             {/* Description */}
-            <p className="text-[#a1a1aa] text-sm leading-relaxed pr-0 lg:pr-8">
-              Break Point Arena is the ultimate premium gaming destination, offering state-of-the-art gaming stations, console hubs, competitive tournaments, custom memberships, and a curated menu to fuel your sessions. Book your slot now and level up your gaming experience.
+            <p className="text-[#52525b] text-sm leading-relaxed pr-0 lg:pr-8">
+              Arena OS is the ultimate premium gaming destination, offering state-of-the-art gaming stations, console hubs, competitive tournaments, custom memberships, and a curated menu to fuel your sessions. Book your slot now and level up your gaming experience.
             </p>
           </div>
 
           {/* Column 2: Pages Links */}
           <div className="lg:col-span-3">
-            <h3 className="text-white font-bold text-lg mb-6" style={{ fontFamily: "'Oxanium', sans-serif" }}>
+            <h3 className="text-[#111115] font-bold text-lg mb-6" style={{ fontFamily: "'Oxanium', sans-serif" }}>
               Pages
             </h3>
             <ul className="flex flex-col gap-4 uppercase">
               {footerLinks.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.path} className="text-[#a1a1aa] text-sm hover:text-[#FFC107] transition-colors duration-300">
+                  <Link href={link.path} className="text-[#52525b] text-sm hover:text-[#FFC107] transition-colors duration-300">
                     {link.label}
                   </Link>
                 </li>
@@ -68,10 +68,10 @@ export default function Footer() {
           <div className="lg:col-span-4 lg:pl-8">
             {/* Newsletter */}
             <div className="mb-10">
-              <h3 className="text-white font-bold text-lg mb-4" style={{ fontFamily: "'Oxanium', sans-serif" }}>
+              <h3 className="text-[#111115] font-bold text-lg mb-4" style={{ fontFamily: "'Oxanium', sans-serif" }}>
                 Newsletter
               </h3>
-              <p className="text-[#a1a1aa] text-sm mb-4">
+              <p className="text-[#52525b] text-sm mb-4">
                 Your email is safe with us. We don't spam.
               </p>
               {/* Optional: Add a simple email input field here if needed in the future */}
@@ -79,7 +79,7 @@ export default function Footer() {
 
             {/* Social Links */}
             <div>
-              <h3 className="text-white font-bold text-lg mb-4" style={{ fontFamily: "'Oxanium', sans-serif" }}>
+              <h3 className="text-[#111115] font-bold text-lg mb-4" style={{ fontFamily: "'Oxanium', sans-serif" }}>
                 Follow Us on
               </h3>
               <div className="flex flex-wrap gap-3">
@@ -93,13 +93,13 @@ export default function Footer() {
 
         {/* Bottom Copyright Bar */}
         {/* Center aligned on mobile, split left/right on tablet/desktop */}
-        <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left text-sm text-[#a1a1aa]">
+        <div className="pt-8 border-t border-[#e4e4e7] flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left text-sm text-[#52525b]">
           <p>
-            &copy; {currentYear} <span className="text-[#FFC107] hover:underline cursor-pointer">Break Point Arena</span>. All rights reserved by <span className="text-[#FFC107] hover:underline cursor-pointer">Break Point Arena</span>
+            &copy; {currentYear} <span className="text-[#FFC107] hover:underline cursor-pointer">Arena OS</span>. All rights reserved by <span className="text-[#FFC107] hover:underline cursor-pointer">Arena OS</span>
           </p>
           <div className="flex flex-wrap justify-center gap-6">
-            <a href="#" className="hover:text-white transition-colors duration-300">Terms & Conditions</a>
-            <a href="#" className="hover:text-white transition-colors duration-300">Privacy Policy</a>
+            <a href="#" className="hover:text-[#111115] transition-colors duration-300">Terms & Conditions</a>
+            <a href="#" className="hover:text-[#111115] transition-colors duration-300">Privacy Policy</a>
           </div>
         </div>
 
@@ -113,7 +113,7 @@ function SocialIcon({ Icon, href }: { Icon: any; href: string }) {
   return (
     <a
       href={href}
-      className="w-10 h-10 rounded-lg bg-[#1a1a1a] border border-white/5 flex items-center justify-center text-[#a1a1aa] hover:bg-[#FFC107] hover:text-[#0a0a0a] hover:border-[#FFC107] transition-all duration-300 hover:-translate-y-1"
+      className="w-10 h-10 rounded-lg bg-[#f4f4f5] border border-[#e4e4e7] flex items-center justify-center text-[#52525b] hover:bg-[#FFC107] hover:text-[#0a0a0a] hover:border-[#FFC107] transition-all duration-300 hover:-translate-y-1"
     >
       <Icon className="w-4 h-4" />
     </a>

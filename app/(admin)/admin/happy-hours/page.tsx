@@ -235,13 +235,13 @@ export default function HappyHoursPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-3 md:p-8 bg-[#0a0a0a] min-h-screen text-white animate-in fade-in duration-700">
-      
+    <div className="flex flex-col gap-6 p-3 md:p-8 bg-white min-h-screen text-[#111115] animate-in fade-in duration-700">
+
       {/* HEADER PANEL */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
         <div className="space-y-1 animate-in slide-in-from-left-4 duration-500">
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white">Happy Hours Management</h1>
-          <p className="text-[#a1a1aa] text-sm leading-snug">
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-[#111115]">Happy Hours Management</h1>
+          <p className="text-[#52525b] text-sm leading-snug">
             Configure automated pricing rules for peak and off-peak gaming sessions.
           </p>
         </div>
@@ -255,44 +255,44 @@ export default function HappyHoursPage() {
 
       {/* SUMMARY CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-in slide-in-from-bottom-4 duration-700">
-        <div className="bg-[var(--surface)] border border-[#27272a] rounded-xl p-5 flex flex-col gap-2">
+        <div className="bg-[var(--surface)] border border-[#e4e4e7] rounded-xl p-5 flex flex-col gap-2">
           <div className="flex justify-between items-center w-full">
             <Timer className="text-primary h-5 w-5" />
             <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded-md">Active Now</span>
           </div>
-          <p className="text-[#a1a1aa] text-xs uppercase tracking-wider mt-2">Currently Running</p>
+          <p className="text-[#52525b] text-xs uppercase tracking-wider mt-2">Currently Running</p>
           {/* You could make this dynamic by filtering the 'rules' array for status === 'LIVE' */}
-          <h2 className="text-xl font-bold text-white">
+          <h2 className="text-xl font-bold text-[#111115]">
             {rules.find(r => r.status === 'LIVE')?.name || 'None Active'}
           </h2>
-          <p className="text-[#a1a1aa] text-sm mt-1">Status check complete</p>
+          <p className="text-[#52525b] text-sm mt-1">Status check complete</p>
         </div>
 
-        <div className="bg-[var(--surface)] border border-[#27272a] rounded-xl p-5 flex flex-col gap-2">
+        <div className="bg-[var(--surface)] border border-[#e4e4e7] rounded-xl p-5 flex flex-col gap-2">
           <div className="flex justify-between items-center w-full">
              <div className="text-primary flex gap-1">
                 <div className="h-4 w-3 border-2 border-current rounded-sm"></div>
                 <div className="h-5 w-4 border-2 border-current rounded-sm"></div>
              </div>
           </div>
-          <p className="text-[#a1a1aa] text-xs uppercase tracking-wider mt-2">Total Rules</p>
-          <h2 className="text-xl font-bold text-white">{rules.length} Configured</h2>
-          <p className="text-[#a1a1aa] text-sm mt-1">Across all devices</p>
+          <p className="text-[#52525b] text-xs uppercase tracking-wider mt-2">Total Rules</p>
+          <h2 className="text-xl font-bold text-[#111115]">{rules.length} Configured</h2>
+          <p className="text-[#52525b] text-sm mt-1">Across all devices</p>
         </div>
       </div>
 
       {/* MAIN TABLE AREA */}
-      <div className="mt-2 animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both bg-[var(--surface)] border border-[#27272a] rounded-xl p-4 md:p-6">
+      <div className="mt-2 animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both bg-[var(--surface)] border border-[#e4e4e7] rounded-xl p-4 md:p-6">
         <div className="flex justify-between items-center mb-6">
-            <h2 className="text-base md:text-lg font-bold text-white">Active Rules Configuration</h2>
-            <div className="flex gap-3 text-[#a1a1aa]">
-                <button className="hover:text-white transition-colors p-1"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></button>
-                <button className="hover:text-white transition-colors p-1"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg></button>
+            <h2 className="text-base md:text-lg font-bold text-[#111115]">Active Rules Configuration</h2>
+            <div className="flex gap-3 text-[#52525b]">
+                <button className="hover:text-[#111115] transition-colors p-1"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></button>
+                <button className="hover:text-[#111115] transition-colors p-1"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg></button>
             </div>
         </div>
-        
+
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-[#a1a1aa] gap-3">
+          <div className="flex flex-col items-center justify-center py-20 text-[#52525b] gap-3">
             <BreakpointLoader size="lg" />
             <p className="text-sm font-medium">Loading rules from database...</p>
           </div>
@@ -305,15 +305,15 @@ export default function HappyHoursPage() {
       {editingRule && <EditHappyHourModal rule={editingRule} open={!!editingRule} setOpen={val => !val && setEditingRule(null)} onFormSuccess={handleRefresh} />}
 
       <AlertDialog open={!!ruleToDelete} onOpenChange={open => !open && setRuleToDelete(null)}>
-        <AlertDialogContent className="w-[90vw] max-w-[500px] bg-[var(--surface)] border border-[#27272a] text-white rounded-xl">
+        <AlertDialogContent className="w-[90vw] max-w-[500px] bg-[var(--surface)] border border-[#e4e4e7] text-[#111115] rounded-xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg md:text-xl font-bold">Remove Pricing Rule?</AlertDialogTitle>
-            <AlertDialogDescription className="text-[#a1a1aa] text-sm">
+            <AlertDialogDescription className="text-[#52525b] text-sm">
               Are you sure you want to delete this happy hour rule? It will no longer apply to your configured devices. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-4 flex-col sm:flex-row gap-3">
-            <AlertDialogCancel disabled={isPending} className="w-full sm:w-auto bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800">
+            <AlertDialogCancel disabled={isPending} className="w-full sm:w-auto bg-[#e4e4e7] text-[#111115] border-[#e4e4e7] hover:bg-[#e4e4e7]">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction onClick={e => { e.preventDefault(); confirmDelete(); }} disabled={isPending} className="w-full sm:w-auto bg-gradient-primary text-black hover:bg-gradient-primary/90 font-semibold flex items-center justify-center">

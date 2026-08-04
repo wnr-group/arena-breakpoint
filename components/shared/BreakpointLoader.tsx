@@ -45,7 +45,7 @@ export function BreakpointLoader({ size = "md", text }: BreakpointLoaderProps) {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className={`${textSizeMap[size]} font-black uppercase tracking-wide text-white`}
+          className={`${textSizeMap[size]} font-black uppercase tracking-wide text-[#111115]`}
         >
           {text}
         </motion.p>
@@ -56,7 +56,7 @@ export function BreakpointLoader({ size = "md", text }: BreakpointLoaderProps) {
 
 export function BreakpointLoaderFullScreen({ text = "Loading..." }: { text?: string }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d0a14]/95 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/95 backdrop-blur-sm">
       <BreakpointLoader size="xl" text={text} />
     </div>
   );

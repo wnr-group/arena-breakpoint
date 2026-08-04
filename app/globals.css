@@ -1,17 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0F0F12;
-  --foreground: #ededed;
+  /* ⚪ WHITE / LIGHT THEME */
+  --background: #ffffff;
+  --foreground: #111115;
 
-  /* 🎨 PREMIUM GOLD GRADIENT THEME */
+  /* 🎨 PREMIUM GOLD GRADIENT THEME (accent kept) */
   --primary: #B8860B;
-  --primary-hover: #FFDF73;
-  --primary-dark: #8B6914;
+  --primary-hover: #8B6914;
+  --primary-dark: #6b520f;
 
-  /* Surface Colors */
-  --surface: #18181C;
-  --surface-hover: #1F1F23;
+  /* Surface Colors (light) */
+  --surface: #f4f4f5;
+  --surface-hover: #e4e4e7;
 
   /* Gradient Definitions - Dark Gold to Bright Gold */
   --gradient-primary: linear-gradient(135deg, #B8860B 0%, #FFDF73 100%);
@@ -19,7 +20,7 @@
   --gradient-secondary: linear-gradient(135deg, #FFDF73 0%, #B8860B 100%);
   --gradient-accent: linear-gradient(135deg, #B8860B 0%, #D4AF37 100%);
   --gradient-success: linear-gradient(135deg, #10B981 0%, #059669 100%);
-  --gradient-dark: linear-gradient(135deg, #18181C 0%, #0F0F12 100%);
+  --gradient-dark: linear-gradient(135deg, #f4f4f5 0%, #ffffff 100%);
 
   /* Animated Gradient for backgrounds */
   --gradient-animated: linear-gradient(270deg, #B8860B, #D4AF37, #FFDF73, #B8860B);
@@ -42,19 +43,20 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* White theme only — force light values even when the OS is in dark mode */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0F0F12;
-    --foreground: #ededed;
+    --background: #ffffff;
+    --foreground: #111115;
 
-    /* 🎨 PREMIUM GOLD GRADIENT THEME */
+    /* 🎨 PREMIUM GOLD GRADIENT THEME (accent kept) */
     --primary: #B8860B;
-    --primary-hover: #FFDF73;
-    --primary-dark: #8B6914;
+    --primary-hover: #8B6914;
+    --primary-dark: #6b520f;
 
-    /* Surface Colors */
-    --surface: #18181C;
-    --surface-hover: #1F1F23;
+    /* Surface Colors (light) */
+    --surface: #f4f4f5;
+    --surface-hover: #e4e4e7;
 
     /* Gradient Definitions - Dark Gold to Bright Gold */
     --gradient-primary: linear-gradient(135deg, #B8860B 0%, #FFDF73 100%);
@@ -62,7 +64,7 @@
     --gradient-secondary: linear-gradient(135deg, #FFDF73 0%, #B8860B 100%);
     --gradient-accent: linear-gradient(135deg, #B8860B 0%, #D4AF37 100%);
     --gradient-success: linear-gradient(135deg, #10B981 0%, #059669 100%);
-    --gradient-dark: linear-gradient(135deg, #18181C 0%, #0F0F12 100%);
+    --gradient-dark: linear-gradient(135deg, #f4f4f5 0%, #ffffff 100%);
 
     /* Animated Gradient for backgrounds */
     --gradient-animated: linear-gradient(270deg, #B8860B, #D4AF37, #FFDF73, #B8860B);
@@ -126,25 +128,25 @@ main {
   /* The background track area of the scrollbar slot */
   ::-webkit-scrollbar-track {
     background: var(--background);
-    border-left: 1px solid #27272a;
+    border-left: 1px solid #e4e4e7;
   }
 
   /* The actual draggable scrollbar handle/thumb */
   ::-webkit-scrollbar-thumb {
-    background: #27272a;
+    background: #d4d4d8;
     border-radius: 9999px;
     border: 2px solid var(--background);
   }
 
   /* Changes color subtly when an operator hovers over the track */
   ::-webkit-scrollbar-thumb:hover {
-    background: #3f3f46;
+    background: #a1a1aa;
   }
 
   /* Standard support properties for Firefox */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #27272a var(--background);
+    scrollbar-color: #d4d4d8 var(--background);
   }
 
 
@@ -196,7 +198,7 @@ main {
 }
 
 .rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
-  background-color: #1a1a1a !important;
+  background-color: #f4f4f5 !important;
   color: var(--primary) !important;
 }
 
@@ -206,7 +208,7 @@ main {
   font-weight: 900 !important;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #FFFFFF !important;
+  color: #111115 !important;
 }
 
 .rdp-nav_button {
@@ -339,31 +341,31 @@ main {
   }
 
   .text-data-placeholder {
-    color: var(--text-muted, #a1a1aa);
+    color: var(--text-muted, #71717a);
     /* Visible grey */
     font-style: italic;
   }
 
-  /* 🎯 TEXT VISIBILITY IMPROVEMENTS */
+  /* 🎯 TEXT VISIBILITY IMPROVEMENTS (white theme) */
 
-  /* Primary Text - High visibility white */
+  /* Primary Text - High visibility dark */
   .text-primary-content {
-    color: #FFFFFF;
+    color: #111115;
   }
 
-  /* Secondary Text - Brighter grey for better readability */
+  /* Secondary Text - Readable dark grey */
   .text-secondary-content {
-    color: #D4D4D8; /* zinc-300 - much brighter than zinc-500 */
+    color: #3f3f46; /* zinc-700 */
   }
 
   /* Muted Text - Still visible but less prominent */
   .text-muted-content {
-    color: #A1A1AA; /* zinc-400 - balanced visibility */
+    color: #52525b; /* zinc-600 */
   }
 
   /* Label Text - For form labels and small headers */
   .text-label {
-    color: #A1A1AA; /* zinc-400 */
+    color: #52525b; /* zinc-600 */
     font-size: 0.6875rem; /* 11px */
     font-weight: 700;
     text-transform: uppercase;
@@ -372,7 +374,7 @@ main {
 
   /* Enhanced Label - Larger and more visible */
   .text-label-enhanced {
-    color: #D4D4D8; /* zinc-300 - brighter */
+    color: #3f3f46; /* zinc-700 */
     font-size: 0.75rem; /* 12px */
     font-weight: 800;
     text-transform: uppercase;
@@ -381,7 +383,7 @@ main {
 
   /* Description Text - Readable size for body text */
   .text-description {
-    color: #D4D4D8; /* zinc-300 */
+    color: #3f3f46; /* zinc-700 */
     font-size: 0.875rem; /* 14px - increased from common 12px */
     line-height: 1.5;
   }
@@ -404,7 +406,7 @@ main {
   .text-sm-enhanced {
     font-size: 0.875rem; /* 14px */
     font-weight: 600;
-    color: #D4D4D8; /* zinc-300 */
+    color: #3f3f46; /* zinc-700 */
   }
 
   .text-base-readable {
@@ -417,14 +419,14 @@ main {
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #E4E4E7; /* zinc-200 - very bright */
+    color: #18181b; /* zinc-900 - strong */
   }
 
   /* Stats & Numbers - Make them pop */
   .text-stat-value {
     font-size: 1.5rem; /* 24px */
     font-weight: 900;
-    color: #FFFFFF;
+    color: #111115;
     line-height: 1.2;
   }
 
@@ -433,7 +435,7 @@ main {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #D4D4D8; /* zinc-300 */
+    color: #3f3f46; /* zinc-700 */
   }
 }
 

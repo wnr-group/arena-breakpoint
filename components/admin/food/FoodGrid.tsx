@@ -69,10 +69,10 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
         return (
           <Card
             key={item.id}
-            className="bg-[var(--surface)] border-[#27272a] hover:border-primary/50 hover:shadow-[0_0_20px_rgba(184,134,11,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden group relative"
+            className="bg-[var(--surface)] border-[#e4e4e7] hover:border-primary/50 hover:shadow-[0_0_20px_rgba(184,134,11,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden group relative"
           >
             {/* 1. MEDIA HEADER ASSET FRAME */}
-            <div className="h-48 w-full bg-[var(--background)] border-b border-[#27272a] flex items-center justify-center overflow-hidden relative">
+            <div className="h-48 w-full bg-[var(--background)] border-b border-[#e4e4e7] flex items-center justify-center overflow-hidden relative">
               {item.image_url ? (
                 <img
                   src={item.image_url}
@@ -102,7 +102,7 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
               <div className="space-y-2.5">
                 {/* Title and Status Row */}
                 <div className="flex items-start justify-between gap-4">
-                  <h3 className="font-black text-base text-white group-hover:text-primary transition-colors leading-snug break-words flex-1" title={item.name}>
+                  <h3 className="font-black text-base text-[#111115] group-hover:text-primary transition-colors leading-snug break-words flex-1" title={item.name}>
                     {item.name}
                   </h3>
                   
@@ -123,7 +123,7 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
                     type="button"
                     onClick={() => handleToggleStatus(item)}
                     className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out outline-none ${
-                      isCurrentlyAvailable ? "bg-primary" : "bg-zinc-800"
+                      isCurrentlyAvailable ? "bg-primary" : "bg-[#e4e4e7]"
                     }`}
                   >
                     <span
@@ -135,26 +135,26 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
                 </div>
 
                 {/* Short Description Field Area */}
-                <p className="text-[11px] text-[#a1a1aa]/70 line-clamp-2 h-8 leading-relaxed pt-0.5">
+                <p className="text-[11px] text-[#52525b]/70 line-clamp-2 h-8 leading-relaxed pt-0.5">
                   {item.description || "Premium operational kitchen item configuration with zero details logged."}
                 </p>
               </div>
 
               {/* Category Pill Badge fixed securely on the bottom-left area */}
               <div className="pt-1 flex justify-start items-center">
-                <span className="inline-flex items-center px-2 py-1 text-[9px] font-black text-primary bg-[var(--surface-hover)] border border-[#27272a] rounded-md uppercase tracking-wider select-none">
+                <span className="inline-flex items-center px-2 py-1 text-[9px] font-black text-primary bg-[var(--surface-hover)] border border-[#e4e4e7] rounded-md uppercase tracking-wider select-none">
                   {item.category}
                 </span>
               </div>
             </div>
 
             {/* 3. ACCORDION HOVER PANEL */}
-            <div className="mt-auto h-0 opacity-0 group-hover:h-14 group-hover:opacity-100 transition-all duration-300 ease-out bg-[#0e0e0e]/95 backdrop-blur-sm border-t border-[#27272a]/30 flex items-center justify-end gap-2 px-4 overflow-hidden w-full z-20">
+            <div className="mt-auto h-0 opacity-0 group-hover:h-14 group-hover:opacity-100 transition-all duration-300 ease-out bg-black/5 backdrop-blur-sm border-t border-[#e4e4e7] flex items-center justify-end gap-2 px-4 overflow-hidden w-full z-20">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => onEdit(item)}
-                className="h-8 w-8 text-white bg-[#27272a] hover:bg-[#3f3f46] border border-zinc-700/60 transition-colors"
+                className="h-8 w-8 text-[#111115] bg-[#e4e4e7] hover:bg-[#d4d4d8] border border-[#e4e4e7] transition-colors"
               >
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
@@ -171,15 +171,15 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
                   </Button>
                 </AlertDialogTrigger>
 
-                <AlertDialogContent className="bg-[var(--surface)] border border-[#27272a] text-white">
+                <AlertDialogContent className="bg-[var(--surface)] border border-[#e4e4e7] text-[#111115]">
                   <AlertDialogHeader>
                     <AlertDialogTitle className="text-xl font-bold">Remove Menu Item Record?</AlertDialogTitle>
-                    <AlertDialogDescription className="text-[#a1a1aa] text-sm">
+                    <AlertDialogDescription className="text-[#52525b] text-sm">
                       Are you sure you want to delete **{item.name}**? This drops the asset parameters completely from your database configuration mapping.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter className="mt-4">
-                    <AlertDialogCancel className="bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800">Cancel</AlertDialogCancel>
+                    <AlertDialogCancel className="bg-[#e4e4e7] text-[#111115] border-[#e4e4e7] hover:bg-[#d4d4d8]">Cancel</AlertDialogCancel>
                     <AlertDialogAction onClick={() => onDelete(item.id)} className="bg-gradient-primary text-[var(--button-text)] hover:bg-gradient-primary-hover font-semibold">
                       Confirm Delete
                     </AlertDialogAction>

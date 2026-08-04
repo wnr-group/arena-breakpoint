@@ -31,10 +31,10 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
         return (
           <Card
             key={device.id}
-            className="bg-[var(--surface)] border-[#27272a] hover:border-primary/50 hover:shadow-[0_0_20px_rgba(184,134,11,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden group relative animate-in zoom-in-95"
+            className="bg-[var(--surface)] border-[#e4e4e7] hover:border-primary/50 hover:shadow-[0_0_20px_rgba(184,134,11,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full overflow-hidden group relative animate-in zoom-in-95"
           >
             {/* 1. MEDIA CONTAINER FRAME */}
-            <div className="h-48 w-full bg-[var(--background)] border-b border-[#27272a] flex items-center justify-center overflow-hidden relative">
+            <div className="h-48 w-full bg-[var(--background)] border-b border-[#e4e4e7] flex items-center justify-center overflow-hidden relative">
               {device.image_url ? (
                 <img
                   src={device.image_url}
@@ -60,19 +60,19 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
                     <h3 className="font-black text-xl text-primary uppercase tracking-wide truncate max-w-[130px]" title={device.station_number}>
                       {device.station_number}
                     </h3>
-                    <p className="text-xs text-[#a1a1aa] font-medium truncate max-w-[130px]">{device.device_type?.display_name || 'N/A'}</p>
+                    <p className="text-xs text-[#52525b] font-medium truncate max-w-[130px]">{device.device_type?.display_name || 'N/A'}</p>
                   </div>
 
                   {/* HOURLY PRICING NODE */}
                   <div className="text-primary font-black text-xl text-right flex-shrink-0">
                     ₹{device.device_type?.regular_hourly_rate ? Number(device.device_type.regular_hourly_rate).toLocaleString('en-IN') : "0"}
-                    <span className="text-[#a1a1aa] text-[10px] font-normal tracking-tight">/hr</span>
+                    <span className="text-[#52525b] text-[10px] font-normal tracking-tight">/hr</span>
                   </div>
                 </div>
 
                 {/* HARDWARE SPECIFICATIONS BLOCKS */}
                 <div
-                  className="flex items-start gap-1.5 text-[11px] text-[#a1a1aa]/80 bg-[#161616] border border-[#27272a]/40 p-2 rounded-lg truncate mt-1"
+                  className="flex items-start gap-1.5 text-[11px] text-[#52525b]/80 bg-[#e4e4e7] border border-[#e4e4e7]/40 p-2 rounded-lg truncate mt-1"
                   title={device.specs || "No specifications listed"}
                 >
                   <Cpu className="h-3.5 w-3.5 text-muted-content flex-shrink-0" />
@@ -83,12 +83,12 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
               </div>
             </div>
             
-            <div className="mt-auto h-0 opacity-0 group-hover:h-14 group-hover:opacity-100 transition-all duration-300 ease-out bg-[#0e0e0e]/60 border-t border-[#27272a]/30 flex items-center justify-end gap-2 px-4 overflow-hidden w-full">
+            <div className="mt-auto h-0 opacity-0 group-hover:h-14 group-hover:opacity-100 transition-all duration-300 ease-out bg-black/5 border-t border-[#e4e4e7]/30 flex items-center justify-end gap-2 px-4 overflow-hidden w-full">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => onEdit(device)}
-                className="h-8 w-8 text-white bg-[#27272a] hover:bg-[#3f3f46] border border-zinc-700/60 transition-colors"
+                className="h-8 w-8 text-[#111115] bg-[#e4e4e7] hover:bg-[#e4e4e7] border border-[#e4e4e7]/60 transition-colors"
               >
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
@@ -105,15 +105,15 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
                   </Button>
                 </AlertDialogTrigger>
 
-                <AlertDialogContent className="bg-[var(--surface)] border border-[#27272a] text-white">
+                <AlertDialogContent className="bg-[var(--surface)] border border-[#e4e4e7] text-[#111115]">
                   <AlertDialogHeader>
                     <AlertDialogTitle className="text-xl font-bold">Remove Terminal Record?</AlertDialogTitle>
-                    <AlertDialogDescription className="text-[#a1a1aa] text-sm">
+                    <AlertDialogDescription className="text-[#52525b] text-sm">
                       Are you sure you want to delete **Station {device.station_number}**? This action will remove the hardware machine data completely from your system inventory.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter className="mt-4">
-                    <AlertDialogCancel className="bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800 hover:text-white">
+                    <AlertDialogCancel className="bg-[#e4e4e7] text-[#111115] border-[#e4e4e7] hover:bg-[#e4e4e7] hover:text-[#111115]">
                       Cancel
                     </AlertDialogCancel>
                     <AlertDialogAction
@@ -136,7 +136,7 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
 function GridStatusBadge({ status }: { status: string }) {
   if (status === 'available') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-white bg-black/60 border border-green-500/40 rounded-full backdrop-blur-md whitespace-nowrap">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-[#111115] bg-[#e4e4e7] border border-green-500/40 rounded-full backdrop-blur-md whitespace-nowrap">
         <span className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
         AVAILABLE
       </span>
@@ -144,7 +144,7 @@ function GridStatusBadge({ status }: { status: string }) {
   }
   if (status === 'maintenance') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-white bg-black/60 border border-red-500/40 rounded-full backdrop-blur-md whitespace-nowrap">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-[#111115] bg-[#e4e4e7] border border-red-500/40 rounded-full backdrop-blur-md whitespace-nowrap">
         <span className="w-1 h-1 rounded-full bg-red-500" />
         MAINTENANCE
       </span>
@@ -152,14 +152,14 @@ function GridStatusBadge({ status }: { status: string }) {
   }
   if (status === 'inactive') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-muted-content bg-black/60 border border-zinc-700 rounded-full backdrop-blur-md whitespace-nowrap">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-muted-content bg-[#e4e4e7] border border-[#e4e4e7] rounded-full backdrop-blur-md whitespace-nowrap">
         <span className="w-1 h-1 rounded-full bg-zinc-500" />
         OFFLINE
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-white bg-black/60 border border-amber-500/40 rounded-full backdrop-blur-md whitespace-nowrap">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-[#111115] bg-[#e4e4e7] border border-amber-500/40 rounded-full backdrop-blur-md whitespace-nowrap">
       <span className="w-1 h-1 rounded-full bg-amber-500" />
       FULLY BOOKED
     </span>

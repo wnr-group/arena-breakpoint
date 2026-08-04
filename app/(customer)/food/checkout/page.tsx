@@ -279,12 +279,12 @@ export default function FoodCheckoutPage() {
 
   if (cartItems.length === 0 && step !== "success") {
     return (
-      <div className="h-[60vh] flex items-center justify-center bg-[#0d0a14]">
-        <Card className="bg-[#111] border-zinc-900 p-12 max-w-md mx-auto rounded-xl glow-box-hover">
+      <div className="h-[60vh] flex items-center justify-center bg-white">
+        <Card className="bg-[#f4f4f5] border-[#e4e4e7] p-12 max-w-md mx-auto rounded-xl glow-box-hover">
           <div className="text-center space-y-4">
-            <ShoppingCart className="h-16 w-16 text-zinc-700 mx-auto" />
-            <h2 className="text-xl font-black text-zinc-400 uppercase">Cart is Empty</h2>
-            <p className="text-sm text-zinc-600">Add items to your cart to place an order</p>
+            <ShoppingCart className="h-16 w-16 text-[#52525b] mx-auto" />
+            <h2 className="text-xl font-black text-[#3f3f46] uppercase">Cart is Empty</h2>
+            <p className="text-sm text-[#52525b]">Add items to your cart to place an order</p>
             <Button variant="gradient" onClick={() => router.push("/food")} className="text-black font-black uppercase px-6 py-4 rounded-xl">
               Browse Menu
             </Button>
@@ -298,21 +298,21 @@ export default function FoodCheckoutPage() {
     return (
       <div className="w-full max-w-5xl mx-auto py-6 px-4 space-y-6 animate-in fade-in duration-200">
         <div className="flex flex-col gap-1 select-none">
-          <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-4 mt-9 relative z-0">
+          <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#52525b] mb-4 mt-9 relative z-0">
             <Link href="/" className="hover:text-primary transition-colors">
               Home
             </Link>
-            <ChevronRight className="h-2.5 w-2.5 text-zinc-700" />
+            <ChevronRight className="h-2.5 w-2.5 text-[#52525b]" />
 
             <Link href="/food" className="hover:text-primary transition-colors">
               Respawn Refuel
             </Link>
-            <ChevronRight className="h-2.5 w-2.5 text-zinc-700" />
+            <ChevronRight className="h-2.5 w-2.5 text-[#52525b]" />
 
             <span className="text-primary">Cart</span>
           </div>
-          <h1 className="text-3xl font-black uppercase text-white tracking-tight mt-2">
-            Your Cart <span className="text-zinc-500 font-medium text-lg lowercase font-sans">Items ({cartItemCount})</span>
+          <h1 className="text-3xl font-black uppercase text-[#111115] tracking-tight mt-2">
+            Your Cart <span className="text-[#52525b] font-medium text-lg lowercase font-sans">Items ({cartItemCount})</span>
           </h1>
         </div>
 
@@ -321,46 +321,46 @@ export default function FoodCheckoutPage() {
             {cartItems.map((item) => (
               <Card
                 key={item.menu_item_id}
-                className="bg-[#121214] border border-zinc-900 p-2.5 rounded-xl flex items-center justify-between gap-2 transition-all hover:border-zinc-800"
+                className="bg-[#f4f4f5] border border-[#e4e4e7] p-2.5 rounded-xl flex items-center justify-between gap-2 transition-all hover:border-[#e4e4e7]"
               >
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-950 border border-zinc-900/60 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-[#f4f4f5] border border-[#e4e4e7]/60 flex-shrink-0">
                     <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-black text-[12px] text-zinc-100 leading-tight line-clamp-2 break-words">
+                    <h3 className="font-black text-[12px] text-[#111115] leading-tight line-clamp-2 break-words">
                       {item.name}
                     </h3>
-                    <p className="text-[8px] text-zinc-500 font-extrabold uppercase tracking-widest">{item.category}</p>
+                    <p className="text-[8px] text-[#52525b] font-extrabold uppercase tracking-widest">{item.category}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <div className="flex items-center bg-zinc-950 border border-zinc-800 p-0.5 rounded-lg">
-                    <button type="button" onClick={() => dispatch(decrementQuantity(item.menu_item_id))} className="h-6 w-6 flex items-center justify-center text-zinc-500"><Minus className="h-3 w-3" /></button>
-                    <span className="text-[10px] font-black text-zinc-200 w-5 text-center font-mono">{item.quantity}</span>
+                  <div className="flex items-center bg-[#f4f4f5] border border-[#e4e4e7] p-0.5 rounded-lg">
+                    <button type="button" onClick={() => dispatch(decrementQuantity(item.menu_item_id))} className="h-6 w-6 flex items-center justify-center text-[#52525b]"><Minus className="h-3 w-3" /></button>
+                    <span className="text-[10px] font-black text-[#111115] w-5 text-center font-mono">{item.quantity}</span>
                     <button type="button" onClick={() => dispatch(incrementQuantity(item.menu_item_id))} className="h-6 w-6 flex items-center justify-center text-black bg-primary rounded"><Plus className="h-3 w-3" /></button>
                   </div>
 
                   <span className="text-[13px] font-mono font-black text-primary w-[40px] text-right">₹{formatCurrency(item.price * item.quantity)}</span>
 
-                  <button type="button" onClick={() => dispatch(removeFromCart(item.menu_item_id))} className="text-zinc-600 hover:text-red-400">
+                  <button type="button" onClick={() => dispatch(removeFromCart(item.menu_item_id))} className="text-[#52525b] hover:text-red-400">
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </Card>
             ))}
 
-            <button type="button" onClick={() => router.push("/food")} className="flex items-center gap-2 text-xs font-black uppercase text-zinc-300 hover:text-primary pt-2 select-none tracking-wider transition-colors">
+            <button type="button" onClick={() => router.push("/food")} className="flex items-center gap-2 text-xs font-black uppercase text-[#3f3f46] hover:text-primary pt-2 select-none tracking-wider transition-colors">
               ← Continue Shopping
             </button>
           </div>
 
           <div className="lg:col-span-5">
-            <Card className="bg-[#121214] border border-zinc-900 p-6 space-y-5 rounded-2xl shadow-2xl glow-box-strong">
-              <h3 className="text-sm font-black uppercase text-zinc-200 tracking-wider pb-2 border-b border-zinc-900/60">Order Summary</h3>
-              <div className="space-y-3.5 text-xs text-zinc-400">
-                <div className="flex justify-between"><span>Subtotal</span><span className="text-zinc-200 font-mono font-bold">₹{formatCurrency(cartTotal)}</span></div>
+            <Card className="bg-[#f4f4f5] border border-[#e4e4e7] p-6 space-y-5 rounded-2xl shadow-2xl glow-box-strong">
+              <h3 className="text-sm font-black uppercase text-[#111115] tracking-wider pb-2 border-b border-[#e4e4e7]/60">Order Summary</h3>
+              <div className="space-y-3.5 text-xs text-[#3f3f46]">
+                <div className="flex justify-between"><span>Subtotal</span><span className="text-[#111115] font-mono font-bold">₹{formatCurrency(cartTotal)}</span></div>
                 {promoDiscount > 0 && (
                   <div className="flex justify-between text-primary font-bold">
                     <span className="flex items-center gap-1">
@@ -370,20 +370,20 @@ export default function FoodCheckoutPage() {
                     <span className="font-mono">-₹{formatCurrency(promoDiscount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between items-baseline font-black text-white pt-4 border-t border-t-zinc-900">
-                  <span className="text-xs uppercase text-zinc-400 font-black">Total</span>
+                <div className="flex justify-between items-baseline font-black text-[#111115] pt-4 border-t border-t-zinc-900">
+                  <span className="text-xs uppercase text-[#3f3f46] font-black">Total</span>
                   <span className="text-2xl text-primary font-mono tracking-tight">₹{formatCurrency(finalTotalAmount)}</span>
                 </div>
               </div>
 
               <div className="space-y-1.5 pt-1">
-                <Label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest block">Promo Code</Label>
+                <Label className="text-[9px] font-black text-[#52525b] uppercase tracking-widest block">Promo Code</Label>
                 <div className="flex gap-2">
                   <Input
                     placeholder="Enter code"
                     value={promoCode}
                     onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
-                    className="bg-zinc-950 border-zinc-900 h-10 text-xs text-white rounded-xl uppercase font-mono"
+                    className="bg-[#f4f4f5] border-[#e4e4e7] h-10 text-xs text-[#111115] rounded-xl uppercase font-mono"
                     disabled={isApplyingPromo || appliedPromoCode !== null}
                   />
                   {appliedPromoCode ? (
@@ -428,20 +428,20 @@ export default function FoodCheckoutPage() {
     return (
       <div className="w-full max-w-xl mx-auto py-8 px-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
         <div className="w-full max-w-xs mx-auto flex items-center justify-between pb-8 select-none">
-          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-500 font-bold text-[9px] flex items-center justify-center">1</div><span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Cart</span></div>
+          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-[#e4e4e7] border border-[#e4e4e7] text-[#52525b] font-bold text-[9px] flex items-center justify-center">1</div><span className="text-[8px] font-black uppercase text-[#52525b] tracking-wider">Cart</span></div>
           <div className="h-0.5 bg-primary flex-1 mx-2" />
           <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">2</div><span className="text-[8px] font-black uppercase text-primary tracking-wider">Details</span></div>
-          <div className="h-0.5 bg-zinc-800 flex-1 mx-2" />
-          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-bold text-[9px] flex items-center justify-center border border-zinc-800">3</div><span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Confirm</span></div>
+          <div className="h-0.5 bg-[#e4e4e7] flex-1 mx-2" />
+          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-[#e4e4e7] text-[#52525b] font-bold text-[9px] flex items-center justify-center border border-[#e4e4e7]">3</div><span className="text-[8px] font-black uppercase text-[#52525b] tracking-wider">Confirm</span></div>
         </div>
 
-        <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6 glow-box-hover">
-          <div className="border-b border-zinc-900 pb-4 space-y-3">
+        <Card className="bg-[#f4f4f5] border border-[#e4e4e7] p-6 shadow-2xl rounded-2xl space-y-6 glow-box-hover">
+          <div className="border-b border-[#e4e4e7] pb-4 space-y-3">
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 onClick={() => setStep("cart")}
-                className="h-8 flex items-center gap-2 text-zinc-500 hover:text-white px-2"
+                className="h-8 flex items-center gap-2 text-[#52525b] hover:text-[#111115] px-2"
               >
                 <ArrowLeft className="h-5 w-5" />
                 <span className="text-xs font-black uppercase tracking-wider">Back to Cart</span>
@@ -449,16 +449,16 @@ export default function FoodCheckoutPage() {
             </div>
 
             <div className="space-y-1">
-              <h3 className="text-lg font-black uppercase text-white tracking-tight">CUSTOMER IDENTIFICATION</h3>
-              <p className="text-xs text-zinc-500 font-medium">Enter your mobile number to load profiles or route standalone orders.</p>
+              <h3 className="text-lg font-black uppercase text-[#111115] tracking-tight">CUSTOMER IDENTIFICATION</h3>
+              <p className="text-xs text-[#52525b] font-medium">Enter your mobile number to load profiles or route standalone orders.</p>
             </div>
           </div>
 
           <form onSubmit={handlePhoneLookupSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><Phone className="h-3 w-3 text-zinc-600" /> MOBILE NUMBER <span className="text-red-500">*</span></Label>
+              <Label htmlFor="phone" className="text-[11px] font-black text-[#3f3f46] uppercase tracking-wider flex items-center gap-1.5"><Phone className="h-3 w-3 text-[#52525b]" /> MOBILE NUMBER <span className="text-red-500">*</span></Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-600 border-r border-zinc-900 pr-2">+91</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-[#52525b] border-r border-[#e4e4e7] pr-2">+91</span>
                 <Input
                   id="phone"
                   type="tel"
@@ -467,7 +467,7 @@ export default function FoodCheckoutPage() {
                   placeholder="Enter 10-digit mobile number"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                  className="bg-zinc-950 border-zinc-900 h-12 pl-12 text-sm text-white focus-visible:ring-primary font-mono tracking-wide rounded-xl"
+                  className="bg-[#f4f4f5] border-[#e4e4e7] h-12 pl-12 text-sm text-[#111115] focus-visible:ring-primary font-mono tracking-wide rounded-xl"
                 />
               </div>
             </div>
@@ -479,8 +479,8 @@ export default function FoodCheckoutPage() {
             </div>
           </form>
 
-          <div className="pt-2 flex gap-2 items-center text-[10px] text-zinc-600 justify-center select-none border-t border-zinc-950">
-            <ShieldCheck className="h-4 w-4 text-zinc-700" /><span>Your account is tracked safely inside active operational clusters.</span>
+          <div className="pt-2 flex gap-2 items-center text-[10px] text-[#52525b] justify-center select-none border-t border-[#e4e4e7]">
+            <ShieldCheck className="h-4 w-4 text-[#52525b]" /><span>Your account is tracked safely inside active operational clusters.</span>
           </div>
         </Card>
       </div>
@@ -490,21 +490,21 @@ export default function FoodCheckoutPage() {
   if (step === "details") {
     return (
       <div className="w-full max-w-xl mx-auto py-4 px-2 animate-in fade-in duration-300">
-        <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6 glow-box-hover">
-          <div className="border-b border-zinc-900 pb-4 space-y-1">
-            <h3 className="text-lg font-black uppercase text-white tracking-tight">NEW CUSTOMER REGISTRATION</h3>
-            <p className="text-xs text-zinc-500 font-medium">Please provide your credentials to map this checkout profile transaction.</p>
+        <Card className="bg-[#f4f4f5] border border-[#e4e4e7] p-6 shadow-2xl rounded-2xl space-y-6 glow-box-hover">
+          <div className="border-b border-[#e4e4e7] pb-4 space-y-1">
+            <h3 className="text-lg font-black uppercase text-[#111115] tracking-tight">NEW CUSTOMER REGISTRATION</h3>
+            <p className="text-xs text-[#52525b] font-medium">Please provide your credentials to map this checkout profile transaction.</p>
           </div>
 
-          <div className="bg-zinc-950 p-4 border border-zinc-900 rounded-xl flex items-center justify-between gap-4 text-xs">
+          <div className="bg-[#f4f4f5] p-4 border border-[#e4e4e7] rounded-xl flex items-center justify-between gap-4 text-xs">
             <div className="space-y-0.5">
-              <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest block">Entered Identity</span>
+              <span className="text-[8px] font-black text-[#52525b] uppercase tracking-widest block">Entered Identity</span>
               <span className="text-primary font-mono font-black tracking-wider">+91 {phone}</span>
             </div>
             <button
               type="button"
               onClick={() => setStep("phone")}
-              className="px-3 h-8 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[10px] font-black uppercase text-zinc-400 hover:text-primary rounded-lg tracking-wider flex items-center gap-1.5 transition-colors select-none"
+              className="px-3 h-8 bg-[#e4e4e7] hover:bg-[#e4e4e7] border border-[#e4e4e7] text-[10px] font-black uppercase text-[#3f3f46] hover:text-primary rounded-lg tracking-wider flex items-center gap-1.5 transition-colors select-none"
             >
               <RefreshCw className="h-3 w-3" /> Change Number
             </button>
@@ -512,13 +512,13 @@ export default function FoodCheckoutPage() {
 
           <form onSubmit={handleNewCustomerSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><User className="h-3 w-3 text-zinc-600" /> FULL NAME <span className="text-red-500">*</span></Label>
-              <Input id="name" type="text" required placeholder="Enter full name" value={name} onChange={(e) => setName(e.target.value)} className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl" />
+              <Label htmlFor="name" className="text-[11px] font-black text-[#3f3f46] uppercase tracking-wider flex items-center gap-1.5"><User className="h-3 w-3 text-[#52525b]" /> FULL NAME <span className="text-red-500">*</span></Label>
+              <Input id="name" type="text" required placeholder="Enter full name" value={name} onChange={(e) => setName(e.target.value)} className="bg-[#f4f4f5] border-[#e4e4e7] h-12 text-sm text-[#111115] focus-visible:ring-primary rounded-xl" />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dob" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Cake className="h-3 w-3 text-zinc-600" /> DATE OF BIRTH (DD-MM-YYYY)
+              <Label htmlFor="dob" className="text-[11px] font-black text-[#3f3f46] uppercase tracking-wider flex items-center gap-1.5">
+                <Cake className="h-3 w-3 text-[#52525b]" /> DATE OF BIRTH (DD-MM-YYYY)
               </Label>
               <Input
                 id="dob"
@@ -528,13 +528,13 @@ export default function FoodCheckoutPage() {
                 maxLength={10}
                 value={customerDob}
                 onChange={handleDobChange}
-                className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl"
+                className="bg-[#f4f4f5] border-[#e4e4e7] h-12 text-sm text-[#111115] focus-visible:ring-primary rounded-xl"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><Mail className="h-3 w-3 text-zinc-600" /> EMAIL ADDRESS</Label>
-              <Input id="email" type="email" placeholder="Enter your email (optional)" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl" />
+              <Label htmlFor="email" className="text-[11px] font-black text-[#3f3f46] uppercase tracking-wider flex items-center gap-1.5"><Mail className="h-3 w-3 text-[#52525b]" /> EMAIL ADDRESS</Label>
+              <Input id="email" type="email" placeholder="Enter your email (optional)" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-[#f4f4f5] border-[#e4e4e7] h-12 text-sm text-[#111115] focus-visible:ring-primary rounded-xl" />
             </div>
 
             <div className="pt-4 space-y-2">
@@ -551,7 +551,7 @@ export default function FoodCheckoutPage() {
   if (step === "success") {
     return (
       <div className="w-full max-w-2xl mx-auto py-4 px-2 animate-in fade-in duration-500">
-        <Card className="bg-[#111] border border-green-500/20 p-8 shadow-2xl rounded-2xl space-y-6 glow-box-strong">
+        <Card className="bg-[#f4f4f5] border border-green-500/20 p-8 shadow-2xl rounded-2xl space-y-6 glow-box-strong">
           {/* Success Header */}
           <div className="text-center space-y-4">
             <div className="flex justify-center">
@@ -560,14 +560,14 @@ export default function FoodCheckoutPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <h3 className="text-2xl font-black uppercase text-white tracking-tight">ORDER CONFIRMED!</h3>
-              <p className="text-sm text-zinc-400">Your food is being prepared.</p>
+              <h3 className="text-2xl font-black uppercase text-[#111115] tracking-tight">ORDER CONFIRMED!</h3>
+              <p className="text-sm text-[#3f3f46]">Your food is being prepared.</p>
             </div>
           </div>
 
           {/* QR Code Section */}
-          <div className="bg-zinc-950 p-6 rounded-xl border border-zinc-900 space-y-4 glow-box-strong">
-            <div className="flex items-center justify-center gap-2 text-xs font-black text-zinc-500 uppercase tracking-wider">
+          <div className="bg-[#f4f4f5] p-6 rounded-xl border border-[#e4e4e7] space-y-4 glow-box-strong">
+            <div className="flex items-center justify-center gap-2 text-xs font-black text-[#52525b] uppercase tracking-wider">
               <QrCode className="h-4 w-4" />
               <span>Order QR Code</span>
             </div>
@@ -575,37 +575,37 @@ export default function FoodCheckoutPage() {
               <QRCodeSVG value={orderNumber || "FO-12345"} size={160} level="H" />
             </div>
             <div className="text-center">
-              <p className="text-xs text-zinc-500 mb-1">Order Number</p>
+              <p className="text-xs text-[#52525b] mb-1">Order Number</p>
               <p className="text-lg font-black text-primary font-mono tracking-wider">{orderNumber || "FO-12345"}</p>
             </div>
           </div>
 
           {/* Food Items Ordered */}
-          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 glow-box-hover">
-            <h4 className="text-[10px] font-black text-zinc-500 uppercase flex items-center gap-2">
+          <div className="bg-[#f4f4f5] p-4 rounded-xl border border-[#e4e4e7] space-y-3 glow-box-hover">
+            <h4 className="text-[10px] font-black text-[#52525b] uppercase flex items-center gap-2">
               <UtensilsCrossed className="h-3.5 w-3.5" />
               Food Items Ordered
             </h4>
             <div className="space-y-2">
               {cartItems.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between py-2 border-b border-zinc-900 last:border-0">
+                <div key={idx} className="flex items-center justify-between py-2 border-b border-[#e4e4e7] last:border-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-zinc-400">{item.name}</span>
-                    <span className="text-xs text-zinc-600">x{item.quantity}</span>
+                    <span className="text-sm text-[#3f3f46]">{item.name}</span>
+                    <span className="text-xs text-[#52525b]">x{item.quantity}</span>
                   </div>
-                  <span className="text-sm text-white font-bold">₹{formatCurrency(item.price * item.quantity)}</span>
+                  <span className="text-sm text-[#111115] font-bold">₹{formatCurrency(item.price * item.quantity)}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Order Details */}
-          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 text-sm glow-box-hover">
-            <h4 className="text-[10px] font-black text-zinc-500 uppercase">Order Details</h4>
-            <div className="flex justify-between"><span className="text-zinc-500">Customer:</span> <span className="text-white font-bold">{name}</span></div>
-            <div className="flex justify-between"><span className="text-zinc-500">Phone:</span> <span className="text-primary font-bold">+91 {phone}</span></div>
-            <div className="flex justify-between"><span className="text-zinc-500">Items Count:</span> <span className="text-white font-bold">{cartItemCount} items</span></div>
-            <div className="flex justify-between"><span className="text-zinc-500">Subtotal:</span> <span className="text-white font-bold">₹{formatCurrency(cartTotal)}</span></div>
+          <div className="bg-[#f4f4f5] p-4 rounded-xl border border-[#e4e4e7] space-y-3 text-sm glow-box-hover">
+            <h4 className="text-[10px] font-black text-[#52525b] uppercase">Order Details</h4>
+            <div className="flex justify-between"><span className="text-[#52525b]">Customer:</span> <span className="text-[#111115] font-bold">{name}</span></div>
+            <div className="flex justify-between"><span className="text-[#52525b]">Phone:</span> <span className="text-primary font-bold">+91 {phone}</span></div>
+            <div className="flex justify-between"><span className="text-[#52525b]">Items Count:</span> <span className="text-[#111115] font-bold">{cartItemCount} items</span></div>
+            <div className="flex justify-between"><span className="text-[#52525b]">Subtotal:</span> <span className="text-[#111115] font-bold">₹{formatCurrency(cartTotal)}</span></div>
             {promoDiscount > 0 && (
               <div className="flex justify-between text-xs text-green-500">
                 <span className="flex items-center gap-1">
@@ -615,9 +615,9 @@ export default function FoodCheckoutPage() {
                 <span className="font-bold">-₹{formatCurrency(promoDiscount)}</span>
               </div>
             )}
-            <div className="flex justify-between border-t border-zinc-800 pt-2 font-black">
-              <span className="text-zinc-500">Amount Paid:</span>
-              <span className="text-white">₹{formatCurrency(finalTotalAmount)}</span>
+            <div className="flex justify-between border-t border-[#e4e4e7] pt-2 font-black">
+              <span className="text-[#52525b]">Amount Paid:</span>
+              <span className="text-[#111115]">₹{formatCurrency(finalTotalAmount)}</span>
             </div>
           </div>
 
@@ -627,17 +627,17 @@ export default function FoodCheckoutPage() {
               <ShoppingCart className="h-4 w-4" />
               ORDER MORE FOOD
             </Button>
-            <Button onClick={() => router.push("/retrieve")} variant="ghost" className="w-full border-2 border-primary text-zinc-300 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
+            <Button onClick={() => router.push("/retrieve")} variant="ghost" className="w-full border-2 border-primary text-[#3f3f46] hover:text-[#3f3f46] font-bold uppercase text-[11px] h-11 rounded-xl">
               VIEW MY ORDERS
             </Button>
-            <Button onClick={() => router.push("/")} variant="ghost" className="w-full text-zinc-300 border border-zinc-800 hover:text-zinc-400 font-bold uppercase text-[11px] h-10 rounded-xl">
+            <Button onClick={() => router.push("/")} variant="ghost" className="w-full text-[#3f3f46] border border-[#e4e4e7] hover:text-[#3f3f46] font-bold uppercase text-[11px] h-10 rounded-xl">
               BACK TO HOME
             </Button>
           </div>
 
           {/* Footer Note */}
-          <div className="pt-2 flex gap-2 items-center text-[10px] text-zinc-600 justify-center border-t border-zinc-950">
-            <ShieldCheck className="h-3.5 w-3.5 text-zinc-700" />
+          <div className="pt-2 flex gap-2 items-center text-[10px] text-[#52525b] justify-center border-t border-[#e4e4e7]">
+            <ShieldCheck className="h-3.5 w-3.5 text-[#52525b]" />
             <span>Show this QR code at the counter to claim your order</span>
           </div>
         </Card>

@@ -56,7 +56,7 @@ export default function CustomerRouteGroupLayout({ children }: { children: React
   return (
     <>
       <ScrollToTop />
-      <div className="min-h-screen flex flex-col bg-[#0d0a14] relative">
+      <div className="min-h-screen flex flex-col bg-white relative">
         {/* Animated purple background blobs */}
         <AnimatedBackground />
 

@@ -102,9 +102,9 @@ export default function SubscriptionsCards() {
   }, [])
 
   return (
-    <div className="min-h-screen relative bg-[#0d0a14] flex items-center justify-center px-4 py-16 overflow-hidden">
+    <div className="min-h-screen relative bg-white flex items-center justify-center px-4 py-16 overflow-hidden">
       {/* Base gradient overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/5 via-[#0d0a14] to-[#0d0a14] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/5 via-white to-white pointer-events-none" />
 
       {/* Animated golden blobs */}
       <div
@@ -133,7 +133,7 @@ export default function SubscriptionsCards() {
           >
             <div className="absolute -top-6 left-0 w-32 h-32 bg-[#A855F7]/10 blur-3xl rounded-full pointer-events-none" />
             <h1
-              className="relative text-4xl md:text-5xl font-black text-white"
+              className="relative text-4xl md:text-5xl font-black text-[#111115]"
              
             >
               Today's Elite Pricing

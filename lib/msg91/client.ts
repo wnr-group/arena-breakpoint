@@ -46,7 +46,7 @@ export async function sendBookingConfirmation(params: SendBookingConfirmationPar
   // Use template_id from MSG91_TEMPLATE_ID_BOOKING
   const message = `✅ Booking confirmed!
 
-Break Point Arena
+Arena OS
 ${params.deviceName} - ${params.date}, ${params.time}
 
 Booking ID: ${params.bookingId}
@@ -64,7 +64,7 @@ export async function sendSubscriptionConfirmation(params: SendSubscriptionConfi
   // TODO: Implement using MSG91 SMS/WhatsApp API
   const message = `✅ Subscription activated!
 
-Break Point Arena - ${params.planName}
+Arena OS - ${params.planName}
 ${params.discount} on all bookings
 Valid until: ${params.validUntil}
 

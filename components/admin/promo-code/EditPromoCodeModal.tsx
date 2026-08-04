@@ -83,10 +83,10 @@ export function EditPromoCodeModal({ onClose, editingPromo, onRefresh }: EditPro
 
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <Card className="w-full max-w-3xl bg-[#09090b] border border-zinc-800/80 rounded-2xl shadow-[0_0_60px_rgba(184,134,11,0.08)] overflow-hidden animate-in zoom-in-95 duration-250">
-        <div className="flex justify-between items-center p-5 border-b border-zinc-900 bg-[var(--background)]/80">
+      <Card className="w-full max-w-3xl bg-white border border-[#e4e4e7]/80 rounded-2xl shadow-[0_0_60px_rgba(184,134,11,0.08)] overflow-hidden animate-in zoom-in-95 duration-250">
+        <div className="flex justify-between items-center p-5 border-b border-[#e4e4e7] bg-[var(--background)]/80">
           <div>
-            <h3 className="font-black text-base text-white uppercase tracking-wider flex items-center gap-2">
+            <h3 className="font-black text-base text-[#111115] uppercase tracking-wider flex items-center gap-2">
               <span className="w-2 h-4 bg-primary rounded-sm block shadow-primary" />
               Modify Promotion Details
             </h3>
@@ -95,7 +95,7 @@ export function EditPromoCodeModal({ onClose, editingPromo, onRefresh }: EditPro
           <button 
             type="button" 
             onClick={onClose} 
-            className="p-2 rounded-xl bg-zinc-900/50 border border-zinc-800 text-muted-content hover:text-primary hover:border-primary/40 transition-all duration-200"
+            className="p-2 rounded-xl bg-[#e4e4e7]/50 border border-[#e4e4e7] text-muted-content hover:text-primary hover:border-primary/40 transition-all duration-200"
           >
             <X className="h-4 w-4"/>
           </button>
@@ -104,7 +104,7 @@ export function EditPromoCodeModal({ onClose, editingPromo, onRefresh }: EditPro
         <form onSubmit={handleFormSubmitCommit} className="p-6 space-y-6 text-left">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div className="space-y-2 md:col-span-1">
-              <Label className="text-[10px] font-black tracking-widest uppercase text-zinc-300 flex items-center gap-1.5">
+              <Label className="text-[10px] font-black tracking-widest uppercase text-[#3f3f46] flex items-center gap-1.5">
                 <Tag className="h-3 w-3 text-primary" /> Promo Code
               </Label>
               <Input 
@@ -112,33 +112,33 @@ export function EditPromoCodeModal({ onClose, editingPromo, onRefresh }: EditPro
                 disabled
                 placeholder="SUMMERTREAT30"
                 value={code}
-                className="bg-zinc-900 border-zinc-800 h-12 uppercase text-xs tracking-wider font-black text-secondary-content rounded-xl cursor-not-allowed select-none"
+                className="bg-[#e4e4e7] border-[#e4e4e7] h-12 uppercase text-xs tracking-wider font-black text-secondary-content rounded-xl cursor-not-allowed select-none"
               />
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label className="text-[10px] font-black tracking-widest uppercase text-zinc-300 flex items-center gap-1.5">
+              <Label className="text-[10px] font-black tracking-widest uppercase text-[#3f3f46] flex items-center gap-1.5">
                 <AlignLeft className="h-3 w-3 text-primary" /> Description 
               </Label>
               <Textarea 
                 placeholder="Enter context tags, internal notes, or client display messages..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="bg-[var(--background)] border-zinc-800 text-xs text-zinc-200 placeholder-zinc-700 rounded-xl focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-transparent resize-none h-12 font-medium leading-normal transition-all py-3"
+                className="bg-[var(--background)] border-[#e4e4e7] text-xs text-[#3f3f46] placeholder-zinc-700 rounded-xl focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-transparent resize-none h-12 font-medium leading-normal transition-all py-3"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-2">
-              <Label className="text-[10px] font-black tracking-widest uppercase text-zinc-300 flex items-center gap-1.5">
+              <Label className="text-[10px] font-black tracking-widest uppercase text-[#3f3f46] flex items-center gap-1.5">
                 {discountType === "percentage" ? <Percent className="h-3 w-3 text-primary" /> : <Banknote className="h-3 w-3 text-primary" />}
                 Discount Type 
               </Label>
               <select 
                 value={discountType} 
                 onChange={(e) => { setDiscountType(e.target.value as any); setDiscountValue(""); }}
-                className="w-full bg-[var(--background)] border border-zinc-800 rounded-xl h-12 px-3.5 text-xs text-white font-black focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent cursor-pointer appearance-none transition-all hover:border-zinc-700"
+                className="w-full bg-[var(--background)] border border-[#e4e4e7] rounded-xl h-12 px-3.5 text-xs text-[#111115] font-black focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent cursor-pointer appearance-none transition-all hover:border-[#e4e4e7]"
                 style={{ backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23FFC107' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', backgroundSize: '14px' }}
               >
                 <option value="percentage">Percentage (%)</option>
@@ -147,7 +147,7 @@ export function EditPromoCodeModal({ onClose, editingPromo, onRefresh }: EditPro
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[10px] font-black tracking-widest uppercase text-zinc-300">
+              <Label className="text-[10px] font-black tracking-widest uppercase text-[#3f3f46]">
                 Discount Value
               </Label>
               <div className="relative flex items-center">
@@ -159,7 +159,7 @@ export function EditPromoCodeModal({ onClose, editingPromo, onRefresh }: EditPro
                   placeholder={discountType === "percentage" ? "25" : "200"}
                   value={discountValue}
                   onChange={(e) => setDiscountValue(e.target.value)}
-                  className="bg-[var(--background)] border-zinc-800 h-12 text-xs text-white placeholder-zinc-700 font-black rounded-xl focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-transparent transition-all pr-14"
+                  className="bg-[var(--background)] border-[#e4e4e7] h-12 text-xs text-[#111115] placeholder-zinc-700 font-black rounded-xl focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-transparent transition-all pr-14"
                 />
                 <span className="absolute right-2 text-[9px] font-black text-black bg-primary border border-primary px-2 py-1.5 rounded-lg select-none shadow-[0_0_10px_rgba(184,134,11,0.2)]">
                   {discountType === "percentage" ? "PCT" : "INR"}
@@ -170,59 +170,59 @@ export function EditPromoCodeModal({ onClose, editingPromo, onRefresh }: EditPro
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-2 w-full">
-              <Label className="text-[10px] font-black tracking-widest uppercase text-zinc-300 flex items-center gap-1.5">
+              <Label className="text-[10px] font-black tracking-widest uppercase text-[#3f3f46] flex items-center gap-1.5">
                 <CalendarDays className="h-3 w-3 text-primary" /> Active From Date
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="w-full bg-[var(--background)] border border-zinc-800 h-12 rounded-xl px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="w-full bg-[var(--background)] border border-[#e4e4e7] h-12 rounded-xl px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-[#e4e4e7] text-[#111115] focus:outline-none focus:ring-1 focus:ring-primary"
                   >
                     <span>{dateFrom ? format(dateFrom, "dd-MM-yyyy") : <span className="text-muted-content">dd-mm-yyyy</span>}</span>
                     <CalendarDays className="h-4 w-4 text-primary drop-shadow-[0_0_4px_rgba(184,134,11,0.3)]" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[280px] p-3 bg-[var(--background)] border border-zinc-800 rounded-xl shadow-2xl z-50" align="start" side="top" sideOffset={8}>
+                <PopoverContent className="w-[280px] p-3 bg-[var(--background)] border border-[#e4e4e7] rounded-xl shadow-2xl z-50" align="start" side="top" sideOffset={8}>
                   <Calendar
                     mode="single"
                     selected={dateFrom}
                     onSelect={setDateFrom}
-                    className="bg-[var(--background)] text-white rounded-xl p-0"
+                    className="bg-[var(--background)] text-[#111115] rounded-xl p-0"
                   />
                 </PopoverContent>
               </Popover>
             </div>
 
             <div className="space-y-2 w-full">
-              <Label className="text-[10px] font-black tracking-widest uppercase text-zinc-300 flex items-center gap-1.5">
+              <Label className="text-[10px] font-black tracking-widest uppercase text-[#3f3f46] flex items-center gap-1.5">
                 <CalendarDays className="h-3 w-3 text-primary" /> Expiry Date
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="w-full bg-[var(--background)] border border-zinc-800 h-12 rounded-xl px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="w-full bg-[var(--background)] border border-[#e4e4e7] h-12 rounded-xl px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-[#e4e4e7] text-[#111115] focus:outline-none focus:ring-1 focus:ring-primary"
                   >
                     <span>{dateTo ? format(dateTo, "dd-MM-yyyy") : <span className="text-muted-content">dd-mm-yyyy</span>}</span>
                     <CalendarDays className="h-4 w-4 text-primary drop-shadow-[0_0_4px_rgba(184,134,11,0.3)]" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[280px] p-3 bg-[var(--background)] border border-zinc-800 rounded-xl shadow-2xl z-50" align="start" side="top" sideOffset={8}>
+                <PopoverContent className="w-[280px] p-3 bg-[var(--background)] border border-[#e4e4e7] rounded-xl shadow-2xl z-50" align="start" side="top" sideOffset={8}>
                   <Calendar
                     mode="single"
                     selected={dateTo}
                     onSelect={setDateTo}
-                    className="bg-[var(--background)] text-white rounded-xl p-0"
+                    className="bg-[var(--background)] text-[#111115] rounded-xl p-0"
                   />
                 </PopoverContent>
               </Popover>
             </div>
           </div>
 
-          <div className="flex items-center justify-between bg-[var(--background)] border border-zinc-800/60 p-4 rounded-xl transition-all">
+          <div className="flex items-center justify-between bg-[var(--background)] border border-[#e4e4e7]/60 p-4 rounded-xl transition-all">
             <div className="space-y-0.5">
-              <Label className="text-[11px] font-black text-white uppercase tracking-wider block flex items-center gap-1.5">
+              <Label className="text-[11px] font-black text-[#111115] uppercase tracking-wider block flex items-center gap-1.5">
                 <ShieldCheck className={`h-3.5 w-3.5 ${isActive ? "text-primary" : "text-muted-content"}`} /> Promotion Active State
               </Label>
               <span className="text-label font-medium block">If deactivated, validation processing will lock this code instantly.</span>
@@ -234,16 +234,16 @@ export function EditPromoCodeModal({ onClose, editingPromo, onRefresh }: EditPro
                 onChange={(e) => setIsActive(e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-10 h-6 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-zinc-400 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary peer-checked:after:bg-black peer-checked:after:border-black shadow-inner" />
+              <div className="w-10 h-6 bg-[#e4e4e7] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-zinc-400 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary peer-checked:after:bg-black peer-checked:after:border-black shadow-inner" />
             </label>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-zinc-900">
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-[#e4e4e7]">
             <Button 
               type="button" 
               onClick={onClose} 
               variant="ghost" 
-              className="border border-zinc-800 text-muted-content hover:text-white hover:bg-zinc-900 font-black text-xs h-12 px-5 rounded-xl transition-all"
+              className="border border-[#e4e4e7] text-muted-content hover:text-[#111115] hover:bg-[#e4e4e7] font-black text-xs h-12 px-5 rounded-xl transition-all"
             >
               Cancel
             </Button>

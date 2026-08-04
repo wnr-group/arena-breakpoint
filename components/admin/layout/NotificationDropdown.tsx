@@ -19,10 +19,10 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
   }
 
   return (
-    <div className="absolute right-0 top-12 w-96 bg-[var(--background)] border border-zinc-800 rounded-lg shadow-[0_0_40px_rgba(184,134,11,0.15)] z-50 overflow-hidden">
+    <div className="absolute right-0 top-12 w-96 bg-[var(--background)] border border-[#e4e4e7] rounded-lg shadow-[0_0_40px_rgba(184,134,11,0.15)] z-50 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-zinc-800">
-        <h3 className="text-sm font-black uppercase text-white">Notifications</h3>
+      <div className="flex items-center justify-between p-4 border-b border-[#e4e4e7]">
+        <h3 className="text-sm font-black uppercase text-[#111115]">Notifications</h3>
         {notifications.length > 0 && (
           <button
             onClick={markAllAsRead}
@@ -38,7 +38,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
       <div className="max-h-[400px] overflow-y-auto">
         {notifications.length === 0 ? (
           <div className="p-8 text-center">
-            <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center mx-auto mb-3">
+            <div className="w-12 h-12 rounded-full bg-[#e4e4e7] flex items-center justify-center mx-auto mb-3">
               <Bell className="h-6 w-6 text-muted-content" />
             </div>
             <p className="text-sm text-secondary-content font-medium">No notifications yet</p>
@@ -53,7 +53,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
               <button
                 key={notification.id}
                 onClick={() => handleNotificationClick(notification.id, notification.bookingId)}
-                className={`w-full p-4 border-b border-zinc-800/50 hover:bg-[var(--surface-hover)] transition-colors text-left group ${
+                className={`w-full p-4 border-b border-[#e4e4e7] hover:bg-[var(--surface-hover)] transition-colors text-left group ${
                   !notification.read ? 'bg-primary/5' : ''
                 }`}
               >
@@ -68,7 +68,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-black text-white">{notification.title}</p>
+                      <p className="text-sm font-black text-[#111115]">{notification.title}</p>
                       {!notification.read && (
                         <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1"></span>
                       )}

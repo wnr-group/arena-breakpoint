@@ -65,9 +65,9 @@ export default function RetrieveBookingPage() {
         glow: 'shadow-[0_0_15px_rgba(59,130,246,0.3)]'
       },
       completed: {
-        bg: 'bg-zinc-800/50',
-        text: 'text-zinc-400',
-        border: 'border-zinc-700',
+        bg: 'bg-[#e4e4e7]',
+        text: 'text-[#52525b]',
+        border: 'border-[#e4e4e7]',
         glow: ''
       },
       cancelled: {
@@ -94,7 +94,7 @@ export default function RetrieveBookingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0d0a14] text-white py-12 px-4">
+    <div className="min-h-screen bg-white text-[#111115] py-12 px-4">
       <div className="max-w-5xl mx-auto space-y-8">
 
         {/* Header with Animation */}
@@ -104,7 +104,7 @@ export default function RetrieveBookingPage() {
               <Search className="h-6 w-6 text-black" />
             </div>
             <div>
-              <h1 className="text-3xl md:text-4xl font-black uppercase bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text text-transparent tracking-tight">
+              <h1 className="text-3xl md:text-4xl font-black uppercase bg-gradient-to-r from-[#111115] via-amber-600 to-[#111115] bg-clip-text text-transparent tracking-tight">
                 RETRIEVE BOOKING
               </h1>
               <p className="text-xs text-primary font-bold uppercase tracking-widest flex items-center gap-1.5 mt-1">
@@ -113,11 +113,11 @@ export default function RetrieveBookingPage() {
               </p>
             </div>
           </div>
-          <p className="text-sm text-zinc-500 pl-15">Enter your phone number to view all your bookings and access QR codes</p>
+          <p className="text-sm text-[#52525b] pl-15">Enter your phone number to view all your bookings and access QR codes</p>
         </div>
 
         {/* Search Card with Enhanced Styling */}
-        <Card className="bg-gradient-to-br from-[#111] via-[#0f0f0f] to-[#111] border-2 border-primary/30 p-8 shadow-[0_0_40px_rgba(255,193,7,0.2)] rounded-2xl relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+        <Card className="bg-gradient-to-br from-[#f4f4f5] via-[#ebebeb] to-[#f4f4f5] border-2 border-primary/30 p-8 shadow-[0_0_40px_rgba(255,193,7,0.2)] rounded-2xl relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
           {/* Animated gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-amber-400/5 to-primary/5 opacity-0 hover:opacity-100 transition-opacity duration-500" />
 
@@ -126,7 +126,7 @@ export default function RetrieveBookingPage() {
 
           <form onSubmit={handleSearch} className="space-y-6 relative z-10">
             <div className="space-y-3">
-              <Label htmlFor="phone-search" className="text-xs font-black text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+              <Label htmlFor="phone-search" className="text-xs font-black text-[#52525b] uppercase tracking-wider flex items-center gap-2">
                 <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Phone className="h-3.5 w-3.5 text-primary" />
                 </div>
@@ -134,7 +134,7 @@ export default function RetrieveBookingPage() {
               </Label>
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-zinc-600 border-r border-zinc-800 pr-3">+91</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#52525b] border-r border-[#e4e4e7] pr-3">+91</span>
                   <Input
                     id="phone-search"
                     type="tel"
@@ -143,7 +143,7 @@ export default function RetrieveBookingPage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    className="bg-zinc-950/50 border-2 border-zinc-800 hover:border-primary/50 focus:border-primary h-14 pl-16 text-base text-white focus-visible:ring-primary font-mono tracking-wide rounded-xl transition-all shadow-[0_0_15px_rgba(255,193,7,0.1)]"
+                    className="bg-white border-2 border-[#e4e4e7] hover:border-primary/50 focus:border-primary h-14 pl-16 text-base text-[#111115] focus-visible:ring-primary font-mono tracking-wide rounded-xl transition-all shadow-[0_0_15px_rgba(255,193,7,0.1)]"
                   />
                 </div>
                 <Button
@@ -176,18 +176,18 @@ export default function RetrieveBookingPage() {
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
               <div className="absolute inset-0 blur-xl bg-primary/30 animate-pulse" />
             </div>
-            <p className="text-sm font-bold text-zinc-500 uppercase tracking-wider">Searching bookings...</p>
+            <p className="text-sm font-bold text-[#52525b] uppercase tracking-wider">Searching bookings...</p>
           </div>
         )}
 
         {/* No Results with Better Design */}
         {hasSearched && !isLoading && bookings.length === 0 && (
-          <Card className="bg-gradient-to-br from-[#111] to-zinc-950 border-2 border-zinc-800 p-12 text-center animate-in fade-in zoom-in duration-500 rounded-2xl">
-            <div className="w-20 h-20 rounded-full bg-zinc-900 border-2 border-zinc-800 flex items-center justify-center mx-auto mb-6">
-              <Search className="h-10 w-10 text-zinc-700" />
+          <Card className="bg-gradient-to-br from-[#f4f4f5] to-[#ebebeb] border-2 border-[#e4e4e7] p-12 text-center animate-in fade-in zoom-in duration-500 rounded-2xl">
+            <div className="w-20 h-20 rounded-full bg-[#e4e4e7] border-2 border-[#e4e4e7] flex items-center justify-center mx-auto mb-6">
+              <Search className="h-10 w-10 text-[#52525b]" />
             </div>
-            <h3 className="text-xl font-black text-zinc-400 mb-3 uppercase">No Bookings Found</h3>
-            <p className="text-sm text-zinc-600 max-w-md mx-auto">No bookings were found for this phone number. Try a different number or create a new booking.</p>
+            <h3 className="text-xl font-black text-[#3f3f46] mb-3 uppercase">No Bookings Found</h3>
+            <p className="text-sm text-[#52525b] max-w-md mx-auto">No bookings were found for this phone number. Try a different number or create a new booking.</p>
             <Button
               onClick={() => router.push("/booking")}
               variant="gradient"
@@ -203,7 +203,7 @@ export default function RetrieveBookingPage() {
         {!isLoading && !selectedBooking && bookings.length > 0 && (
           <div className="space-y-6">
             <div className="flex items-center justify-between animate-in fade-in slide-in-from-left-4 duration-500 delay-200">
-              <h2 className="text-sm font-black text-zinc-500 uppercase tracking-wider flex items-center gap-2">
+              <h2 className="text-sm font-black text-[#52525b] uppercase tracking-wider flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                   <CheckCircle2 className="h-4 w-4 text-primary" />
                 </div>
@@ -220,7 +220,7 @@ export default function RetrieveBookingPage() {
                 return (
                   <Card
                     key={booking.id}
-                    className="bg-gradient-to-br from-[#111] via-[#0f0f0f] to-[#111] border-2 border-zinc-900 hover:border-primary/50 p-6 shadow-[0_0_20px_rgba(255,193,7,0.1)] hover:shadow-[0_0_30px_rgba(255,193,7,0.25)] rounded-2xl transition-all cursor-pointer group relative overflow-hidden"
+                    className="bg-gradient-to-br from-[#f4f4f5] via-[#ebebeb] to-[#f4f4f5] border-2 border-[#e4e4e7] hover:border-primary/50 p-6 shadow-[0_0_20px_rgba(255,193,7,0.1)] hover:shadow-[0_0_30px_rgba(255,193,7,0.25)] rounded-2xl transition-all cursor-pointer group relative overflow-hidden"
                     onClick={() => setSelectedBooking(booking)}
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
@@ -230,12 +230,12 @@ export default function RetrieveBookingPage() {
                     <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                       <div className="space-y-4 flex-1">
                         {/* Title - Device Name OR Food Order */}
-                        <div className="flex items-center justify-between gap-3 flex-wrap pb-3 border-b border-zinc-800">
+                        <div className="flex items-center justify-between gap-3 flex-wrap pb-3 border-b border-[#e4e4e7]">
                           <div className="flex items-center gap-2">
                             {isFoodOnly ? (
                               <>
                                 <UtensilsCrossed className="h-5 w-5 text-orange-400" />
-                                <span className="text-lg sm:text-xl font-black text-white">
+                                <span className="text-lg sm:text-xl font-black text-[#111115]">
                                   Food Order
                                 </span>
                                 <span className="text-xs font-bold text-orange-400 bg-orange-500/10 px-2 py-1 rounded border border-orange-500/30">
@@ -245,10 +245,10 @@ export default function RetrieveBookingPage() {
                             ) : (
                               <>
                                 <Zap className="h-5 w-5 text-primary" />
-                                <span className="text-lg sm:text-xl font-black text-white">
+                                <span className="text-lg sm:text-xl font-black text-[#111115]">
                                   {booking.booking_device_slots?.[0]?.device_type || 'Device'}
                                 </span>
-                                <span className="text-xs font-bold text-zinc-600 bg-zinc-900 px-2 py-1 rounded">
+                                <span className="text-xs font-bold text-[#52525b] bg-[#e4e4e7] px-2 py-1 rounded">
                                   #{booking.booking_device_slots?.[0]?.device_station_number || 'N/A'}
                                 </span>
                               </>
@@ -261,7 +261,7 @@ export default function RetrieveBookingPage() {
 
                       {/* Booking ID - Small tag */}
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-mono font-bold text-zinc-600 bg-zinc-950/50 px-2 py-1 rounded border border-zinc-800">
+                        <span className="text-[10px] font-mono font-bold text-[#52525b] bg-black/5 px-2 py-1 rounded border border-[#e4e4e7]">
                           #{booking.booking_number}
                         </span>
                       </div>
@@ -271,35 +271,35 @@ export default function RetrieveBookingPage() {
                           // Food-only booking info
                           <>
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center">
+                              <div className="w-10 h-10 rounded-lg bg-[#e4e4e7] flex items-center justify-center">
                                 <UtensilsCrossed className="h-4 w-4 text-orange-400" />
                               </div>
                               <div>
-                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Items</p>
-                                <p className="text-sm text-white font-black">
+                                <p className="text-[10px] text-[#52525b] uppercase font-bold">Items</p>
+                                <p className="text-sm text-[#111115] font-black">
                                   {booking.booking_food_items.length} item{booking.booking_food_items.length > 1 ? 's' : ''}
                                 </p>
                               </div>
                             </div>
 
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center">
+                              <div className="w-10 h-10 rounded-lg bg-[#e4e4e7] flex items-center justify-center">
                                 <Calendar className="h-4 w-4 text-primary" />
                               </div>
                               <div>
-                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Ordered</p>
-                                <p className="text-sm text-white font-black">
+                                <p className="text-[10px] text-[#52525b] uppercase font-bold">Ordered</p>
+                                <p className="text-sm text-[#111115] font-black">
                                   {new Date(booking.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                 </p>
                               </div>
                             </div>
 
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center">
+                              <div className="w-10 h-10 rounded-lg bg-[#e4e4e7] flex items-center justify-center">
                                 <CreditCard className="h-4 w-4 text-primary" />
                               </div>
                               <div>
-                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Amount</p>
+                                <p className="text-[10px] text-[#52525b] uppercase font-bold">Amount</p>
                                 <p className="text-sm text-primary font-black">₹{booking.total_amount}</p>
                               </div>
                             </div>
@@ -308,12 +308,12 @@ export default function RetrieveBookingPage() {
                           // Device booking info
                           <>
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center">
+                              <div className="w-10 h-10 rounded-lg bg-[#e4e4e7] flex items-center justify-center">
                                 <Calendar className="h-4 w-4 text-primary" />
                               </div>
                               <div>
-                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Date</p>
-                                <p className="text-sm text-white font-black">
+                                <p className="text-[10px] text-[#52525b] uppercase font-bold">Date</p>
+                                <p className="text-sm text-[#111115] font-black">
                                   {booking.booking_device_slots?.[0]?.slot_date ?
                                     new Date(booking.booking_device_slots[0].slot_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) :
                                     'N/A'
@@ -323,23 +323,23 @@ export default function RetrieveBookingPage() {
                             </div>
 
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center">
+                              <div className="w-10 h-10 rounded-lg bg-[#e4e4e7] flex items-center justify-center">
                                 <Clock className="h-4 w-4 text-primary" />
                               </div>
                               <div>
-                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Time</p>
-                                <p className="text-sm text-white font-black">
+                                <p className="text-[10px] text-[#52525b] uppercase font-bold">Time</p>
+                                <p className="text-sm text-[#111115] font-black">
                                   {booking.booking_device_slots?.[0]?.slot_start_time || 'N/A'}
                                 </p>
                               </div>
                             </div>
 
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center">
+                              <div className="w-10 h-10 rounded-lg bg-[#e4e4e7] flex items-center justify-center">
                                 <CreditCard className="h-4 w-4 text-primary" />
                               </div>
                               <div>
-                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Amount</p>
+                                <p className="text-[10px] text-[#52525b] uppercase font-bold">Amount</p>
                                 <p className="text-sm text-primary font-black">₹{booking.total_amount}</p>
                               </div>
                             </div>
@@ -378,8 +378,8 @@ export default function RetrieveBookingPage() {
               <div className="relative z-10">
                 {/* Booking ID - Small tag at top right */}
                 <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <p className="text-[10px] sm:text-xs text-zinc-500 font-bold uppercase tracking-wider">Booking Status</p>
-                  <span className="text-[10px] sm:text-xs font-mono font-bold text-zinc-600 bg-zinc-950/50 px-2 sm:px-3 py-1 rounded-md border border-zinc-800">
+                  <p className="text-[10px] sm:text-xs text-[#52525b] font-bold uppercase tracking-wider">Booking Status</p>
+                  <span className="text-[10px] sm:text-xs font-mono font-bold text-[#52525b] bg-black/5 px-2 sm:px-3 py-1 rounded-md border border-[#e4e4e7]">
                     #{selectedBooking.booking_number}
                   </span>
                 </div>
@@ -392,13 +392,13 @@ export default function RetrieveBookingPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                       {getStatusBadge(selectedBooking.status)}
-                      <span className="text-xs text-zinc-600 hidden sm:inline">•</span>
+                      <span className="text-xs text-[#52525b] hidden sm:inline">•</span>
                       <span className={`text-[10px] sm:text-xs font-black uppercase px-2 sm:px-3 py-1 sm:py-1.5 rounded-full ${
                         selectedBooking.payment_status === 'paid'
                           ? 'bg-green-500/20 text-green-400 border border-green-500/40'
                           : selectedBooking.payment_status === 'pending'
                           ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
-                          : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
+                          : 'bg-[#e4e4e7] text-[#52525b] border border-[#e4e4e7]'
                       }`}>
                         {selectedBooking.payment_status}
                       </span>
@@ -409,7 +409,7 @@ export default function RetrieveBookingPage() {
             </Card>
 
             {/* QR Code with Scanning Animation */}
-            <Card className="bg-gradient-to-br from-[#111] via-zinc-950 to-[#111] border-2 border-primary/30 p-8 shadow-[0_0_40px_rgba(255,193,7,0.25)] rounded-2xl relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
+            <Card className="bg-gradient-to-br from-[#f4f4f5] via-[#ebebeb] to-[#f4f4f5] border-2 border-primary/30 p-8 shadow-[0_0_40px_rgba(255,193,7,0.25)] rounded-2xl relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
               {/* Top border pulse */}
               <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse" />
 
@@ -419,7 +419,7 @@ export default function RetrieveBookingPage() {
               </div>
 
               <div className="space-y-6 relative z-10">
-                <div className="flex items-center justify-center gap-2 text-xs font-black text-zinc-500 uppercase tracking-wider">
+                <div className="flex items-center justify-center gap-2 text-xs font-black text-[#52525b] uppercase tracking-wider">
                   <QrCode className="h-5 w-5 text-primary" />
                   <span>Booking QR Code</span>
                 </div>
@@ -444,7 +444,7 @@ export default function RetrieveBookingPage() {
                 </div>
 
                 <div className="text-center">
-                  <p className="text-xs text-zinc-500">Show this QR code at the counter for instant check-in</p>
+                  <p className="text-xs text-[#52525b]">Show this QR code at the counter for instant check-in</p>
                 </div>
               </div>
             </Card>
@@ -464,29 +464,29 @@ export default function RetrieveBookingPage() {
                   </h3>
                   <div className="grid gap-4">
                     {selectedBooking.booking_device_slots.map((slot: any, idx: number) => (
-                      <div key={idx} className="bg-gradient-to-br from-[#111] to-zinc-950 p-4 sm:p-6 rounded-xl border-2 border-primary/30 hover:border-primary/50 transition-all shadow-[0_0_20px_rgba(255,193,7,0.2)] hover:shadow-[0_0_30px_rgba(255,193,7,0.3)]">
+                      <div key={idx} className="bg-gradient-to-br from-[#f4f4f5] to-[#ebebeb] p-4 sm:p-6 rounded-xl border-2 border-primary/30 hover:border-primary/50 transition-all shadow-[0_0_20px_rgba(255,193,7,0.2)] hover:shadow-[0_0_30px_rgba(255,193,7,0.3)]">
                         <div className="space-y-4 sm:space-y-5">
                           {/* Device Info - Large and Prominent with Responsive Sizing */}
                           <div className="pb-3 sm:pb-4 border-b-2 border-primary/20">
-                            <p className="text-[10px] sm:text-xs text-zinc-500 uppercase font-bold mb-2 tracking-wider">Gaming Device</p>
+                            <p className="text-[10px] sm:text-xs text-[#52525b] uppercase font-bold mb-2 tracking-wider">Gaming Device</p>
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white leading-tight">
+                              <span className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-[#111115] leading-tight">
                                 {slot.device_type}
                               </span>
-                              <span className="text-xs sm:text-sm font-bold text-zinc-600 bg-zinc-900 px-2 sm:px-3 py-1 rounded-lg">
+                              <span className="text-xs sm:text-sm font-bold text-[#52525b] bg-[#e4e4e7] px-2 sm:px-3 py-1 rounded-lg">
                                 #{slot.device_station_number}
                               </span>
                             </div>
                           </div>
 
                           {/* Date & Time - Combined in Single Box */}
-                          <div className="bg-zinc-950/50 p-4 sm:p-5 rounded-lg border border-primary/20">
+                          <div className="bg-black/5 p-4 sm:p-5 rounded-lg border border-primary/20">
                             <div className="space-y-3 sm:space-y-4">
                               <div className="flex items-center gap-3">
                                 <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
                                 <div className="flex-1">
-                                  <p className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Date</p>
-                                  <p className="text-sm sm:text-base md:text-lg font-black text-white leading-tight">
+                                  <p className="text-[10px] text-[#52525b] uppercase font-bold mb-1">Date</p>
+                                  <p className="text-sm sm:text-base md:text-lg font-black text-[#111115] leading-tight">
                                     {new Date(slot.slot_date).toLocaleDateString('en-US', {
                                       weekday: 'short',
                                       month: 'short',
@@ -499,7 +499,7 @@ export default function RetrieveBookingPage() {
                               <div className="flex items-center gap-3">
                                 <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
                                 <div className="flex-1">
-                                  <p className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Time Slot</p>
+                                  <p className="text-[10px] text-[#52525b] uppercase font-bold mb-1">Time Slot</p>
                                   <p className="text-sm sm:text-base md:text-lg font-black text-primary leading-tight">
                                     {slot.slot_start_time} - {slot.slot_end_time}
                                   </p>
@@ -511,22 +511,22 @@ export default function RetrieveBookingPage() {
                           {/* Duration and Player Count - Medium Size */}
                           <div className="grid grid-cols-2 gap-3 sm:gap-4">
                             {slot.duration_hours && (
-                              <div className="bg-zinc-950/30 p-3 sm:p-4 rounded-lg border border-zinc-800">
-                                <p className="text-[10px] text-zinc-500 uppercase font-bold mb-1.5">Duration</p>
-                                <p className="text-base sm:text-lg md:text-xl font-black text-white">{slot.duration_hours}h</p>
+                              <div className="bg-black/5 p-3 sm:p-4 rounded-lg border border-[#e4e4e7]">
+                                <p className="text-[10px] text-[#52525b] uppercase font-bold mb-1.5">Duration</p>
+                                <p className="text-base sm:text-lg md:text-xl font-black text-[#111115]">{slot.duration_hours}h</p>
                               </div>
                             )}
                             {slot.player_count && (
-                              <div className="bg-zinc-950/30 p-3 sm:p-4 rounded-lg border border-zinc-800">
-                                <p className="text-[10px] text-zinc-500 uppercase font-bold mb-1.5">Players</p>
-                                <p className="text-base sm:text-lg md:text-xl font-black text-white">{slot.player_count}</p>
+                              <div className="bg-black/5 p-3 sm:p-4 rounded-lg border border-[#e4e4e7]">
+                                <p className="text-[10px] text-[#52525b] uppercase font-bold mb-1.5">Players</p>
+                                <p className="text-base sm:text-lg md:text-xl font-black text-[#111115]">{slot.player_count}</p>
                               </div>
                             )}
                           </div>
 
                           {slot.extra_players_total > 0 && (
                             <div className="flex items-center justify-between text-xs bg-primary/10 px-3 py-2 rounded-lg border border-primary/20">
-                              <span className="text-zinc-400 font-bold">Extra Players Charge:</span>
+                              <span className="text-[#52525b] font-bold">Extra Players Charge:</span>
                               <span className="text-primary font-black text-sm sm:text-base">+₹{slot.extra_players_total}</span>
                             </div>
                           )}
@@ -540,38 +540,38 @@ export default function RetrieveBookingPage() {
 
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Customer Info */}
-              <Card className="bg-[#111] border-2 border-zinc-900 p-6 shadow-[0_0_20px_rgba(255,193,7,0.15)] rounded-2xl hover:shadow-[0_0_30px_rgba(255,193,7,0.25)] transition-all animate-in fade-in slide-in-from-left-4 duration-500 delay-200">
-                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-5 flex items-center gap-2">
+              <Card className="bg-[#f4f4f5] border-2 border-[#e4e4e7] p-6 shadow-[0_0_20px_rgba(255,193,7,0.15)] rounded-2xl hover:shadow-[0_0_30px_rgba(255,193,7,0.25)] transition-all animate-in fade-in slide-in-from-left-4 duration-500 delay-200">
+                <h3 className="text-xs font-black text-[#52525b] uppercase tracking-wider mb-5 flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <User className="h-4 w-4 text-primary" />
                   </div>
                   Customer Information
                 </h3>
                 <div className="space-y-4 text-sm">
-                  <div className="flex items-center justify-between pb-3 border-b border-zinc-900">
-                    <span className="text-zinc-500 font-bold">Customer:</span>
-                    <span className="text-white font-black">{selectedBooking.customer_name}</span>
+                  <div className="flex items-center justify-between pb-3 border-b border-[#e4e4e7]">
+                    <span className="text-[#52525b] font-bold">Customer:</span>
+                    <span className="text-[#111115] font-black">{selectedBooking.customer_name}</span>
                   </div>
-                  <div className="flex items-center justify-between pb-3 border-b border-zinc-900">
-                    <span className="text-zinc-500 font-bold">Phone:</span>
+                  <div className="flex items-center justify-between pb-3 border-b border-[#e4e4e7]">
+                    <span className="text-[#52525b] font-bold">Phone:</span>
                     <span className="text-primary font-black">{selectedBooking.customer_phone}</span>
                   </div>
                   {selectedBooking.customer_email && (
-                    <div className="flex items-center justify-between pb-3 border-b border-zinc-900">
-                      <span className="text-zinc-500 font-bold">Email:</span>
-                      <span className="text-white font-bold truncate ml-2 text-right">{selectedBooking.customer_email}</span>
+                    <div className="flex items-center justify-between pb-3 border-b border-[#e4e4e7]">
+                      <span className="text-[#52525b] font-bold">Email:</span>
+                      <span className="text-[#111115] font-bold truncate ml-2 text-right">{selectedBooking.customer_email}</span>
                     </div>
                   )}
                   <div className="flex items-center justify-between">
-                    <span className="text-zinc-500 font-bold">DOB:</span>
-                    <span className="text-white font-black">{selectedBooking.customer_dob}</span>
+                    <span className="text-[#52525b] font-bold">DOB:</span>
+                    <span className="text-[#111115] font-black">{selectedBooking.customer_dob}</span>
                   </div>
                 </div>
               </Card>
 
               {/* Payment Summary */}
-              <Card className="bg-gradient-to-br from-[#111] via-zinc-950 to-[#111] border-2 border-primary/30 p-6 shadow-[0_0_30px_rgba(255,193,7,0.2)] rounded-2xl animate-in fade-in slide-in-from-right-4 duration-500 delay-200">
-                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-5 flex items-center gap-2">
+              <Card className="bg-gradient-to-br from-[#f4f4f5] via-[#ebebeb] to-[#f4f4f5] border-2 border-primary/30 p-6 shadow-[0_0_30px_rgba(255,193,7,0.2)] rounded-2xl animate-in fade-in slide-in-from-right-4 duration-500 delay-200">
+                <h3 className="text-xs font-black text-[#52525b] uppercase tracking-wider mb-5 flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <CreditCard className="h-4 w-4 text-primary" />
                   </div>
@@ -603,29 +603,29 @@ export default function RetrieveBookingPage() {
                     return (
                       <>
                         <div className="flex items-center justify-between py-2">
-                          <span className="text-zinc-500 font-bold">
+                          <span className="text-[#52525b] font-bold">
                             Device Booking ({durationHours}h × ₹{hourlyRate}):
                           </span>
-                          <span className="text-white font-black">₹{deviceCharges.toFixed(2)}</span>
+                          <span className="text-[#111115] font-black">₹{deviceCharges.toFixed(2)}</span>
                         </div>
 
                         {extraPlayersTotal > 0 && (
                           <div className="flex items-center justify-between py-2">
-                            <span className="text-zinc-500 font-bold">Extra Players:</span>
-                            <span className="text-white font-black">₹{extraPlayersTotal.toFixed(2)}</span>
+                            <span className="text-[#52525b] font-bold">Extra Players:</span>
+                            <span className="text-[#111115] font-black">₹{extraPlayersTotal.toFixed(2)}</span>
                           </div>
                         )}
 
                         {selectedBooking.food_subtotal > 0 && (
                           <div className="flex items-center justify-between py-2">
-                            <span className="text-zinc-500 font-bold">Food & Beverages:</span>
-                            <span className="text-white font-black">₹{Number(selectedBooking.food_subtotal).toFixed(2)}</span>
+                            <span className="text-[#52525b] font-bold">Food & Beverages:</span>
+                            <span className="text-[#111115] font-black">₹{Number(selectedBooking.food_subtotal).toFixed(2)}</span>
                           </div>
                         )}
 
-                        <div className="flex items-center justify-between py-2 border-t border-zinc-800">
-                          <span className="text-zinc-400 font-black">Subtotal:</span>
-                          <span className="text-white font-black">₹{calculatedSubtotal.toFixed(2)}</span>
+                        <div className="flex items-center justify-between py-2 border-t border-[#e4e4e7]">
+                          <span className="text-[#3f3f46] font-black">Subtotal:</span>
+                          <span className="text-[#111115] font-black">₹{calculatedSubtotal.toFixed(2)}</span>
                         </div>
 
                         {selectedBooking.subscription_discount > 0 && (
@@ -656,7 +656,7 @@ export default function RetrieveBookingPage() {
                         )}
 
                         <div className="flex items-center justify-between pt-4 border-t-2 border-primary/20">
-                          <span className="text-white font-black text-base uppercase">Total Amount:</span>
+                          <span className="text-[#111115] font-black text-base uppercase">Total Amount:</span>
                           <span className="text-3xl font-black bg-gradient-to-r from-primary via-amber-300 to-primary bg-clip-text text-transparent">
                             ₹{calculatedTotal.toFixed(2)}
                           </span>
@@ -670,8 +670,8 @@ export default function RetrieveBookingPage() {
 
             {/* Food Items */}
             {selectedBooking.booking_food_items?.length > 0 && (
-              <Card className="bg-[#111] border-2 border-zinc-900 p-6 shadow-[0_0_20px_rgba(255,193,7,0.15)] rounded-2xl hover:shadow-[0_0_30px_rgba(255,193,7,0.25)] transition-all animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400">
-                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-5 flex items-center gap-2">
+              <Card className="bg-[#f4f4f5] border-2 border-[#e4e4e7] p-6 shadow-[0_0_20px_rgba(255,193,7,0.15)] rounded-2xl hover:shadow-[0_0_30px_rgba(255,193,7,0.25)] transition-all animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400">
+                <h3 className="text-xs font-black text-[#52525b] uppercase tracking-wider mb-5 flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <UtensilsCrossed className="h-4 w-4 text-primary" />
                   </div>
@@ -679,10 +679,10 @@ export default function RetrieveBookingPage() {
                 </h3>
                 <div className="space-y-2">
                   {selectedBooking.booking_food_items.map((item: any, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between py-3 px-4 bg-zinc-950/50 rounded-lg border border-zinc-900 hover:border-primary/30 transition-all">
+                    <div key={idx} className="flex items-center justify-between py-3 px-4 bg-black/5 rounded-lg border border-[#e4e4e7] hover:border-primary/30 transition-all">
                       <div className="flex items-center gap-3">
-                        <span className="text-zinc-300 font-bold">{item.item_name}</span>
-                        <span className="text-xs text-zinc-600 font-black bg-zinc-900 px-2 py-1 rounded">x{item.quantity}</span>
+                        <span className="text-[#3f3f46] font-bold">{item.item_name}</span>
+                        <span className="text-xs text-[#52525b] font-black bg-[#e4e4e7] px-2 py-1 rounded">x{item.quantity}</span>
                       </div>
                       <span className="text-primary font-black">₹{item.line_total}</span>
                     </div>
@@ -714,7 +714,7 @@ export default function RetrieveBookingPage() {
               <Button
                 onClick={() => setSelectedBooking(null)}
                 variant="ghost"
-                className="w-full border-2 border-zinc-800 hover:border-zinc-700 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-xs h-11 rounded-xl"
+                className="w-full border-2 border-[#e4e4e7] hover:border-[#d4d4d8] text-[#52525b] hover:text-[#3f3f46] font-bold uppercase text-xs h-11 rounded-xl"
               >
                 ← BACK TO SEARCH
               </Button>
@@ -727,7 +727,7 @@ export default function RetrieveBookingPage() {
           <Button
             onClick={() => router.push("/")}
             variant="ghost"
-            className="w-full text-zinc-600 hover:text-zinc-400 font-bold uppercase text-xs h-11 rounded-xl border border-zinc-900 hover:border-zinc-800"
+            className="w-full text-[#52525b] hover:text-[#3f3f46] font-bold uppercase text-xs h-11 rounded-xl border border-[#e4e4e7] hover:border-[#d4d4d8]"
           >
             ← BACK TO HOME
           </Button>

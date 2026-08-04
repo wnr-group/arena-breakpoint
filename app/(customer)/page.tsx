@@ -34,10 +34,10 @@ export default function LandingPage(){
       <HeroCarousel />
       <DevicePage />
       <FoodMenu />
-      <div className="relative py-12 md:py-16 overflow-hidden bg-black/60 border-y border-zinc-900/40">
+      <div className="relative py-12 md:py-16 overflow-hidden bg-black/5 border-y border-[#e4e4e7]">
         <div
           className="absolute inset-0 z-0 opacity-80"
-          style={{ background: 'linear-gradient(to bottom, #1E1F22 0%, rgba(30,31,34,0.88) 50%, #1E1F22 100%)' }}
+          style={{ background: 'linear-gradient(to bottom, #f4f4f5 0%, rgba(244,244,245,0.88) 50%, #f4f4f5 100%)' }}
         />
         <div className="relative z-10">
           <CTASection />

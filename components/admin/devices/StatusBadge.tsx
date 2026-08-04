@@ -11,7 +11,7 @@ export function StatusBadge({ status }: { status: string }) {
 
   if (clean === 'occupied') {
     return (
-      <span className="inline-flex px-2 py-1 text-[10px] font-bold text-[#a1a1aa] border border-[#a1a1aa]/30 rounded uppercase bg-[#a1a1aa]/5">
+      <span className="inline-flex px-2 py-1 text-[10px] font-bold text-[#52525b] border border-[#a1a1aa]/30 rounded uppercase bg-[#a1a1aa]/5">
         Occupied
       </span>
     );
@@ -26,7 +26,7 @@ export function StatusBadge({ status }: { status: string }) {
   }
 
   return (
-    <span className="inline-flex px-2 py-1 text-[10px] font-bold text-secondary-content border border-zinc-700 rounded uppercase">
+    <span className="inline-flex px-2 py-1 text-[10px] font-bold text-secondary-content border border-[#e4e4e7] rounded uppercase">
       Inactive
     </span>
   );

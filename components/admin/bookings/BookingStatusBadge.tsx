@@ -14,7 +14,7 @@ export function BookingStatusBadge({ status, size = "md" }: BookingStatusBadgePr
 
   if (statusClean === "confirmed") {
     return (
-      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-bold text-blue-300 bg-blue-500/10 border border-blue-500/30 rounded-full whitespace-nowrap uppercase tracking-wide transition-all duration-300`}>
+      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-bold text-blue-700 bg-blue-500/10 border border-blue-500/30 rounded-full whitespace-nowrap uppercase tracking-wide transition-all duration-300`}>
         <span className="w-1 h-1 rounded-full bg-blue-400" />
         CONFIRMED
       </span>
@@ -23,7 +23,7 @@ export function BookingStatusBadge({ status, size = "md" }: BookingStatusBadgePr
 
   if (statusClean === "checked_in") {
     return (
-      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-bold text-green-300 bg-green-500/10 border border-green-500/30 rounded-full whitespace-nowrap uppercase tracking-wide transition-all duration-300`}>
+      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-bold text-green-700 bg-green-500/10 border border-green-500/30 rounded-full whitespace-nowrap uppercase tracking-wide transition-all duration-300`}>
         <span className="w-1 h-1 rounded-full bg-green-400" />
         CHECKED IN
       </span>
@@ -41,7 +41,7 @@ export function BookingStatusBadge({ status, size = "md" }: BookingStatusBadgePr
 
   if (statusClean === "cancelled") {
     return (
-      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-bold text-red-300 bg-red-500/10 border border-red-500/30 rounded-full whitespace-nowrap uppercase tracking-wide transition-all duration-300`}>
+      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-bold text-red-700 bg-red-500/10 border border-red-500/30 rounded-full whitespace-nowrap uppercase tracking-wide transition-all duration-300`}>
         <span className="w-1 h-1 rounded-full bg-red-400" />
         CANCELLED
       </span>
@@ -50,7 +50,7 @@ export function BookingStatusBadge({ status, size = "md" }: BookingStatusBadgePr
 
   if (statusClean === "locked") {
     return (
-      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-bold text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-full whitespace-nowrap uppercase tracking-wide transition-all duration-300`}>
+      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-bold text-amber-700 bg-amber-500/10 border border-amber-500/30 rounded-full whitespace-nowrap uppercase tracking-wide transition-all duration-300`}>
         <span className="w-1 h-1 rounded-full bg-amber-400" />
         LOCKED
       </span>
@@ -59,7 +59,7 @@ export function BookingStatusBadge({ status, size = "md" }: BookingStatusBadgePr
 
   // Default/Unknown status
   return (
-    <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-black text-muted-content bg-black/60 border border-zinc-700 rounded-full backdrop-blur-md whitespace-nowrap uppercase tracking-wide`}>
+    <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-black text-muted-content bg-[#e4e4e7] border border-[#e4e4e7] rounded-full backdrop-blur-md whitespace-nowrap uppercase tracking-wide`}>
       <span className="w-1 h-1 rounded-full bg-zinc-500" />
       {statusClean.toUpperCase()}
     </span>

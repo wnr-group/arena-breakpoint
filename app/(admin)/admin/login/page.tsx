@@ -63,9 +63,9 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-black">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-white">
       {/* Animated background effects */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/10 via-black to-black" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/10 via-white to-white" />
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-r from-primary/20 to-primary/20 rounded-full blur-[120px] animate-pulse" />
       <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-gradient-to-l from-orange-600/15 to-primary/15 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
 
@@ -73,7 +73,7 @@ function LoginForm() {
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgxNjgsODUsMjQ3LDAuMDMpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30" />
 
       <div className="relative z-10 w-full max-w-md px-4">
-        <Card className="border-primary/20 bg-gradient-to-br from-zinc-900/95 via-black/95 to-zinc-900/95 backdrop-blur-xl shadow-[0_0_50px_rgba(184,134,11,0.15)]">
+        <Card className="border-primary/20 bg-gradient-to-br from-white/95 via-[#f4f4f5]/95 to-white/95 backdrop-blur-xl shadow-[0_0_50px_rgba(184,134,11,0.15)]">
           <CardHeader className="space-y-4 text-center pb-6">
             {/* Logo/Icon */}
             <div className="flex justify-center">
@@ -82,7 +82,7 @@ function LoginForm() {
                 <div className="relative bg-gradient-to-br from-zinc-900 to-[var(--background)] p-4 rounded-2xl border border-primary/30">
                   <Image
                     src="/bp_logo.png"
-                    alt="Breakpoint Arena"
+                    alt="Arena OS"
                     width={64}
                     height={64}
                     className="w-16 h-16 object-contain rounded-lg"
@@ -93,7 +93,7 @@ function LoginForm() {
             </div>
 
             <div>
-              <CardTitle className="text-3xl font-black text-transparent bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text mb-2">
+              <CardTitle className="text-3xl font-black text-transparent bg-gradient-to-r from-[#111115] via-amber-600 to-[#111115] bg-clip-text mb-2">
                 Admin Portal
               </CardTitle>
               <CardDescription className="text-muted-content">
@@ -106,7 +106,7 @@ function LoginForm() {
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Email Input */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-zinc-300 font-semibold">
+                <Label htmlFor="email" className="text-[#52525b] font-semibold">
                   Email Address
                 </Label>
                 <div className="relative">
@@ -114,19 +114,19 @@ function LoginForm() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="admin@breakpointarena.com"
+                    placeholder="admin@arenaos.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="pl-10 bg-[var(--background)]/50 border-zinc-800 focus:border-primary/50 focus:ring-primary/20 text-white placeholder:text-muted-content h-12"
+                    className="pl-10 bg-[var(--background)]/50 border-[#e4e4e7] focus:border-primary/50 focus:ring-primary/20 text-[#111115] placeholder:text-muted-content h-12"
                   />
                 </div>
               </div>
 
               {/* Password Input */}
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-zinc-300 font-semibold">
+                <Label htmlFor="password" className="text-[#52525b] font-semibold">
                   Password
                 </Label>
                 <div className="relative">
@@ -139,7 +139,7 @@ function LoginForm() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="pl-10 pr-10 bg-[var(--background)]/50 border-zinc-800 focus:border-primary/50 focus:ring-primary/20 text-white placeholder:text-muted-content h-12"
+                    className="pl-10 pr-10 bg-[var(--background)]/50 border-[#e4e4e7] focus:border-primary/50 focus:ring-primary/20 text-[#111115] placeholder:text-muted-content h-12"
                   />
                   <button
                     type="button"
@@ -180,10 +180,10 @@ function LoginForm() {
           </CardContent>
         </Card>
 
-        {/* Breakpoint Arena Text */}
+        {/* Arena OS Text */}
         <div className="mt-8 text-center">
           <p className="text-muted-content text-sm font-bold tracking-wider">
-            BREAKPOINT ARENA
+            ARENA OS
           </p>
           <p className="text-zinc-700 text-xs mt-1">
             Admin Dashboard v1.0
@@ -196,7 +196,7 @@ function LoginForm() {
 
 export default function AdminLoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-black"><div className="text-white">Loading...</div></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white"><div className="text-[#111115]">Loading...</div></div>}>
       <LoginForm />
     </Suspense>
   )

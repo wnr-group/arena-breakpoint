@@ -67,17 +67,17 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
 
       {/* RENDER SIDEBAR CONTAINER */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 md:sticky flex-shrink-0 bg-[var(--background)] border-r border-[#27272a] flex flex-col h-screen transition-all duration-300 ease-in-out scrollbar-none ${isOpen ? "w-[260px] translate-x-0" : "w-[80px] -translate-x-full md:translate-x-0"
+        className={`fixed top-0 bottom-0 left-0 z-50 md:sticky flex-shrink-0 bg-[var(--background)] border-r border-[#e4e4e7] flex flex-col h-screen transition-all duration-300 ease-in-out scrollbar-none ${isOpen ? "w-[260px] translate-x-0" : "w-[80px] -translate-x-full md:translate-x-0"
           }`}
       >
 
         {/* BRAND LOGO AREA + INTEGRATED DESKTOP/MOBILE CONTROLLER */}
-        <div className="p-4 flex items-center justify-between border-b border-[#27272a]/40 h-20 overflow-hidden">
+        <div className="p-4 flex items-center justify-between border-b border-[#e4e4e7] h-20 overflow-hidden">
           {isOpen ? (
             <div className="pl-2 flex items-center gap-3 hover:scale-[1.02] transition-transform duration-300 cursor-pointer animate-in fade-in duration-300">
               <Image
                 src="/bp_logo.png"
-                alt="Breakpoint Arena"
+                alt="Arena OS"
                 width={40}
                 height={40}
                 className="w-10 h-10 object-contain rounded-md"
@@ -85,9 +85,9 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
               />
               <div>
                 <h1 className="text-lg font-black tracking-tight text-primary drop-shadow-[0_0_10px_rgba(184,134,11,0.3)] whitespace-nowrap">
-                  Break Point Arena
+                  Arena OS
                 </h1>
-                <p className="text-[10px] text-[#a1a1aa] mt-0.5 font-medium">Admin Panel</p>
+                <p className="text-[10px] text-[#52525b] mt-0.5 font-medium">Admin Panel</p>
               </div>
             </div>
           ) : (
@@ -106,7 +106,7 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
           {/* DYNAMIC TOGGLE SWITCH BUTTON */}
           <button
             onClick={onToggle}
-            className={`p-2 rounded-xl text-[#a1a1aa] hover:text-white hover:bg-[var(--surface-hover)] transition-all border border-transparent hover:border-[#27272a] ${!isOpen ? "absolute right-3 top-5" : ""
+            className={`p-2 rounded-xl text-[#52525b] hover:text-[#111115] hover:bg-[var(--surface-hover)] transition-all border border-transparent hover:border-[#e4e4e7] ${!isOpen ? "absolute right-3 top-5" : ""
               }`}
             aria-label="Toggle Navigation Layout Menu"
           >
@@ -129,7 +129,7 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
                   className={`flex items-center gap-3 py-3 rounded-xl transition-all duration-300 group animate-in slide-in-from-left-4 fade-in fill-mode-both ${isOpen ? "px-4" : "justify-center px-0 h-11 w-11 mx-auto"
                     } ${isActive
                       ? "bg-gradient-primary text-[var(--button-text)] font-bold glow-primary scale-[1.02]"
-                      : "text-[#a1a1aa] hover:text-white hover:bg-[var(--surface-hover)] hover:translate-x-1"
+                      : "text-[#52525b] hover:text-[#111115] hover:bg-[var(--surface-hover)] hover:translate-x-1"
                     }`}
                   style={{ animationDelay: `${index * 30 + 50}ms` }}
                 >
@@ -145,7 +145,7 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
         </nav>
 
         {/* LOGOUT AREA PANEL */}
-        <div className="p-3 border-t border-[#27272a] overflow-hidden">
+        <div className="p-3 border-t border-[#e4e4e7] overflow-hidden">
           <button
             className={`flex items-center gap-3 py-3 rounded-xl text-[#ef4444] hover:bg-red-500/10 transition-all duration-300 group ${isOpen ? "px-4 w-full" : "justify-center px-0 h-11 w-11 mx-auto"
               }`}

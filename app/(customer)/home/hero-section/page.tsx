@@ -19,7 +19,7 @@ const slides: SlideData[] = [
   {
     id: 1,
     video: "/hero_video.mp4",
-    title: "WELCOME TO BREAK POINT ARENA",
+    title: "WELCOME TO ARENA OS",
     subtitle: "Experience the ultimate gaming destination with cutting-edge technology and unmatched performance.",
     price: "9.99"
   },

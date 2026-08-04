@@ -9,9 +9,9 @@ export default async function SubscriptionPage() {
   const plansData = response.success && response.data ? response.data : []
 
   return (
-    <main className="min-h-screen bg-[#0d0a14] text-white font-sans pt-12 pb-8 px-0 sm:px-6 lg:px-8 mt-5 relative overflow-hidden">
+    <main className="min-h-screen bg-white text-[#111115] font-sans pt-12 pb-8 px-0 sm:px-6 lg:px-8 mt-5 relative overflow-hidden">
       {/* Animated background effects */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-[#0d0a14] to-[#0d0a14] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-white to-white pointer-events-none" />
       <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-gradient-to-r from-primary/10 to-amber-500/10 rounded-full blur-[150px] animate-pulse pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-gradient-to-l from-orange-600/10 to-primary/10 rounded-full blur-[150px] animate-pulse pointer-events-none" style={{ animationDelay: '1.5s' }} />
 
@@ -27,10 +27,10 @@ export default async function SubscriptionPage() {
               Membership Plans
             </span>
           </div>
-          <h1 className="text-4xl md:text-6xl font-black text-transparent bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text mb-6 tracking-tight leading-tight">
+          <h1 className="text-4xl md:text-6xl font-black text-transparent bg-gradient-to-r from-[#111115] via-amber-600 to-[#111115] bg-clip-text mb-6 tracking-tight leading-tight">
             Choose Your Subscription Plan
           </h1>
-          <p className="text-zinc-400 text-lg leading-relaxed">
+          <p className="text-[#52525b] text-lg leading-relaxed">
             Save on every booking with our subscription plans. Unlock exclusive{' '}
             <span className="text-transparent bg-gradient-to-r from-primary via-amber-300 to-primary bg-clip-text font-bold">elite gaming status</span>
             {' '}and arena-wide benefits.

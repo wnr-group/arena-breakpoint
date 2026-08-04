@@ -108,7 +108,7 @@ export default function Navbar() {
 
   return (
     <nav className={`fixed left-0 w-full z-[100] transition-all duration-500 ${(hasActiveHold && !scrolled) ? "top-10" : "top-0"
-      } ${scrolled ? "bg-[#0a0a0a]/80 backdrop-blur-md py-4 shadow-xl" : "bg-transparent py-6"
+      } ${scrolled ? "bg-white/80 backdrop-blur-md py-4 shadow-xl" : "bg-transparent py-6"
       }`}>
 
       {/* Main Bar */}
@@ -134,14 +134,14 @@ export default function Navbar() {
           >
             <Image
               src="/bp_logo.png"
-              alt="Breakpoint Arena Logo"
+              alt="Arena OS Logo"
               width={40}
               height={40}
               className="w-10 h-10 object-contain rounded-md"
               priority
             />
           </motion.div>
-          <span className="text-2xl font-bold text-white tracking-wide uppercase">Break point Arena</span>
+          <span className="text-2xl font-bold text-[#111115] tracking-wide uppercase">Arena OS</span>
         </Link>
 
         {/* Desktop Links */}
@@ -155,7 +155,7 @@ export default function Navbar() {
                 href={link.path}
                 className="group cursor-pointer relative py-2"
               >
-                <span className={`text-sm font-black transition-colors duration-300 uppercase tracking-widest ${isActive ? "text-white" : "text-gray-300 group-hover:text-white"
+                <span className={`text-sm font-black transition-colors duration-300 uppercase tracking-widest ${isActive ? "text-[#111115]" : "text-[#52525b] group-hover:text-[#111115]"
                   }`}>
                   {link.label}
                 </span>
@@ -177,7 +177,7 @@ export default function Navbar() {
           </Link>
 
           <button
-            className="lg:hidden text-white hover:text-[var(--primary)] transition-colors p-2 z-50"
+            className="lg:hidden text-[#111115] hover:text-[var(--primary)] transition-colors p-2 z-50"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle Menu"
           >
@@ -194,7 +194,7 @@ export default function Navbar() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed top-0 left-0 w-full h-screen bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-8 gap-8 lg:hidden z-40"
+            className="fixed top-0 left-0 w-full h-screen bg-white/95 backdrop-blur-2xl flex flex-col items-center justify-center p-8 gap-8 lg:hidden z-40"
           >
             <div className="flex flex-col items-center gap-6 w-full max-w-sm mt-10">
               {navLinks.map((link) => {
@@ -211,7 +211,7 @@ export default function Navbar() {
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="w-full flex items-center justify-center cursor-pointer group py-2"
                     >
-                      <span className={`text-md md:text-sm font-bold transition-all duration-300 uppercase tracking-widest text-center flex items-center gap-3 ${isActive ? "text-white scale-105" : "text-gray-400 group-hover:text-white group-hover:scale-105"
+                      <span className={`text-md md:text-sm font-bold transition-all duration-300 uppercase tracking-widest text-center flex items-center gap-3 ${isActive ? "text-[#111115] scale-105" : "text-[#52525b] group-hover:text-[#111115] group-hover:scale-105"
                         }`}>
                         {link.label}
                         {/* Arrow: stays visible if active */}

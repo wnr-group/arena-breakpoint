@@ -138,17 +138,17 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-[var(--surface)] border-[#27272a] p-6">
+        <Card className="bg-[var(--surface)] border-[#e4e4e7] p-6">
           <p className="text-label-enhanced text-muted-content mb-2">Total Expenses</p>
           <p className="text-3xl font-black text-red-400">₹{totalExpenses.toLocaleString('en-IN')}</p>
           <p className="text-sm-enhanced text-secondary-content mt-1">{expenses.length} expense(s)</p>
         </Card>
-        <Card className="bg-[var(--surface)] border-[#27272a] p-6">
+        <Card className="bg-[var(--surface)] border-[#e4e4e7] p-6">
           <p className="text-label-enhanced text-muted-content mb-2">OpEx (Operational)</p>
           <p className="text-3xl font-black text-orange-400">₹{opexTotal.toLocaleString('en-IN')}</p>
           <p className="text-sm-enhanced text-secondary-content mt-1">Day-to-day expenses</p>
         </Card>
-        <Card className="bg-[var(--surface)] border-[#27272a] p-6">
+        <Card className="bg-[var(--surface)] border-[#e4e4e7] p-6">
           <p className="text-label-enhanced text-muted-content mb-2">CapEx (Capital)</p>
           <p className="text-3xl font-black text-blue-400">₹{capexTotal.toLocaleString('en-IN')}</p>
           <p className="text-sm-enhanced text-secondary-content mt-1">Long-term investments</p>
@@ -156,7 +156,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
       </div>
 
       {/* Action Bar */}
-      <Card className="bg-[var(--surface)] border-[#27272a] p-4">
+      <Card className="bg-[var(--surface)] border-[#e4e4e7] p-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex gap-2">
             <Button
@@ -202,18 +202,18 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="w-full mt-2 bg-[var(--background)] border border-zinc-800 h-10 rounded-md px-3 text-sm font-medium text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="w-full mt-2 bg-[var(--background)] border border-[#e4e4e7] h-10 rounded-md px-3 text-sm font-medium text-left flex items-center justify-between transition-all hover:border-[#e4e4e7] text-[#111115] focus:outline-none focus:ring-1 focus:ring-primary"
                   >
                     <span className="truncate mr-2">{formDate ? format(new Date(formDate), "dd-MM-yyyy") : <span className="text-muted-content">Select date</span>}</span>
                     <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-zinc-800 rounded-xl shadow-2xl" align="start">
+                <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-[#e4e4e7] rounded-xl shadow-2xl" align="start">
                   <Calendar
                     mode="single"
                     selected={formDate ? new Date(formDate) : undefined}
                     onSelect={(date) => date && setFormDate(format(date, 'yyyy-MM-dd'))}
-                    className="text-white"
+                    className="text-[#111115]"
                   />
                 </PopoverContent>
               </Popover>
@@ -223,7 +223,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
               <select
                 value={formCategory}
                 onChange={(e) => setFormCategory(e.target.value as 'operational' | 'capital')}
-                className="w-full mt-2 h-10 px-3 bg-[var(--background)] border border-zinc-800 text-white rounded-md"
+                className="w-full mt-2 h-10 px-3 bg-[var(--background)] border border-[#e4e4e7] text-[#111115] rounded-md"
               >
                 <option value="operational">OpEx (Operational)</option>
                 <option value="capital">CapEx (Capital)</option>
@@ -235,7 +235,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                 placeholder="e.g., Electricity Bill"
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
-                className="bg-[var(--background)] border-zinc-800 text-white mt-2"
+                className="bg-[var(--background)] border-[#e4e4e7] text-[#111115] mt-2"
               />
             </div>
             <div>
@@ -245,7 +245,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                 placeholder="0.00"
                 value={formAmount}
                 onChange={(e) => setFormAmount(e.target.value)}
-                className="bg-[var(--background)] border-zinc-800 text-white mt-2"
+                className="bg-[var(--background)] border-[#e4e4e7] text-[#111115] mt-2"
               />
             </div>
           </div>
@@ -263,10 +263,10 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
       )}
 
       {/* Expenses Table */}
-      <Card className="bg-[var(--surface)] border-[#27272a] overflow-hidden">
+      <Card className="bg-[var(--surface)] border-[#e4e4e7] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-[var(--background)] border-b border-[#27272a]">
+            <thead className="bg-[var(--background)] border-b border-[#e4e4e7]">
               <tr>
                 <th className="py-4 px-4 text-left text-label-enhanced">Date</th>
                 <th className="py-4 px-4 text-left text-label-enhanced">Category</th>
@@ -275,7 +275,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                 <th className="py-4 px-4 text-right text-label-enhanced">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#27272a]">
+            <tbody className="divide-y divide-[#e4e4e7]">
               {loading ? (
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-sm-enhanced">Loading...</td>
@@ -294,18 +294,18 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                             <PopoverTrigger asChild>
                               <button
                                 type="button"
-                                className="w-full bg-[var(--background)] border border-zinc-800 h-8 rounded-md px-2 text-sm font-medium text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                                className="w-full bg-[var(--background)] border border-[#e4e4e7] h-8 rounded-md px-2 text-sm font-medium text-left flex items-center justify-between transition-all hover:border-[#e4e4e7] text-[#111115] focus:outline-none focus:ring-1 focus:ring-primary"
                               >
                                 <span className="truncate mr-1 text-xs">{formDate ? format(new Date(formDate), "dd-MM-yyyy") : <span className="text-muted-content">Select</span>}</span>
                                 <CalendarDays className="h-3 w-3 text-primary flex-shrink-0" />
                               </button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-zinc-800 rounded-xl shadow-2xl" align="start">
+                            <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-[#e4e4e7] rounded-xl shadow-2xl" align="start">
                               <Calendar
                                 mode="single"
                                 selected={formDate ? new Date(formDate) : undefined}
                                 onSelect={(date) => date && setFormDate(format(date, 'yyyy-MM-dd'))}
-                                className="text-white"
+                                className="text-[#111115]"
                               />
                             </PopoverContent>
                           </Popover>
@@ -314,7 +314,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                           <select
                             value={formCategory}
                             onChange={(e) => setFormCategory(e.target.value as 'operational' | 'capital')}
-                            className="h-8 px-2 bg-[var(--background)] border border-zinc-800 text-white rounded-md text-sm"
+                            className="h-8 px-2 bg-[var(--background)] border border-[#e4e4e7] text-[#111115] rounded-md text-sm"
                           >
                             <option value="operational">OpEx</option>
                             <option value="capital">CapEx</option>
@@ -324,7 +324,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                           <Input
                             value={formDescription}
                             onChange={(e) => setFormDescription(e.target.value)}
-                            className="bg-[var(--background)] border-zinc-800 text-white h-8 text-sm"
+                            className="bg-[var(--background)] border-[#e4e4e7] text-[#111115] h-8 text-sm"
                           />
                         </td>
                         <td className="py-3 px-4">
@@ -332,7 +332,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                             type="number"
                             value={formAmount}
                             onChange={(e) => setFormAmount(e.target.value)}
-                            className="bg-[var(--background)] border-zinc-800 text-white h-8 text-sm text-right"
+                            className="bg-[var(--background)] border-[#e4e4e7] text-[#111115] h-8 text-sm text-right"
                           />
                         </td>
                         <td className="py-3 px-4">
@@ -364,7 +364,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                             {expense.category === 'operational' ? 'OpEx' : 'CapEx'}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-base text-white font-semibold">{expense.description}</td>
+                        <td className="py-3 px-4 text-base text-[#111115] font-semibold">{expense.description}</td>
                         <td className="py-3 px-4 text-base text-right font-black text-red-400">
                           ₹{Number(expense.amount).toLocaleString('en-IN')}
                         </td>
@@ -388,15 +388,15 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                                   <Trash2 className="h-3 w-3" />
                                 </Button>
                               </AlertDialogTrigger>
-                              <AlertDialogContent className="bg-[var(--surface)] border border-[#27272a] text-white">
+                              <AlertDialogContent className="bg-[var(--surface)] border border-[#e4e4e7] text-[#111115]">
                                 <AlertDialogHeader>
                                   <AlertDialogTitle className="text-xl font-bold">Delete Expense Record?</AlertDialogTitle>
-                                  <AlertDialogDescription className="text-[#a1a1aa] text-sm">
+                                  <AlertDialogDescription className="text-[#52525b] text-sm">
                                     Are you sure you want to delete the expense **"{expense.description}"**? This action cannot be undone.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter className="mt-4">
-                                  <AlertDialogCancel className="bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800 hover:text-white">
+                                  <AlertDialogCancel className="bg-[#e4e4e7] text-[#111115] border-[#e4e4e7] hover:bg-[#d4d4d8] hover:text-[#111115]">
                                     Cancel
                                   </AlertDialogCancel>
                                   <AlertDialogAction

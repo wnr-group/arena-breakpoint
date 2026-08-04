@@ -52,14 +52,14 @@ export function AvailableDevicesModal({ open, onClose, devices }: AvailableDevic
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="bg-[var(--background)] border-primary/30 max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-black uppercase text-white flex items-center justify-between">
+          <DialogTitle className="text-xl font-black uppercase text-[#111115] flex items-center justify-between">
             <div className="flex items-center gap-2">
               {selectedType && (
                 <Button
                   onClick={handleBack}
                   size="sm"
                   variant="ghost"
-                  className="text-white hover:text-primary -ml-2"
+                  className="text-[#111115] hover:text-primary -ml-2"
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
@@ -86,19 +86,19 @@ export function AvailableDevicesModal({ open, onClose, devices }: AvailableDevic
             <div className="grid grid-cols-3 gap-3 mb-6">
               <div className="p-4 bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/20 rounded-lg">
                 <p className="text-xs text-green-400 mb-1">Available</p>
-                <p className="text-2xl font-black text-white">{availableDevices.length}</p>
+                <p className="text-2xl font-black text-[#111115]">{availableDevices.length}</p>
                 <p className="text-label mt-1">Ready to use</p>
               </div>
 
               <div className="p-4 bg-gradient-to-br from-red-500/10 to-red-600/5 border border-red-500/20 rounded-lg">
                 <p className="text-xs text-red-400 mb-1">In Use</p>
-                <p className="text-2xl font-black text-white">{occupiedDevices.length}</p>
+                <p className="text-2xl font-black text-[#111115]">{occupiedDevices.length}</p>
                 <p className="text-label mt-1">Currently booked</p>
               </div>
 
               <div className="p-4 bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-lg">
                 <p className="text-xs text-blue-400 mb-1">Total</p>
-                <p className="text-2xl font-black text-white">{devices.length}</p>
+                <p className="text-2xl font-black text-[#111115]">{devices.length}</p>
                 <p className="text-label mt-1">All devices</p>
               </div>
             </div>
@@ -116,11 +116,11 @@ export function AvailableDevicesModal({ open, onClose, devices }: AvailableDevic
                     <div
                       key={typeGroup.name}
                       onClick={() => setSelectedType(typeGroup.name)}
-                      className="p-4 bg-[var(--surface)] border border-[#27272a] rounded-lg cursor-pointer hover:border-primary/50 transition-all hover:scale-[1.02] group"
+                      className="p-4 bg-[var(--surface)] border border-[#e4e4e7] rounded-lg cursor-pointer hover:border-primary/50 transition-all hover:scale-[1.02] group"
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
-                          <p className="text-sm font-bold text-white mb-1 group-hover:text-primary transition-colors">
+                          <p className="text-sm font-bold text-[#111115] mb-1 group-hover:text-primary transition-colors">
                             {typeGroup.name}
                           </p>
                           <p className="text-xs text-primary font-bold">
@@ -133,7 +133,7 @@ export function AvailableDevicesModal({ open, onClose, devices }: AvailableDevic
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-xs text-muted-content">Available</p>
-                          <p className="text-lg font-black text-white">{availableCount}/{totalCount}</p>
+                          <p className="text-lg font-black text-[#111115]">{availableCount}/{totalCount}</p>
                         </div>
                         <span className={`text-xs font-black px-2 py-1 rounded ${
                           percentage >= 50 ? 'bg-green-500/20 text-green-400' :
@@ -157,21 +157,21 @@ export function AvailableDevicesModal({ open, onClose, devices }: AvailableDevic
             <div className="grid grid-cols-3 gap-3 mb-4">
               <div className="p-3 bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/20 rounded-lg">
                 <p className="text-xs text-green-400 mb-1">Available</p>
-                <p className="text-xl font-black text-white">
+                <p className="text-xl font-black text-[#111115]">
                   {selectedDevices.filter((d: any) => d.status === "available").length}
                 </p>
               </div>
 
               <div className="p-3 bg-gradient-to-br from-red-500/10 to-red-600/5 border border-red-500/20 rounded-lg">
                 <p className="text-xs text-red-400 mb-1">In Use</p>
-                <p className="text-xl font-black text-white">
+                <p className="text-xl font-black text-[#111115]">
                   {selectedDevices.filter((d: any) => d.status === "occupied").length}
                 </p>
               </div>
 
               <div className="p-3 bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-lg">
                 <p className="text-xs text-blue-400 mb-1">Total</p>
-                <p className="text-xl font-black text-white">{selectedDevices.length}</p>
+                <p className="text-xl font-black text-[#111115]">{selectedDevices.length}</p>
               </div>
             </div>
 
@@ -218,7 +218,7 @@ export function AvailableDevicesModal({ open, onClose, devices }: AvailableDevic
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-1.5">
                           <MapPin className={`h-3 w-3 ${config.iconColor}`} />
-                          <p className="text-xs font-bold text-white">#{device.station_number}</p>
+                          <p className="text-xs font-bold text-[#111115]">#{device.station_number}</p>
                         </div>
                         <Icon className={`h-3 w-3 ${config.iconColor}`} />
                       </div>

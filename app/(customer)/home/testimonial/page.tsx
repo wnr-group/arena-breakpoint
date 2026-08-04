@@ -142,7 +142,7 @@ export default function Testimonials() {
   return (
     <section
       ref={sectionRef}
-      className="w-full bg-[#0f0f0f] py-24 overflow-hidden relative"
+      className="w-full bg-white py-24 overflow-hidden relative"
     >
       {/* Custom cursor */}
       {isHovering && (
@@ -171,7 +171,7 @@ export default function Testimonials() {
         >
           <div className="flex flex-col gap-4">
             <motion.div variants={fadeUp}>
-              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs font-semibold text-[var(--primary)] tracking-[0.18em] uppercase">
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#e4e4e7] bg-black/5 text-xs font-semibold text-[var(--primary)] tracking-[0.18em] uppercase">
                 <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] animate-pulse" />
                 Customer Reviews
               </span>
@@ -179,10 +179,10 @@ export default function Testimonials() {
 
             <motion.h2
               variants={fadeUp}
-              className="text-5xl md:text-6xl font-black text-white leading-none"
+              className="text-5xl md:text-6xl font-black text-[#111115] leading-none"
             >
               4.85{" "}
-              <span className="text-2xl md:text-3xl font-bold text-zinc-500">out of 5</span>
+              <span className="text-2xl md:text-3xl font-bold text-[#52525b]">out of 5</span>
             </motion.h2>
           </div>
 
@@ -190,7 +190,7 @@ export default function Testimonials() {
             {[...Array(5)].map((_, i) => (
               <Star key={i} className="w-5 h-5 fill-[var(--primary)] text-[var(--primary)]" />
             ))}
-            <span className="ml-2 text-zinc-400 text-sm font-medium">Based on 2,400+ reviews</span>
+            <span className="ml-2 text-[#52525b] text-sm font-medium">Based on 2,400+ reviews</span>
           </motion.div>
         </motion.div>
 
@@ -216,8 +216,8 @@ export default function Testimonials() {
                 key={`${t.id}-${idx}`}
                 className="w-[300px] md:w-[340px] flex-shrink-0 rounded-2xl p-6 flex flex-col justify-between relative overflow-hidden group"
                 style={{
-                  background: "linear-gradient(160deg, #1c1c1c 0%, #161616 100%)",
-                  border: "1px solid #272727",
+                  background: "linear-gradient(160deg, #f4f4f5 0%, #ebebeb 100%)",
+                  border: "1px solid #e4e4e7",
                 }}
               >
                 {/* Subtle top accent line */}
@@ -240,13 +240,13 @@ export default function Testimonials() {
                   </div>
 
                   {/* Text */}
-                  <p className="text-zinc-300 text-[13.5px] leading-relaxed font-light mb-6">
+                  <p className="text-[#52525b] text-[13.5px] leading-relaxed font-light mb-6">
                     "{t.text}"
                   </p>
                 </div>
 
                 {/* Avatar + name */}
-                <div className="relative z-10 flex items-center gap-3 pt-4 border-t border-white/5">
+                <div className="relative z-10 flex items-center gap-3 pt-4 border-t border-[#e4e4e7]">
                   <div className="relative w-9 h-9">
                     <Image
                       src={t.avatar}
@@ -257,11 +257,11 @@ export default function Testimonials() {
                       draggable="false"
                       loading="lazy"
                     />
-                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#1c1c1c]" />
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#f4f4f5]" />
                   </div>
                   <div>
-                    <p className="text-white text-sm font-bold leading-none mb-0.5">{t.name}</p>
-                    <p className="text-zinc-500 text-[11px] font-medium">{t.role}</p>
+                    <p className="text-[#111115] text-sm font-bold leading-none mb-0.5">{t.name}</p>
+                    <p className="text-[#52525b] text-[11px] font-medium">{t.role}</p>
                   </div>
                 </div>
               </div>
@@ -283,7 +283,7 @@ export default function Testimonials() {
               className="relative h-1.5 rounded-full transition-all duration-300 overflow-hidden"
               style={{
                 width: activeIndex === idx ? 28 : 8,
-                background: activeIndex === idx ? "var(--primary)" : "rgba(255,255,255,0.15)",
+                background: activeIndex === idx ? "var(--primary)" : "rgba(0,0,0,0.15)",
               }}
             />
           ))}

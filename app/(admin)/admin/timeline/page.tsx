@@ -70,7 +70,7 @@ export default function TimelinePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black uppercase tracking-tight text-white">
+          <h1 className="text-2xl font-black uppercase tracking-tight text-[#111115]">
             Bookings Timeline
           </h1>
           <p className="text-sm text-secondary-content mt-1">Visual timeline of all bookings</p>
@@ -78,13 +78,13 @@ export default function TimelinePage() {
       </div>
 
       {/* Date Navigation */}
-      <Card className="bg-[var(--surface)] border-[#27272a] p-4">
+      <Card className="bg-[var(--surface)] border-[#e4e4e7] p-4">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <Button
               onClick={goToPreviousDay}
               size="sm"
-              className="bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-white border border-[#27272a] h-9 px-3"
+              className="bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[#111115] border border-[#e4e4e7] h-9 px-3"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -93,20 +93,20 @@ export default function TimelinePage() {
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="flex items-center gap-2 px-4 py-2 bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[#27272a] rounded-lg transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="flex items-center gap-2 px-4 py-2 bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[#e4e4e7] rounded-lg transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
                 >
                   <Calendar className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-bold text-white">
+                  <span className="text-sm font-bold text-[#111115]">
                     {formatDate(timelineDate)}
                   </span>
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-zinc-800 rounded-xl shadow-2xl" align="start">
+              <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-[#e4e4e7] rounded-xl shadow-2xl" align="start">
                 <CalendarComponent
                   mode="single"
                   selected={timelineDate}
                   onSelect={(date) => date && setTimelineDate(date)}
-                  className="text-white"
+                  className="text-[#111115]"
                 />
               </PopoverContent>
             </Popover>
@@ -114,7 +114,7 @@ export default function TimelinePage() {
             <Button
               onClick={goToNextDay}
               size="sm"
-              className="bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-white border border-[#27272a] h-9 px-3"
+              className="bg-[var(--surface)] hover:bg-[var(--surface-hover)] text-[#111115] border border-[#e4e4e7] h-9 px-3"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>

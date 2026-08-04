@@ -385,7 +385,7 @@ export default function AdminBookingsPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-black uppercase text-white tracking-tight">BOOKING MANAGEMENT</h1>
+          <h1 className="text-2xl font-black uppercase text-[#111115] tracking-tight">BOOKING MANAGEMENT</h1>
           <p className="text-description font-medium mt-1">View and manage all customer bookings</p>
         </div>
         <div className="flex gap-2">
@@ -393,7 +393,7 @@ export default function AdminBookingsPage() {
             onClick={handleRefresh}
             disabled={loading}
             variant="outline"
-            className="border-[#27272a] text-white hover:bg-[var(--surface)] font-black uppercase text-xs h-10 px-4"
+            className="border-[#e4e4e7] text-[#111115] hover:bg-[var(--surface)] font-black uppercase text-xs h-10 px-4"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -410,31 +410,31 @@ export default function AdminBookingsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="bg-[var(--surface)] border-[#27272a] p-4">
+        <Card className="bg-[var(--surface)] border-[#e4e4e7] p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-500/10 rounded-lg">
               <Receipt className="h-5 w-5 text-blue-500" />
             </div>
             <div>
               <p className="text-label text-muted-content">Total Bookings</p>
-              <p className="text-xl font-black text-white"><CountUp end={stats?.total || 0} duration={1000} /></p>
+              <p className="text-xl font-black text-[#111115]"><CountUp end={stats?.total || 0} duration={1000} /></p>
             </div>
           </div>
         </Card>
 
-        <Card className="bg-[var(--surface)] border-[#27272a] p-4">
+        <Card className="bg-[var(--surface)] border-[#e4e4e7] p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-500/10 rounded-lg">
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             </div>
             <div>
               <p className="text-label text-muted-content">Checked In</p>
-              <p className="text-xl font-black text-white"><CountUp end={stats?.checked_in || 0} duration={900} /></p>
+              <p className="text-xl font-black text-[#111115]"><CountUp end={stats?.checked_in || 0} duration={900} /></p>
             </div>
           </div>
         </Card>
 
-        <Card className="bg-[var(--surface)] border-[#27272a] p-4">
+        <Card className="bg-[var(--surface)] border-[#e4e4e7] p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg">
               <DollarSign className="h-5 w-5 text-primary" />
@@ -446,26 +446,26 @@ export default function AdminBookingsPage() {
           </div>
         </Card>
 
-        <Card className="bg-[var(--surface)] border-[#27272a] p-4">
+        <Card className="bg-[var(--surface)] border-[#e4e4e7] p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-600/10 rounded-lg">
               <CheckCircle2 className="h-5 w-5 text-green-600" />
             </div>
             <div>
               <p className="text-label text-muted-content">Completed</p>
-              <p className="text-xl font-black text-white"><CountUp end={stats?.completed || 0} duration={900} /></p>
+              <p className="text-xl font-black text-[#111115]"><CountUp end={stats?.completed || 0} duration={900} /></p>
             </div>
           </div>
         </Card>
 
-        <Card className="bg-[var(--surface)] border-[#27272a] p-4">
+        <Card className="bg-[var(--surface)] border-[#e4e4e7] p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-red-500/10 rounded-lg">
               <XCircle className="h-5 w-5 text-red-500" />
             </div>
             <div>
               <p className="text-label text-muted-content">Cancelled</p>
-              <p className="text-xl font-black text-white"><CountUp end={stats?.cancelled || 0} duration={800} /></p>
+              <p className="text-xl font-black text-[#111115]"><CountUp end={stats?.cancelled || 0} duration={800} /></p>
             </div>
           </div>
         </Card>
@@ -480,7 +480,7 @@ export default function AdminBookingsPage() {
               onClick={() => handleFilterChange(tab.id)}
               className={`px-4 py-2 text-min font-black uppercase border rounded-lg transition-all whitespace-nowrap ${activeStatusFilter === tab.id
                   ? "bg-primary text-black border-transparent"
-                  : "bg-[var(--surface)] border-[#27272a] text-secondary-content hover:border-zinc-700"
+                  : "bg-[var(--surface)] border-[#e4e4e7] text-secondary-content hover:border-[#e4e4e7]"
                 }`}
             >
               {tab.label}
@@ -493,12 +493,12 @@ export default function AdminBookingsPage() {
 
         <div className="flex gap-2 w-full lg:w-auto">
           {/* View Mode Toggle */}
-          <div className="flex bg-[var(--surface)] border border-[#27272a] rounded-lg overflow-hidden">
+          <div className="flex bg-[var(--surface)] border border-[#e4e4e7] rounded-lg overflow-hidden">
             <button
               onClick={() => setViewMode("list")}
               className={`p-2 transition-colors ${viewMode === "list"
                   ? "bg-primary text-black"
-                  : "text-secondary-content hover:text-white"
+                  : "text-secondary-content hover:text-[#111115]"
                 }`}
               title="List View"
             >
@@ -508,7 +508,7 @@ export default function AdminBookingsPage() {
               onClick={() => setViewMode("grid")}
               className={`p-2 transition-colors ${viewMode === "grid"
                   ? "bg-primary text-black"
-                  : "text-secondary-content hover:text-white"
+                  : "text-secondary-content hover:text-[#111115]"
                 }`}
               title="Grid View"
             >
@@ -522,7 +522,7 @@ export default function AdminBookingsPage() {
               placeholder="Search by name, phone, or booking number... (auto-search)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-[var(--surface)] border-[#27272a] text-white h-10 text-sm"
+              className="pl-10 bg-[var(--surface)] border-[#e4e4e7] text-[#111115] h-10 text-sm"
             />
             {loading && (
               <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary animate-spin" />
@@ -537,9 +537,9 @@ export default function AdminBookingsPage() {
           <BreakpointLoader size="lg" text="Loading Bookings..." />
         </div>
       ) : bookings.length === 0 ? (
-        <Card className="bg-[var(--surface)] border-[#27272a] p-12">
+        <Card className="bg-[var(--surface)] border-[#e4e4e7] p-12">
           <div className="text-center space-y-2">
-            <Receipt className="h-12 w-12 text-zinc-700 mx-auto" />
+            <Receipt className="h-12 w-12 text-[#52525b] mx-auto" />
             <h3 className="text-lg font-black text-muted-content uppercase">No Bookings Found</h3>
             <p className="text-sm text-muted-content">No bookings match your current filters.</p>
           </div>
@@ -558,10 +558,10 @@ export default function AdminBookingsPage() {
           isPending={isPending}
         />
       ) : (
-        <Card className="bg-[var(--surface)] border-[#27272a] overflow-hidden">
+        <Card className="bg-[var(--surface)] border-[#e4e4e7] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-[var(--background)] border-b border-[#27272a]">
+              <thead className="bg-[var(--background)] border-b border-[#e4e4e7]">
                 <tr>
                   <th className="py-4 px-4 text-left text-label text-muted-content">
                     Booking #
@@ -589,7 +589,7 @@ export default function AdminBookingsPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#27272a]">
+              <tbody className="divide-y divide-[#e4e4e7]">
                 {customerGroups.map((group) => {
                   const isExpanded = expandedCustomers.has(group.phone);
                   const isSingleBooking = group.count === 1;
@@ -794,7 +794,7 @@ export default function AdminBookingsPage() {
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => setSelectedBooking(firstBooking)}
-                                className="h-8 w-8 p-0 text-muted-content hover:text-white"
+                                className="h-8 w-8 p-0 text-muted-content hover:text-[#111115]"
                                 title="View Details"
                               >
                                 <Eye className="h-4 w-4" />
@@ -908,7 +908,7 @@ export default function AdminBookingsPage() {
                                   size="sm"
                                   variant="ghost"
                                   onClick={() => setSelectedBooking(booking)}
-                                  className="h-8 w-8 p-0 text-muted-content hover:text-white"
+                                  className="h-8 w-8 p-0 text-muted-content hover:text-[#111115]"
                                   title="View Details"
                                 >
                                   <Eye className="h-4 w-4" />
@@ -955,7 +955,7 @@ export default function AdminBookingsPage() {
           setPendingPaymentModal({ open: false, bookingId: null, balanceDue: 0, bookingNumber: "", isCheckout: false });
         }
       }}>
-        <DialogContent className="bg-[var(--background)] border-2 border-amber-500/50 text-white max-w-md">
+        <DialogContent className="bg-[var(--background)] border-2 border-amber-500/50 text-[#111115] max-w-md">
           <DialogHeader>
             <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-2 text-amber-400">
               <AlertCircle className="h-5 w-5" />
@@ -968,7 +968,7 @@ export default function AdminBookingsPage() {
 
           <div className="space-y-4 py-4">
             {/* Booking Info */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+            <div className="bg-[#f4f4f5] border border-[#e4e4e7] rounded-lg p-4">
               <p className="text-xs text-secondary-content uppercase mb-1">Booking Number</p>
               <p className="text-base font-black text-primary font-mono">{pendingPaymentModal.bookingNumber}</p>
             </div>
@@ -991,7 +991,7 @@ export default function AdminBookingsPage() {
             </div>
 
             {/* Split Payment Inputs */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 space-y-3">
+            <div className="bg-[#f4f4f5] border border-[#e4e4e7] rounded-lg p-4 space-y-3">
               <Label className="text-xs font-black uppercase text-secondary-content block">
                 Split Payment Across Methods
               </Label>
@@ -1000,14 +1000,14 @@ export default function AdminBookingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-2xl">💵</span>
                 <div className="flex-1">
-                  <Label className="text-[10px] text-zinc-500 uppercase">Cash</Label>
+                  <Label className="text-[10px] text-[#52525b] uppercase">Cash</Label>
                   <Input
                     type="number"
                     min="0"
                     step="0.01"
                     value={paymentSplit.cashAmount || ''}
                     onChange={(e) => setPaymentSplit({ ...paymentSplit, cashAmount: parseFloat(e.target.value) || 0 })}
-                    className="bg-zinc-800 border-zinc-700 text-white h-9 text-sm"
+                    className="bg-[#e4e4e7] border-[#e4e4e7] text-[#111115] h-9 text-sm"
                     placeholder="0.00"
                   />
                 </div>
@@ -1017,14 +1017,14 @@ export default function AdminBookingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-2xl">💳</span>
                 <div className="flex-1">
-                  <Label className="text-[10px] text-zinc-500 uppercase">Card</Label>
+                  <Label className="text-[10px] text-[#52525b] uppercase">Card</Label>
                   <Input
                     type="number"
                     min="0"
                     step="0.01"
                     value={paymentSplit.cardAmount || ''}
                     onChange={(e) => setPaymentSplit({ ...paymentSplit, cardAmount: parseFloat(e.target.value) || 0 })}
-                    className="bg-zinc-800 border-zinc-700 text-white h-9 text-sm"
+                    className="bg-[#e4e4e7] border-[#e4e4e7] text-[#111115] h-9 text-sm"
                     placeholder="0.00"
                   />
                 </div>
@@ -1034,23 +1034,23 @@ export default function AdminBookingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-2xl">📱</span>
                 <div className="flex-1">
-                  <Label className="text-[10px] text-zinc-500 uppercase">UPI</Label>
+                  <Label className="text-[10px] text-[#52525b] uppercase">UPI</Label>
                   <Input
                     type="number"
                     min="0"
                     step="0.01"
                     value={paymentSplit.upiAmount || ''}
                     onChange={(e) => setPaymentSplit({ ...paymentSplit, upiAmount: parseFloat(e.target.value) || 0 })}
-                    className="bg-zinc-800 border-zinc-700 text-white h-9 text-sm"
+                    className="bg-[#e4e4e7] border-[#e4e4e7] text-[#111115] h-9 text-sm"
                     placeholder="0.00"
                   />
                 </div>
               </div>
 
               {/* Total Validator */}
-              <div className="pt-2 border-t border-zinc-800">
+              <div className="pt-2 border-t border-[#e4e4e7]">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-zinc-500">Total Split:</span>
+                  <span className="text-xs text-[#52525b]">Total Split:</span>
                   <span className={`text-sm font-black ${Math.abs((paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount) - pendingPaymentModal.balanceDue) < 0.01 ? 'text-green-400' : 'text-red-400'}`}>
                     ₹{(paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount).toFixed(2)}
                   </span>
@@ -1069,7 +1069,7 @@ export default function AdminBookingsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setPaymentSplit({ cashAmount: pendingPaymentModal.balanceDue, cardAmount: 0, upiAmount: 0 })}
-                  className="flex-1 text-[10px] h-7 border-zinc-700 hover:bg-zinc-800"
+                  className="flex-1 text-[10px] h-7 border-[#e4e4e7] hover:bg-[#e4e4e7]"
                 >
                   All Cash
                 </Button>
@@ -1078,7 +1078,7 @@ export default function AdminBookingsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setPaymentSplit({ cashAmount: 0, cardAmount: pendingPaymentModal.balanceDue, upiAmount: 0 })}
-                  className="flex-1 text-[10px] h-7 border-zinc-700 hover:bg-zinc-800"
+                  className="flex-1 text-[10px] h-7 border-[#e4e4e7] hover:bg-[#e4e4e7]"
                 >
                   All Card
                 </Button>
@@ -1087,7 +1087,7 @@ export default function AdminBookingsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setPaymentSplit({ cashAmount: 0, cardAmount: 0, upiAmount: pendingPaymentModal.balanceDue })}
-                  className="flex-1 text-[10px] h-7 border-zinc-700 hover:bg-zinc-800"
+                  className="flex-1 text-[10px] h-7 border-[#e4e4e7] hover:bg-[#e4e4e7]"
                 >
                   All UPI
                 </Button>
@@ -1099,7 +1099,7 @@ export default function AdminBookingsPage() {
             <Button
               onClick={() => setPendingPaymentModal({ open: false, bookingId: null, balanceDue: 0, bookingNumber: "", isCheckout: false })}
               variant="ghost"
-              className="flex-1 border border-zinc-800 text-muted-content hover:text-white font-bold uppercase text-xs h-10 rounded-lg"
+              className="flex-1 border border-[#e4e4e7] text-muted-content hover:text-[#111115] font-bold uppercase text-xs h-10 rounded-lg"
             >
               Cancel
             </Button>

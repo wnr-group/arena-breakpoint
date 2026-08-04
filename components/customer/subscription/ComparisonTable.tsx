@@ -29,13 +29,13 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ plans = [] }) 
       className="w-full mt-12 overflow-x-auto px-4 pb-12"
       style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
     >
-      <h2 className="text-3xl md:text-4xl font-bold text-center text-white mb-10 tracking-tight">
+      <h2 className="text-3xl md:text-4xl font-bold text-center text-[#111115] mb-10 tracking-tight">
         Quick Comparison
       </h2>
 
       <div className="max-w-250 mx-auto min-w-200 rounded-xl overflow-hidden shadow-2xl">
         {/* Table Header */}
-        <div className="grid grid-cols-[1.5fr_0.8fr_1fr_1fr_2.7fr] bg-[#2B271E] p-5">
+        <div className="grid grid-cols-[1.5fr_0.8fr_1fr_1fr_2.7fr] bg-[#e4e4e7] p-5">
           {['Plan', 'Price', 'Duration', 'Savings', 'Benefits'].map((heading, i) => (
             <div 
               key={i} 
@@ -64,16 +64,16 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ plans = [] }) 
             return (
               <div
                 key={plan.id}
-                className={`grid grid-cols-[1.5fr_0.8fr_1fr_1fr_2.7fr] p-5 items-center transition-colors ${i % 2 === 0 ? 'bg-[#191919]' : 'bg-[#222222]'
+                className={`grid grid-cols-[1.5fr_0.8fr_1fr_1fr_2.7fr] p-5 items-center transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-[#f4f4f5]'
                   }`}
               >
-                <div className="font-bold text-white pl-6 text-[14px] md:text-[15px] text-left">
+                <div className="font-bold text-[#111115] pl-6 text-[14px] md:text-[15px] text-left">
                   {plan.name}
                 </div>
-                <div className="text-neutral-300 pl-6 text-[14px] md:text-[15px] font-medium text-left">
+                <div className="text-[#52525b] pl-6 text-[14px] md:text-[15px] font-medium text-left">
                   ₹{plan.price}
                 </div>
-                <div className="text-neutral-300 pl-6 text-[14px] md:text-[15px] font-medium text-left">
+                <div className="text-[#52525b] pl-6 text-[14px] md:text-[15px] font-medium text-left">
                   {duration}
                 </div>
                 <div
@@ -82,7 +82,7 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({ plans = [] }) 
                 >
                   {savings}
                 </div>
-                <div className="text-neutral-300 pl-6 text-[14px] md:text-[15px] font-medium text-left">
+                <div className="text-[#52525b] pl-6 text-[14px] md:text-[15px] font-medium text-left">
                   {topBenefit}
                 </div>
               </div>

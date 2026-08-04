@@ -223,7 +223,7 @@ export default function AdminReportsPage() {
         <Card className="bg-[var(--surface)] border-red-500/20 p-12 max-w-md text-center">
           <div className="space-y-4">
             <ShieldAlert className="h-16 w-16 text-red-500 mx-auto" />
-            <h2 className="text-2xl font-black text-white uppercase">Access Denied</h2>
+            <h2 className="text-2xl font-black text-[#111115] uppercase">Access Denied</h2>
             <p className="text-secondary-content">
               You don't have permission to view reports. Only admins can access this page.
             </p>
@@ -244,7 +244,7 @@ export default function AdminReportsPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-black uppercase text-white tracking-tight">
+          <h1 className="text-2xl font-black uppercase text-[#111115] tracking-tight">
             REPORTS & ANALYTICS
           </h1>
           <p className="text-sm text-secondary-content font-medium mt-1">
@@ -254,7 +254,7 @@ export default function AdminReportsPage() {
       </div>
 
       {/* Date Filters */}
-      <Card className="bg-[var(--surface)] border-[#27272a] p-4 space-y-4">
+      <Card className="bg-[var(--surface)] border-[#e4e4e7] p-4 space-y-4">
         {/* Quick Filter Buttons */}
         <div>
           <Label className="text-label text-muted-content mb-2 block">
@@ -350,18 +350,18 @@ export default function AdminReportsPage() {
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-3 sm:px-4 text-[10px] sm:text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary overflow-hidden"
+                    className="w-full bg-[var(--background)] border border-[#e4e4e7] h-12 rounded-xl px-3 sm:px-4 text-[10px] sm:text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-[#e4e4e7] text-[#111115] focus:outline-none focus:ring-1 focus:ring-primary overflow-hidden"
                   >
                     <span className="truncate mr-2">{dateFrom ? format(new Date(dateFrom), "dd-MM-yyyy") : <span className="text-muted-content">dd-mm-yyyy</span>}</span>
                     <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-zinc-800 rounded-xl shadow-2xl" align="start">
+                <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-[#e4e4e7] rounded-xl shadow-2xl" align="start">
                   <Calendar
                     mode="single"
                     selected={dateFrom ? new Date(dateFrom) : undefined}
                     onSelect={(date) => date && setDateFrom(format(date, 'yyyy-MM-dd'))}
-                    className="text-white"
+                    className="text-[#111115]"
                   />
                 </PopoverContent>
               </Popover>
@@ -376,18 +376,18 @@ export default function AdminReportsPage() {
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-3 sm:px-4 text-[10px] sm:text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary overflow-hidden"
+                    className="w-full bg-[var(--background)] border border-[#e4e4e7] h-12 rounded-xl px-3 sm:px-4 text-[10px] sm:text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-[#e4e4e7] text-[#111115] focus:outline-none focus:ring-1 focus:ring-primary overflow-hidden"
                   >
                     <span className="truncate mr-2">{dateTo ? format(new Date(dateTo), "dd-MM-yyyy") : <span className="text-muted-content">dd-mm-yyyy</span>}</span>
                     <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-zinc-800 rounded-xl shadow-2xl" align="start">
+                <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-[#e4e4e7] rounded-xl shadow-2xl" align="start">
                   <Calendar
                     mode="single"
                     selected={dateTo ? new Date(dateTo) : undefined}
                     onSelect={(date) => date && setDateTo(format(date, 'yyyy-MM-dd'))}
-                    className="text-white "
+                    className="text-[#111115] "
                   />
                 </PopoverContent>
               </Popover>
@@ -419,7 +419,7 @@ export default function AdminReportsPage() {
       </Card>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-[#27272a] overflow-x-auto">
+      <div className="flex gap-2 border-b border-[#e4e4e7] overflow-x-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
@@ -428,7 +428,7 @@ export default function AdminReportsPage() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === tab.id
                 ? "text-primary border-b-2 border-primary"
-                : "text-secondary-content hover:text-zinc-300"
+                : "text-secondary-content hover:text-[#111115]"
                 }`}
             >
               <Icon className="h-4 w-4" />
@@ -456,7 +456,7 @@ export default function AdminReportsPage() {
                       <p className="text-xs font-black uppercase text-green-500/70 mb-1">
                         Total Revenue
                       </p>
-                      <h3 className="text-2xl font-black text-white">
+                      <h3 className="text-2xl font-black text-[#111115]">
                         <CurrencyCountUp amount={overviewData.totalRevenue} duration={1500} />
                       </h3>
                     </div>
@@ -472,7 +472,7 @@ export default function AdminReportsPage() {
                       <p className="text-xs font-black uppercase text-blue-500/70 mb-1">
                         Device Revenue
                       </p>
-                      <h3 className="text-2xl font-black text-white">
+                      <h3 className="text-2xl font-black text-[#111115]">
                         <CurrencyCountUp amount={overviewData.deviceRevenue} duration={1300} />
                       </h3>
                     </div>
@@ -488,7 +488,7 @@ export default function AdminReportsPage() {
                       <p className="text-xs font-black uppercase text-amber-500/70 mb-1">
                         Food Revenue
                       </p>
-                      <h3 className="text-2xl font-black text-white">
+                      <h3 className="text-2xl font-black text-[#111115]">
                         <CurrencyCountUp amount={overviewData.foodRevenue} duration={1300} />
                       </h3>
                     </div>
@@ -504,7 +504,7 @@ export default function AdminReportsPage() {
                       <p className="text-xs font-black uppercase text-amber-500/70 mb-1">
                         Total Bookings
                       </p>
-                      <h3 className="text-2xl font-black text-white">
+                      <h3 className="text-2xl font-black text-[#111115]">
                         <CountUp end={overviewData.totalBookings} duration={1000} />
                       </h3>
                     </div>
@@ -576,7 +576,7 @@ export default function AdminReportsPage() {
                       <p className="text-xs font-black uppercase text-amber-500/70 mb-2">
                         Total Revenue
                       </p>
-                      <h3 className="text-2xl font-black text-white">
+                      <h3 className="text-2xl font-black text-[#111115]">
                         <CurrencyCountUp amount={foodData.summary.totalRevenue} duration={1300} />
                       </h3>
                     </div>
@@ -591,7 +591,7 @@ export default function AdminReportsPage() {
                       <p className="text-xs font-black uppercase text-green-500/70 mb-2">
                         Items Sold
                       </p>
-                      <h3 className="text-2xl font-black text-white">
+                      <h3 className="text-2xl font-black text-[#111115]">
                         <CountUp end={foodData.summary.totalItemsSold} duration={1000} />
                       </h3>
                     </div>
@@ -606,7 +606,7 @@ export default function AdminReportsPage() {
                       <p className="text-xs font-black uppercase text-blue-500/70 mb-2">
                         Total Orders
                       </p>
-                      <h3 className="text-2xl font-black text-white">
+                      <h3 className="text-2xl font-black text-[#111115]">
                         <CountUp end={foodData.summary.totalOrders} duration={1000} />
                       </h3>
                     </div>
@@ -621,7 +621,7 @@ export default function AdminReportsPage() {
                       <p className="text-xs font-black uppercase text-purple-500/70 mb-2">
                         Avg Order Value
                       </p>
-                      <h3 className="text-2xl font-black text-white">
+                      <h3 className="text-2xl font-black text-[#111115]">
                         <CurrencyCountUp amount={foodData.summary.averageOrderValue} duration={1100} />
                       </h3>
                     </div>
@@ -633,12 +633,12 @@ export default function AdminReportsPage() {
               </div>
 
               {/* Category Breakdown */}
-              <Card className="bg-[var(--surface)] border-[#27272a] p-6">
+              <Card className="bg-[var(--surface)] border-[#e4e4e7] p-6">
                 <div className="flex items-center gap-2 mb-6">
                   <div className="p-2 bg-amber-500/10 rounded-lg">
                     <UtensilsCrossed className="h-5 w-5 text-amber-500" />
                   </div>
-                  <h3 className="text-sm font-black uppercase text-white">
+                  <h3 className="text-sm font-black uppercase text-[#111115]">
                     Category Breakdown
                   </h3>
                 </div>
@@ -665,7 +665,7 @@ export default function AdminReportsPage() {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-lg font-black text-white">
+                          <p className="text-lg font-black text-[#111115]">
                             <CurrencyCountUp amount={category.totalRevenue} duration={1100} />
                           </p>
                           <p className="text-[10px] text-secondary-content uppercase mt-1">
@@ -679,12 +679,12 @@ export default function AdminReportsPage() {
               </Card>
 
               {/* Top Items */}
-              <Card className="bg-[var(--surface)] border-[#27272a] p-6">
+              <Card className="bg-[var(--surface)] border-[#e4e4e7] p-6">
                 <div className="flex items-center gap-2 mb-6">
                   <div className="p-2 bg-primary/10 rounded-lg">
                     <TrendingUp className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="text-sm font-black uppercase text-white">
+                  <h3 className="text-sm font-black uppercase text-[#111115]">
                     Top Selling Items
                   </h3>
                 </div>
@@ -701,14 +701,14 @@ export default function AdminReportsPage() {
                     return (
                       <div
                         key={item.itemName}
-                        className="flex items-center justify-between p-4 bg-gradient-to-r from-[var(--background)] to-[var(--background)]/50 border border-zinc-800 rounded-xl hover:border-primary/30 hover:scale-[1.01] transition-all"
+                        className="flex items-center justify-between p-4 bg-gradient-to-r from-[var(--background)] to-[var(--background)]/50 border border-[#e4e4e7] rounded-xl hover:border-primary/30 hover:scale-[1.01] transition-all"
                       >
                         <div className="flex items-center gap-4">
                           <div className={`w-10 h-10 rounded-xl ${rankColor} flex items-center justify-center text-sm font-black shadow-lg`}>
                             {idx + 1}
                           </div>
                           <div>
-                            <p className="text-sm font-black text-white">{item.itemName}</p>
+                            <p className="text-sm font-black text-[#111115]">{item.itemName}</p>
                             <p className="text-xs text-secondary-content mt-1">
                               {item.category} • <CountUp end={item.totalQuantity} duration={800} /> sold
                             </p>
@@ -741,7 +741,7 @@ export default function AdminReportsPage() {
                       <p className="text-xs font-black uppercase text-blue-500/70 mb-2">
                         Total Revenue
                       </p>
-                      <h3 className="text-2xl font-black text-white">
+                      <h3 className="text-2xl font-black text-[#111115]">
                         <CurrencyCountUp amount={deviceData.summary.totalRevenue} duration={1300} />
                       </h3>
                     </div>
@@ -756,7 +756,7 @@ export default function AdminReportsPage() {
                       <p className="text-xs font-black uppercase text-purple-500/70 mb-2">
                         Total Bookings
                       </p>
-                      <h3 className="text-2xl font-black text-white">
+                      <h3 className="text-2xl font-black text-[#111115]">
                         <CountUp end={deviceData.summary.totalBookings} duration={1000} />
                       </h3>
                     </div>
@@ -771,7 +771,7 @@ export default function AdminReportsPage() {
                       <p className="text-xs font-black uppercase text-green-500/70 mb-2">
                         Hours Booked
                       </p>
-                      <h3 className="text-2xl font-black text-white">
+                      <h3 className="text-2xl font-black text-[#111115]">
                         <CountUp end={deviceData.summary.totalHours} duration={1000} />
                       </h3>
                     </div>
@@ -786,7 +786,7 @@ export default function AdminReportsPage() {
                       <p className="text-xs font-black uppercase text-amber-500/70 mb-2">
                         Avg Revenue
                       </p>
-                      <h3 className="text-2xl font-black text-white">
+                      <h3 className="text-2xl font-black text-[#111115]">
                         <CurrencyCountUp amount={deviceData.summary.averageRevenuePerBooking} duration={1100} />
                       </h3>
                     </div>
@@ -798,12 +798,12 @@ export default function AdminReportsPage() {
               </div>
 
               {/* Device Type Breakdown */}
-              <Card className="bg-[var(--surface)] border-[#27272a] p-6">
+              <Card className="bg-[var(--surface)] border-[#e4e4e7] p-6">
                 <div className="flex items-center gap-2 mb-6">
                   <div className="p-2 bg-blue-500/10 rounded-lg">
                     <Gamepad2 className="h-5 w-5 text-blue-500" />
                   </div>
-                  <h3 className="text-sm font-black uppercase text-white">
+                  <h3 className="text-sm font-black uppercase text-[#111115]">
                     Device Type Performance
                   </h3>
                 </div>
@@ -831,26 +831,26 @@ export default function AdminReportsPage() {
                               {device.deviceType}
                             </h4>
                           </div>
-                          <p className="text-xl font-black text-white">
+                          <p className="text-xl font-black text-[#111115]">
                             <CurrencyCountUp amount={device.totalRevenue} duration={1200} />
                           </p>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                           <div className="p-3 bg-[var(--background)]/50 rounded-lg">
                             <p className="text-[10px] text-secondary-content uppercase font-bold mb-1">Bookings</p>
-                            <p className="text-base font-black text-white">
+                            <p className="text-base font-black text-[#111115]">
                               <CountUp end={device.totalBookings} duration={800} />
                             </p>
                           </div>
                           <div className="p-3 bg-[var(--background)]/50 rounded-lg">
                             <p className="text-[10px] text-secondary-content uppercase font-bold mb-1">Hours</p>
-                            <p className="text-base font-black text-white">
+                            <p className="text-base font-black text-[#111115]">
                               <CountUp end={device.totalHours} duration={800} />h
                             </p>
                           </div>
                           <div className="p-3 bg-[var(--background)]/50 rounded-lg">
                             <p className="text-[10px] text-secondary-content uppercase font-bold mb-1">Avg Players</p>
-                            <p className="text-base font-black text-white">
+                            <p className="text-base font-black text-[#111115]">
                               <CountUp end={device.averagePlayersPerBooking} duration={900} decimals={1} />
                             </p>
                           </div>
@@ -878,27 +878,27 @@ export default function AdminReportsPage() {
                   <p className="text-xs font-black uppercase text-green-500/70 mb-2">
                     Total Revenue
                   </p>
-                  <h3 className="text-3xl font-black text-white mb-4">
+                  <h3 className="text-3xl font-black text-[#111115] mb-4">
                     <CurrencyCountUp amount={revenueData.summary.totalRevenue} duration={1500} />
                   </h3>
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between">
                       <span className="text-data-placeholder">Device Revenue:</span>
-                      <span className="font-bold text-white">
+                      <span className="font-bold text-[#111115]">
                         <CurrencyCountUp amount={revenueData.summary.deviceRevenue} duration={1200} />
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-data-placeholder">Food Revenue:</span>
-                      <span className="font-bold text-white">
+                      <span className="font-bold text-[#111115]">
                         <CurrencyCountUp amount={revenueData.summary.foodRevenue} duration={1200} />
                       </span>
                     </div>
                   </div>
                 </Card>
 
-                <Card className="bg-[var(--surface)] border-[#27272a] p-6 hover:-translate-y-1">
-                  <p className="text-xs font-black uppercase 0text-zinc-50 mb-2">
+                <Card className="bg-[var(--surface)] border-[#e4e4e7] p-6 hover:-translate-y-1">
+                  <p className="text-xs font-black uppercase text-[#111115] mb-2">
                     Payment Status
                   </p>
                   <div className="space-y-3">
@@ -909,7 +909,7 @@ export default function AdminReportsPage() {
                           <CountUp end={revenueData.summary.paidBookings} duration={800} />
                         </span>
                       </div>
-                      <div className="w-full bg-zinc-900 rounded-full h-2">
+                      <div className="w-full bg-[#e4e4e7] rounded-full h-2">
                         <div
                           className="bg-green-500 h-2 rounded-full transition-all duration-[1500ms] ease-out"
                           style={{
@@ -925,7 +925,7 @@ export default function AdminReportsPage() {
                           <CountUp end={revenueData.summary.pendingBookings} duration={800} />
                         </span>
                       </div>
-                      <div className="w-full bg-zinc-900 rounded-full h-2">
+                      <div className="w-full bg-[#e4e4e7] rounded-full h-2">
                         <div
                           className="bg-amber-500 h-2 rounded-full transition-all duration-[1500ms] ease-out"
                           style={{
@@ -937,8 +937,8 @@ export default function AdminReportsPage() {
                   </div>
                 </Card>
 
-                <Card className="bg-[var(--surface)] border-[#27272a] p-6 hover:-translate-y-1">
-                  <p className="text-xs font-black uppercase text-white mb-2">
+                <Card className="bg-[var(--surface)] border-[#e4e4e7] p-6 hover:-translate-y-1">
+                  <p className="text-xs font-black uppercase text-[#111115] mb-2">
                     Revenue Split
                   </p>
                   <div className="space-y-3">
@@ -949,7 +949,7 @@ export default function AdminReportsPage() {
                           <CountUp end={revenueData.summary.deviceRevenuePercentage} duration={1000} decimals={1} suffix="%" />
                         </span>
                       </div>
-                      <div className="w-full bg-zinc-900 rounded-full h-2">
+                      <div className="w-full bg-[#e4e4e7] rounded-full h-2">
                         <div
                           className="bg-blue-500 h-2 rounded-full transition-all duration-[1500ms] ease-out"
                           style={{ width: `${revenueData.summary.deviceRevenuePercentage}%` }}
@@ -963,7 +963,7 @@ export default function AdminReportsPage() {
                           <CountUp end={revenueData.summary.foodRevenuePercentage} duration={1000} decimals={1} suffix="%" />
                         </span>
                       </div>
-                      <div className="w-full bg-zinc-900 rounded-full h-2">
+                      <div className="w-full bg-[#e4e4e7] rounded-full h-2">
                         <div
                           className="bg-amber-500 h-2 rounded-full transition-all duration-[1500ms] ease-out"
                           style={{ width: `${revenueData.summary.foodRevenuePercentage}%` }}
@@ -975,7 +975,7 @@ export default function AdminReportsPage() {
               </div>
 
               {/* Booking Source Breakdown */}
-              <Card className="bg-[var(--surface)] border-[#27272a] p-6">
+              <Card className="bg-[var(--surface)] border-[#e4e4e7] p-6">
                 <h3 className="text-sm font-black uppercase text-muted-content mb-4">
                   Revenue by Source
                 </h3>
@@ -983,9 +983,9 @@ export default function AdminReportsPage() {
                   {revenueData.sourceBreakdown.map((source: any) => (
                     <div
                       key={source.source}
-                      className="p-4 bg-[var(--background)] border border-[#27272a] rounded-lg"
+                      className="p-4 bg-[var(--background)] border border-[#e4e4e7] rounded-lg"
                     >
-                      <p className="text-xs font-black uppercase text-white mb-2">
+                      <p className="text-xs font-black uppercase text-[#111115] mb-2">
                         {source.source === "walk-in" ? "Walk-In Booking" : "Pre-Booking"}
                       </p>
                       <h4 className="text-xl font-black text-primary mb-1">
@@ -1000,16 +1000,16 @@ export default function AdminReportsPage() {
               </Card>
 
               {/* Payment Method Breakdown */}
-              <Card className="bg-[var(--surface)] border-[#27272a] p-6">
+              <Card className="bg-[var(--surface)] border-[#e4e4e7] p-6">
                 <h3 className="text-sm font-black uppercase text-muted-content mb-4">
                   Revenue by Payment Method
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {/* Cash */}
-                  <div className="p-4 bg-[var(--background)] border border-[#27272a] rounded-lg">
+                  <div className="p-4 bg-[var(--background)] border border-[#e4e4e7] rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-2xl">💵</span>
-                      <p className="text-xs font-black uppercase text-white">Cash</p>
+                      <p className="text-xs font-black uppercase text-[#111115]">Cash</p>
                     </div>
                     <h4 className="text-xl font-black text-green-400 mb-1">
                       <CurrencyCountUp amount={revenueData.summary.totalCash} duration={1100} />
@@ -1020,10 +1020,10 @@ export default function AdminReportsPage() {
                   </div>
 
                   {/* Card */}
-                  <div className="p-4 bg-[var(--background)] border border-[#27272a] rounded-lg">
+                  <div className="p-4 bg-[var(--background)] border border-[#e4e4e7] rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-2xl">💳</span>
-                      <p className="text-xs font-black uppercase text-white">Card</p>
+                      <p className="text-xs font-black uppercase text-[#111115]">Card</p>
                     </div>
                     <h4 className="text-xl font-black text-blue-400 mb-1">
                       <CurrencyCountUp amount={revenueData.summary.totalCard} duration={1100} />
@@ -1034,10 +1034,10 @@ export default function AdminReportsPage() {
                   </div>
 
                   {/* UPI */}
-                  <div className="p-4 bg-[var(--background)] border border-[#27272a] rounded-lg">
+                  <div className="p-4 bg-[var(--background)] border border-[#e4e4e7] rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-2xl">📱</span>
-                      <p className="text-xs font-black uppercase text-white">UPI</p>
+                      <p className="text-xs font-black uppercase text-[#111115]">UPI</p>
                     </div>
                     <h4 className="text-xl font-black text-purple-400 mb-1">
                       <CurrencyCountUp amount={revenueData.summary.totalUpi} duration={1100} />
@@ -1050,7 +1050,7 @@ export default function AdminReportsPage() {
               </Card>
 
               {/* Daily Revenue Chart */}
-              <Card className="bg-[var(--surface)] border-[#27272a] p-6">
+              <Card className="bg-[var(--surface)] border-[#e4e4e7] p-6">
                 <h3 className="text-sm font-black uppercase text-muted-content mb-4">
                   Daily Revenue Trend
                 </h3>
@@ -1068,11 +1068,11 @@ export default function AdminReportsPage() {
                               day: 'numeric'
                             })}
                           </span>
-                          <span className="font-bold text-white">
+                          <span className="font-bold text-[#111115]">
                             <CurrencyCountUp amount={day.totalRevenue} duration={1000} />
                           </span>
                         </div>
-                        <div className="w-full bg-zinc-900 rounded-full h-2.5 overflow-hidden">
+                        <div className="w-full bg-[#e4e4e7] rounded-full h-2.5 overflow-hidden">
                           <div className="flex h-full">
                             <div
                               className="bg-blue-500 transition-all duration-[1500ms] ease-out"
@@ -1100,7 +1100,7 @@ export default function AdminReportsPage() {
                     );
                   })}
                 </div>
-                <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-[#27272a]">
+                <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-[#e4e4e7]">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-blue-500 rounded"></div>
                     <span className="text-xs text-data-placeholder">Device</span>

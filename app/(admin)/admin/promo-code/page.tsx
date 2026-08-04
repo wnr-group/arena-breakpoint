@@ -64,8 +64,8 @@ export default function AdminPromoCodeDashboard() {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6 text-white p-2 sm:p-6 animate-in fade-in duration-300">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-900 pb-5">
+    <div className="w-full max-w-7xl mx-auto space-y-6 text-[#111115] p-2 sm:p-6 animate-in fade-in duration-300">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#e4e4e7] pb-5">
         <div>
           <h1 className="text-2xl font-black uppercase tracking-tight">Promo Code Management</h1>
           <p className="text-xs text-secondary-content font-medium mt-0.5">Configure and monitor structural discount campaigns across the arena platform stores.</p>
@@ -92,7 +92,7 @@ export default function AdminPromoCodeDashboard() {
           </Button>
         </div>
       ) : loading ? (
-        <div className="h-48 w-full flex items-center justify-center border border-zinc-900 rounded-xl bg-[var(--surface)]">
+        <div className="h-48 w-full flex items-center justify-center border border-[#e4e4e7] rounded-xl bg-[var(--surface)]">
           <BreakpointLoader size="md" />
         </div>
       ) : (

@@ -43,8 +43,8 @@ export function ConfirmDialog({
     info: {
       icon: "text-primary",
       confirmButton: "bg-primary hover:bg-primary-hover text-black",
-      border: "border-zinc-900",
-      bg: "bg-[#111]",
+      border: "border-[#e4e4e7]",
+      bg: "bg-white",
     },
   };
 
@@ -61,14 +61,14 @@ export function ConfirmDialog({
               <AlertTriangle className={`h-6 w-6 ${styles.icon}`} />
             </div>
             <div className="flex-1 space-y-2">
-              <h3 className="text-base font-black text-white uppercase tracking-tight">
+              <h3 className="text-base font-black text-[#111115] uppercase tracking-tight">
                 {title}
               </h3>
-              <p className="text-sm text-zinc-400">{description}</p>
+              <p className="text-sm text-[#52525b]">{description}</p>
             </div>
             <button
               onClick={onClose}
-              className="p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-900 transition-all"
+              className="p-1 rounded-lg text-[#52525b] hover:text-[#111115] hover:bg-[#e4e4e7] transition-all"
             >
               <X className="h-4 w-4" />
             </button>
@@ -78,7 +78,7 @@ export function ConfirmDialog({
             <Button
               onClick={onClose}
               variant="outline"
-              className="flex-1 border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900"
+              className="flex-1 border-[#e4e4e7] text-[#52525b] hover:text-[#111115] hover:bg-[#e4e4e7]"
             >
               {cancelText}
             </Button>

@@ -48,17 +48,17 @@ export function BookingsGrid({
           return (
             <Card
               key={booking.id}
-              className="bg-[var(--surface)] border-[#27272a] hover:border-primary/40 transition-all overflow-hidden group hover:shadow-[0_0_20px_rgba(255,193,7,0.1)]"
+              className="bg-[var(--surface)] border-[#e4e4e7] hover:border-primary/40 transition-all overflow-hidden group hover:shadow-[0_0_20px_rgba(255,193,7,0.1)]"
             >
               {/* Header - Booking ID & Status */}
-              <div className="p-4 bg-gradient-to-br from-[var(--background)] to-[var(--surface)] border-b border-[#27272a]/50">
+              <div className="p-4 bg-gradient-to-br from-[var(--background)] to-[var(--surface)] border-b border-[#e4e4e7]/50">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-[10px] font-mono text-primary/70">{booking.booking_number}</p>
                   <BookingStatusBadge status={booking.status} size="sm" />
                 </div>
 
                 {/* Customer Name - Big */}
-                <h3 className="text-lg font-black text-white mb-1 truncate group-hover:text-primary transition-colors">
+                <h3 className="text-lg font-black text-[#111115] mb-1 truncate group-hover:text-primary transition-colors">
                   {group.customerName}
                 </h3>
                 <p className="text-xs text-muted-content font-mono">{group.phone}</p>
@@ -76,18 +76,18 @@ export function BookingsGrid({
                       </div>
                       <div className="flex-1">
                         <p className="text-xs text-amber-400">Food Order Only</p>
-                        <p className="text-sm font-bold text-white">{foodItems.length} item(s)</p>
+                        <p className="text-sm font-bold text-[#111115]">{foodItems.length} item(s)</p>
                       </div>
                     </div>
 
                     {/* Order Date */}
-                    <div className="flex items-center gap-2 p-2 bg-[var(--background)] rounded-lg border border-[#27272a]/50">
+                    <div className="flex items-center gap-2 p-2 bg-[var(--background)] rounded-lg border border-[#e4e4e7]/50">
                       <div className="p-1.5 bg-blue-500/10 rounded">
                         <Calendar className="h-4 w-4 text-blue-400" />
                       </div>
                       <div className="flex-1">
                         <p className="text-xs text-muted-content">Order Date</p>
-                        <p className="text-sm font-bold text-white">
+                        <p className="text-sm font-bold text-[#111115]">
                           {new Date(booking.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </p>
                         <p className="text-[10px] text-muted-content flex items-center gap-1">
@@ -100,24 +100,24 @@ export function BookingsGrid({
                 ) : (
                   <>
                     {/* Device Type Only */}
-                    <div className="flex items-center gap-2 p-2 bg-[var(--background)] rounded-lg border border-[#27272a]/50">
+                    <div className="flex items-center gap-2 p-2 bg-[var(--background)] rounded-lg border border-[#e4e4e7]/50">
                       <div className="p-1.5 bg-primary/10 rounded">
                         <MapPin className="h-4 w-4 text-primary" />
                       </div>
                       <div className="flex-1">
                         <p className="text-xs text-muted-content">Device</p>
-                        <p className="text-sm font-bold text-white">{deviceSlot?.device_type || "N/A"}</p>
+                        <p className="text-sm font-bold text-[#111115]">{deviceSlot?.device_type || "N/A"}</p>
                       </div>
                     </div>
 
                     {/* Date & Time */}
-                    <div className="flex items-center gap-2 p-2 bg-[var(--background)] rounded-lg border border-[#27272a]/50">
+                    <div className="flex items-center gap-2 p-2 bg-[var(--background)] rounded-lg border border-[#e4e4e7]/50">
                       <div className="p-1.5 bg-blue-500/10 rounded">
                         <Calendar className="h-4 w-4 text-blue-400" />
                       </div>
                       <div className="flex-1">
                         <p className="text-xs text-muted-content">Date & Time</p>
-                        <p className="text-sm font-bold text-white">
+                        <p className="text-sm font-bold text-[#111115]">
                           {deviceSlot?.slot_date ? new Date(deviceSlot.slot_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : "N/A"}
                         </p>
                         <p className="text-[10px] text-muted-content flex items-center gap-1">
@@ -150,7 +150,7 @@ export function BookingsGrid({
               </div>
 
               {/* Actions */}
-              <div className="p-3 bg-[var(--background)]/50 border-t border-[#27272a]/50 flex items-center justify-between gap-2">
+              <div className="p-3 bg-[var(--background)]/50 border-t border-[#e4e4e7]/50 flex items-center justify-between gap-2">
                 <div className="flex gap-1">
                   {/* Only show check-in/check-out for bookings with device slots */}
                   {!isFoodOnly && booking.status === "confirmed" && (
@@ -159,7 +159,7 @@ export function BookingsGrid({
                       variant="ghost"
                       onClick={() => onCheckIn(booking.id, booking.booking_number, booking)}
                       disabled={isPending}
-                      className="h-8 w-8 p-0 text-green-400 hover:text-green-300 hover:bg-green-500/10 rounded-lg"
+                      className="h-8 w-8 p-0 text-green-400 hover:text-green-700 hover:bg-green-500/10 rounded-lg"
                       title="Check In"
                     >
                       <UserCheck className="h-4 w-4" />
@@ -171,7 +171,7 @@ export function BookingsGrid({
                       variant="ghost"
                       onClick={() => onCheckOut(booking.id, booking.booking_number, booking)}
                       disabled={isPending}
-                      className="h-8 w-8 p-0 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg"
+                      className="h-8 w-8 p-0 text-blue-400 hover:text-blue-700 hover:bg-blue-500/10 rounded-lg"
                       title="Check Out"
                     >
                       <LogOut className="h-4 w-4" />
@@ -193,7 +193,7 @@ export function BookingsGrid({
                         size="sm"
                         variant="ghost"
                         onClick={() => onCheckoutBilling(booking.id)}
-                        className="h-8 w-8 p-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 rounded-lg"
+                        className="h-8 w-8 p-0 text-amber-400 hover:text-amber-700 hover:bg-amber-500/10 rounded-lg"
                         title="Checkout & Billing"
                       >
                         <CreditCard className="h-4 w-4" />
@@ -204,7 +204,7 @@ export function BookingsGrid({
                 <Button
                   size="sm"
                   onClick={() => onBookingClick(booking)}
-                  className="h-8 px-3 bg-[var(--surface)] hover:bg-primary/10 border border-[#27272a] hover:border-primary/50 text-white hover:text-primary text-[10px] font-black uppercase rounded-lg transition-all"
+                  className="h-8 px-3 bg-[var(--surface)] hover:bg-primary/10 border border-[#e4e4e7] hover:border-primary/50 text-[#111115] hover:text-primary text-[10px] font-black uppercase rounded-lg transition-all"
                 >
                   <Eye className="h-3.5 w-3.5 mr-1" />
                   View
