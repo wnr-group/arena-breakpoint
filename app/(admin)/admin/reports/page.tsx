@@ -26,6 +26,12 @@ import { ProfitTab } from "@/components/admin/reports/ProfitTab";
 import { CountUp, CurrencyCountUp } from "@/components/shared/CountUp";
 import { roundToTwo, formatCurrency } from "@/lib/currency";
 import { checkReportsAccess } from "@/lib/auth/roles";
+import {
+  formatLocalDate,
+  parseLocalDate,
+  startOfLocalDay,
+  validateReportDateRange
+} from "@/lib/utils/dates";
 
 export default function AdminReportsPage() {
   const router = useRouter();
@@ -54,6 +60,42 @@ export default function AdminReportsPage() {
   const [dateFrom, setDateFrom] = useState(currentMonth.from);
   const [dateTo, setDateTo] = useState(currentMonth.to);
   const [activeQuickFilter, setActiveQuickFilter] = useState<string>("month");
+
+  // --- Date range validation -------------------------------------------------
+  // Recomputed every render so the pickers stay in step with each other: the
+  // bounds of one are always derived from the current value of the other.
+  const today = startOfLocalDay(new Date());
+  const fromDate = dateFrom ? parseLocalDate(dateFrom) : null;
+  const toDate = dateTo ? parseLocalDate(dateTo) : null;
+  const dateRangeError = validateReportDateRange(dateFrom, dateTo);
+
+  // From Date runs up to the chosen To Date, and is unbounded without one
+  const isFromDateDisabled = (day: Date) => {
+    const candidate = startOfLocalDay(day);
+    return !!toDate && candidate > toDate;
+  };
+
+  // To Date starts at the chosen From Date, and is unbounded without one
+  const isToDateDisabled = (day: Date) => {
+    const candidate = startOfLocalDay(day);
+    return !!fromDate && candidate < fromDate;
+  };
+
+  const handleSelectFromDate = (date?: Date) => {
+    if (!date) return;
+    const next = formatLocalDate(date);
+    setDateFrom(next);
+    // Belt and braces: the picker disables these days, but a preset or a stale
+    // popover must not be able to leave the range inverted.
+    if (dateTo && next > dateTo) setDateTo(next);
+  };
+
+  const handleSelectToDate = (date?: Date) => {
+    if (!date) return;
+    const next = formatLocalDate(date);
+    setDateTo(next);
+    if (dateFrom && next < dateFrom) setDateFrom(next);
+  };
 
   // Overview data
   const [overviewData, setOverviewData] = useState<any>(null);
@@ -90,6 +132,12 @@ export default function AdminReportsPage() {
   }, [activeTab, hasAccess]);
 
   const loadData = async () => {
+    // Never query on a range the user has been told is invalid
+    if (dateRangeError) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     const filters: ReportFilters = {};
     if (dateFrom) filters.dateFrom = dateFrom;
@@ -125,6 +173,10 @@ export default function AdminReportsPage() {
   };
 
   const handleApplyFilters = () => {
+    if (dateRangeError) {
+      toast.error("Invalid date range", { description: dateRangeError });
+      return;
+    }
     loadData();
   };
 
@@ -359,8 +411,11 @@ export default function AdminReportsPage() {
                 <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-zinc-800 rounded-xl shadow-2xl" align="start">
                   <Calendar
                     mode="single"
-                    selected={dateFrom ? new Date(dateFrom) : undefined}
-                    onSelect={(date) => date && setDateFrom(format(date, 'yyyy-MM-dd'))}
+                    selected={fromDate ?? undefined}
+                    onSelect={handleSelectFromDate}
+                    disabled={isFromDateDisabled}
+                    defaultMonth={fromDate ?? toDate ?? today}
+                    endMonth={toDate ?? undefined}
                     className="text-white"
                   />
                 </PopoverContent>
@@ -385,8 +440,11 @@ export default function AdminReportsPage() {
                 <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-zinc-800 rounded-xl shadow-2xl" align="start">
                   <Calendar
                     mode="single"
-                    selected={dateTo ? new Date(dateTo) : undefined}
-                    onSelect={(date) => date && setDateTo(format(date, 'yyyy-MM-dd'))}
+                    selected={toDate ?? undefined}
+                    onSelect={handleSelectToDate}
+                    disabled={isToDateDisabled}
+                    defaultMonth={toDate ?? today}
+                    startMonth={fromDate ?? undefined}
                     className="text-white "
                   />
                 </PopoverContent>
@@ -398,7 +456,8 @@ export default function AdminReportsPage() {
           <div className="grid grid-cols-2 gap-3 w-full md:w-auto md:flex md:gap-4">
             <Button
               onClick={handleApplyFilters}
-              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-11 rounded-xl px-6 transition-all"
+              disabled={!!dateRangeError}
+              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-11 rounded-xl px-6 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Apply Range
             </Button>
@@ -416,6 +475,18 @@ export default function AdminReportsPage() {
           </div>
 
         </div>
+
+        {/* Validation message - the pickers disable these days, so this only
+            shows if a range was set some other way */}
+        {dateRangeError && (
+          <p
+            role="alert"
+            className="flex items-center gap-2 text-xs font-bold text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2"
+          >
+            <ShieldAlert className="h-4 w-4 flex-shrink-0" />
+            {dateRangeError}
+          </p>
+        )}
       </Card>
 
       {/* Tabs */}

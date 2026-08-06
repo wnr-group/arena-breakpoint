@@ -97,6 +97,29 @@ export function parseLocalDate(dateString: string): Date | null {
 }
 
 /**
+ * Validates a report date range. Both bounds are YYYY-MM-DD, and an empty
+ * string means "unbounded" - the All Time filter clears both.
+ *
+ * The only rule is that the range reads forwards: From Date on or before To
+ * Date. Future dates are allowed on both ends, because presets such as "This
+ * Month" run to the end of the month and a range that overshoots today simply
+ * includes everything recorded so far.
+ *
+ * Returns the message to show the user, or null when the range is usable.
+ */
+export function validateReportDateRange(dateFrom: string, dateTo: string): string | null {
+  const from = dateFrom ? parseLocalDate(dateFrom) : null
+  const to = dateTo ? parseLocalDate(dateTo) : null
+
+  if (dateFrom && !from) return 'From Date is not a valid date.'
+  if (dateTo && !to) return 'To Date is not a valid date.'
+
+  if (from && to && from > to) return 'From Date cannot be after To Date.'
+
+  return null
+}
+
+/**
  * Server-side guard for a YYYY-MM-DD booking date.
  *
  * `toleranceDays` absorbs the offset between the browser's calendar day and the
