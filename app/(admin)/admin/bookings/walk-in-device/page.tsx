@@ -49,6 +49,7 @@ import {
   isTimeSlotWithinRange
 } from "@/lib/utils/timeSlots";
 import { useHappyHours } from "@/lib/hooks/useHappyHours";
+import { useNotifications } from "@/lib/contexts/NotificationContext";
 
 export default function WalkInBookingPage() {
   const router = useRouter();
@@ -84,6 +85,8 @@ export default function WalkInBookingPage() {
 
   // Happy Hours
   const { checkHappyHour, calculateDiscount } = useHappyHours();
+
+  const { addNotification } = useNotifications();
 
   const allStartTimes = useMemo(() => generateStartTimes(), []);
   const allDurations = useMemo(() => generateDurationOptions(), []);
@@ -292,7 +295,15 @@ export default function WalkInBookingPage() {
     setSubmitting(false);
 
     if (result.success) {
-      toast.success("Walk-in booking created successfully!");
+      // One notification for the confirmed booking: it toasts, chimes and lands
+      // in the bell. The poller skips walk-ins so this is not repeated.
+      addNotification({
+        type: "booking",
+        title: "Walk-In Booking Confirmed",
+        message: `${customerName.trim()} • #${result.bookingNumber} • ₹${Math.round(total).toLocaleString("en-IN")}`,
+        bookingId: result.bookingId || "",
+        bookingNumber: result.bookingNumber || ""
+      });
       router.push("/admin/bookings");
     } else {
       toast.error("Failed to create booking", { description: result.error });

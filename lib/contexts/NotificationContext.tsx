@@ -24,6 +24,14 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
 
+/**
+ * Window in which the same event is treated as already announced. Two sources
+ * feed this list - the walk-in screens announce their own order, and the poller
+ * announces what customers do - so one event reaching both would otherwise be
+ * listed twice.
+ */
+const DUPLICATE_WINDOW_MS = 2 * 60 * 1000
+
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([])
 
@@ -35,7 +43,22 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       read: false,
     }
 
-    setNotifications(prev => [newNotification, ...prev].slice(0, 10)) // Keep only last 10
+    setNotifications(prev => {
+      // Same booking, same headline, moments apart: it is the same event.
+      // A later, genuinely different event on that booking ("Food Added" after
+      // "New Booking") carries a different title and still comes through.
+      const cutoff = Date.now() - DUPLICATE_WINDOW_MS
+      const alreadyAnnounced = prev.some(
+        existing =>
+          existing.bookingId === newNotification.bookingId &&
+          existing.title === newNotification.title &&
+          existing.timestamp.getTime() >= cutoff
+      )
+
+      if (alreadyAnnounced) return prev
+
+      return [newNotification, ...prev].slice(0, 10) // Keep only last 10
+    })
   }, [])
 
   const markAsRead = useCallback((notificationId: string) => {

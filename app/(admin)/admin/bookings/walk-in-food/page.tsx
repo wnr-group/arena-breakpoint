@@ -29,9 +29,11 @@ import { checkCustomerExists } from "@/app/(customer)/booking/actions";
 import { createFoodOnlyWalkInBooking } from "../actions";
 import { formatDateForDB, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
+import { useNotifications } from "@/lib/contexts/NotificationContext";
 
 export default function WalkInFoodOnlyPage() {
   const router = useRouter();
+  const { addNotification } = useNotifications();
   const [step, setStep] = useState(1); // 1: Customer Lookup, 2: Food Selection, 3: Confirm
 
   // Customer details
@@ -216,8 +218,14 @@ export default function WalkInFoodOnlyPage() {
       });
 
       if (result.success) {
-        toast.success("Food order created successfully!", {
-          description: `Order #${result.bookingNumber}`
+        // One notification for the confirmed order: it toasts, chimes and lands
+        // in the bell. The poller skips walk-ins so this is not repeated.
+        addNotification({
+          type: "food",
+          title: "Walk-In Food Order Confirmed",
+          message: `${customerName.trim()} • #${result.bookingNumber} • ₹${Math.round(totalAmount).toLocaleString("en-IN")}`,
+          bookingId: result.bookingId || "",
+          bookingNumber: result.bookingNumber || ""
         });
         router.push("/admin/bookings");
       } else {
