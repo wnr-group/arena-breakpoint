@@ -7,10 +7,14 @@ import { setSlot, setPricing, setSlotLockExpiry, setBookingId, setPlayerCount } 
 import { checkAvailabilityByDeviceType, initializeSoftLockReservation as createSoftLockTransaction } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
+import { DateSelector } from "@/components/booking/DateSelector";
 import { Clock, ChevronRight, X, Users, Plus, Minus , Loader2 } from 'lucide-react';
 import { toast } from "sonner";
-import { formatLocalDate } from "@/lib/utils/dates";
+import {
+  formatLocalDate,
+  isDateWithinBookingWindow,
+  BOOKING_WINDOW_ERROR
+} from "@/lib/utils/dates";
 
 const staticDaylightSchedulesMatrix = [
   { id: "s1", label: "10:00 AM - 11:00 AM", start: "10:00 AM", end: "11:00 AM", tier: "Morning Slots" },
@@ -34,7 +38,6 @@ export default function SlotBookingPage() {
   const [queryingDb, setQueryingDb] = useState(false);
   const [submittingLock, setSubmittingLock] = useState(false);
   
-  const [mobileCalendarDrawerOpen, setMobileCalendarDrawerOpen] = useState(false);
   const [mobileTimeDrawerOpen, setMobileTimeDrawerOpen] = useState(false);
   const [mobileSummaryDrawerOpen, setMobileSummaryDrawerOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -49,7 +52,7 @@ export default function SlotBookingPage() {
     if (typeof window === 'undefined') return;
     const mainEl = document.querySelector('main');
     const htmlEl = document.documentElement;
-    if (mobileCalendarDrawerOpen || mobileTimeDrawerOpen || mobileSummaryDrawerOpen) {
+    if (mobileTimeDrawerOpen || mobileSummaryDrawerOpen) {
       document.body.style.overflow = 'hidden';
       document.body.style.height = '100dvh';
       htmlEl.style.overflow = 'hidden';
@@ -69,10 +72,16 @@ export default function SlotBookingPage() {
       htmlEl.style.height = '';
       if (mainEl) mainEl.style.zIndex = '';
     };
-  }, [mobileCalendarDrawerOpen, mobileTimeDrawerOpen, mobileSummaryDrawerOpen]);
+  }, [mobileTimeDrawerOpen, mobileSummaryDrawerOpen]);
 
   useEffect(() => {
     if (!mounted || !calendarDay || !deviceTypeId) return;
+    // Never query slots for a date outside the booking window
+    if (!isDateWithinBookingWindow(calendarDay)) {
+      setDisabledLabelsArray([]);
+      setSlotAvailability({});
+      return;
+    }
     async function checkAvailability() {
       setQueryingDb(true);
       const res = await checkAvailabilityByDeviceType(formatLocalDate(calendarDay!), deviceTypeId!);
@@ -97,6 +106,10 @@ export default function SlotBookingPage() {
 
   const handleRegisterTransactionLock = async () => {
     if (!calendarDay || !selectedSlotNode || !deviceTypeId) return;
+    if (!isDateWithinBookingWindow(calendarDay)) {
+      toast.error(BOOKING_WINDOW_ERROR);
+      return;
+    }
     setSubmittingLock(true);
     const dateQueryString = formatLocalDate(calendarDay);
 
@@ -144,9 +157,10 @@ export default function SlotBookingPage() {
 
           {/* MOBILE FLOW CLICK*/}
           <div className="space-y-3 md:hidden">
-            <div onClick={() => setMobileCalendarDrawerOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer">
-              <div className="space-y-0.5"><span className="text-[8px] font-black text-zinc-500 uppercase block">Select Date</span><span className="text-xs font-black text-white">{calendarDay ? calendarDay.toLocaleDateString() : "Choose Target Date"}</span></div>
-              <ChevronRight className="h-4 w-4 text-zinc-600" />
+            {/* Date Selection - today + next 6 days, all on one row */}
+            <div className="space-y-2">
+              <span className="text-[8px] font-black text-zinc-500 uppercase block pl-1">Select Date</span>
+              <DateSelector selected={calendarDay} onSelect={setCalendarDay} />
             </div>
 
             <div onClick={() => setMobileTimeDrawerOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer">
@@ -163,10 +177,11 @@ export default function SlotBookingPage() {
           </div>
 
           {/* WIDESCREEN DESKTOP CONSTANT INLINE CONTAINERS MAPS */}
-          <div className="hidden md:grid grid-cols-2 gap-6 items-start">
+          <div className="hidden md:block space-y-6">
+            {/* Date Selection - today + next 6 days */}
             <div className="space-y-3">
               <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">📅 Select Date</h3>
-              <Card className="bg-[#111] border border-zinc-900 p-4 w-full flex justify-center rounded-2xl shadow-inner"><Calendar mode="single" selected={calendarDay} onSelect={setCalendarDay} disabled={(day) => day < new Date(new Date().setHours(0,0,0,0))} /></Card>
+              <DateSelector selected={calendarDay} onSelect={setCalendarDay} />
             </div>
             <div className="space-y-4">
               <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">🕒 Select Time Slot</h3>
@@ -259,15 +274,6 @@ export default function SlotBookingPage() {
           </Card>
         </div>
       </div>
-
-      {mobileCalendarDrawerOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end md:hidden animate-in fade-in duration-150">
-          <div className="bg-[#121212] border-t border-zinc-800 rounded-t-2xl w-full p-5 space-y-4 animate-in slide-in-from-bottom duration-250">
-            <div className="flex justify-between items-center border-b border-zinc-900 pb-2"><span className="text-xs font-black uppercase text-zinc-400">Select Date Calendar</span><button onClick={() => setMobileCalendarDrawerOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-500"><X className="h-4 w-4"/></button></div>
-            <div className="flex justify-center bg-zinc-950 p-2 rounded-xl"><Calendar mode="single" selected={calendarDay} onSelect={(day) => { setCalendarDay(day); setMobileCalendarDrawerOpen(false); }} disabled={(day) => day < new Date(new Date().setHours(0,0,0,0))} /></div>
-          </div>
-        </div>
-      )}
 
       {mobileTimeDrawerOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end md:hidden animate-in fade-in duration-150">

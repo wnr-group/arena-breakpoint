@@ -347,7 +347,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                       {row.created_at ? format(new Date(row.created_at), "dd MMM yy") : "N/A"}
                     </span>
                     <span className="text-label-enhanced">
-                      {row.created_at ? format(new Date(row.created_at), "HH:mm") : ""}
+                      {row.created_at ? format(new Date(row.created_at), "hh:mm a") : ""}
                     </span>
                   </div>
                 </td>

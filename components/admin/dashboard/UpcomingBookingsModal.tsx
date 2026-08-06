@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Calendar, Clock, User, MapPin, Phone } from "lucide-react";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
+import { formatDbTimeRange } from "@/lib/utils/timeSlots";
 
 interface UpcomingBookingsModalProps {
   open: boolean;
@@ -102,7 +103,7 @@ export function UpcomingBookingsModal({ open, onClose, bookings, onBookingClick 
                       <Clock className="h-3.5 w-3.5 text-secondary-content" />
                       <div>
                         <p className="text-xs text-white font-bold">
-                          {slot.slot_start_time.substring(0, 5)} - {slot.slot_end_time.substring(0, 5)}
+                          {formatDbTimeRange(slot.slot_start_time, slot.slot_end_time)}
                         </p>
                         <p className="text-label">
                           {new Date(slot.slot_date).toLocaleDateString('en-IN', {

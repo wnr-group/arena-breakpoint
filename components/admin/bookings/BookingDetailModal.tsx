@@ -11,14 +11,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BookingStatusBadge } from "./BookingStatusBadge";
-import { getBookingDetails, checkInBooking, checkOutBooking, cancelBooking, addFoodToBooking, updatePlayerCount, markBookingAsPaid } from "@/app/(admin)/admin/bookings/actions";
+import { getBookingDetails, checkInBooking, checkOutBooking, cancelBooking, addFoodToBooking, removeFoodItemFromBooking, updatePlayerCount, markBookingAsPaid } from "@/app/(admin)/admin/bookings/actions";
 import { getMenuItems } from "@/app/(admin)/admin/food/actions";
 import { Label } from "@/components/ui/label";
 import { QRCodeSVG } from "qrcode.react";
 import {
   User, Phone, Mail, Calendar, Clock, DollarSign,
   Loader2, CheckCircle2, XCircle, LogIn, LogOut,
-  UtensilsCrossed, QrCode, MapPin, Gamepad2, Plus, Minus, Search, Filter
+  UtensilsCrossed, QrCode, MapPin, Gamepad2, Plus, Minus, Search, Filter, Trash2
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -31,6 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { formatDbTimeRange } from "@/lib/utils/timeSlots";
 
 interface BookingDetailModalProps {
   bookingId: string | null;
@@ -56,6 +57,8 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [selectedFoodItems, setSelectedFoodItems] = useState<Record<string, number>>({});
   const [updatingPlayerCount, setUpdatingPlayerCount] = useState(false);
+  const [foodItemToRemove, setFoodItemToRemove] = useState<any>(null);
+  const [removingFoodItem, setRemovingFoodItem] = useState(false);
   const [foodSearchQuery, setFoodSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
@@ -190,6 +193,26 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
       toast.error("Cancellation failed", { description: result.error });
     }
     setActionLoading(false);
+  };
+
+  const handleRemoveFoodItem = async () => {
+    if (!bookingId || !foodItemToRemove) return;
+    setRemovingFoodItem(true);
+
+    const result = await removeFoodItemFromBooking(bookingId, foodItemToRemove.id);
+
+    if (result.success) {
+      toast.success(`${foodItemToRemove.item_name} removed`, {
+        description: `New total: ₹${Number(result.newTotal || 0).toLocaleString('en-IN')}`
+      });
+      setFoodItemToRemove(null);
+      loadBookingDetails();
+      onUpdate?.();
+    } else {
+      toast.error("Could not remove item", { description: result.error });
+    }
+
+    setRemovingFoodItem(false);
   };
 
   const handleUpdatePlayerCount = async (slotId: string, newCount: number, maxPlayers: number) => {
@@ -368,7 +391,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                       <div className="flex-1">
                         <p className="text-label-enhanced text-muted-content mb-1">Time Slot</p>
                         <p className="text-base text-white font-semibold">
-                          {deviceSlot?.slot_start_time} - {deviceSlot?.slot_end_time}
+                          {formatDbTimeRange(deviceSlot?.slot_start_time, deviceSlot?.slot_end_time)}
                         </p>
                         <p className="text-sm-enhanced text-secondary-content mt-1">
                           Duration: {deviceSlot?.duration_hours}h
@@ -496,9 +519,23 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                           <p className="text-lg font-bold text-white mb-1">{item.item_name}</p>
                           <p className="text-sm-enhanced text-secondary-content">Qty: <span className="font-bold">{item.quantity}</span> × ₹{Number(item.unit_price).toLocaleString('en-IN')}</p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-xl font-black text-primary">₹{Number(item.line_total).toLocaleString('en-IN')}</p>
-                          <p className="text-min text-muted-content uppercase mt-1">{item.status}</p>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <p className="text-xl font-black text-primary">₹{Number(item.line_total).toLocaleString('en-IN')}</p>
+                            <p className="text-min text-muted-content uppercase mt-1">{item.status}</p>
+                          </div>
+                          {/* Only unpaid food an admin added can be taken back off */}
+                          {item.removable && booking.status !== "cancelled" && booking.status !== "completed" && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setFoodItemToRemove(item)}
+                              className="h-9 w-9 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                              title={`Remove ${item.item_name}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -965,6 +1002,43 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
             >
               {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Confirm Cancellation
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Remove Food Item Confirmation Dialog */}
+      <AlertDialog
+        open={!!foodItemToRemove}
+        onOpenChange={(open) => !open && setFoodItemToRemove(null)}
+      >
+        <AlertDialogContent className="bg-[var(--surface)] border-[#27272a] text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-bold">Remove Food Item?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-content">
+              <span className="text-primary font-bold">
+                {foodItemToRemove?.quantity} × {foodItemToRemove?.item_name}
+              </span>{" "}
+              (₹{Number(foodItemToRemove?.line_total || 0).toLocaleString('en-IN')}) will be taken
+              off this booking, the amount deducted from the bill and the stock returned to the
+              menu. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800">
+              Keep Item
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                // Keep the dialog up while the request is in flight
+                event.preventDefault();
+                handleRemoveFoodItem();
+              }}
+              disabled={removingFoodItem}
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold"
+            >
+              {removingFoodItem ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Remove Item
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

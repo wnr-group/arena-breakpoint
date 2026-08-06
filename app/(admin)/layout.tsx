@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/admin/layout/SideBar";
 import { Topbar } from "@/components/admin/layout/TopBar";
 import { SessionMonitor } from "@/components/admin/auth/SessionMonitor";
-import { Toaster } from "sonner";
 import AnimatedBackground from "@/components/customer/layout/AnimatedBackground";
 import { NotificationProvider } from "@/lib/contexts/NotificationContext";
 import { NotificationToastManager } from "@/components/admin/layout/NotificationToast";
@@ -24,24 +23,8 @@ export default function AdminLayout({
   return (
     <NotificationProvider>
       <ScrollToTop />
-      <Toaster
-        theme="dark"
-        position="top-right"
-        closeButton
-        richColors
-        toastOptions={{
-          style: {
-            background: '#121212',
-            color: '#ffffff',
-            border: '1px solid #27272a',
-          },
-          className: 'toast-item',
-          descriptionClassName: 'toast-description',
-        }}
-        style={{
-          zIndex: 99999,
-        }}
-      />
+      {/* Toaster is mounted once in the root layout (app/layout.tsx).
+          Mounting a second one here rendered every toast twice on admin routes. */}
       <div className="flex h-screen bg-[var(--background)] overflow-hidden font-sans relative">
       {/* Animated purple background - same as customer pages */}
       <AnimatedBackground />

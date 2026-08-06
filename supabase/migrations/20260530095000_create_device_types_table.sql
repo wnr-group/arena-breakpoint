@@ -36,7 +36,7 @@ INSERT INTO public.device_types (name, display_name, regular_hourly_rate, includ
   ('medium_snooker', 'Medium Snooker Table', 299.00, 4, 8, 79.00, 'Medium size snooker table - great for smaller groups', 2),
   ('american_pool', 'American Pool Table', 249.00, 4, 8, 49.00, 'American pool table - classic billiards experience', 3),
   ('ps5', 'PS5 Console', 200.00, 1, 4, 150.00, 'PlayStation 5 gaming console - latest games and titles', 4),
-  ('other', 'Other Gaming Device', 200.00, 1, 4, 100.00, 'Other gaming devices and activities', 5);
+  ('other', 'Board Games', 200.00, 1, 4, 100.00, 'Board games and tabletop activities', 5);
 
 -- Add foreign key to devices table
 ALTER TABLE public.devices

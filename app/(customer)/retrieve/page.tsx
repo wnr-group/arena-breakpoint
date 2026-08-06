@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Search, Phone, Calendar, Clock, QrCode, UtensilsCrossed, User, CheckCircle2, Sparkles, Zap, CreditCard , Loader2 } from 'lucide-react';
 import { toast } from "sonner";
 import { getBookingsByPhone } from "./actions";
+import { formatDbTime, formatDbTimeRange } from "@/lib/utils/timeSlots";
 import { QRCodeSVG } from "qrcode.react";
 
 export default function RetrieveBookingPage() {
@@ -329,7 +330,7 @@ export default function RetrieveBookingPage() {
                               <div>
                                 <p className="text-[10px] text-zinc-600 uppercase font-bold">Time</p>
                                 <p className="text-sm text-white font-black">
-                                  {booking.booking_device_slots?.[0]?.slot_start_time || 'N/A'}
+                                  {formatDbTime(booking.booking_device_slots?.[0]?.slot_start_time)}
                                 </p>
                               </div>
                             </div>
@@ -505,7 +506,7 @@ export default function RetrieveBookingPage() {
                                 <div className="flex-1">
                                   <p className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Time Slot</p>
                                   <p className="text-sm sm:text-base md:text-lg font-black text-primary leading-tight">
-                                    {slot.slot_start_time} - {slot.slot_end_time}
+                                    {formatDbTimeRange(slot.slot_start_time, slot.slot_end_time)}
                                   </p>
                                 </div>
                               </div>

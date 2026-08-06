@@ -2,16 +2,8 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { findApplicableHappyHour, type HappyHourRule } from '@/lib/happy-hours'
 import { calculateEndTime, formatTo24Hour } from '@/lib/utils/timeSlots'
 import { escapeLikePattern } from '@/lib/utils/sqlPattern'
+import { isBookingDateStringWithinWindow, BOOKING_WINDOW_ERROR } from '@/lib/utils/dates'
 import { countAvailableDevicesForRange, toRequestedRange } from './availability'
-
-/**
- * Server-authoritative pricing.
- *
- * The browser sends *what* the customer wants (device type, slot, duration,
- * players, cart, promo code) but never *how much* it costs. Rates, item prices,
- * happy-hour rules, subscription tiers and promo values are all re-read from the
- * database here, so a tampered client cannot pay less than the real price.
- */
 
 const MIN_DURATION_MINUTES = 30
 const MAX_DURATION_MINUTES = 5 * 60
@@ -355,6 +347,11 @@ export async function quoteDeviceBooking(
       return { success: false, error: 'Please select a valid booking date.' }
     }
 
+    // Bookings only run today through the next 6 days, whatever the client sends
+    if (!isBookingDateStringWithinWindow(input.selectedDate)) {
+      return { success: false, error: BOOKING_WINDOW_ERROR }
+    }
+
     const durationMinutes = Number(input.durationMinutes)
     if (
       !Number.isFinite(durationMinutes) ||
@@ -365,10 +362,6 @@ export async function quoteDeviceBooking(
       return { success: false, error: 'Please select a valid booking duration.' }
     }
 
-    // Validate the 12-hour input itself: formatTo24Hour() falls back to '00:00'
-    // for anything it cannot parse, so checking only its output would wave
-    // through garbage as a midnight booking. Hours are bounded to 1-12 and
-    // minutes to 0-59 - '25:99 PM' parses but is not a time.
     const slotStartTime12 = (input.slotStartTime || '').trim()
     if (!/^(0?[1-9]|1[0-2]):[0-5]\d\s*(AM|PM)$/i.test(slotStartTime12)) {
       return { success: false, error: 'Please select a valid start time.' }

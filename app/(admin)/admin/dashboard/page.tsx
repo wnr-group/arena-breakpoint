@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
+import { formatDbTime } from "@/lib/utils/timeSlots";
 import {
   getDashboardStats,
   getRecentBookings,
@@ -390,11 +391,11 @@ export default function AdminDashboardPage() {
                 >
                   <div className="flex items-center gap-3 flex-1">
                     <div className="flex flex-col items-center justify-center w-16 h-16 bg-zinc-900 rounded-lg">
-                      <span className="text-xs font-black text-primary">
-                        {slot.slot_start_time.substring(0, 5)}
+                      <span className="text-[10px] font-black text-primary whitespace-nowrap">
+                        {formatDbTime(slot.slot_start_time)}
                       </span>
-                      <span className="text-[8px] text-muted-content">
-                        {slot.slot_end_time.substring(0, 5)}
+                      <span className="text-[8px] text-muted-content whitespace-nowrap">
+                        {formatDbTime(slot.slot_end_time)}
                       </span>
                     </div>
                     <div className="flex-1">

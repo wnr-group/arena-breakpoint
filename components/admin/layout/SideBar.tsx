@@ -7,8 +7,11 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Calendar, Monitor, Utensils, Tag,
   PartyPopper, BarChart2, LogOut, ChevronLeft,
-  User2Icon, Crown, Clock
+  User2Icon, Crown, Clock, Loader2
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase/client";
 import { getUserRole, type UserRole } from "@/lib/auth/roles";
 
 const navItems = [
@@ -32,7 +35,9 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [userRole, setUserRole] = useState<UserRole>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     // Get user role on mount
@@ -52,6 +57,37 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
   const handleNavigationClick = () => {
     if (window.innerWidth < 768) {
       onClose();
+    }
+  };
+
+  const handleLogout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
+
+    try {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        toast.error('Logout Failed', {
+          description: 'An error occurred while signing out',
+        });
+        setLoggingOut(false);
+        return;
+      }
+
+      toast.success('Logged Out', {
+        description: 'You have been signed out successfully',
+      });
+
+      // Close the drawer so it is not left open behind the login screen
+      onClose();
+      router.push('/admin/login');
+      router.refresh();
+    } catch (error) {
+      toast.error('Logout Failed', {
+        description: 'An unexpected error occurred',
+      });
+      setLoggingOut(false);
     }
   };
 
@@ -147,12 +183,22 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
         {/* LOGOUT AREA PANEL */}
         <div className="p-3 border-t border-[#27272a] overflow-hidden">
           <button
-            className={`flex items-center gap-3 py-3 rounded-xl text-[#ef4444] hover:bg-red-500/10 transition-all duration-300 group ${isOpen ? "px-4 w-full" : "justify-center px-0 h-11 w-11 mx-auto"
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className={`flex items-center gap-3 py-3 rounded-xl text-[#ef4444] hover:bg-red-500/10 transition-all duration-300 group disabled:opacity-50 disabled:cursor-not-allowed ${isOpen ? "px-4 w-full" : "justify-center px-0 h-11 w-11 mx-auto"
               }`}
             title={!isOpen ? "Logout" : undefined}
           >
-            <LogOut className="h-5 w-5 flex-shrink-0 group-hover:-translate-x-0.5 transition-transform" />
-            {isOpen && <span className="text-sm font-semibold animate-in fade-in duration-200">Logout</span>}
+            {loggingOut ? (
+              <Loader2 className="h-5 w-5 flex-shrink-0 animate-spin" />
+            ) : (
+              <LogOut className="h-5 w-5 flex-shrink-0 group-hover:-translate-x-0.5 transition-transform" />
+            )}
+            {isOpen && (
+              <span className="text-sm font-semibold animate-in fade-in duration-200">
+                {loggingOut ? "Logging out..." : "Logout"}
+              </span>
+            )}
           </button>
         </div>
       </aside>

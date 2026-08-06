@@ -1,4 +1,118 @@
-import { addDays, addMinutes, format, isAfter, isBefore, isWithinInterval } from 'date-fns'
+import {
+  addDays,
+  addMinutes,
+  differenceInCalendarDays,
+  format,
+  isAfter,
+  isBefore,
+  isWithinInterval,
+} from 'date-fns'
+
+/**
+ * Rolling booking window: slots can only be booked from today through the next
+ * six days (7 days inclusive). Calendars, availability lookups and server-side
+ * validation all derive their bounds from here.
+ */
+export const BOOKING_WINDOW_DAYS = 7
+
+export const BOOKING_WINDOW_ERROR = `Bookings are only open for the next ${BOOKING_WINDOW_DAYS} days.`
+
+export interface BookingWindow {
+  /** Today at 00:00 local time - the first bookable day. */
+  start: Date
+  /** Today + 6 days at 00:00 local time - the last bookable day. */
+  end: Date
+}
+
+/** Midnight of the given date, in the local timezone. */
+export function startOfLocalDay(date: Date): Date {
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+/**
+ * The bookable date range. `addDays` rolls over month and year boundaries, so
+ * Aug 29 yields Aug 29 - Sep 4 and Dec 29 yields Dec 29 - Jan 4.
+ */
+export function getBookingWindow(reference: Date = new Date()): BookingWindow {
+  const start = startOfLocalDay(reference)
+  return { start, end: addDays(start, BOOKING_WINDOW_DAYS - 1) }
+}
+
+/** True when `date` falls on one of the bookable days. */
+export function isDateWithinBookingWindow(
+  date: Date,
+  window: BookingWindow = getBookingWindow()
+): boolean {
+  const day = startOfLocalDay(date)
+  return day >= window.start && day <= window.end
+}
+
+/** True when both dates fall on the same local calendar day. */
+export function isSameLocalDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  )
+}
+
+/**
+ * Milliseconds until the local day flips, plus a second of slack so a timer
+ * scheduled with it never fires a hair before midnight. Used to roll the date
+ * selector over for a page that is left open overnight.
+ */
+export function msUntilNextLocalMidnight(reference: Date = new Date()): number {
+  const nextMidnight = addDays(startOfLocalDay(reference), 1)
+  return nextMidnight.getTime() - reference.getTime() + 1000
+}
+
+/**
+ * The bookable days as a list, today first - what the 7-day date selector
+ * renders. Month and year rollovers are handled by `addDays`.
+ */
+export function getBookingWindowDates(reference: Date = new Date()): Date[] {
+  const start = startOfLocalDay(reference)
+  return Array.from({ length: BOOKING_WINDOW_DAYS }, (_, index) => addDays(start, index))
+}
+
+/** Parses a YYYY-MM-DD string as a local calendar date, or null if invalid. */
+export function parseLocalDate(dateString: string): Date | null {
+  const match =
+    typeof dateString === 'string' ? dateString.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/) : null
+  if (!match) return null
+
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const date = new Date(year, month - 1, day)
+
+  // Rejects impossible dates that JS would roll over (e.g. 2026-02-31).
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return null
+  }
+
+  return date
+}
+
+/**
+ * Server-side guard for a YYYY-MM-DD booking date.
+ *
+ * `toleranceDays` absorbs the offset between the browser's calendar day and the
+ * server's: a request sent at 01:00 IST reaches a UTC server that is still on
+ * the previous day, so the legitimate 7th day would otherwise be rejected.
+ */
+export function isBookingDateStringWithinWindow(
+  dateString: string,
+  toleranceDays = 1
+): boolean {
+  const date = parseLocalDate(dateString)
+  if (!date) return false
+
+  const offset = differenceInCalendarDays(date, new Date())
+  return offset >= -toleranceDays && offset <= BOOKING_WINDOW_DAYS - 1 + toleranceDays
+}
 
 export function formatSlotTime(date: Date): string {
   return format(date, 'h:mm a')

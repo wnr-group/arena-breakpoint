@@ -2,6 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Activity, Clock, User, MapPin, Timer } from "lucide-react";
+import { formatDbTimeRange } from "@/lib/utils/timeSlots";
 
 interface ActiveSessionsModalProps {
   open: boolean;
@@ -93,7 +94,7 @@ export function ActiveSessionsModal({ open, onClose, sessions, onBookingClick }:
                       <Clock className="h-3.5 w-3.5 text-secondary-content" />
                       <div>
                         <p className="text-xs text-white font-bold">
-                          {session.slot_start_time.substring(0, 5)} - {session.slot_end_time.substring(0, 5)}
+                          {formatDbTimeRange(session.slot_start_time, session.slot_end_time)}
                         </p>
                         <p className="text-label">Booked slot</p>
                       </div>

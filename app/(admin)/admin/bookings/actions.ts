@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { annotateRemovableFoodItems } from "@/lib/bookings/foodItems";
 
 export interface BookingFilters {
   status?: string;
@@ -211,6 +212,9 @@ export async function getBookingDetails(bookingId: string) {
       booking: {
         ...data,
         total_amount: correctTotal, // Override with calculated value
+        // Flags the food an admin added and nobody has paid for yet, which is
+        // the only food the UI may offer to remove.
+        booking_food_items: annotateRemovableFoodItems(data.booking_food_items, lineItems || []),
         line_items: lineItems || [],
         unpaid_items: unpaidItems,
         balance_due: balanceDue
@@ -532,6 +536,161 @@ export async function addFoodToBooking(
     return { success: true, foodItems, newTotal };
   } catch (err: any) {
     console.error("Add food to booking error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Remove a food item an admin added to an existing booking - the undo for a
+ * mistaken "Add Food". Reverses everything addFoodToBooking() did: the food
+ * row, its billing line item, the booking totals and the stock it took.
+ */
+export async function removeFoodItemFromBooking(bookingId: string, foodItemId: string) {
+  try {
+    // Scoped to the booking, so an id belonging to another booking cannot be removed
+    const { data: foodItem, error: foodItemError } = await supabaseAdmin
+      .from("booking_food_items")
+      .select("id, booking_id, menu_item_id, item_name, quantity, line_total")
+      .eq("id", foodItemId)
+      .eq("booking_id", bookingId)
+      .maybeSingle();
+
+    if (foodItemError) throw foodItemError;
+    if (!foodItem) {
+      return { success: false, error: "That food item is no longer on this booking." };
+    }
+
+    const { data: booking, error: bookingError } = await supabaseAdmin
+      .from("bookings")
+      .select(
+        "status, device_subtotal, subscription_discount, promo_discount, happy_hour_discount, amount_paid"
+      )
+      .eq("id", bookingId)
+      .single();
+
+    if (bookingError) throw bookingError;
+
+    if (booking.status === "cancelled" || booking.status === "completed") {
+      return {
+        success: false,
+        error: `This booking is ${booking.status}. Food can no longer be changed.`
+      };
+    }
+
+    // Find the line item this food row was billed through. menu_item_id is
+    // nullable (the menu item may have been deleted since), so fall back to the
+    // stored name in that case.
+    let lineItemQuery = supabaseAdmin
+      .from("booking_line_items")
+      .select("id, item_type, added_by, is_paid, quantity, reference_id, description")
+      .eq("booking_id", bookingId)
+      .eq("item_type", "food")
+      .eq("added_by", "admin")
+      .eq("is_paid", false)
+      .eq("quantity", foodItem.quantity)
+      .order("display_order", { ascending: false });
+
+    lineItemQuery = foodItem.menu_item_id
+      ? lineItemQuery.eq("reference_id", foodItem.menu_item_id)
+      : lineItemQuery.is("reference_id", null).eq("description", foodItem.item_name);
+
+    const { data: lineItems, error: lineItemError } = await lineItemQuery;
+
+    if (lineItemError) throw lineItemError;
+
+    const lineItem = (lineItems || [])[0];
+
+    if (!lineItem) {
+      return {
+        success: false,
+        error: `${foodItem.item_name} has already been paid for. Refund it instead of removing it.`
+      };
+    }
+
+    // Delete the food row first: it is what the operator sees, and the totals
+    // below are recomputed from what is actually left, so a failure after this
+    // point still leaves the booking charging the right amount.
+    const { error: deleteFoodError } = await supabaseAdmin
+      .from("booking_food_items")
+      .delete()
+      .eq("id", foodItem.id)
+      .eq("booking_id", bookingId);
+
+    if (deleteFoodError) throw deleteFoodError;
+
+    const { error: deleteLineItemError } = await supabaseAdmin
+      .from("booking_line_items")
+      .delete()
+      .eq("id", lineItem.id);
+
+    if (deleteLineItemError) {
+      // The charge is already off the booking; a stale audit row is worth
+      // logging but not worth failing the removal over.
+      console.error("Failed to delete booking line item:", deleteLineItemError);
+    }
+
+    // Recompute from the rows that remain rather than subtracting from the
+    // stored value, so the totals cannot drift.
+    const { data: remainingFood, error: remainingError } = await supabaseAdmin
+      .from("booking_food_items")
+      .select("line_total")
+      .eq("booking_id", bookingId);
+
+    if (remainingError) throw remainingError;
+
+    const newFoodSubtotal = (remainingFood || []).reduce(
+      (sum: number, item: any) => sum + Number(item.line_total || 0),
+      0
+    );
+
+    const deviceSubtotal = Number(booking.device_subtotal || 0);
+    const subscriptionDiscount = Number(booking.subscription_discount || 0);
+    const promoDiscount = Number(booking.promo_discount || 0);
+    const happyHourDiscount = Number(booking.happy_hour_discount || 0);
+    const amountPaid = Number(booking.amount_paid || 0);
+
+    const newTotal =
+      deviceSubtotal + newFoodSubtotal - subscriptionDiscount - promoDiscount - happyHourDiscount;
+
+    // Same rule as addFoodToBooking, so removing the last unpaid item settles
+    // a booking that was only "partial" because of it.
+    let newPaymentStatus: "pending" | "partial" | "paid";
+    if (amountPaid >= newTotal) {
+      newPaymentStatus = "paid";
+    } else if (amountPaid > 0) {
+      newPaymentStatus = "partial";
+    } else {
+      newPaymentStatus = "pending";
+    }
+
+    const { error: updateError } = await supabaseAdmin
+      .from("bookings")
+      .update({
+        food_subtotal: newFoodSubtotal,
+        total_amount: newTotal,
+        payment_status: newPaymentStatus,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", bookingId);
+
+    if (updateError) throw updateError;
+
+    // Give the stock back. addFoodToBooking() is the only path that decremented
+    // it, and the line item check above guarantees we came from there.
+    if (foodItem.menu_item_id) {
+      const { error: inventoryError } = await supabaseAdmin.rpc("increment_menu_item_quantity", {
+        item_id: foodItem.menu_item_id,
+        increment_by: foodItem.quantity
+      });
+
+      if (inventoryError) {
+        console.error("Failed to restore menu item stock:", inventoryError);
+      }
+    }
+
+    return { success: true, newTotal, newFoodSubtotal, removedItemName: foodItem.item_name };
+  } catch (err: any) {
+    console.error("Remove food item from booking error:", err);
     return { success: false, error: err.message };
   }
 }

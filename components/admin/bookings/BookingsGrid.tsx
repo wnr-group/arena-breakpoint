@@ -6,6 +6,7 @@ import { BookingStatusBadge } from "./BookingStatusBadge";
 import { PaymentStatusBadge } from "./PaymentStatusBadge";
 import { Calendar, Clock, MapPin, DollarSign, Phone, User, Eye, UserCheck, LogOut, UtensilsCrossed, CreditCard, Link2 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
+import { formatDbTimeRange } from "@/lib/utils/timeSlots";
 
 interface BookingsGridProps {
   customerGroups: Array<{
@@ -122,7 +123,7 @@ export function BookingsGrid({
                         </p>
                         <p className="text-[10px] text-muted-content flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          {deviceSlot?.slot_start_time || "N/A"} - {deviceSlot?.slot_end_time || "N/A"}
+                          {formatDbTimeRange(deviceSlot?.slot_start_time, deviceSlot?.slot_end_time)}
                         </p>
                       </div>
                     </div>

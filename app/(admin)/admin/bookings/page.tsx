@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { CountUp, CurrencyCountUp } from "@/components/shared/CountUp";
 import { roundToTwo, formatCurrency } from "@/lib/currency";
+import { formatDbTime, formatDbTimeRange } from "@/lib/utils/timeSlots";
 
 export default function AdminBookingsPage() {
   const router = useRouter();
@@ -138,7 +139,7 @@ export default function AdminBookingsPage() {
         const confirmed = window.confirm(
           `⚠️ Early Check-In Warning\n\n` +
           `You are checking in ${Math.round(minutesUntilStart)} minutes before the scheduled start time.\n\n` +
-          `Scheduled time: ${deviceSlot.slot_start_time}\n` +
+          `Scheduled time: ${formatDbTime(deviceSlot.slot_start_time)}\n` +
           `Current time: ${now.toLocaleTimeString()}\n\n` +
           `Do you want to proceed with early check-in?`
         );
@@ -172,7 +173,7 @@ export default function AdminBookingsPage() {
         const confirmed = window.confirm(
           `⚠️ Early Check-Out Warning\n\n` +
           `You are checking out ${Math.round(minutesUntilEnd)} minutes before the scheduled end time.\n\n` +
-          `Scheduled end time: ${deviceSlot.slot_end_time}\n` +
+          `Scheduled end time: ${formatDbTime(deviceSlot.slot_end_time)}\n` +
           `Current time: ${now.toLocaleTimeString()}\n\n` +
           `Do you want to proceed with early check-out?`
         );
@@ -680,7 +681,7 @@ export default function AdminBookingsPage() {
                                   {new Date(firstSlot.slot_date).toLocaleDateString()}
                                 </p>
                                 <p className="text-sm-readable text-secondary-content">
-                                  {firstSlot.slot_start_time} - {firstSlot.slot_end_time}
+                                  {formatDbTimeRange(firstSlot.slot_start_time, firstSlot.slot_end_time)}
                                 </p>
                               </>
                             ) : (
@@ -831,7 +832,7 @@ export default function AdminBookingsPage() {
                                 {deviceSlot?.slot_date ? new Date(deviceSlot.slot_date).toLocaleDateString() : "N/A"}
                               </p>
                               <p className="text-sm-readable text-secondary-content">
-                                {deviceSlot?.slot_start_time || "N/A"} - {deviceSlot?.slot_end_time || "N/A"}
+                                {formatDbTimeRange(deviceSlot?.slot_start_time, deviceSlot?.slot_end_time)}
                               </p>
                             </td>
                             <td className="py-3 px-4">

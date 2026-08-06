@@ -5,7 +5,7 @@ import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
+import { DateSelector } from "@/components/booking/DateSelector";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -30,7 +30,15 @@ import {
   checkCustomerExists
 } from "@/app/(customer)/booking/actions";
 import { createWalkInBooking } from "../actions";
-import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY, formatLocalDate } from "@/lib/utils/dates";
+import {
+  formatDateForDB,
+  formatDateForDisplay,
+  handleDobInput,
+  isValidDateDDMMYYYY,
+  formatLocalDate,
+  isDateWithinBookingWindow,
+  BOOKING_WINDOW_ERROR
+} from "@/lib/utils/dates";
 import {
   generateStartTimes,
   filterPastTimeSlots,
@@ -79,23 +87,6 @@ export default function WalkInBookingPage() {
 
   const allStartTimes = useMemo(() => generateStartTimes(), []);
   const allDurations = useMemo(() => generateDurationOptions(), []);
-
-  const today = useMemo(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }, []);
-
-  const isDayDisabled = (day: Date) => {
-    return day < today;  // Only disable past dates
-  };
-
-  const isDayHidden = (day: Date) => {
-    // Hide dates outside current month view to prevent showing overflow dates
-    const viewMonth = selectedDate?.getMonth() ?? today.getMonth();
-    const viewYear = selectedDate?.getFullYear() ?? today.getFullYear();
-    return day.getMonth() !== viewMonth || day.getFullYear() !== viewYear;
-  };
 
   // Filter out past time slots for today
   const availableStartTimesForDate = useMemo(() => {
@@ -146,6 +137,11 @@ export default function WalkInBookingPage() {
 
   const loadAvailability = async () => {
     if (!selectedDeviceType || !selectedDate) return;
+    // Never query slots for a date outside the booking window
+    if (!isDateWithinBookingWindow(selectedDate)) {
+      setAvailableStartTimes(new Set());
+      return;
+    }
     setLoadingSlots(true);
     const dateString = formatLocalDate(selectedDate);
 
@@ -221,6 +217,11 @@ export default function WalkInBookingPage() {
   const handleSubmit = async () => {
     if (!customerName.trim() || !customerPhone.trim() || !selectedStartTime || !endTime) {
       toast.error("Please fill in customer name, phone number, and choose a valid time slot");
+      return;
+    }
+
+    if (!isDateWithinBookingWindow(selectedDate)) {
+      toast.error(BOOKING_WINDOW_ERROR);
       return;
     }
 
@@ -473,21 +474,13 @@ export default function WalkInBookingPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-              {/* Date Picker */}
-              <div className="space-y-3">
-                <h3 className="text-xs font-black text-secondary-content uppercase tracking-widest pl-1">📅 Select Date</h3>
-                <Card className="bg-[#111] border border-zinc-900 p-4 w-full flex justify-center rounded-2xl">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => date && setSelectedDate(date)}
-                    disabled={isDayDisabled}
-                    hidden={isDayHidden}
-                  />
-                </Card>
-              </div>
+            {/* Date Selection - today + next 6 days */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-black text-secondary-content uppercase tracking-widest pl-1">📅 Select Date</h3>
+              <DateSelector selected={selectedDate} onSelect={setSelectedDate} />
+            </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               {/* Duration Selection */}
               <div className="space-y-3">
                 <h3 className="text-xs font-black text-secondary-content uppercase tracking-widest pl-1">⏱️ Duration</h3>

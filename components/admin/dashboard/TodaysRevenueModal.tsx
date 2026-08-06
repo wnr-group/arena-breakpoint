@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DollarSign, TrendingUp, Receipt, Calendar } from "lucide-react";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
+import { formatDbTimeRange } from "@/lib/utils/timeSlots";
 
 interface TodaysRevenueModalProps {
   open: boolean;
@@ -148,7 +149,7 @@ export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBo
                       </div>
                       <p className="text-xs text-white">{booking.customer_name}</p>
                       <p className="text-label mt-1">
-                        {slot?.device_type} • {slot?.slot_start_time?.substring(0, 5)} - {slot?.slot_end_time?.substring(0, 5)}
+                        {slot?.device_type} • {formatDbTimeRange(slot?.slot_start_time, slot?.slot_end_time)}
                       </p>
                     </div>
                     <div className="text-right">

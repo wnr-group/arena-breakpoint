@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { isBookingDateStringWithinWindow, BOOKING_WINDOW_ERROR } from "@/lib/utils/dates";
 
 export interface AddonSelection {
   id: string;
@@ -101,6 +102,16 @@ export async function checkAvailabilityByDeviceType(
   deviceTypeId: string
 ) {
   try {
+    // Slots are only offered inside the rolling booking window
+    if (!isBookingDateStringWithinWindow(dateString)) {
+      return {
+        success: false,
+        error: BOOKING_WINDOW_ERROR,
+        unavailableSlots: [],
+        slotAvailability: {}
+      };
+    }
+
     // Step 1: Get total available devices of this type
     const { count: totalDevices, error: devicesError } = await supabaseAdmin
       .from("devices")
@@ -280,6 +291,11 @@ export async function initializeSoftLockReservation(payload: {
   durationMinutes?: number; // Optional: for flexible bookings
 }) {
   try {
+    // Slots can only be held inside the rolling booking window
+    if (!isBookingDateStringWithinWindow(payload.date)) {
+      return { success: false, error: BOOKING_WINDOW_ERROR };
+    }
+
     // Convert time format from "10:00 AM" to "10:00:00"
     const formatTime = (timeStr: string) => {
       const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
@@ -447,6 +463,12 @@ export async function checkFlexibleAvailability(
   console.log(`[Availability ${requestId}] Duration: ${durationMinutes} minutes`);
 
   try {
+    // Slots are only offered inside the rolling booking window
+    if (!isBookingDateStringWithinWindow(dateString)) {
+      console.log(`[Availability ${requestId}] ❌ Date outside booking window - returning empty`);
+      return { success: false, error: BOOKING_WINDOW_ERROR, availableStartTimes: [] };
+    }
+
     // Helper: Convert 24h time to minutes since midnight
     const timeToMinutes = (time: string): number => {
       const [hours, minutes] = time.split(':').map(Number);
