@@ -54,7 +54,7 @@ export function EditSubscriptionModal({ plan, onFormSuccess, open, setOpen }: Ed
       <DialogContent className="bg-[var(--surface)] border-[#27272a] text-white max-w-2xl p-0 shadow-2xl sm:rounded-xl flex flex-col max-h-[95dvh] sm:max-h-[90dvh]">
         {/* Header */}
         <div className="p-4 sm:p-6 pb-2 sm:pb-4 flex justify-between items-start shrink-0">
-          <div className="pr-6">
+          <div className="pr-10">
             <DialogTitle className="text-xl font-bold text-primary">
               Edit Subscription Plan
             </DialogTitle>

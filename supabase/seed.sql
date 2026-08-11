@@ -82,9 +82,11 @@ END $$;
 -- 3. SEED DATA FOR TABLE: promo_codes
 INSERT INTO public.promo_codes (code, description, discount_type, discount_value, valid_from, valid_until, is_active)
 VALUES
-  ('ARENA20', 'Welcome Bonus Voucher providing an introductory 20% discount window across booking balances.', 'percentage', 20.00, CURRENT_DATE - INTERVAL '1 day', CURRENT_DATE + INTERVAL '30 days', true),
-  ('ELITE500', 'Premium high-value absolute flat savings voucher deduction applied directly onto processing checkouts.', 'fixed', 500.00, CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE + INTERVAL '60 days', true),
-  ('HIDDENOFF', 'Undercover administration test code disabled from operational customer execution pathways by default.', 'percentage', 50.00, CURRENT_DATE, CURRENT_DATE + INTERVAL '90 days', false)
+  -- `valid_until` runs to the end of its day: the end date is inclusive, so the
+  -- code is redeemable for the whole of that final day.
+  ('ARENA20', 'Welcome Bonus Voucher providing an introductory 20% discount window across booking balances.', 'percentage', 20.00, CURRENT_DATE - INTERVAL '1 day', CURRENT_DATE + INTERVAL '31 days' - INTERVAL '1 millisecond', true),
+  ('ELITE500', 'Premium high-value absolute flat savings voucher deduction applied directly onto processing checkouts.', 'fixed', 500.00, CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE + INTERVAL '61 days' - INTERVAL '1 millisecond', true),
+  ('HIDDENOFF', 'Undercover administration test code disabled from operational customer execution pathways by default.', 'percentage', 50.00, CURRENT_DATE, CURRENT_DATE + INTERVAL '91 days' - INTERVAL '1 millisecond', false)
 ON CONFLICT (code) DO NOTHING;
 
 -- ================================================

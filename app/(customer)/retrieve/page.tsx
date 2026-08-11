@@ -10,6 +10,7 @@ import { Search, Phone, Calendar, Clock, QrCode, UtensilsCrossed, User, CheckCir
 import { toast } from "sonner";
 import { getBookingsByPhone } from "./actions";
 import { formatDbTime, formatDbTimeRange } from "@/lib/utils/timeSlots";
+import { formatDateForDisplay } from "@/lib/utils/dates";
 import { QRCodeSVG } from "qrcode.react";
 
 export default function RetrieveBookingPage() {
@@ -136,15 +137,21 @@ export default function RetrieveBookingPage() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-zinc-600 border-r border-zinc-800 pr-3">+91</span>
+                  {/* The field is monospaced and starts behind the +91 prefix,
+                      so on a narrow phone the placeholder ran past the right
+                      edge and showed nothing at all. Mobile reclaims that room
+                      from the left padding and the letter spacing rather than
+                      the font size - dropping below 16px makes Safari zoom the
+                      page when the field takes focus. */}
                   <Input
                     id="phone-search"
                     type="tel"
                     maxLength={10}
-                    placeholder="Enter 10-digit phone number"
+                    placeholder="Enter 10-digit number"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    className="bg-zinc-950/50 border-2 border-zinc-800 hover:border-primary/50 focus:border-primary h-14 pl-16 text-base text-white focus-visible:ring-primary font-mono tracking-wide rounded-xl transition-all shadow-[0_0_15px_rgba(255,193,7,0.1)]"
+                    className="bg-zinc-950/50 border-2 border-zinc-800 hover:border-primary/50 focus:border-primary h-14 pl-[60px] sm:pl-16 text-base text-white focus-visible:ring-primary font-mono tracking-normal sm:tracking-wide rounded-xl transition-all shadow-[0_0_15px_rgba(255,193,7,0.1)]"
                   />
                 </div>
                 <Button
@@ -232,7 +239,7 @@ export default function RetrieveBookingPage() {
                       <div className="space-y-4 flex-1">
                         {/* Title - Device Name OR Food Order */}
                         <div className="flex items-center justify-between gap-3 flex-wrap pb-3 border-b border-zinc-800">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap min-w-0">
                             {isFoodOnly ? (
                               <>
                                 <UtensilsCrossed className="h-5 w-5 text-orange-400" />
@@ -249,7 +256,10 @@ export default function RetrieveBookingPage() {
                                 <span className="text-lg sm:text-xl font-black text-white">
                                   {booking.booking_device_slots?.[0]?.device_type || 'Device'}
                                 </span>
-                                <span className="text-xs font-bold text-zinc-600 bg-zinc-900 px-2 py-1 rounded">
+                                {/* nowrap: a station like "SS-001" gives the
+                                    browser a break opportunity at the hyphen,
+                                    splitting the tag across two lines. */}
+                                <span className="text-xs font-bold text-zinc-600 bg-zinc-900 px-2 py-1 rounded whitespace-nowrap shrink-0">
                                   #{booking.booking_device_slots?.[0]?.device_station_number || 'N/A'}
                                 </span>
                               </>
@@ -478,7 +488,7 @@ export default function RetrieveBookingPage() {
                               <span className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white leading-tight">
                                 {slot.device_type}
                               </span>
-                              <span className="text-xs sm:text-sm font-bold text-zinc-600 bg-zinc-900 px-2 sm:px-3 py-1 rounded-lg">
+                              <span className="text-xs sm:text-sm font-bold text-zinc-600 bg-zinc-900 px-2 sm:px-3 py-1 rounded-lg whitespace-nowrap shrink-0">
                                 #{slot.device_station_number}
                               </span>
                             </div>
@@ -569,7 +579,12 @@ export default function RetrieveBookingPage() {
                   )}
                   <div className="flex items-center justify-between">
                     <span className="text-zinc-500 font-bold">DOB:</span>
-                    <span className="text-white font-black">{selectedBooking.customer_dob}</span>
+                    {/* Stored as a DATE, so it arrives as YYYY-MM-DD. Shown the
+                        way the arena writes dates - day, month, year - matching
+                        the DOB field on the booking form. */}
+                    <span className="text-white font-black">
+                      {formatDateForDisplay(selectedBooking.customer_dob) || '—'}
+                    </span>
                   </div>
                 </div>
               </Card>

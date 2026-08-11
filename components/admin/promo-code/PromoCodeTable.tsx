@@ -1,6 +1,7 @@
 "use client";
 
 import { PromoCodeRow } from "@/lib/types/promo-code";
+import { getPromoStatus, PROMO_STATUS_PRESENTATION } from "@/lib/promo/status";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Edit2, Trash2, Tag } from "lucide-react";
@@ -63,11 +64,17 @@ export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTab
                 {new Date(row.valid_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
               </td>
               <td className="p-4 whitespace-nowrap">
-                {row.is_active ? (
-                  <span className="bg-green-500/10 text-green-400 border border-green-500/20 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Live</span>
-                ) : (
-                  <span className="bg-[var(--background)]/80 text-red-400 border border-zinc-900 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Inactive</span>
-                )}
+                {(() => {
+                  // Derived, never read straight off `is_active`: a code whose
+                  // validity period has run out is no longer live, however the
+                  // switch is set.
+                  const { label, className } = PROMO_STATUS_PRESENTATION[getPromoStatus(row)];
+                  return (
+                    <span className={`${className} text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider`}>
+                      {label}
+                    </span>
+                  );
+                })()}
               </td>
               <td className="p-4 w-24 min-w-[96px] whitespace-nowrap">
                 <div className="flex justify-end gap-1.5 opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">

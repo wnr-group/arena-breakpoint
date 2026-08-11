@@ -37,7 +37,7 @@ function overlaps(a: MinuteRange, b: MinuteRange): boolean {
 }
 
 /** ISO date string (YYYY-MM-DD) shifted by `days`. */
-function shiftDate(dateString: string, days: number): string {
+export function shiftDate(dateString: string, days: number): string {
   const [year, month, day] = dateString.split('-').map(Number)
   const date = new Date(year, month - 1, day)
   date.setDate(date.getDate() + days)

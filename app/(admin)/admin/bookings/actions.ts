@@ -26,6 +26,37 @@ export interface TimelineBooking {
   total_amount: number;
 }
 
+/**
+ * The days a booking belongs to on the bookings page: the sessions it reserves.
+ * Food-only bookings hold no slot, so they fall back to the day they were
+ * raised. Everything is YYYY-MM-DD, which compares correctly as a string.
+ */
+function getBookingDates(booking: any): string[] {
+  const slotDates = (booking?.booking_device_slots || [])
+    .map((slot: any) => slot?.slot_date)
+    .filter(Boolean);
+
+  if (slotDates.length > 0) return slotDates;
+
+  return booking?.created_at ? [String(booking.created_at).split("T")[0]] : [];
+}
+
+/**
+ * A booking is in range when any of its slots falls inside it. An empty bound
+ * means "unbounded" - the All Time filter clears both.
+ */
+function isBookingInDateRange(
+  booking: any,
+  dateFrom?: string,
+  dateTo?: string
+): boolean {
+  return getBookingDates(booking).some((date) => {
+    if (dateFrom && date < dateFrom) return false;
+    if (dateTo && date > dateTo) return false;
+    return true;
+  });
+}
+
 export async function getAllBookings(filters?: BookingFilters) {
   try {
     let query = supabaseAdmin
@@ -86,14 +117,6 @@ export async function getAllBookings(filters?: BookingFilters) {
       query = query.eq("status", filters.status);
     }
 
-    if (filters?.dateFrom) {
-      query = query.gte("created_at", filters.dateFrom);
-    }
-
-    if (filters?.dateTo) {
-      query = query.lte("created_at", filters.dateTo);
-    }
-
     if (filters?.searchQuery) {
       query = query.or(
         `customer_name.ilike.%${filters.searchQuery}%,customer_phone.ilike.%${filters.searchQuery}%,booking_number.ilike.%${filters.searchQuery}%`
@@ -104,8 +127,16 @@ export async function getAllBookings(filters?: BookingFilters) {
 
     if (error) throw error;
 
+    // Bookings are filtered on the session they reserve, not on when the row
+    // was created: "today" here means today's slots, whenever they were booked.
+    const inRange = (filters?.dateFrom || filters?.dateTo)
+      ? (data || []).filter((booking: any) =>
+          isBookingInDateRange(booking, filters.dateFrom, filters.dateTo)
+        )
+      : (data || []);
+
     // Calculate correct total_amount and balance_due for each booking
-    const bookingsWithBalance = (data || []).map((booking: any) => {
+    const bookingsWithBalance = inRange.map((booking: any) => {
       const deviceSubtotal = Number(booking.device_subtotal || 0);
       const foodSubtotal = Number(booking.food_subtotal || 0);
       const subscriptionDiscount = Number(booking.subscription_discount || 0);
@@ -318,14 +349,23 @@ export async function cancelBooking(bookingId: string, reason?: string) {
   }
 }
 
-export async function getBookingStats() {
+export async function getBookingStats(
+  filters?: Pick<BookingFilters, "dateFrom" | "dateTo">
+) {
   try {
-    // Get counts by status
-    const { data: statusCounts, error: statusError } = await supabaseAdmin
+    // Get counts by status. The slot dates come along so the counts can be
+    // scoped to the same range as the list they sit above.
+    const { data: allStatuses, error: statusError } = await supabaseAdmin
       .from("bookings")
-      .select("status", { count: "exact", head: false });
+      .select("status, created_at, booking_device_slots(slot_date)");
 
     if (statusError) throw statusError;
+
+    const statusCounts = (filters?.dateFrom || filters?.dateTo)
+      ? (allStatuses || []).filter((booking: any) =>
+          isBookingInDateRange(booking, filters.dateFrom, filters.dateTo)
+        )
+      : (allStatuses || []);
 
     // Calculate today's revenue
     const today = new Date().toISOString().split("T")[0];
@@ -746,54 +786,7 @@ export async function createWalkInBooking(payload: {
 
     if (customerError) throw customerError;
 
-    // Step 2: Find available device of this type
-    const { data: devices, error: devicesError } = await supabaseAdmin
-      .from("devices")
-      .select("id, station_number")
-      .eq("device_type_id", payload.deviceTypeId)
-      .eq("status", "available");
-
-    if (devicesError || !devices || devices.length === 0) {
-      return { success: false, error: "No devices available" };
-    }
-
-    // Get all bookings for these devices at this time slot
-    const { data: bookedDevices, error: bookingsError } = await supabaseAdmin
-      .from("booking_device_slots")
-      .select(`
-        device_id,
-        bookings!inner(status, lock_expires_at)
-      `)
-      .in("device_id", devices.map((d: any) => d.id))
-      .eq("slot_date", payload.selectedDate)
-      .eq("slot_start_time", startTime)
-      .in("bookings.status", ["locked", "confirmed", "checked_in"]);
-
-    if (bookingsError) throw bookingsError;
-
-    const rightNow = new Date().toISOString();
-
-    // Filter out expired locks
-    const activelyBookedDeviceIds = (bookedDevices || [])
-      .filter((booking: any) => {
-        const bookingRecord = booking.bookings;
-        if (bookingRecord.status === "locked" && bookingRecord.lock_expires_at) {
-          return new Date(bookingRecord.lock_expires_at) > new Date(rightNow);
-        }
-        return true;
-      })
-      .map((booking: any) => booking.device_id);
-
-    // Find first available device
-    const availableDevice = devices.find(
-      (device: any) => !activelyBookedDeviceIds.includes(device.id)
-    );
-
-    if (!availableDevice) {
-      return { success: false, error: "No devices available for this time slot" };
-    }
-
-    // Step 3: Generate booking number
+    // Step 2: Generate booking number
     const { data: bookingNumber, error: bookingNumberError } = await supabaseAdmin
       .rpc("generate_booking_number");
 
@@ -807,7 +800,7 @@ export async function createWalkInBooking(payload: {
     const happyHourDiscount = payload.happyHourDiscount || 0;
     const totalAmount = deviceSubtotal - subscriptionDiscount - happyHourDiscount;
 
-    // Step 4: Create booking
+    // Step 3: Create booking
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
       .insert({
@@ -832,25 +825,29 @@ export async function createWalkInBooking(payload: {
 
     if (bookingError) throw bookingError;
 
-    // Step 5: Create device slot
-    const { error: slotError } = await supabaseAdmin
-      .from("booking_device_slots")
-      .insert({
-        booking_id: booking.id,
-        device_id: availableDevice.id,
-        device_type: payload.deviceTypeName,
-        device_station_number: availableDevice.station_number,
-        slot_date: payload.selectedDate,
-        slot_start_time: startTime,
-        slot_end_time: endTime,
-        duration_hours: payload.durationHours,
-        hourly_rate: payload.hourlyRate,
-        slot_total: payload.subtotal,
-        player_count: payload.playerCount,
-        included_players: payload.includedPlayers,
-        extra_player_charge: payload.extraPlayerCharge,
-        extra_players_total: extraPlayersTotal
-      });
+    // Step 4: Claim a station and write the slot
+    // Station selection and the insert happen inside one locked transaction,
+    // the same path a customer booking takes. Picking the station here instead
+    // meant an exact-start-time check, which cannot see a 10:00-12:00 booking
+    // when asked about 11:00-12:00 and so hands out a station already in use.
+    const { data: assignment, error: slotError } = await supabaseAdmin.rpc(
+      "assign_device_slot",
+      {
+        p_booking_id: booking.id,
+        p_device_type_id: payload.deviceTypeId,
+        p_slot_date: payload.selectedDate,
+        p_slot_start_time: startTime,
+        p_slot_end_time: endTime,
+        p_duration_hours: payload.durationHours,
+        p_hourly_rate: payload.hourlyRate,
+        p_slot_total: payload.subtotal,
+        p_device_type: payload.deviceTypeName,
+        p_player_count: payload.playerCount,
+        p_included_players: payload.includedPlayers,
+        p_extra_player_charge: payload.extraPlayerCharge,
+        p_extra_players_total: extraPlayersTotal
+      }
+    );
 
     if (slotError) {
       // Rollback booking if slot creation fails
@@ -858,7 +855,16 @@ export async function createWalkInBooking(payload: {
       throw slotError;
     }
 
-    // Step 6: Create booking line items for audit trail & receipt presentation
+    // Zero rows back means every station of this type is busy for the window
+    if (!assignment || (assignment as any[]).length === 0) {
+      await supabaseAdmin.from("bookings").delete().eq("id", booking.id);
+      return {
+        success: false,
+        error: "No station of this type is free for the selected time. Pick another time or device."
+      };
+    }
+
+    // Step 5: Create booking line items for audit trail & receipt presentation
     const lineItems: any[] = [];
     let displayOrder = 1;
 

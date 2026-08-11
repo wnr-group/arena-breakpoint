@@ -208,6 +208,10 @@ async function resolvePromoDiscount(
 
   if (error || !promo || !promo.is_active) return none
 
+  // Both bounds are inclusive instants: `valid_from` is the start of its day and
+  // `valid_until` the end of its day (23:59:59.999), written that way by the
+  // admin modals, so a code lasts through the whole of its final day. Mirrors
+  // validatePromoCode() in app/(customer)/booking/promo-actions.ts.
   const now = new Date()
   if (now < new Date(promo.valid_from) || now > new Date(promo.valid_until)) {
     return none

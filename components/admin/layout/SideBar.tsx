@@ -103,50 +103,55 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
 
       {/* RENDER SIDEBAR CONTAINER */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 md:sticky flex-shrink-0 bg-[var(--background)] border-r border-[#27272a] flex flex-col h-screen transition-all duration-300 ease-in-out scrollbar-none ${isOpen ? "w-[260px] translate-x-0" : "w-[80px] -translate-x-full md:translate-x-0"
+        className={`fixed top-0 bottom-0 left-0 z-50 md:sticky flex-shrink-0 bg-[var(--background)] border-r border-[#27272a] flex flex-col h-screen transition-all duration-300 ease-in-out scrollbar-none ${isOpen ? "w-[288px] translate-x-0" : "w-[80px] -translate-x-full md:translate-x-0"
           }`}
       >
 
         {/* BRAND LOGO AREA + INTEGRATED DESKTOP/MOBILE CONTROLLER */}
-        <div className="p-4 flex items-center justify-between border-b border-[#27272a]/40 h-20 overflow-hidden">
+        <div
+          className={`flex border-b border-[#27272a]/40 h-20 overflow-hidden ${isOpen
+            ? "px-4 flex-row items-center justify-between gap-2"
+            : "px-2 py-2 flex-col items-center justify-center gap-1"
+            }`}
+        >
           {isOpen ? (
-            <div className="pl-2 flex items-center gap-3 hover:scale-[1.02] transition-transform duration-300 cursor-pointer animate-in fade-in duration-300">
+            <div className="flex items-center gap-3 min-w-0 hover:scale-[1.02] transition-transform duration-300 cursor-pointer animate-in fade-in duration-300">
               <Image
                 src="/bp_logo.png"
                 alt="Breakpoint Arena"
                 width={40}
                 height={40}
-                className="w-10 h-10 object-contain rounded-md"
-                priority
+                className="w-10 h-10 flex-shrink-0 object-contain rounded-md"
+                loading="eager"
               />
-              <div>
-                <h1 className="text-lg font-black tracking-tight text-primary drop-shadow-[0_0_10px_rgba(184,134,11,0.3)] whitespace-nowrap">
+              <div className="min-w-0">
+                <h1 className="text-base font-black tracking-tight text-primary drop-shadow-[0_0_10px_rgba(184,134,11,0.3)] truncate leading-tight">
                   Break Point Arena
                 </h1>
-                <p className="text-[10px] text-[#a1a1aa] mt-0.5 font-medium">Admin Panel</p>
+                <p className="text-[10px] text-[#a1a1aa] mt-0.5 font-medium truncate">Admin Panel</p>
               </div>
             </div>
           ) : (
-            <div className="mx-auto animate-in fade-in duration-300">
-              <Image
-                src="/bp_logo.png"
-                alt="BP"
-                width={40}
-                height={40}
-                className="w-10 h-10 object-contain rounded-md"
-                priority
-              />
-            </div>
+            <Image
+              src="/bp_logo.png"
+              alt="BP"
+              width={32}
+              height={32}
+              className="w-8 h-8 flex-shrink-0 object-contain rounded-md animate-in fade-in duration-300"
+              loading="eager"
+            />
           )}
 
           {/* DYNAMIC TOGGLE SWITCH BUTTON */}
           <button
             onClick={onToggle}
-            className={`p-2 rounded-xl text-[#a1a1aa] hover:text-white hover:bg-[var(--surface-hover)] transition-all border border-transparent hover:border-[#27272a] ${!isOpen ? "absolute right-3 top-5" : ""
+            className={`rounded-xl text-[#a1a1aa] hover:text-white hover:bg-[var(--surface-hover)] transition-all border border-transparent hover:border-[#27272a] flex-shrink-0 ${isOpen ? "p-2" : "p-1"
               }`}
             aria-label="Toggle Navigation Layout Menu"
           >
-            <ChevronLeft className={`h-5 w-5 transition-transform duration-300 ${!isOpen ? "rotate-180" : ""}`} />
+            <ChevronLeft
+              className={`transition-transform duration-300 ${isOpen ? "h-5 w-5" : "h-4 w-4 rotate-180"}`}
+            />
           </button>
         </div>
 

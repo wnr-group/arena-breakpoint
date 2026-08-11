@@ -71,12 +71,11 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
                 </div>
 
                 {/* HARDWARE SPECIFICATIONS BLOCKS */}
-                <div
-                  className="flex items-start gap-1.5 text-[11px] text-[#a1a1aa]/80 bg-[#161616] border border-[#27272a]/40 p-2 rounded-lg truncate mt-1"
-                  title={device.specs || "No specifications listed"}
-                >
-                  <Cpu className="h-3.5 w-3.5 text-muted-content flex-shrink-0" />
-                  <span className="truncate">
+                {/* The description runs in full here - the grid is the view that
+                    has room for it. The table still truncates to keep rows even. */}
+                <div className="flex items-start gap-1.5 text-[11px] text-[#a1a1aa]/80 bg-[#161616] border border-[#27272a]/40 p-2 rounded-lg mt-1">
+                  <Cpu className="h-3.5 w-3.5 text-muted-content flex-shrink-0 mt-0.5" />
+                  <span className="min-w-0 flex-1 whitespace-pre-line break-words leading-relaxed">
                     {device.specs || <span className="text-muted-content italic">No specs listed</span>}
                   </span>
                 </div>

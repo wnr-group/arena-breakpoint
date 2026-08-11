@@ -36,7 +36,12 @@ export async function validatePromoCode(code: string) {
       };
     }
 
-    // Check date validity
+    // Check date validity.
+    // Both bounds are inclusive instants, not calendar days: the admin modals
+    // store `valid_from` as the start of its day and `valid_until` as the end of
+    // its day (23:59:59.999), so a code set to run "until 11 Aug" is redeemable
+    // for the whole of 11 Aug. Comparing with < / > rather than <= / >= keeps
+    // those boundary instants valid.
     const now = new Date();
     const validFrom = new Date(promo.valid_from);
     const validUntil = new Date(promo.valid_until);

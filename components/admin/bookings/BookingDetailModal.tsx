@@ -280,9 +280,13 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
       <Dialog open={open && !openFoodModalDirectly} onOpenChange={onClose}>
         <DialogContent className="bg-[var(--surface)] border-[#27272a] text-white max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center justify-between">
+            <DialogTitle className="text-xl font-black uppercase tracking-tight flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
               BOOKING DETAILS
-              {booking && <BookingStatusBadge status={booking.status} size="lg" />}
+              {booking && (
+                <span className="flex-shrink-0">
+                  <BookingStatusBadge status={booking.status} size="lg" />
+                </span>
+              )}
             </DialogTitle>
           </DialogHeader>
 

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
+import { endOfDay, format, startOfDay } from "date-fns";
 import { Loader2, X, Percent, Banknote, CalendarDays, Tag, AlignLeft, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
@@ -49,8 +49,12 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
       description,
       discount_type: discountType,
       discount_value: parseFloat(discountValue),
-      valid_from: format(dateFrom, "yyyy-MM-dd"),
-      valid_until: format(dateTo, "yyyy-MM-dd"),
+      // The picker deals in whole days, so the window is stored as the instants
+      // that bracket them: a code set from 11 to 12 Aug runs from 11 Aug 00:00
+      // right through 12 Aug 23:59:59.999. Sending a bare "yyyy-MM-dd" stored
+      // the end as midnight, which killed the code as its final day began.
+      valid_from: startOfDay(dateFrom).toISOString(),
+      valid_until: endOfDay(dateTo).toISOString(),
       is_active: isActive,
     };
 

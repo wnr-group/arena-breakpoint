@@ -158,14 +158,17 @@ function MySubscriptionPageContent() {
                   <Label htmlFor="search-phone" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Phone className="h-3 w-3 text-zinc-600" /> MOBILE NUMBER
                   </Label>
-                  <div className="flex gap-2">
+                  {/* Stacked on mobile: sharing the row with the button left
+                      the monospaced field too narrow to show its placeholder at
+                      all once the +91 prefix took its left padding. */}
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <div className="relative flex-1">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-600 border-r border-zinc-900 pr-2">+91</span>
                       <Input
                         id="search-phone"
                         type="tel"
                         maxLength={10}
-                        placeholder="Enter 10-digit phone number"
+                        placeholder="Enter 10-digit number"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                         onKeyDown={(e) => e.key === "Enter" && fetchSubscription(phone)}
@@ -175,7 +178,7 @@ function MySubscriptionPageContent() {
                     <Button
                       onClick={() => fetchSubscription(phone)}
                       disabled={isLoading}
-                      className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 px-6 rounded-xl"
+                      className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 px-6 rounded-xl"
                     >
                       {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "SEARCH"}
                     </Button>

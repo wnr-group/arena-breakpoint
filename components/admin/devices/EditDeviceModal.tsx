@@ -82,7 +82,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
       <DialogContent className="bg-[var(--background)] border-[#27272a] text-white max-w-[900px] w-[95vw] p-0 overflow-hidden shadow-2xl h-auto max-h-[90vh] flex flex-col justify-between">
 
         {/* Header Panel */}
-        <div className="p-6 border-b border-[#27272a]/70 bg-[var(--surface)] flex-shrink-0">
+        <div className="p-6 pr-14 border-b border-[#27272a]/70 bg-[var(--surface)] flex-shrink-0">
           <DialogTitle className="text-xl font-black tracking-tight text-white">Edit Device Configuration</DialogTitle>
           <p className="text-xs text-[#a1a1aa] mt-1">Modify real-time arena metrics and track design layout card alterations instantly</p>
         </div>

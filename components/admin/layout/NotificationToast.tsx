@@ -36,13 +36,26 @@ function showNotificationToast(notification: Notification) {
   sonnerToast.custom(
     (t) => (
       <div
-        className="w-full bg-gradient-to-br from-[#111] via-zinc-950 to-[#111] border-2 border-primary/40 rounded-xl p-4 shadow-[0_0_40px_rgba(184,134,11,0.3)] cursor-pointer hover:border-primary/60 transition-all"
+        className="relative w-full bg-gradient-to-br from-[#111] via-zinc-950 to-[#111] border-2 border-primary/40 rounded-xl p-4 shadow-[0_0_40px_rgba(184,134,11,0.3)] cursor-pointer hover:border-primary/60 transition-all"
         onClick={() => {
           window.open(`/admin/bookings?id=${notification.bookingId}`, '_blank')
           sonnerToast.dismiss(t)
         }}
       >
-        <div className="flex items-start gap-3">
+        {/* Pinned to the card's top-right corner, matching the styled toasts */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            sonnerToast.dismiss(t)
+          }}
+          aria-label="Dismiss notification"
+          className="absolute right-2 top-2 rounded-lg p-1 text-secondary-content transition-colors hover:bg-white/5 hover:text-white"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        {/* pr-6 keeps the message clear of the close button */}
+        <div className="flex items-start gap-3 pr-6">
           <div
             className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
               notification.type === 'booking'
@@ -57,16 +70,6 @@ function showNotificationToast(notification: Notification) {
             <h4 className="text-sm font-black text-white mb-1">{notification.title}</h4>
             <p className="text-xs text-muted-content">{notification.message}</p>
           </div>
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              sonnerToast.dismiss(t)
-            }}
-            className="text-secondary-content hover:text-white transition-colors flex-shrink-0"
-          >
-            <X className="h-4 w-4" />
-          </button>
         </div>
       </div>
     ),

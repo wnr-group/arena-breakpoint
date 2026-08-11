@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format, parseISO } from "date-fns";
+import { endOfDay, format, parseISO, startOfDay } from "date-fns";
 import { Loader2, X, Percent, Banknote, CalendarDays, Tag, AlignLeft, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
@@ -64,8 +64,10 @@ export function EditPromoCodeModal({ onClose, editingPromo, onRefresh }: EditPro
       description,
       discount_type: discountType,
       discount_value: parseFloat(discountValue),
-      valid_from: format(dateFrom, "yyyy-MM-dd"),
-      valid_until: format(dateTo, "yyyy-MM-dd"),
+      // Whole days, stored as the instants that bracket them - the end date is
+      // inclusive, so a code set to run until 11 Aug lasts all of 11 Aug.
+      valid_from: startOfDay(dateFrom).toISOString(),
+      valid_until: endOfDay(dateTo).toISOString(),
       is_active: isActive,
     };
 
