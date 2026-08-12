@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import {
-  Filter,
-  Download,
   Edit2,
   Trash2,
   ChevronLeft,
@@ -52,14 +50,6 @@ export function SubscriptionTable({ data = [], onEdit, onDelete }: SubscriptionT
     <div className="bg-[var(--surface)] border border-[#27272a] rounded-xl overflow-hidden flex flex-col">
       <div className="p-4 sm:p-5 flex items-center justify-between border-b border-[#27272a]">
         <h2 className="text-lg font-bold text-white">Subscription Plans</h2>
-        <div className="flex gap-2">
-          <button className="p-2 bg-[var(--surface-hover)] border border-[#27272a] rounded-md text-[#a1a1aa] hover:text-white transition-colors">
-            <Filter className="h-4 w-4" />
-          </button>
-          <button className="p-2 bg-[var(--surface-hover)] border border-[#27272a] rounded-md text-[#a1a1aa] hover:text-white transition-colors">
-            <Download className="h-4 w-4" />
-          </button>
-        </div>
       </div>
 
       <div className="overflow-x-auto min-h-75">
