@@ -2,6 +2,7 @@
 
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { annotateRemovableFoodItems } from "@/lib/bookings/foodItems";
+import { formatLocalDate } from "@/lib/utils/dates";
 
 export interface BookingFilters {
   status?: string;
@@ -800,6 +801,16 @@ export async function createWalkInBooking(payload: {
     const happyHourDiscount = payload.happyHourDiscount || 0;
     const totalAmount = deviceSubtotal - subscriptionDiscount - happyHourDiscount;
 
+    // A walk-in is someone standing at the counter, so the front desk should not
+    // have to check them in as a second step - the booking starts already
+    // checked in. Only same-day walk-ins though: this form also takes bookings up
+    // to 6 days out (see isDateWithinBookingWindow), and marking one of those
+    // checked_in would put a session that has not started into the dashboard's
+    // active-session count and offer staff a Check Out button for it. Those stay
+    // 'confirmed' and get checked in by hand when the customer turns up.
+    const isToday = payload.selectedDate === formatLocalDate(new Date());
+    const now = new Date().toISOString();
+
     // Step 3: Create booking
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
@@ -815,7 +826,8 @@ export async function createWalkInBooking(payload: {
         subscription_discount: subscriptionDiscount,
         happy_hour_discount: happyHourDiscount,
         total_amount: totalAmount,
-        status: "confirmed", // Walk-in bookings are immediately confirmed
+        status: isToday ? "checked_in" : "confirmed",
+        checked_in_at: isToday ? now : null,
         payment_status: "pending",
         booking_source: "walk-in",
         lock_expires_at: null
@@ -939,7 +951,7 @@ export async function createWalkInBooking(payload: {
       throw lineItemsError;
     }
 
-    return { success: true, bookingId: booking.id, bookingNumber };
+    return { success: true, bookingId: booking.id, bookingNumber, checkedIn: isToday };
   } catch (err: any) {
     console.error("Create walk-in booking error:", err);
     return { success: false, error: err.message };

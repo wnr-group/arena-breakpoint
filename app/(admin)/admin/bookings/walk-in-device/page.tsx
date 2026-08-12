@@ -297,9 +297,11 @@ export default function WalkInBookingPage() {
     if (result.success) {
       // One notification for the confirmed booking: it toasts, chimes and lands
       // in the bell. The poller skips walk-ins so this is not repeated.
+      // Same-day walk-ins come back already checked in, so say so - the front
+      // desk should not go looking for a Check In button that is not there.
       addNotification({
         type: "booking",
-        title: "Walk-In Booking Confirmed",
+        title: result.checkedIn ? "Walk-In Checked In" : "Walk-In Booking Confirmed",
         message: `${customerName.trim()} • #${result.bookingNumber} • ₹${Math.round(total).toLocaleString("en-IN")}`,
         bookingId: result.bookingId || "",
         bookingNumber: result.bookingNumber || ""
