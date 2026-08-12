@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BookingStatusBadge } from "./BookingStatusBadge";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { getBookingDetails, checkInBooking, checkOutBooking, cancelBooking, addFoodToBooking, removeFoodItemFromBooking, updatePlayerCount, markBookingAsPaid } from "@/app/(admin)/admin/bookings/actions";
 import { getMenuItems } from "@/app/(admin)/admin/food/actions";
 import { Label } from "@/components/ui/label";
@@ -40,9 +41,22 @@ interface BookingDetailModalProps {
   onUpdate?: () => void;
   openFoodModalDirectly?: boolean;
   onPendingPayment?: (bookingId: string, balanceDue: number, bookingNumber: string) => void;
+  /**
+   * "modal" (default) renders inside a Dialog, as every existing caller expects.
+   * "page" renders the same panel as ordinary page content, for the standalone
+   * /admin/bookings/[bookingId] route the dashboard opens in a new tab - so a
+   * booking is never a second dialog stacked on the stat modal behind it.
+   *
+   * The secondary dialogs below (add food, cancel, mark paid) stay dialogs in
+   * both modes: those confirm an action already under way, they are not a second
+   * thing to browse.
+   */
+  variant?: "modal" | "page";
+  /** Rendered above the title in page mode - used for the back link. */
+  headerSlot?: React.ReactNode;
 }
 
-export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoodModalDirectly, onPendingPayment }: BookingDetailModalProps) {
+export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoodModalDirectly, onPendingPayment, variant = "modal", headerSlot }: BookingDetailModalProps) {
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [markAsPaidModalOpen, setMarkAsPaidModalOpen] = useState(false);
@@ -61,9 +75,20 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
   const [removingFoodItem, setRemovingFoodItem] = useState(false);
   const [foodSearchQuery, setFoodSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  /**
+   * The fetch only starts in the effect below, i.e. after the first paint, so
+   * without this the first render has `loading === false` and `booking === null`
+   * and briefly shows "No booking data available" before the spinner appears.
+   * Barely visible inside an animating dialog; very visible on the standalone
+   * page, which is a cold load in a fresh tab.
+   */
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
     if (open && bookingId) {
+      // Reset so switching to a different booking shows the loader again rather
+      // than the previous booking's details.
+      setHasLoaded(false);
       loadBookingDetails();
       loadMenuItems();
       if (openFoodModalDirectly) {
@@ -82,6 +107,9 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
       toast.error("Failed to load booking details", { description: result.error });
     }
     setLoading(false);
+    // Set on failure too, so a booking that cannot be fetched falls through to
+    // the empty state instead of spinning forever.
+    setHasLoaded(true);
   };
 
   const loadMenuItems = async () => {
@@ -275,24 +303,14 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
 
   const deviceSlot = booking?.booking_device_slots?.[0];
 
-  return (
+  // The detail panel itself, wrapped either in a Dialog or in plain page markup
+  // further down. Kept as one expression so both modes render exactly the same
+  // thing and cannot drift apart.
+  const detailBody = (
     <>
-      <Dialog open={open && !openFoodModalDirectly} onOpenChange={onClose}>
-        <DialogContent className="bg-[var(--surface)] border-[#27272a] text-white max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black uppercase tracking-tight flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-              BOOKING DETAILS
-              {booking && (
-                <span className="flex-shrink-0">
-                  <BookingStatusBadge status={booking.status} size="lg" />
-                </span>
-              )}
-            </DialogTitle>
-          </DialogHeader>
-
-          {loading ? (
+          {loading || (bookingId && !hasLoaded) ? (
             <div className="h-96 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 text-primary animate-spin" />
+              <BreakpointLoader size="md" text="Loading Booking..." />
             </div>
           ) : booking ? (
             <div className="space-y-6 mt-4">
@@ -811,8 +829,43 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
               <p className="text-muted-content">No booking data available</p>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+    </>
+  );
+
+  const titleRow = (
+    <>
+      BOOKING DETAILS
+      {booking && (
+        <span className="flex-shrink-0">
+          <BookingStatusBadge status={booking.status} size="lg" />
+        </span>
+      )}
+    </>
+  );
+
+  return (
+    <>
+      {variant === "page" ? (
+        // Standalone route: same panel, no Dialog, so nothing is ever stacked.
+        <div className="max-w-4xl mx-auto w-full">
+          {headerSlot}
+          <h1 className="text-xl font-black uppercase tracking-tight text-white flex flex-wrap items-center justify-between gap-x-3 gap-y-2 mb-2">
+            {titleRow}
+          </h1>
+          {detailBody}
+        </div>
+      ) : (
+        <Dialog open={open && !openFoodModalDirectly} onOpenChange={onClose}>
+          <DialogContent className="bg-[var(--surface)] border-[#27272a] text-white max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-black uppercase tracking-tight flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                {titleRow}
+              </DialogTitle>
+            </DialogHeader>
+            {detailBody}
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Add Food Modal */}
       <Dialog open={addFoodModalOpen} onOpenChange={(val) => {

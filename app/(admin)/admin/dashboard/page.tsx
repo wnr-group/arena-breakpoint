@@ -27,7 +27,6 @@ import { ActiveSessionsModal } from "@/components/admin/dashboard/ActiveSessions
 import { UpcomingBookingsModal } from "@/components/admin/dashboard/UpcomingBookingsModal";
 import { AvailableDevicesModal } from "@/components/admin/dashboard/AvailableDevicesModal";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
-import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
 import { CountUp, CurrencyCountUp } from "@/components/shared/CountUp";
 
 export default function AdminDashboardPage() {
@@ -47,15 +46,32 @@ export default function AdminDashboardPage() {
   const [upcomingDetails, setUpcomingDetails] = useState<any[]>([]);
   const [devicesModalOpen, setDevicesModalOpen] = useState(false);
   const [devicesDetails, setDevicesDetails] = useState<any[]>([]);
-  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
-  const [bookingDetailOpen, setBookingDetailOpen] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
   }, []);
 
-  const loadDashboardData = async () => {
-    setLoading(true);
+  /**
+   * A booking opened in another tab can be checked out, marked paid or have food
+   * added, none of which this tab would hear about - it would sit showing stale
+   * revenue until manually refreshed. Refetching when the operator returns to
+   * this tab keeps the figures honest. Silent, so any open stat modal survives.
+   */
+  useEffect(() => {
+    const refreshOnReturn = () => {
+      if (document.visibilityState === "visible") loadDashboardData(true);
+    };
+
+    document.addEventListener("visibilitychange", refreshOnReturn);
+    return () => document.removeEventListener("visibilitychange", refreshOnReturn);
+  }, []);
+
+  /**
+   * `silent` refreshes the figures without flipping `loading`, which would swap
+   * the whole page for the full-screen loader and tear down any open stat modal.
+   */
+  const loadDashboardData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [statsResult, bookingsResult, scheduleResult, quickStatsResult] = await Promise.all([
         getDashboardStats(),
@@ -79,20 +95,13 @@ export default function AdminDashboardPage() {
     } catch (err) {
       console.error("Failed to load dashboard data:", err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   const handleRefresh = () => {
     loadDashboardData();
     toast.success("Refreshed", { description: "Dashboard data reloaded" });
-  };
-
-  const handleBookingDetailClose = () => {
-    setBookingDetailOpen(false);
-    setSelectedBookingId(null);
-    // Reload dashboard data when closing booking detail
-    loadDashboardData();
   };
 
   const getCurrentTime = () => {
@@ -144,9 +153,16 @@ export default function AdminDashboardPage() {
     }
   };
 
+  /**
+   * Opens a booking from one of the stat modals (Today's Revenue, Active
+   * Sessions, Upcoming Bookings) in a new tab rather than a second dialog on top
+   * of the one already open. The stat modal stays put behind it, so the figure
+   * being reviewed is not lost.
+   *
+   * noopener/noreferrer because the new tab must not get a handle on this one.
+   */
   const handleBookingClick = (bookingId: string) => {
-    setSelectedBookingId(bookingId);
-    setBookingDetailOpen(true);
+    window.open(`/admin/bookings/${bookingId}`, "_blank", "noopener,noreferrer");
   };
 
   if (loading) {
@@ -565,13 +581,8 @@ export default function AdminDashboardPage() {
         devices={devicesDetails}
       />
 
-      {/* Booking Detail Modal */}
-      <BookingDetailModal
-        bookingId={selectedBookingId}
-        open={bookingDetailOpen}
-        onClose={handleBookingDetailClose}
-        onUpdate={loadDashboardData}
-      />
+      {/* Booking detail is not rendered here - it opens as its own page in a new
+          tab (see handleBookingClick), so the stat modals never stack. */}
     </div>
   );
 }
