@@ -29,7 +29,6 @@ import {
   RazorpayFailedError,
 } from "@/lib/razorpay/checkout";
 import { checkCustomerExists } from "../../booking/actions";
-import { validatePromoCode, calculatePromoDiscount } from "../../booking/promo-actions";
 import {
   Loader2,
   Trash2,
@@ -39,24 +38,28 @@ import {
   User,
   Phone,
   Mail,
-  Sparkles,
   ChevronRight,
   ShieldCheck,
   RefreshCw,
   Cake,
   CheckCircle2,
   ArrowLeft,
-  Tag,
   QrCode,
   UtensilsCrossed
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
-import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
+import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDob, DOB_ERROR } from "@/lib/utils/dates";
+import { allFilled, isPlausibleEmail } from "@/lib/utils/forms";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/currency";
 
-type Step = "cart" | "phone" | "details" | "success";
+/**
+ * "summary" sits between identifying the customer and opening Razorpay. Without
+ * it the phone lookup dropped a returning customer straight into the payment
+ * sheet with no chance to check what they were about to be charged for.
+ */
+type Step = "cart" | "phone" | "details" | "summary" | "success";
 
 export default function FoodCheckoutPage() {
   const router = useRouter();
@@ -84,16 +87,9 @@ export default function FoodCheckoutPage() {
   // this screen computed once we have it.
   const [serverSummary, setServerSummary] = useState<{
     itemsTotal: number;
-    promoDiscount: number;
     totalAmount: number;
   } | null>(null);
   const [mounted, setMounted] = useState(false);
-
-  // Promo Code States
-  const [promoCode, setPromoCodeInput] = useState("");
-  const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
-  const [promoDiscount, setPromoDiscount] = useState<number>(0);
-  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -113,6 +109,12 @@ export default function FoodCheckoutPage() {
     }
   }, [step, bookingContext.bookingId]);
 
+  // Gates the new-customer submit: every starred field must be filled.
+  const detailsComplete =
+    allFilled(name, customerDob) &&
+    customerDob.length === 10 &&
+    isPlausibleEmail(email);
+
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = handleDobInput(e.target.value);
     setCustomerDob(formatted);
@@ -122,69 +124,31 @@ export default function FoodCheckoutPage() {
     return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   }, [cartItems]);
 
-  const finalTotalAmount = useMemo(() => {
-    return Math.max(0, cartTotal - promoDiscount);
-  }, [cartTotal, promoDiscount]);
+  // Food carries no discounts, so the total is simply the cart total.
+  const finalTotalAmount = cartTotal;
 
   // What the customer is shown. Defers to the server's price the moment it has
   // told us what it will charge.
   const effectiveItemsTotal = serverSummary?.itemsTotal ?? cartTotal;
-  const effectivePromoDiscount = serverSummary?.promoDiscount ?? promoDiscount;
   const effectiveTotal = serverSummary?.totalAmount ?? finalTotalAmount;
 
   const cartItemCount = useMemo(() => {
     return cartItems.reduce((sum, item) => sum + item.quantity, 0);
   }, [cartItems]);
 
-  const handleApplyPromo = async () => {
-    if (!promoCode.trim()) {
-      toast.error("Please enter a promo code");
-      return;
-    }
-
-    setIsApplyingPromo(true);
-    const result = await validatePromoCode(promoCode);
-
-    if (result.success && result.promo) {
-      const discount = await calculatePromoDiscount(
-        cartTotal,
-        result.promo.discount_type,
-        result.promo.discount_value
-      );
-
-      setPromoDiscount(discount);
-      setAppliedPromoCode(result.promo.code);
-      toast.success("Promo code applied!", {
-        description: `You saved ₹${formatCurrency(discount)} with code ${result.promo.code}`
-      });
-    } else {
-      toast.error(result.error || "Invalid promo code");
-    }
-    setIsApplyingPromo(false);
-  };
-
-  const handleRemovePromo = () => {
-    setPromoDiscount(0);
-    setAppliedPromoCode(null);
-    setPromoCodeInput("");
-    toast.info("Promo code removed");
-  };
+  /**
+   * Food ordered against an active device session goes on that session's tab and
+   * is settled at the counter - no identification step and no online payment.
+   */
+  const isOnTab = Boolean(bookingContext.bookingId);
+  const summaryName = bookingContext.customerName || name;
+  const summaryPhone = bookingContext.customerPhone || phone;
 
   const handleProceedToCheckout = () => {
-    if (bookingContext.bookingId) {
-      // Get DOB from booking context or current form
-      const dobValue = bookingContext.customerDob || customerDob;
-      const formattedDob = dobValue ? formatDateForDB(dobValue) : "";
-
-      submitOrderPayload(
-        bookingContext.customerPhone || phone,
-        bookingContext.customerName || name,
-        null,
-        formattedDob
-      );
-    } else {
-      setStep("phone");
-    }
+    // On-tab orders already know who the customer is from the session, so they
+    // skip identification - but they still get the review screen before the
+    // items are committed to the tab.
+    setStep(isOnTab ? "summary" : "phone");
   };
 
   const handlePhoneLookupSubmit = async (e: React.FormEvent) => {
@@ -208,7 +172,10 @@ export default function FoodCheckoutPage() {
       }
       toast.success("Welcome back!", { description: `Hey ${result.customer.name}! Profile authenticated successfully.` });
 
-      await submitOrderPayload(phone, result.customer.name, result.customer.email || null, dobFromDB || "");
+      // Review before paying, rather than dropping straight into Razorpay.
+      // No membership lookup here: food is never discounted, so a customer's
+      // subscription has no bearing on what this order costs.
+      setStep("summary");
     } else {
       toast.info("New Profile", { description: "Please complete registration to place your order." });
       setStep("details");
@@ -229,8 +196,9 @@ export default function FoodCheckoutPage() {
       return;
     }
 
-    if (!isValidDateDDMMYYYY(customerDob)) {
-      toast.error("Invalid Date", { description: "Please enter a valid date in DD-MM-YYYY format." });
+    // isValidDob covers both the DD-MM-YYYY shape and the accepted year range.
+    if (!isValidDob(customerDob)) {
+      toast.error(DOB_ERROR);
       return;
     }
 
@@ -240,10 +208,35 @@ export default function FoodCheckoutPage() {
       return;
     }
 
+    // Straight to the review screen; payment happens from there.
+    setStep("summary");
+  };
+
+  /** Called from the summary screen once the customer has seen what they owe. */
+  const handleConfirmAndPay = async () => {
+    if (isOnTab) {
+      // Identity comes from the active session, not from a form the customer
+      // filled in - they never saw one.
+      const dobValue = bookingContext.customerDob || customerDob;
+      await submitOrderPayload(
+        bookingContext.customerPhone || phone,
+        bookingContext.customerName || name,
+        null,
+        dobValue ? formatDateForDB(dobValue) : ""
+      );
+      return;
+    }
+
+    const formattedDob = customerDob ? formatDateForDB(customerDob) : "";
     await submitOrderPayload(phone, name, email.trim() || null, formattedDob);
   };
 
-  const submitOrderPayload = async (targetPhone: string, targetName: string, targetEmail: string | null, dob: string) => {
+  const submitOrderPayload = async (
+    targetPhone: string,
+    targetName: string,
+    targetEmail: string | null,
+    dob: string
+  ) => {
     setIsSubmitting(true);
 
     const validationResult = await validateMenuItems(
@@ -301,7 +294,6 @@ export default function FoodCheckoutPage() {
           id: item.menu_item_id,
           quantity: item.quantity,
         })),
-        promoCode: appliedPromoCode,
       });
 
       if (!order.success) {
@@ -322,11 +314,11 @@ export default function FoodCheckoutPage() {
       }
 
       // The server prices the cart from the menu, so it can legitimately disagree
-      // with this screen - a price change, an expired promo, an item pulled from
-      // sale. Never open checkout on a number the customer has not seen.
+      // with this screen - a price change, an item pulled from sale. Never open
+      // checkout on a number the customer has not seen.
       if (
         order.summary &&
-        Math.abs(order.summary.totalAmount - finalTotalAmount) > 0.01
+        Math.abs(order.summary.totalAmount - cartTotal) > 0.01
       ) {
         toast.warning("Price Updated", {
           description: `Your order now comes to ₹${formatCurrency(
@@ -465,15 +457,6 @@ export default function FoodCheckoutPage() {
               <h3 className="text-sm font-black uppercase text-zinc-200 tracking-wider pb-2 border-b border-zinc-900/60">Order Summary</h3>
               <div className="space-y-3.5 text-xs text-zinc-400">
                 <div className="flex justify-between"><span>Subtotal</span><span className="text-zinc-200 font-mono font-bold">₹{formatCurrency(effectiveItemsTotal)}</span></div>
-                {effectivePromoDiscount > 0 && (
-                  <div className="flex justify-between text-primary font-bold">
-                    <span className="flex items-center gap-1">
-                      <Tag className="h-3 w-3" />
-                      Promo Discount ({appliedPromoCode}):
-                    </span>
-                    <span className="font-mono">-₹{formatCurrency(effectivePromoDiscount)}</span>
-                  </div>
-                )}
                 <div className="flex justify-between items-baseline font-black text-white pt-4 border-t border-t-zinc-900">
                   <span className="text-xs uppercase text-zinc-400 font-black">Total</span>
                   <span className="text-2xl text-primary font-mono tracking-tight">₹{formatCurrency(effectiveTotal)}</span>
@@ -485,46 +468,10 @@ export default function FoodCheckoutPage() {
                 )}
               </div>
 
-              <div className="space-y-1.5 pt-1">
-                <Label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest block">Promo Code</Label>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Enter code"
-                    value={promoCode}
-                    onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
-                    className="bg-zinc-950 border-zinc-900 h-10 text-xs text-white rounded-xl uppercase font-mono"
-                    disabled={isApplyingPromo || appliedPromoCode !== null}
-                  />
-                  {appliedPromoCode ? (
-                    <Button
-                      onClick={handleRemovePromo}
-                      variant="outline"
-                      className="border-red-500/30 text-red-400 hover:bg-red-950/20 text-[10px] font-black uppercase h-10 px-4 rounded-xl"
-                      disabled={isApplyingPromo}
-                    >
-                      Remove
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={handleApplyPromo}
-                      disabled={!promoCode.trim() || isApplyingPromo}
-                      variant="gradient"
-                      className="uppercase text-[10px] h-10 px-6 rounded-xl"
-                    >
-                      {isApplyingPromo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Apply"}
-                    </Button>
-                  )}
-                </div>
-                {appliedPromoCode && (
-                  <div className="flex items-center gap-1.5 text-xs text-green-400 bg-green-950/30 px-3 py-2 rounded-lg border border-green-500/20 mt-2">
-                    <CheckCircle2 className="h-3 w-3" />
-                    <span className="font-bold">Code "{appliedPromoCode}" applied successfully!</span>
-                  </div>
-                )}
-              </div>
+              {/* No promo code field: food is never discounted. */}
 
               <Button variant="gradient" onClick={handleProceedToCheckout} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl shadow-xl shadow-primary/5 tracking-wider active:scale-[0.99] transition-transform">
-                Proceed to Checkout
+                {isOnTab ? "Review Order" : "Proceed to Checkout"}
               </Button>
             </Card>
           </div>
@@ -582,7 +529,7 @@ export default function FoodCheckoutPage() {
             </div>
 
             <div className="pt-2 space-y-2">
-              <Button variant="gradient" type="submit" disabled={isSubmitting} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 shadow-xl transition-all">
+              <Button variant="gradient" type="submit" disabled={isSubmitting || phone.trim().length < 10} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 shadow-xl transition-all disabled:opacity-50 disabled:pointer-events-none">
                 {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "CONTINUE"} <ChevronRight className="h-4 w-4 stroke-[3]" />
               </Button>
             </div>
@@ -627,7 +574,7 @@ export default function FoodCheckoutPage() {
 
             <div className="space-y-2">
               <Label htmlFor="dob" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Cake className="h-3 w-3 text-zinc-600" /> DATE OF BIRTH (DD-MM-YYYY)
+                <Cake className="h-3 w-3 text-zinc-600" /> DATE OF BIRTH (DD-MM-YYYY) <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="dob"
@@ -642,16 +589,126 @@ export default function FoodCheckoutPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><Mail className="h-3 w-3 text-zinc-600" /> EMAIL ADDRESS</Label>
-              <Input id="email" type="email" placeholder="Enter your email (optional)" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl" />
+              <Label htmlFor="email" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><Mail className="h-3 w-3 text-zinc-600" /> EMAIL ADDRESS <span className="text-red-500">*</span></Label>
+              <Input id="email" type="email" required placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl" />
             </div>
 
             <div className="pt-4 space-y-2">
-              <Button variant="gradient" type="submit" disabled={isSubmitting} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
-                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "PAY & PLACE ORDER"} <ChevronRight className="h-4 w-4 stroke-[3]" />
+              <Button variant="gradient" type="submit" disabled={isSubmitting || !detailsComplete} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none">
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "REVIEW ORDER"} <ChevronRight className="h-4 w-4 stroke-[3]" />
               </Button>
             </div>
           </form>
+        </Card>
+      </div>
+    );
+  }
+
+  if (step === "summary") {
+    return (
+      <div className="w-full max-w-2xl mx-auto py-4 px-2 animate-in fade-in duration-300">
+        <div className="w-full max-w-xs mx-auto flex items-center justify-between pb-8 select-none">
+          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-green-500 text-black font-black text-[9px] flex items-center justify-center"><CheckCircle2 className="h-3 w-3" /></div><span className="text-[8px] font-black uppercase text-green-500 tracking-wider">Cart</span></div>
+          <div className="h-0.5 bg-green-500 flex-1 mx-2" />
+          {/* On-tab orders never pass through identification, so that step is
+              not shown as something they completed. */}
+          {!isOnTab && (
+            <>
+              <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-green-500 text-black font-black text-[9px] flex items-center justify-center"><CheckCircle2 className="h-3 w-3" /></div><span className="text-[8px] font-black uppercase text-green-500 tracking-wider">Details</span></div>
+              <div className="h-0.5 bg-primary flex-1 mx-2" />
+            </>
+          )}
+          <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">{isOnTab ? 2 : 3}</div><span className="text-[8px] font-black uppercase text-primary tracking-wider">Confirm</span></div>
+        </div>
+
+        <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6 glow-box-hover">
+          <div className="border-b border-zinc-900 pb-4 space-y-1">
+            <h3 className="text-lg font-black uppercase text-white tracking-tight">ORDER SUMMARY</h3>
+            <p className="text-xs text-zinc-500 font-medium">
+              {isOnTab
+                ? "Please review your order before adding it to your session tab."
+                : "Please review your order before paying."}
+            </p>
+          </div>
+
+          {isOnTab && bookingContext.bookingNumber && (
+            <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-amber-400 flex-shrink-0" />
+              <p className="text-[11px] text-amber-300 font-bold">
+                Adding to session {bookingContext.bookingNumber} — pay at the counter.
+              </p>
+            </div>
+          )}
+
+          {/* Items */}
+          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 glow-box-hover">
+            <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider flex items-center gap-2">
+              <UtensilsCrossed className="h-3.5 w-3.5" />
+              Items ({cartItemCount})
+            </h4>
+            <div className="space-y-2">
+              {cartItems.map((item) => (
+                <div key={item.menu_item_id} className="flex items-center justify-between py-2 border-b border-zinc-900 last:border-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm text-zinc-300 truncate">{item.name}</span>
+                    <span className="text-xs text-zinc-600 flex-shrink-0">x{item.quantity}</span>
+                  </div>
+                  <span className="text-sm text-white font-bold font-mono flex-shrink-0">₹{formatCurrency(item.price * item.quantity)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Customer */}
+          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-2 text-sm glow-box-hover">
+            <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Customer Information</h4>
+            {summaryName && (
+              <div className="flex justify-between"><span className="text-zinc-500">Name:</span> <span className="text-white font-bold">{summaryName}</span></div>
+            )}
+            {summaryPhone && (
+              <div className="flex justify-between"><span className="text-zinc-500">Phone:</span> <span className="text-primary font-bold">+91 {summaryPhone}</span></div>
+            )}
+            {!isOnTab && email && (
+              <div className="flex justify-between"><span className="text-zinc-500">Email:</span> <span className="text-white font-bold truncate ml-4">{email}</span></div>
+            )}
+          </div>
+
+          {/* Total */}
+          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 glow-box-hover">
+            <div className="flex justify-between text-xs text-zinc-400">
+              <span>Subtotal</span>
+              <span className="text-zinc-200 font-mono font-bold">₹{formatCurrency(effectiveItemsTotal)}</span>
+            </div>
+            <div className="flex justify-between items-baseline font-black text-white pt-3 border-t border-zinc-900">
+              <span className="text-xs uppercase text-zinc-400 font-black">
+                {isOnTab ? "Added To Tab" : "Amount To Pay"}
+              </span>
+              <span className="text-2xl text-primary font-mono tracking-tight">₹{formatCurrency(effectiveTotal)}</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Button
+              variant="gradient"
+              onClick={handleConfirmAndPay}
+              disabled={isSubmitting}
+              className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none"
+            >
+              {isSubmitting
+                ? <Loader2 className="h-4 w-4 animate-spin text-black" />
+                : isOnTab
+                  ? `ADD ₹${formatCurrency(effectiveTotal)} TO TAB`
+                  : `PAY ₹${formatCurrency(effectiveTotal)}`} <CheckCircle2 className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setStep("cart")}
+              variant="ghost"
+              className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl"
+            >
+              ← BACK TO CART
+            </Button>
+          </div>
         </Card>
       </div>
     );
@@ -715,15 +772,6 @@ export default function FoodCheckoutPage() {
             <div className="flex justify-between"><span className="text-zinc-500">Phone:</span> <span className="text-primary font-bold">+91 {phone}</span></div>
             <div className="flex justify-between"><span className="text-zinc-500">Items Count:</span> <span className="text-white font-bold">{cartItemCount} items</span></div>
             <div className="flex justify-between"><span className="text-zinc-500">Subtotal:</span> <span className="text-white font-bold">₹{formatCurrency(effectiveItemsTotal)}</span></div>
-            {effectivePromoDiscount > 0 && (
-              <div className="flex justify-between text-xs text-green-500">
-                <span className="flex items-center gap-1">
-                  <Tag className="h-3 w-3" />
-                  Promo Discount ({appliedPromoCode}):
-                </span>
-                <span className="font-bold">-₹{formatCurrency(effectivePromoDiscount)}</span>
-              </div>
-            )}
             {/* On-tab orders are settled at the counter, so they are explicitly
                 NOT presented as paid. Only amountPaid - which comes back from
                 server-side payment verification - counts as money received. */}

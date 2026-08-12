@@ -20,12 +20,12 @@ export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTab
         <Tag className="h-12 w-12 text-zinc-700 mx-auto" />
         <div>
           <h3 className="text-sm font-bold text-secondary-content mb-1">No Promo Codes Yet</h3>
-          <p className="text-xs text-muted-content">Create your first promotional campaign to offer discounts.</p>
+          <p className="text-sm text-muted-content">Create your first promotional campaign to offer discounts.</p>
         </div>
         {onAdd && (
           <Button
             onClick={onAdd}
-            className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs"
+            className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-sm"
           >
             Create First Promo Code
           </Button>
@@ -36,12 +36,12 @@ export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTab
 
   return (
     <Card className="bg-[var(--surface)] border-zinc-900 rounded-xl overflow-hidden shadow-2xl w-full overflow-x-auto">
-      <div className="p-4 bg-[var(--background)]/40 border-b border-zinc-900 font-black text-xs uppercase text-muted-content tracking-wider">
+      <div className="p-4 bg-[var(--background)]/40 border-b border-zinc-900 font-black text-sm uppercase text-muted-content tracking-wider">
         Active Promo Code List
       </div>
-      <table className="w-full text-left border-collapse text-xs table-fixed min-w-[800px]">
+      <table className="w-full text-left border-collapse text-sm table-fixed min-w-[800px]">
         <thead>
-          <tr className="border-b border-zinc-900 bg-[var(--background)]/20 text-secondary-content font-black uppercase text-[11px] tracking-wider select-none">
+          <tr className="border-b border-zinc-900 bg-[var(--background)]/20 text-secondary-content font-black uppercase text-xs tracking-wider select-none">
             <th className="p-4 w-[20%]">Code</th>
             <th className="p-4 w-[30%]">Description</th>
             <th className="p-4 w-[15%]">Discount</th>
@@ -70,7 +70,7 @@ export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTab
                   // switch is set.
                   const { label, className } = PROMO_STATUS_PRESENTATION[getPromoStatus(row)];
                   return (
-                    <span className={`${className} text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider`}>
+                    <span className={`${className} text-[11px] font-black px-2 py-0.5 rounded uppercase tracking-wider`}>
                       {label}
                     </span>
                   );

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useRequiredFields } from '@/lib/hooks/useRequiredFields'
 
 // Update this path to match your actual actions file
 import { getDevices, updateHappyHour } from './action'
@@ -47,6 +48,7 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
   const [devices, setDevices] = useState<any[]>([])
   const [isLoadingDevices, setIsLoadingDevices] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { formRef, isComplete, recheck } = useRequiredFields()
 
   // Fetch devices and parse existing rule data
   useEffect(() => {
@@ -178,17 +180,17 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
             <span className="w-2 h-4 bg-primary rounded-sm block shadow-primary" />
             Edit Happy Hour
           </DialogTitle>
-          <p className="text-[11px] text-secondary-content font-semibold mt-0.5 tracking-wide">
+          <p className="text-xs text-secondary-content font-semibold mt-0.5 tracking-wide">
             Update the pricing rules and schedule for this promotion.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0">
+        <form ref={formRef} onChange={recheck} onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0">
           <div className="flex-1 p-8 space-y-6 bg-[var(--background)] overflow-y-auto">
 
             {/* Row 1: Promotion Name (Full Width) */}
             <div className="space-y-2">
-              <label className="text-[10px] font-black tracking-widest uppercase text-zinc-300">Promotion Name</label>
+              <label className="text-xs font-black tracking-widest uppercase text-zinc-300">Promotion Name <span className="text-red-500">*</span></label>
               <Input
                 name="promotionName"
                 defaultValue={rule.name}
@@ -199,14 +201,14 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
 
             {/* Row 2: Select Days */}
             <div className="space-y-2">
-              <label className="text-[10px] font-black tracking-widest uppercase text-zinc-300">Select Days</label>
+              <label className="text-xs font-black tracking-widest uppercase text-zinc-300">Select Days <span className="text-red-500">*</span></label>
               <div className="flex flex-row justify-between sm:justify-start gap-1 sm:gap-2 mt-1 w-full overflow-x-auto pb-1 no-scrollbar">
                 {DAYS_ABBR.map((day, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => toggleDay(idx)}
-                    className={`flex-1 sm:flex-initial w-9 h-9 min-w-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all border ${
+                    className={`flex-1 sm:flex-initial w-9 h-9 min-w-8 flex items-center justify-center rounded-lg text-sm font-bold transition-all border ${
                       selectedDays.includes(idx)
                         ? 'border-primary bg-primary/10 text-primary'
                         : 'border-[#27272a] bg-[var(--surface)] text-muted-content hover:border-zinc-700'
@@ -221,7 +223,7 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
             {/* Row 3: Discount & Status Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-[10px] font-black tracking-widest uppercase text-zinc-300">Discount (%)</label>
+                <label className="text-xs font-black tracking-widest uppercase text-zinc-300">Discount (%) <span className="text-red-500">*</span></label>
                 <div className="relative">
                   <Input
                     type="number"
@@ -237,7 +239,7 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black tracking-widest uppercase text-zinc-300">Status</label>
+                <label className="text-xs font-black tracking-widest uppercase text-zinc-300">Status <span className="text-red-500">*</span></label>
                 <select
                   name="status"
                   className="flex h-10 w-full rounded-md border border-[#27272a] bg-[var(--surface)] px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white cursor-pointer transition-colors"
@@ -254,7 +256,7 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
             {/* Row 4: Time Range & Applies To Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-[10px] font-black tracking-widest uppercase text-zinc-300">Time Range</label>
+                <label className="text-xs font-black tracking-widest uppercase text-zinc-300">Time Range <span className="text-red-500">*</span></label>
                 <div className="flex items-center gap-2">
                   <Input
                     type="time"
@@ -275,7 +277,7 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black tracking-widest uppercase text-zinc-300">Applies To</label>
+                <label className="text-xs font-black tracking-widest uppercase text-zinc-300">Applies To <span className="text-red-500">*</span></label>
                 <select
                   name="device"
                   className="flex h-10 w-full rounded-md border border-[#27272a] bg-[var(--surface)] px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white cursor-pointer transition-colors"
@@ -305,14 +307,14 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
               variant="ghost"
               onClick={() => setOpen(false)}
               disabled={isSubmitting}
-              className="text-muted-content hover:bg-zinc-900 hover:text-white font-black uppercase text-xs tracking-wider"
+              className="text-muted-content hover:bg-zinc-900 hover:text-white font-black uppercase text-sm tracking-wider"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting}
-              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs tracking-wider px-6 h-10 rounded-lg shadow-md transition-all"
+              disabled={isSubmitting || !isComplete || selectedDays.length === 0}
+              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-sm tracking-wider px-6 h-10 rounded-lg shadow-md transition-all disabled:opacity-50 disabled:pointer-events-none"
             >
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Changes'}
             </Button>

@@ -80,14 +80,14 @@ export default function SubscriptionPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-900 pb-5">
         <div className="animate-in slide-in-from-left-4 duration-500">
           <h1 className="text-2xl font-black uppercase tracking-tight">Subscription Management</h1>
-          <p className="text-xs text-secondary-content font-medium mt-0.5">
+          <p className="text-sm text-secondary-content font-medium mt-0.5">
             Configure and monitor subscription plans for gaming and refreshments.
           </p>
         </div>
         <Button
           onClick={() => setIsAddOpen(true)}
           variant="gradient"
-          className="font-black uppercase text-xs h-11 px-5 rounded-lg tracking-wider flex items-center gap-2"
+          className="font-black uppercase text-sm h-11 px-5 rounded-lg tracking-wider flex items-center gap-2"
         >
           <PlusCircle className="h-4 w-4 stroke-[3]" /> Add Subscription
         </Button>
@@ -96,7 +96,7 @@ export default function SubscriptionPage() {
       {/* MAIN TABLE AREA */}
       <div className="mt-2 animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both">
         {isLoading ? (
-          <div className="text-center py-12 bg-[var(--surface)] border border-zinc-900 rounded-xl flex justify-center items-center gap-3 text-[11px] font-black uppercase tracking-wider text-muted-content">
+          <div className="text-center py-12 bg-[var(--surface)] border border-zinc-900 rounded-xl flex justify-center items-center gap-3 text-xs font-black uppercase tracking-wider text-muted-content">
             <BreakpointLoader size="sm" /> Loading subscription plans
           </div>
         ) : (

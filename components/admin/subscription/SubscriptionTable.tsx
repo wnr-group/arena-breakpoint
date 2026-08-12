@@ -48,13 +48,13 @@ export function SubscriptionTable({ data = [], onEdit, onDelete }: SubscriptionT
 
   return (
     <div className="bg-[var(--surface)] border border-zinc-900 rounded-xl overflow-hidden flex flex-col shadow-2xl">
-      <div className="p-4 bg-[var(--background)]/40 border-b border-zinc-900 font-black text-xs uppercase text-muted-content tracking-wider">
+      <div className="p-4 bg-[var(--background)]/40 border-b border-zinc-900 font-black text-sm uppercase text-muted-content tracking-wider">
         Subscription Plan List
       </div>
 
       <div className="overflow-x-auto min-h-75">
-        <table className="w-full text-left text-xs whitespace-nowrap">
-          <thead className="bg-[var(--background)]/20 text-secondary-content font-black uppercase text-[11px] tracking-wider border-b border-zinc-900 select-none">
+        <table className="w-full text-left text-sm whitespace-nowrap">
+          <thead className="bg-[var(--background)]/20 text-secondary-content font-black uppercase text-xs tracking-wider border-b border-zinc-900 select-none">
             <tr>
               <th className="px-6 py-4">Plan Name</th>
               <th className="px-6 py-4">Duration</th>
@@ -71,7 +71,7 @@ export function SubscriptionTable({ data = [], onEdit, onDelete }: SubscriptionT
                   {/* NAME & DESC */}
                   <td className="px-6 py-4">
                     <div className="font-black text-primary tracking-wide uppercase">{row.name}</div>
-                    <div className="text-[11px] text-muted-content font-medium mt-0.5 truncate max-w-50">
+                    <div className="text-xs text-muted-content font-medium mt-0.5 truncate max-w-50">
                       {row.description || 'No description'}
                     </div>
                   </td>
@@ -94,7 +94,7 @@ export function SubscriptionTable({ data = [], onEdit, onDelete }: SubscriptionT
 
                   {/* DISCOUNT */}
                   <td className="px-6 py-4">
-                    <span className="inline-flex items-center justify-center px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 rounded">
+                    <span className="inline-flex items-center justify-center px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 rounded">
                       {row.discount_percentage}% OFF
                     </span>
                   </td>
@@ -102,11 +102,11 @@ export function SubscriptionTable({ data = [], onEdit, onDelete }: SubscriptionT
                   {/* STATUS */}
                   <td className="px-6 py-4">
                     {row.is_active ? (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-green-400 border border-green-500/20 rounded bg-green-500/10">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-green-400 border border-green-500/20 rounded bg-green-500/10">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span> Active
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-muted-content border border-zinc-800 rounded bg-[var(--background)]/80">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-muted-content border border-zinc-800 rounded bg-[var(--background)]/80">
                         <span className="w-1.5 h-1.5 rounded-full bg-zinc-500"></span> Inactive
                       </span>
                     )}
@@ -133,7 +133,7 @@ export function SubscriptionTable({ data = [], onEdit, onDelete }: SubscriptionT
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-xs font-medium text-muted-content">
+                <td colSpan={6} className="px-6 py-12 text-center text-sm font-medium text-muted-content">
                   No subscription plans found. Add one to get started.
                 </td>
               </tr>
@@ -142,7 +142,7 @@ export function SubscriptionTable({ data = [], onEdit, onDelete }: SubscriptionT
         </table>
       </div>
 
-      <div className="p-4 border-t border-zinc-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] font-bold uppercase tracking-wider text-muted-content">
+      <div className="p-4 border-t border-zinc-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold uppercase tracking-wider text-muted-content">
         <span>
           Showing <strong className="text-white font-black">{data.length === 0 ? 0 : startIndex + 1}</strong>{' '}
           to <strong className="text-white font-black">{Math.min(endIndex, data.length)}</strong> of{' '}

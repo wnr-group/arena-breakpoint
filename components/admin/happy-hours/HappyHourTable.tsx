@@ -71,14 +71,14 @@ export function HappyHourTable({ data = [], onEdit, onDelete }: TableProps) {
 
   return (
     <div className="bg-[var(--surface)] border border-zinc-900 rounded-xl overflow-hidden flex flex-col shadow-2xl">
-      <div className="p-4 bg-[var(--background)]/40 border-b border-zinc-900 font-black text-xs uppercase text-muted-content tracking-wider">
+      <div className="p-4 bg-[var(--background)]/40 border-b border-zinc-900 font-black text-sm uppercase text-muted-content tracking-wider">
         Active Rules Configuration
       </div>
 
       {/* RESPONSIVE SCROLLABLE TABLE */}
       <div className="overflow-x-auto min-h-75">
-        <table className="w-full text-left text-xs whitespace-nowrap">
-          <thead className="bg-[var(--background)]/20 text-secondary-content font-black uppercase text-[11px] tracking-wider border-b border-zinc-900 select-none">
+        <table className="w-full text-left text-sm whitespace-nowrap">
+          <thead className="bg-[var(--background)]/20 text-secondary-content font-black uppercase text-xs tracking-wider border-b border-zinc-900 select-none">
             <tr>
               <th className="px-6 py-4">Rule Name</th>
               <th className="px-6 py-4">Discount</th>
@@ -109,10 +109,10 @@ export function HappyHourTable({ data = [], onEdit, onDelete }: TableProps) {
                   <td className="px-6 py-4 text-muted-content">
                     {row.devices.includes('PS') ? (
                       <div className="flex gap-1 items-center">
-                        <span className="bg-[#27272a] text-xs px-2 py-1 rounded-full text-white">PS</span>
-                        <span className="bg-[#27272a] text-xs px-2 py-1 rounded-full text-white">PC</span>
-                        <span className="bg-[#27272a] text-xs px-2 py-1 rounded-full text-white">XR</span>
-                        <span className="bg-primary/20 text-primary text-xs px-2 py-1 rounded-full border border-primary/30">+12</span>
+                        <span className="bg-[#27272a] text-sm px-2 py-1 rounded-full text-white">PS</span>
+                        <span className="bg-[#27272a] text-sm px-2 py-1 rounded-full text-white">PC</span>
+                        <span className="bg-[#27272a] text-sm px-2 py-1 rounded-full text-white">XR</span>
+                        <span className="bg-primary/20 text-primary text-sm px-2 py-1 rounded-full border border-primary/30">+12</span>
                       </div>
                     ) : (
                       row.devices
@@ -124,13 +124,13 @@ export function HappyHourTable({ data = [], onEdit, onDelete }: TableProps) {
                     <div className="flex flex-col">
                       <span className="text-white font-bold">{row.schedule}</span>
                       {/* Displays the time range immediately below the schedule days */}
-                      <span className="text-[11px] font-mono text-muted-content mt-0.5">{row.time_range}</span>
+                      <span className="text-xs font-mono text-muted-content mt-0.5">{row.time_range}</span>
                     </div>
                   </td>
 
                   {/* STATUS */}
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-0.5 border rounded text-[9px] font-black tracking-wider uppercase ${getStatusStyle(row.status)}`}>
+                    <span className={`px-2 py-0.5 border rounded text-[11px] font-black tracking-wider uppercase ${getStatusStyle(row.status)}`}>
                       {row.status}
                     </span>
                   </td>
@@ -155,7 +155,7 @@ export function HappyHourTable({ data = [], onEdit, onDelete }: TableProps) {
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-xs font-medium text-muted-content">
+                <td colSpan={6} className="px-6 py-12 text-center text-sm font-medium text-muted-content">
                   No active rules found. Create one to get started.
                 </td>
               </tr>
@@ -165,7 +165,7 @@ export function HappyHourTable({ data = [], onEdit, onDelete }: TableProps) {
       </div>
 
       {/* PAGINATION FOOTER */}
-      <div className="p-4 border-t border-zinc-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] font-bold uppercase tracking-wider text-muted-content">
+      <div className="p-4 border-t border-zinc-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold uppercase tracking-wider text-muted-content">
         <span>
           Showing <strong className="text-white font-black">{data.length === 0 ? 0 : startIndex + 1}</strong>{' '}
           to <strong className="text-white font-black">{Math.min(endIndex, data.length)}</strong> of{' '}

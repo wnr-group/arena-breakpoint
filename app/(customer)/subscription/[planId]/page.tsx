@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { BreakpointLoader } from '@/components/shared/BreakpointLoader'
 import { toast } from 'sonner'
-import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from '@/lib/utils/dates'
+import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY, isValidDob, DOB_ERROR } from '@/lib/utils/dates'
+import { allFilled, isPlausibleEmail } from '@/lib/utils/forms'
 
 // Import server actions
 import { getSubscriptionPlanDetails } from '@/app/(admin)/admin/subscription/actions'
@@ -126,8 +127,9 @@ export default function PlanDetailsPage() {
       return
     }
 
-    if (!customerDob || !isValidDateDDMMYYYY(customerDob)) {
-      toast.error('Invalid Date of Birth', { description: 'Please enter a valid date in DD-MM-YYYY format.' })
+    // isValidDob covers both the DD-MM-YYYY shape and the accepted year range.
+    if (!customerDob || !isValidDob(customerDob)) {
+      toast.error(DOB_ERROR)
       return
     }
 
@@ -172,6 +174,12 @@ export default function PlanDetailsPage() {
       setIsActivating(false)
     }
   }
+
+  // Gates the details submit: every starred field must be filled.
+  const detailsComplete =
+    allFilled(customerName, customerDob) &&
+    isValidDateDDMMYYYY(customerDob) &&
+    isPlausibleEmail(customerEmail)
 
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = handleDobInput(e.target.value)
@@ -292,12 +300,13 @@ export default function PlanDetailsPage() {
               {/* Email */}
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Mail className="h-3 w-3 text-zinc-600" /> EMAIL ADDRESS
+                  <Mail className="h-3 w-3 text-zinc-600" /> EMAIL ADDRESS <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Enter your email (optional)"
+                  required
+                  placeholder="Enter your email"
                   value={customerEmail}
                   onChange={(e) => setCustomerEmail(e.target.value)}
                   className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary"
@@ -322,7 +331,7 @@ export default function PlanDetailsPage() {
               </div>
 
               <div className="pt-4 space-y-2">
-                <Button variant="gradient" type="submit" disabled={!customerName.trim() || !customerDob || !isValidDateDDMMYYYY(customerDob)} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl">
+                <Button variant="gradient" type="submit" disabled={!detailsComplete} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl disabled:opacity-50 disabled:pointer-events-none">
                   CONTINUE <ChevronRight className="h-4 w-4 ml-1 stroke-[3]" />
                 </Button>
                 <Button type="button" onClick={() => setStep('phone')} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">

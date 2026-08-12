@@ -254,6 +254,82 @@ export function isValidDateDDMMYYYY(dateStr: string): boolean {
 }
 
 /**
+ * Accepted date-of-birth window, expressed as a range of birth *years* that
+ * rolls forward on its own, so it never needs revisiting.
+ *
+ * The latest accepted year is always DOB_END_YEARS_AGO years before the current
+ * one, and the earliest is DOB_YEAR_SPAN years before that. In 2026 that accepts
+ * birth years 1931 through 2021.
+ *
+ * Also closes a hole in the plain year check used elsewhere
+ * (`y > new Date().getFullYear()`), which let a birth date later in the current
+ * year through - someone "born" four months from now.
+ */
+export const DOB_END_YEARS_AGO = 5
+export const DOB_YEAR_SPAN = 90
+
+/**
+ * Deliberately says nothing about the accepted years - the bounds are not the
+ * customer's business, and repeating them in a toast just invites arguing with
+ * the form.
+ */
+export const DOB_ERROR = 'Invalid DOB'
+
+/** The inclusive birth-year bounds currently accepted. */
+export function getDobYearRange(reference: Date = new Date()): {
+  startYear: number
+  endYear: number
+} {
+  const endYear = reference.getFullYear() - DOB_END_YEARS_AGO
+  return { startYear: endYear - DOB_YEAR_SPAN, endYear }
+}
+
+/** Both bounds inclusive. */
+export function isDobYearInRange(year: number, reference: Date = new Date()): boolean {
+  const { startYear, endYear } = getDobYearRange(reference)
+  return year >= startYear && year <= endYear
+}
+
+/**
+ * Full date-of-birth check for DD-MM-YYYY, the format the forms collect: a real
+ * calendar date whose year sits inside the accepted range.
+ */
+export function isValidDob(dateStr: string, reference: Date = new Date()): boolean {
+  if (!isValidDateDDMMYYYY(dateStr)) return false
+
+  const year = Number(dateStr.trim().split('-')[2])
+  return isDobYearInRange(year, reference)
+}
+
+/**
+ * Same rule against YYYY-MM-DD - the shape a date of birth arrives in on the
+ * server, after the browser has run it through formatDateForDB(). Parsed field
+ * by field rather than with `new Date(str)`, which would read it as UTC and can
+ * shift the day either side of midnight.
+ */
+export function isValidStoredDob(dateStr: string, reference: Date = new Date()): boolean {
+  const match = (dateStr || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!match) return false
+
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+
+  const date = new Date(year, month - 1, day)
+
+  // Rejects impossible dates that still match the pattern, e.g. 2000-02-30.
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return false
+  }
+
+  return isDobYearInRange(year, reference)
+}
+
+/**
  * Validates if person is of legal age (18+)
  * @param dateStr - Date string in DD-MM-YYYY format
  * @returns true if 18 or older, false otherwise

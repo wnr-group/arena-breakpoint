@@ -107,7 +107,7 @@ function LoginForm() {
               {/* Email Input */}
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-zinc-300 font-semibold">
-                  Email Address
+                  Email Address <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-content" />
@@ -127,7 +127,7 @@ function LoginForm() {
               {/* Password Input */}
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-zinc-300 font-semibold">
-                  Password
+                  Password <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-content" />
@@ -159,7 +159,7 @@ function LoginForm() {
               {/* Submit Button */}
               <Button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || !email.trim() || !password.trim()}
                 className="w-full h-12 bg-gradient-to-r from-primary via-amber-400 to-primary text-black font-black text-sm uppercase tracking-wider hover:shadow-[0_0_30px_rgba(184,134,11,0.5)] hover:scale-[1.02] transition-all duration-300 relative overflow-hidden group"
               >
                 {isLoading && (

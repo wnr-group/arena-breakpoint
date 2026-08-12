@@ -34,11 +34,13 @@ import {
   formatDateForDB,
   formatDateForDisplay,
   handleDobInput,
-  isValidDateDDMMYYYY,
+  isValidDob,
+  DOB_ERROR,
   formatLocalDate,
   isDateWithinBookingWindow,
   BOOKING_WINDOW_ERROR
 } from "@/lib/utils/dates";
+import { allFilled, isPlausibleEmail } from "@/lib/utils/forms";
 import {
   generateStartTimes,
   filterPastTimeSlots,
@@ -252,10 +254,9 @@ export default function WalkInBookingPage() {
     const total = subtotal - subscriptionDiscount - happyHourDiscountAmount;
 
     // Validate DOB
-    if (!isValidDateDDMMYYYY(customerDob)) {
-      toast.error("Invalid Date of Birth", {
-        description: "Please enter a valid date in DD-MM-YYYY format"
-      });
+    // isValidDob covers both the DD-MM-YYYY shape and the accepted year range.
+    if (!isValidDob(customerDob)) {
+      toast.error(DOB_ERROR);
       setSubmitting(false);
       return;
     }
@@ -360,6 +361,12 @@ export default function WalkInBookingPage() {
   }, [selectedDeviceType, selectedDate, selectedDuration, checkHappyHour]);
 
   const totalAmount = subtotal - subscriptionDiscount - happyHourInfo.discountAmount;
+
+  // Gates the customer-details submit: every starred field must be filled.
+  const customerDetailsComplete =
+    allFilled(customerName, customerDob) &&
+    customerDob.length === 10 &&
+    isPlausibleEmail(customerEmail);
 
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = handleDobInput(e.target.value);
@@ -685,7 +692,7 @@ export default function WalkInBookingPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="dob" className="text-[11px] font-black text-muted-content uppercase tracking-wider flex items-center gap-1.5">
-                      <Cake className="h-3.5 w-3.5 text-muted-content" /> Date of Birth (DD-MM-YYYY)
+                      <Cake className="h-3.5 w-3.5 text-muted-content" /> Date of Birth (DD-MM-YYYY) <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="dob"
@@ -701,11 +708,12 @@ export default function WalkInBookingPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-[11px] font-black text-muted-content uppercase tracking-wider flex items-center gap-1.5">
-                      <Mail className="h-3.5 w-3.5 text-muted-content" /> Email (Optional)
+                      <Mail className="h-3.5 w-3.5 text-muted-content" /> Email <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="email"
                       type="email"
+                      required
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
                       placeholder="customer@domain.com"
@@ -714,7 +722,7 @@ export default function WalkInBookingPage() {
                   </div>
 
                   <div className="pt-4 space-y-2">
-                    <Button type="submit" className="w-full bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1 shadow-lg">
+                    <Button type="submit" disabled={!customerDetailsComplete} className="w-full bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1 shadow-lg disabled:opacity-50 disabled:pointer-events-none">
                       PROCEED TO ORDER SUMMARY <ChevronRight className="h-4 w-4 stroke-[3]" />
                     </Button>
                   </div>

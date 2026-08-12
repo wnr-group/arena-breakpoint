@@ -10,6 +10,7 @@ import { createMenuItem } from "@/app/(admin)/admin/food/actions";
 import { supabase } from "@/lib/supabase/client";
 import { FoodCategory, FoodStatus } from "@/lib/types/food";
 import { toast } from "sonner";
+import { useRequiredFields } from "@/lib/hooks/useRequiredFields";
 
 interface AddFoodModalProps {
   onFormSuccess: () => Promise<void>;
@@ -19,6 +20,7 @@ interface AddFoodModalProps {
 
 export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps) {
   const [isPending, startTransition] = useTransition();
+  const { formRef, isComplete, recheck } = useRequiredFields();
 
   const [previewName, setPreviewName] = useState("");
   const [previewCategory, setPreviewCategory] = useState<FoodCategory>("Snacks");
@@ -105,14 +107,14 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
           <p className="text-xs text-[#a1a1aa] mt-1">Configure menu item details and check real-time layout card output syncs</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 flex flex-col md:flex-row overflow-y-auto min-h-0">
+        <form ref={formRef} onChange={recheck} onSubmit={handleSubmit} className="flex-1 flex flex-col md:flex-row overflow-y-auto min-h-0">
           
           {/* Left Form Input Matrix Column */}
           <div className="flex-1 p-8 space-y-6 bg-[var(--background)] overflow-y-auto">
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Item Name</label>
+                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Item Name <span className="text-red-500">*</span></label>
                 <Input
                   name="name"
                   placeholder="e.g. Cyber Steak Burger"
@@ -123,7 +125,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Category</label>
+                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Category <span className="text-red-500">*</span></label>
                 <select
                   value={previewCategory}
                   onChange={(e) => setPreviewCategory(e.target.value as FoodCategory)}
@@ -138,7 +140,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Price</label>
+                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Price <span className="text-red-500">*</span></label>
                 <div className="relative rounded-md shadow-sm">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <span className="text-[#a1a1aa] text-sm">₹</span>
@@ -157,7 +159,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
               </div>
 
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Available Quantity</label>
+                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Available Quantity <span className="text-red-500">*</span></label>
                 <input
                   type="number"
                   name="quantity"
@@ -185,7 +187,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
             </div>
 
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Availability Status</label>
+              <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Availability Status <span className="text-red-500">*</span></label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {['available', 'out_of_stock', 'hidden'].map((status) => (
                   <label key={status} className={`flex items-center justify-center cursor-pointer rounded-lg border py-2.5 text-xs font-bold transition-all ${previewStatus === status ? 'border-primary bg-primary/10 text-primary' : 'border-[#27272a] bg-[var(--surface)] text-[#a1a1aa] hover:border-zinc-700'}`}>
@@ -244,7 +246,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
             {/* Form control tracking footer alignment */}
             <div className="w-full flex justify-end gap-3 pt-6 border-t border-[#27272a]/40 flex-shrink-0 mt-auto">
               <Button type="button" variant="ghost" className="text-[#a1a1aa] hover:bg-zinc-900 hover:text-white transition-colors text-xs font-semibold" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={isPending} className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-bold px-5 h-9 text-xs rounded-md shadow-md transition-all flex items-center justify-center gap-1.5">
+              <Button type="submit" disabled={isPending || !isComplete} className="disabled:opacity-50 disabled:pointer-events-none bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-bold px-5 h-9 text-xs rounded-md shadow-md transition-all flex items-center justify-center gap-1.5">
                 {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save Food Item"}
               </Button>
             </div>

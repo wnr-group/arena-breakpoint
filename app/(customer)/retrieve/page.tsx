@@ -131,7 +131,7 @@ export default function RetrieveBookingPage() {
                 <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Phone className="h-3.5 w-3.5 text-primary" />
                 </div>
-                MOBILE NUMBER
+                MOBILE NUMBER <span className="text-red-500">*</span>
               </Label>
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
@@ -155,7 +155,7 @@ export default function RetrieveBookingPage() {
                 </div>
                 <Button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading || phone.trim().length < 10}
                   variant="gradient"
                   className="h-14 px-10 rounded-xl text-sm font-black uppercase tracking-wider shadow-[0_0_25px_rgba(255,193,7,0.4)] hover:shadow-[0_0_40px_rgba(255,193,7,0.6)] transition-all"
                 >

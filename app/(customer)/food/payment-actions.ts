@@ -22,7 +22,6 @@ export interface CreateFoodOrderResult {
   amount?: number
   summary?: {
     itemsTotal: number
-    promoDiscount: number
     totalAmount: number
   }
   bookingId?: string
@@ -32,7 +31,6 @@ export interface CreateFoodOrderResult {
 function summarise(quote: FoodOrderQuote) {
   return {
     itemsTotal: quote.itemsTotal,
-    promoDiscount: quote.promoDiscount,
     totalAmount: quote.totalAmount,
   }
 }

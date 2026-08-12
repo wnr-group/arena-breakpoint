@@ -4,6 +4,40 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { annotateRemovableFoodItems } from "@/lib/bookings/foodItems";
 import { formatLocalDate } from "@/lib/utils/dates";
 
+/** Rupee tolerance for float comparisons on money. */
+const MONEY_EPSILON = 0.01
+
+/**
+ * Payment status derived from the figures actually being displayed.
+ *
+ * These reads already recompute `total_amount` and `balance_due` from the
+ * component columns rather than trusting the stored total, but they used to hand
+ * back the *stored* `payment_status` alongside them - so a booking that was paid
+ * online and later had food added showed a positive balance next to a green
+ * "Paid" badge, because nothing had rewritten the status column. Deriving it
+ * from the same numbers keeps the badge and the balance telling one story.
+ *
+ * `refunded` and `failed` are passed through untouched: neither is recoverable
+ * from amounts, and both are terminal.
+ */
+function derivePaymentStatus(
+  correctTotal: number,
+  amountPaid: number,
+  storedStatus: string | null | undefined
+): string {
+  if (storedStatus === "refunded" || storedStatus === "failed") {
+    return storedStatus;
+  }
+
+  // Nothing to collect - a free or fully discounted booking is settled.
+  if (correctTotal <= MONEY_EPSILON) return "paid";
+
+  if (amountPaid >= correctTotal - MONEY_EPSILON) return "paid";
+  if (amountPaid > MONEY_EPSILON) return "partial";
+
+  return "pending";
+}
+
 export interface BookingFilters {
   status?: string;
   dateFrom?: string;
@@ -152,7 +186,12 @@ export async function getAllBookings(filters?: BookingFilters) {
       return {
         ...booking,
         total_amount: correctTotal, // Override with calculated value
-        balance_due: balanceDue
+        balance_due: balanceDue,
+        payment_status: derivePaymentStatus(
+          correctTotal,
+          amountPaid,
+          booking.payment_status
+        )
       };
     });
 
@@ -249,7 +288,8 @@ export async function getBookingDetails(bookingId: string) {
         booking_food_items: annotateRemovableFoodItems(data.booking_food_items, lineItems || []),
         line_items: lineItems || [],
         unpaid_items: unpaidItems,
-        balance_due: balanceDue
+        balance_due: balanceDue,
+        payment_status: derivePaymentStatus(correctTotal, amountPaid, data.payment_status)
       }
     };
   } catch (err: any) {
@@ -1184,7 +1224,8 @@ export async function getBookingBillingDetails(bookingId: string) {
         line_items: lineItems,
         unpaid_items: unpaidItems,
         unpaid_amount: unpaidAmount,
-        balance_due: balanceDue
+        balance_due: balanceDue,
+        payment_status: derivePaymentStatus(correctTotal, amountPaid, data.payment_status)
       }
     };
   } catch (err: any) {

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { BookingStatusBadge } from "./BookingStatusBadge";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
-import { getBookingDetails, checkInBooking, checkOutBooking, cancelBooking, addFoodToBooking, removeFoodItemFromBooking, updatePlayerCount, markBookingAsPaid } from "@/app/(admin)/admin/bookings/actions";
+import { getBookingDetails, checkInBooking, checkOutBooking, cancelBooking, addFoodToBooking, removeFoodItemFromBooking, updatePlayerCount } from "@/app/(admin)/admin/bookings/actions";
 import { getMenuItems } from "@/app/(admin)/admin/food/actions";
 import { Label } from "@/components/ui/label";
 import { QRCodeSVG } from "qrcode.react";
@@ -47,7 +47,7 @@ interface BookingDetailModalProps {
    * /admin/bookings/[bookingId] route the dashboard opens in a new tab - so a
    * booking is never a second dialog stacked on the stat modal behind it.
    *
-   * The secondary dialogs below (add food, cancel, mark paid) stay dialogs in
+   * The secondary dialogs below (add food, cancel, remove item) stay dialogs in
    * both modes: those confirm an action already under way, they are not a second
    * thing to browse.
    */
@@ -59,12 +59,6 @@ interface BookingDetailModalProps {
 export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoodModalDirectly, onPendingPayment, variant = "modal", headerSlot }: BookingDetailModalProps) {
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [markAsPaidModalOpen, setMarkAsPaidModalOpen] = useState(false);
-  const [paymentSplit, setPaymentSplit] = useState({
-    cashAmount: 0,
-    cardAmount: 0,
-    upiAmount: 0
-  });
   const [actionLoading, setActionLoading] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [addFoodModalOpen, setAddFoodModalOpen] = useState(false);
@@ -258,47 +252,6 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
     }
 
     setUpdatingPlayerCount(false);
-  };
-
-  const handleOpenMarkAsPaidModal = () => {
-    const balanceDue = Number(booking?.balance_due || 0);
-    // Default to full balance in cash
-    setPaymentSplit({
-      cashAmount: balanceDue,
-      cardAmount: 0,
-      upiAmount: 0
-    });
-    setMarkAsPaidModalOpen(true);
-  };
-
-  const handleMarkAsPaid = async () => {
-    if (!bookingId) return;
-
-    const totalSplit = paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount;
-    const balanceDue = Number(booking?.balance_due || 0);
-
-    if (Math.abs(totalSplit - balanceDue) > 0.01) {
-      toast.error("Invalid payment split", {
-        description: `Payment split (₹${totalSplit}) must equal balance due (₹${balanceDue})`
-      });
-      return;
-    }
-
-    setActionLoading(true);
-    const result = await markBookingAsPaid(bookingId, paymentSplit);
-
-    if (result.success) {
-      toast.success("Payment marked as paid", {
-        description: `Booking ${booking.booking_number} fully paid`
-      });
-      setMarkAsPaidModalOpen(false);
-      loadBookingDetails();
-      onUpdate?.();
-    } else {
-      toast.error("Failed to mark as paid", { description: result.error });
-    }
-
-    setActionLoading(false);
   };
 
   const deviceSlot = booking?.booking_device_slots?.[0];
@@ -782,26 +735,14 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                 )}
 
                 {booking.status === "checked_in" && (
-                  <>
-                    <Button
-                      onClick={handleCheckOut}
-                      disabled={actionLoading || (Number(booking.balance_due || 0) > 0 && booking.payment_status !== 'paid')}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-sm h-12 px-8 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {actionLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogOut className="h-5 w-5" />}
-                      Check Out Customer
-                    </Button>
-                    {Number(booking.balance_due || 0) > 0 && booking.payment_status !== 'paid' && (
-                      <Button
-                        onClick={handleOpenMarkAsPaidModal}
-                        disabled={actionLoading}
-                        className="bg-amber-600 hover:bg-amber-700 text-white font-black uppercase text-sm h-12 px-8 flex items-center gap-2"
-                      >
-                        <DollarSign className="h-5 w-5" />
-                        Mark as Paid
-                      </Button>
-                    )}
-                  </>
+                  <Button
+                    onClick={handleCheckOut}
+                    disabled={actionLoading || (Number(booking.balance_due || 0) > 0 && booking.payment_status !== 'paid')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-sm h-12 px-8 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {actionLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogOut className="h-5 w-5" />}
+                    Check Out Customer
+                  </Button>
                 )}
 
                 {(booking.status === "confirmed" || booking.status === "checked_in") && (
@@ -1101,145 +1042,6 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Mark as Paid Modal */}
-      <Dialog open={markAsPaidModalOpen} onOpenChange={setMarkAsPaidModalOpen}>
-        <DialogContent className="bg-[var(--surface)] border-[#27272a] text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black uppercase tracking-tight">
-              Mark as Paid
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            {/* Balance Due Display */}
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-amber-400 uppercase">Balance Due:</span>
-                <span className="text-2xl font-black text-amber-300">
-                  ₹{Number(booking?.balance_due || 0).toLocaleString('en-IN')}
-                </span>
-              </div>
-            </div>
-
-            {/* Payment Split Inputs */}
-            <div className="space-y-3">
-              <p className="text-sm font-bold text-muted-content uppercase">Payment Split:</p>
-
-              {/* Quick Select Method */}
-              <div className="grid grid-cols-3 gap-2 pb-2 border-b border-zinc-800/80">
-                <Button
-                  type="button"
-                  onClick={() => setPaymentSplit({ cashAmount: Number(booking?.balance_due || 0), cardAmount: 0, upiAmount: 0 })}
-                  className={`h-9 text-xs font-black uppercase rounded-lg border transition-all ${
-                    paymentSplit.cashAmount === Number(booking?.balance_due || 0)
-                      ? 'bg-green-600 hover:bg-green-700 border-transparent text-white shadow-[0_0_12px_rgba(34,197,94,0.15)]'
-                      : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white'
-                  }`}
-                >
-                  💵 Cash
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => setPaymentSplit({ cashAmount: 0, cardAmount: Number(booking?.balance_due || 0), upiAmount: 0 })}
-                  className={`h-9 text-xs font-black uppercase rounded-lg border transition-all ${
-                    paymentSplit.cardAmount === Number(booking?.balance_due || 0)
-                      ? 'bg-blue-600 hover:bg-blue-700 border-transparent text-white shadow-[0_0_12px_rgba(59,130,246,0.15)]'
-                      : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white'
-                  }`}
-                >
-                  💳 Card
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => setPaymentSplit({ cashAmount: 0, cardAmount: 0, upiAmount: Number(booking?.balance_due || 0) })}
-                  className={`h-9 text-xs font-black uppercase rounded-lg border transition-all ${
-                    paymentSplit.upiAmount === Number(booking?.balance_due || 0)
-                      ? 'bg-purple-600 hover:bg-purple-700 border-transparent text-white shadow-[0_0_12px_rgba(168,85,247,0.15)]'
-                      : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white'
-                  }`}
-                >
-                  📱 UPI
-                </Button>
-              </div>
-
-              {/* Cash */}
-              <div className="space-y-1">
-                <Label htmlFor="cash" className="text-xs font-bold text-zinc-400 uppercase">Cash</Label>
-                <Input
-                  id="cash"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={paymentSplit.cashAmount}
-                  onChange={(e) => setPaymentSplit({ ...paymentSplit, cashAmount: parseFloat(e.target.value) || 0 })}
-                  className="bg-[var(--background)] border-[#27272a] text-white h-11"
-                />
-              </div>
-
-              {/* Card */}
-              <div className="space-y-1">
-                <Label htmlFor="card" className="text-xs font-bold text-zinc-400 uppercase">Card</Label>
-                <Input
-                  id="card"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={paymentSplit.cardAmount}
-                  onChange={(e) => setPaymentSplit({ ...paymentSplit, cardAmount: parseFloat(e.target.value) || 0 })}
-                  className="bg-[var(--background)] border-[#27272a] text-white h-11"
-                />
-              </div>
-
-              {/* UPI */}
-              <div className="space-y-1">
-                <Label htmlFor="upi" className="text-xs font-bold text-zinc-400 uppercase">UPI</Label>
-                <Input
-                  id="upi"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={paymentSplit.upiAmount}
-                  onChange={(e) => setPaymentSplit({ ...paymentSplit, upiAmount: parseFloat(e.target.value) || 0 })}
-                  className="bg-[var(--background)] border-[#27272a] text-white h-11"
-                />
-              </div>
-
-              {/* Total Split Display */}
-              <div className="bg-[var(--background)] border border-[#27272a] rounded-lg p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-zinc-400">Total Split:</span>
-                  <span className={`text-lg font-black ${
-                    Math.abs((paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount) - Number(booking?.balance_due || 0)) < 0.01
-                      ? 'text-green-400'
-                      : 'text-red-400'
-                  }`}>
-                    ₹{(paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount).toFixed(2)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4 border-t border-[#27272a]">
-            <Button
-              variant="ghost"
-              onClick={() => setMarkAsPaidModalOpen(false)}
-              disabled={actionLoading}
-              className="border-[#27272a] text-muted-content hover:text-white"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleMarkAsPaid}
-              disabled={actionLoading}
-              className="bg-green-600 hover:bg-green-700 text-white font-black uppercase"
-            >
-              {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
-              Confirm Payment
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

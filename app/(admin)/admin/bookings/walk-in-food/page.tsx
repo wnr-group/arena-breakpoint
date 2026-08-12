@@ -27,7 +27,8 @@ import {
 import { toast } from "sonner";
 import { checkCustomerExists } from "@/app/(customer)/booking/actions";
 import { createFoodOnlyWalkInBooking } from "../actions";
-import { formatDateForDB, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
+import { formatDateForDB, handleDobInput, isValidDob, DOB_ERROR } from "@/lib/utils/dates";
+import { allFilled, isPlausibleEmail } from "@/lib/utils/forms";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useNotifications } from "@/lib/contexts/NotificationContext";
 
@@ -79,6 +80,12 @@ export default function WalkInFoodOnlyPage() {
     setLoadingMenu(false);
   };
 
+  // Gates "Continue to Food Selection": every starred field must be filled.
+  const registrationComplete =
+    allFilled(customerName, customerDob) &&
+    customerDob.length === 10 &&
+    isPlausibleEmail(customerEmail);
+
   const handlePhoneLookup = async () => {
     if (customerPhone.length < 10) {
       toast.error("Please enter a valid 10-digit phone number");
@@ -125,8 +132,9 @@ export default function WalkInFoodOnlyPage() {
       return;
     }
 
-    if (!customerDob || !isValidDateDDMMYYYY(customerDob)) {
-      toast.error("Please enter a valid date of birth (DD-MM-YYYY)");
+    // isValidDob covers both the DD-MM-YYYY shape and the accepted year range.
+    if (!customerDob || !isValidDob(customerDob)) {
+      toast.error(DOB_ERROR);
       return;
     }
 
@@ -302,7 +310,7 @@ export default function WalkInFoodOnlyPage() {
 
             <div className="space-y-4">
               <div>
-                <Label className="text-zinc-400">Phone Number</Label>
+                <Label className="text-zinc-400">Phone Number <span className="text-red-500">*</span></Label>
                 <div className="flex gap-2">
                   <Input
                     type="tel"
@@ -327,7 +335,7 @@ export default function WalkInFoodOnlyPage() {
               {showFullRegistrationFields && (
                 <>
                   <div>
-                    <Label className="text-zinc-400">Full Name *</Label>
+                    <Label className="text-zinc-400">Full Name <span className="text-red-500">*</span></Label>
                     <Input
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
@@ -337,7 +345,7 @@ export default function WalkInFoodOnlyPage() {
                   </div>
 
                   <div>
-                    <Label className="text-zinc-400">Email *</Label>
+                    <Label className="text-zinc-400">Email <span className="text-red-500">*</span></Label>
                     <Input
                       type="email"
                       value={customerEmail}
@@ -348,7 +356,7 @@ export default function WalkInFoodOnlyPage() {
                   </div>
 
                   <div>
-                    <Label className="text-zinc-400">Date of Birth (DD-MM-YYYY) *</Label>
+                    <Label className="text-zinc-400">Date of Birth (DD-MM-YYYY) <span className="text-red-500">*</span></Label>
                     <Input
                       value={customerDob}
                       onChange={(e) => setCustomerDob(handleDobInput(e.target.value))}
@@ -360,8 +368,9 @@ export default function WalkInFoodOnlyPage() {
 
                   <Button
                     onClick={handleRegisterAndProceed}
+                    disabled={!registrationComplete}
                     variant="gradient"
-                    className="w-full"
+                    className="w-full disabled:opacity-50 disabled:pointer-events-none"
                   >
                     Continue to Food Selection
                   </Button>
@@ -537,9 +546,9 @@ export default function WalkInFoodOnlyPage() {
                 </button>
                 <Button
                   onClick={handleSubmit}
-                  disabled={submitting}
+                  disabled={submitting || selectedItems.length === 0}
                   variant="gradient"
-                  className="flex-1 font-black uppercase text-xs h-12"
+                  className="flex-1 font-black uppercase text-xs h-12 disabled:opacity-50 disabled:pointer-events-none"
                 >
                   {submitting ? (
                     <>

@@ -88,9 +88,9 @@
 //         <div className="bg-[var(--surface)] border border-[#27272a] rounded-xl p-5 flex flex-col gap-2">
 //           <div className="flex justify-between items-center w-full">
 //             <Timer className="text-primary h-5 w-5" />
-//             <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded-md">Active Now</span>
+//             <span className="text-sm font-semibold text-primary bg-primary/10 px-2 py-1 rounded-md">Active Now</span>
 //           </div>
-//           <p className="text-[#a1a1aa] text-xs uppercase tracking-wider mt-2">Currently Running</p>
+//           <p className="text-[#a1a1aa] text-sm uppercase tracking-wider mt-2">Currently Running</p>
 //           <h2 className="text-xl font-bold text-white">Weekend Blitz</h2>
 //           <p className="text-[#a1a1aa] text-sm mt-1">Ends in 02h 45m</p>
 //         </div>
@@ -102,7 +102,7 @@
 //                 <div className="h-5 w-4 border-2 border-current rounded-sm"></div>
 //              </div>
 //           </div>
-//           <p className="text-[#a1a1aa] text-xs uppercase tracking-wider mt-2">Coverage</p>
+//           <p className="text-[#a1a1aa] text-sm uppercase tracking-wider mt-2">Coverage</p>
 //           <h2 className="text-xl font-bold text-white">85%</h2>
 //           <p className="text-[#a1a1aa] text-sm mt-1">42 Devices Assigned</p>
 //         </div>
@@ -234,14 +234,14 @@ export default function HappyHoursPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-zinc-900 pb-5">
         <div className="animate-in slide-in-from-left-4 duration-500">
           <h1 className="text-2xl font-black uppercase tracking-tight">Happy Hours Management</h1>
-          <p className="text-xs text-secondary-content font-medium mt-0.5">
+          <p className="text-sm text-secondary-content font-medium mt-0.5">
             Configure automated pricing rules for peak and off-peak gaming sessions.
           </p>
         </div>
         <Button
           onClick={() => setIsAddOpen(true)}
           variant="gradient"
-          className="w-full md:w-auto font-black uppercase text-xs h-11 px-5 rounded-lg tracking-wider flex items-center gap-2"
+          className="w-full md:w-auto font-black uppercase text-sm h-11 px-5 rounded-lg tracking-wider flex items-center gap-2"
         >
           <PlusCircle className="h-4 w-4 stroke-[3]" /> Create Rule
         </Button>
@@ -252,14 +252,14 @@ export default function HappyHoursPage() {
         <div className="bg-[var(--surface)] border border-zinc-900 rounded-xl p-5 flex flex-col gap-2">
           <div className="flex justify-between items-center w-full">
             <Timer className="text-primary h-5 w-5" />
-            <span className="text-[9px] font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">Active Now</span>
+            <span className="text-[11px] font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">Active Now</span>
           </div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-muted-content mt-2">Currently Running</p>
+          <p className="text-xs font-black uppercase tracking-widest text-muted-content mt-2">Currently Running</p>
           {/* You could make this dynamic by filtering the 'rules' array for status === 'LIVE' */}
           <h2 className="text-xl font-black text-white uppercase tracking-tight">
             {rules.find(r => r.status === 'LIVE')?.name || 'None Active'}
           </h2>
-          <p className="text-xs text-secondary-content font-medium mt-1">Status check complete</p>
+          <p className="text-sm text-secondary-content font-medium mt-1">Status check complete</p>
         </div>
 
         <div className="bg-[var(--surface)] border border-zinc-900 rounded-xl p-5 flex flex-col gap-2">
@@ -269,9 +269,9 @@ export default function HappyHoursPage() {
                 <div className="h-5 w-4 border-2 border-current rounded-sm"></div>
              </div>
           </div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-muted-content mt-2">Total Rules</p>
+          <p className="text-xs font-black uppercase tracking-widest text-muted-content mt-2">Total Rules</p>
           <h2 className="text-xl font-black text-white uppercase tracking-tight">{rules.length} Configured</h2>
-          <p className="text-xs text-secondary-content font-medium mt-1">Across all devices</p>
+          <p className="text-sm text-secondary-content font-medium mt-1">Across all devices</p>
         </div>
       </div>
 
@@ -280,7 +280,7 @@ export default function HappyHoursPage() {
           same shape the subscription screen uses. */}
       <div className="mt-2 animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both">
         {isLoading ? (
-          <div className="text-center py-12 bg-[var(--surface)] border border-zinc-900 rounded-xl flex justify-center items-center gap-3 text-[11px] font-black uppercase tracking-wider text-muted-content">
+          <div className="text-center py-12 bg-[var(--surface)] border border-zinc-900 rounded-xl flex justify-center items-center gap-3 text-xs font-black uppercase tracking-wider text-muted-content">
             <BreakpointLoader size="sm" /> Loading happy hour rules
           </div>
         ) : (

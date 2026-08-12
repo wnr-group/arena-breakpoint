@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { IndianRupee, Clock, Percent, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { createSubscriptionPlan } from '@/app/(admin)/admin/subscription/actions'
 import { toast } from 'sonner'
+import { useRequiredFields } from '@/lib/hooks/useRequiredFields'
 
 interface AddModalProps {
   onFormSuccess?: () => Promise<void> | void
@@ -17,6 +18,7 @@ interface AddModalProps {
 export function AddSubscriptionModal({ onFormSuccess, open, setOpen }: AddModalProps) {
   const [isActive, setIsActive] = useState(true)
   const [isPending, startTransition] = useTransition()
+  const { formRef, isComplete, recheck } = useRequiredFields()
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -55,19 +57,19 @@ export function AddSubscriptionModal({ onFormSuccess, open, setOpen }: AddModalP
             <span className="w-2 h-4 bg-primary rounded-sm block shadow-primary" />
             Add Subscription Plan
           </DialogTitle>
-          <p className="text-[11px] text-secondary-content font-semibold mt-0.5 tracking-wide">
+          <p className="text-xs text-secondary-content font-semibold mt-0.5 tracking-wide">
             Configure pricing and duration for a new membership plan.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0">
+        <form ref={formRef} onChange={recheck} onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0">
           <input type="hidden" name="is_active" value={isActive.toString()} />
 
           {/* Form Body */}
           <div className="flex-1 p-8 space-y-6 bg-[var(--background)] overflow-y-auto">
             <div className="space-y-2">
-              <label className="text-[10px] font-black tracking-widest uppercase text-zinc-300">
-                Plan Name
+              <label className="text-xs font-black tracking-widest uppercase text-zinc-300">
+                Plan Name <span className="text-red-500">*</span>
               </label>
               <Input
                 name="name"
@@ -80,8 +82,8 @@ export function AddSubscriptionModal({ onFormSuccess, open, setOpen }: AddModalP
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               <div className="space-y-2">
-                <label className="text-[10px] font-black tracking-widest uppercase text-zinc-300">
-                  Price
+                <label className="text-xs font-black tracking-widest uppercase text-zinc-300">
+                  Price <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-content pointer-events-none" />
@@ -98,8 +100,8 @@ export function AddSubscriptionModal({ onFormSuccess, open, setOpen }: AddModalP
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black tracking-widest uppercase text-zinc-300">
-                  Duration (Months)
+                <label className="text-xs font-black tracking-widest uppercase text-zinc-300">
+                  Duration (Months) <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-content pointer-events-none" />
@@ -116,8 +118,8 @@ export function AddSubscriptionModal({ onFormSuccess, open, setOpen }: AddModalP
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black tracking-widest uppercase text-zinc-300">
-                  Discount (%)
+                <label className="text-xs font-black tracking-widest uppercase text-zinc-300">
+                  Discount (%) <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-content pointer-events-none" />
@@ -134,8 +136,8 @@ export function AddSubscriptionModal({ onFormSuccess, open, setOpen }: AddModalP
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black tracking-widest uppercase text-zinc-300">
-                Description
+              <label className="text-xs font-black tracking-widest uppercase text-zinc-300">
+                Description <span className="text-red-500">*</span>
               </label>
               <textarea
                 name="description"
@@ -149,8 +151,8 @@ export function AddSubscriptionModal({ onFormSuccess, open, setOpen }: AddModalP
 
             {/* Plan Status Selector - mirrors the device status segment */}
             <div className="space-y-2">
-              <label className="text-[10px] font-black tracking-widest uppercase text-zinc-300">
-                Plan Status
+              <label className="text-xs font-black tracking-widest uppercase text-zinc-300">
+                Plan Status <span className="text-red-500">*</span>
               </label>
               <div className="grid grid-cols-2 gap-2 max-w-xs">
                 {[
@@ -161,7 +163,7 @@ export function AddSubscriptionModal({ onFormSuccess, open, setOpen }: AddModalP
                     key={option.label}
                     type="button"
                     onClick={() => setIsActive(option.value)}
-                    className={`flex items-center justify-center rounded-lg border py-2.5 text-xs font-bold transition-all ${
+                    className={`flex items-center justify-center rounded-lg border py-2.5 text-sm font-bold transition-all ${
                       isActive === option.value
                         ? 'border-primary bg-primary/10 text-primary'
                         : 'border-[#27272a] bg-[var(--surface)] text-muted-content hover:border-zinc-700'
@@ -179,15 +181,15 @@ export function AddSubscriptionModal({ onFormSuccess, open, setOpen }: AddModalP
             <Button
               type="button"
               variant="ghost"
-              className="text-muted-content hover:bg-zinc-900 hover:text-white font-black uppercase text-xs tracking-wider"
+              className="text-muted-content hover:bg-zinc-900 hover:text-white font-black uppercase text-sm tracking-wider"
               onClick={() => setOpen(false)}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={isPending}
-              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs tracking-wider px-6 h-10 rounded-lg shadow-md transition-all"
+              disabled={isPending || !isComplete}
+              className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-sm tracking-wider px-6 h-10 rounded-lg shadow-md transition-all disabled:opacity-50 disabled:pointer-events-none"
             >
               {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Plan'}
             </Button>

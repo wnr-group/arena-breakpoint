@@ -9,6 +9,7 @@ import { Gamepad2, ImageIcon, Loader2, CheckCircle2, AlertCircle, UploadCloud } 
 import { updateDevice } from "@/app/(admin)/admin/devices/actions";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { useRequiredFields } from "@/lib/hooks/useRequiredFields";
 
 interface EditModalProps {
   device: any;
@@ -18,6 +19,7 @@ interface EditModalProps {
 
 export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalProps) {
   const [isPending, startTransition] = useTransition();
+  const { formRef, isComplete, recheck } = useRequiredFields();
 
   // --- ACTIVE MODAL OBSERVER VALUE STATES ---
   const [editType, setEditType] = useState(device.type || "PlayStation 5");
@@ -87,7 +89,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
           <p className="text-xs text-[#a1a1aa] mt-1">Modify real-time arena metrics and track design layout card alterations instantly</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 flex flex-col md:flex-row overflow-y-auto min-h-0">
+        <form ref={formRef} onChange={recheck} onSubmit={handleSubmit} className="flex-1 flex flex-col md:flex-row overflow-y-auto min-h-0">
 
           {/* Left Panel: Grid Input Layout Container */}
           <div className="flex-1 p-8 space-y-6 bg-[var(--background)] overflow-y-auto">
@@ -95,7 +97,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
             {/* Form row block 1 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Platform Type</label>
+                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Platform Type <span className="text-red-500">*</span></label>
                 <select
                   name="device_type_id"
                   defaultValue={device.device_type_id}
@@ -106,7 +108,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Station ID</label>
+                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Station ID <span className="text-red-500">*</span></label>
                 <Input
                   name="station_number"
                   value={editStation}
@@ -119,7 +121,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
 
             {/* Form row block 2 */}
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Hourly Rate</label>
+              <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Hourly Rate <span className="text-red-500">*</span></label>
               <div className="relative rounded-md shadow-sm">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <span className="text-[#a1a1aa] text-sm">₹</span>
@@ -153,7 +155,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
 
             {/* Upgraded layout status into a clean grid  */}
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Device Status</label>
+              <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Device Status <span className="text-red-500">*</span></label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {['available', 'maintenance', 'occupied', 'inactive'].map((status) => (
                   <label key={status} className={`flex items-center justify-center cursor-pointer rounded-lg border py-2.5 text-xs font-bold transition-all ${editStatus === status ? 'border-primary bg-primary/10 text-primary' : 'border-[#27272a] bg-[var(--surface)] text-[#a1a1aa] hover:border-zinc-700'}`}>
@@ -205,7 +207,7 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
             {/* Bottom Footer Control Row */}
             <div className="w-full flex justify-end gap-3 mt-6 pt-4 border-t border-[#27272a]/40 flex-shrink-0">
               <Button type="button" variant="ghost" className="text-[#a1a1aa] hover:bg-zinc-900 hover:text-white" onClick={onClose}>Cancel</Button>
-              <Button type="submit" disabled={isPending} className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-bold px-6 h-10 text-sm rounded-md shadow-md transition-all">
+              <Button type="submit" disabled={isPending || !isComplete} className="disabled:opacity-50 disabled:pointer-events-none bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-bold px-6 h-10 text-sm rounded-md shadow-md transition-all">
                 {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply Overrides"}
               </Button>
             </div>

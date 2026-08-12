@@ -22,7 +22,8 @@ import {
 import { validatePromoCode, calculatePromoDiscount } from "../promo-actions";
 import { QRCodeSVG } from "qrcode.react";
 import { generateDurationOptions } from "@/lib/utils/timeSlots";
-import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
+import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDob, DOB_ERROR } from "@/lib/utils/dates";
+import { allFilled, isPlausibleEmail } from "@/lib/utils/forms";
 
 type Step = "phone" | "details" | "summary" | "success";
 
@@ -178,6 +179,13 @@ export default function CustomerDetailsPage() {
     bookingState.happyHourRuleName,
   ]);
 
+  // Gates the registration submit: every starred field must be filled before the
+  // button becomes usable.
+  const detailsComplete =
+    allFilled(customerName, customerDob) &&
+    customerDob.length === 10 &&
+    isPlausibleEmail(customerEmail);
+
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = handleDobInput(e.target.value);
     setCustomerDob(formatted);
@@ -277,8 +285,9 @@ export default function CustomerDetailsPage() {
       return;
     }
 
-    if (!isValidDateDDMMYYYY(customerDob)) {
-      toast.error("Invalid Date", { description: "Please enter a valid date in DD-MM-YYYY format." });
+    // isValidDob covers both the DD-MM-YYYY shape and the accepted year range.
+    if (!isValidDob(customerDob)) {
+      toast.error(DOB_ERROR);
       return;
     }
 
@@ -633,7 +642,7 @@ export default function CustomerDetailsPage() {
 
             <div className="space-y-2">
               <Label htmlFor="dob" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Cake className="h-3 w-3 text-zinc-600" /> DATE OF BIRTH (DD-MM-YYYY)
+                <Cake className="h-3 w-3 text-zinc-600" /> DATE OF BIRTH (DD-MM-YYYY) <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="dob"
@@ -648,11 +657,12 @@ export default function CustomerDetailsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><Mail className="h-3 w-3 text-zinc-600" /> EMAIL ADDRESS</Label>
+              <Label htmlFor="email" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5"><Mail className="h-3 w-3 text-zinc-600" /> EMAIL ADDRESS <span className="text-red-500">*</span></Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="Enter your email (optional)"
+                required
+                placeholder="Enter your email"
                 value={customerEmail}
                 onChange={(e) => setCustomerEmail(e.target.value)}
                 className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary"
@@ -660,7 +670,7 @@ export default function CustomerDetailsPage() {
             </div>
 
             <div className="pt-4 space-y-2">
-              <Button variant="gradient" type="submit" disabled={isSubmitting || !customerName.trim() || !customerDob.trim() || customerDob.length < 10} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none">
+              <Button variant="gradient" type="submit" disabled={isSubmitting || !detailsComplete} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:pointer-events-none">
                 CONTINUE TO SUMMARY <ChevronRight className="h-4 w-4 stroke-[3]" />
               </Button>
               <Button type="button" onClick={() => setStep("phone")} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">

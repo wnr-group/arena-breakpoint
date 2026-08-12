@@ -9,6 +9,7 @@ import { PlusCircle, UploadCloud, Gamepad2, ImageIcon, Loader2, CheckCircle2, Al
 import { createDevice, getDeviceTypes } from "@/app/(admin)/admin/devices/actions";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { useRequiredFields } from "@/lib/hooks/useRequiredFields";
 
 interface AddModalProps {
   onFormSuccess: () => Promise<void>;
@@ -18,6 +19,7 @@ interface AddModalProps {
 
 export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) {
   const [isPending, startTransition] = useTransition();
+  const { formRef, isComplete, recheck } = useRequiredFields();
 
   const [deviceTypes, setDeviceTypes] = useState<any[]>([]);
   const [selectedDeviceTypeId, setSelectedDeviceTypeId] = useState("");
@@ -32,10 +34,14 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
       setDeviceTypes(types);
       if (types.length > 0) {
         setSelectedDeviceTypeId(types[0].id);
+        // The device type select is `required` but is filled by this state
+        // update, not by the user - which raises no change event, so the form's
+        // onChange never fires and the submit button would stay disabled.
+        setTimeout(recheck, 0);
       }
     }
     loadDeviceTypes();
-  }, []);
+  }, [recheck]);
 
   const selectedDeviceType = deviceTypes.find(dt => dt.id === selectedDeviceTypeId);
 
@@ -114,7 +120,7 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
           <p className="text-xs text-[#a1a1aa] mt-1">Configure asset specifications and check real-time layout display metrics</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 flex flex-col md:flex-row overflow-y-auto min-h-0">
+        <form ref={formRef} onChange={recheck} onSubmit={handleSubmit} className="flex-1 flex flex-col md:flex-row overflow-y-auto min-h-0">
 
           {/* Left Form Panel */}
           <div className="flex-1 p-8 space-y-6 bg-[var(--background)] overflow-y-auto">
@@ -122,7 +128,7 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
             {/* Input Row 1 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Device Type</label>
+                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Device Type <span className="text-red-500">*</span></label>
                 <select
                   name="device_type_id"
                   value={selectedDeviceTypeId}
@@ -141,7 +147,7 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
                 )}
               </div>
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Station #</label>
+                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Station # <span className="text-red-500">*</span></label>
                 <Input
                   name="station_number"
                   placeholder="e.g. SS-001"
@@ -169,7 +175,7 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
 
             {/* Device Status Selector Segment */}
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Device Status</label>
+              <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Device Status <span className="text-red-500">*</span></label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {['available', 'maintenance', 'occupied', 'inactive'].map((status) => (
                   <label key={status} className={`flex items-center justify-center cursor-pointer rounded-lg border py-2.5 text-xs font-bold transition-all ${previewStatus === status ? 'border-primary bg-primary/10 text-primary' : 'border-[#27272a] bg-[var(--surface)] text-[#a1a1aa] hover:border-zinc-700'}`}>
@@ -228,7 +234,7 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
             {/* Bottom Form Control Row */}
             <div className="w-full flex justify-end gap-3 mt-6 pt-4 border-t border-[#27272a]/40 flex-shrink-0">
               <Button type="button" variant="ghost" className="text-[#a1a1aa] hover:bg-zinc-900 hover:text-white" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={isPending} className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-bold px-6 h-10 text-sm rounded-md shadow-md transition-all">
+              <Button type="submit" disabled={isPending || !isComplete} className="disabled:opacity-50 disabled:pointer-events-none bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-bold px-6 h-10 text-sm rounded-md shadow-md transition-all">
                 {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Device"}
               </Button>
             </div>

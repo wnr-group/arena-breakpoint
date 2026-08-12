@@ -68,12 +68,12 @@ export default function AdminPromoCodeDashboard() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-900 pb-5">
         <div>
           <h1 className="text-2xl font-black uppercase tracking-tight">Promo Code Management</h1>
-          <p className="text-xs text-secondary-content font-medium mt-0.5">Configure and monitor structural discount campaigns across the arena platform stores.</p>
+          <p className="text-sm text-secondary-content font-medium mt-0.5">Configure and monitor structural discount campaigns across the arena platform stores.</p>
         </div>
         <Button
           onClick={() => setIsAddOpen(true)}
           variant="gradient"
-          className="font-black uppercase text-xs h-11 px-5 rounded-lg tracking-wider flex items-center gap-2"
+          className="font-black uppercase text-sm h-11 px-5 rounded-lg tracking-wider flex items-center gap-2"
         >
           <PlusCircle className="h-4 w-4 stroke-[3]" /> Create Promo Code
         </Button>
@@ -82,7 +82,7 @@ export default function AdminPromoCodeDashboard() {
       {error ? (
         <div className="h-48 w-full flex flex-col items-center justify-center gap-4 border border-red-900/20 rounded-xl bg-red-950/10">
           <div className="text-red-400 text-sm font-bold">Failed to load promo codes</div>
-          <div className="text-xs text-secondary-content">{error}</div>
+          <div className="text-sm text-secondary-content">{error}</div>
           <Button
             onClick={loadPromoInventoryGrid}
             variant="outline"
