@@ -1,8 +1,11 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { requireStaff } from "@/lib/auth/require-admin";
 
 export async function getDashboardStats() {
+  await requireStaff();
+
   try {
     const today = new Date().toISOString().split('T')[0];
     const now = new Date();
@@ -112,6 +115,8 @@ export async function getDashboardStats() {
 }
 
 export async function getRecentBookings(limit: number = 10) {
+  await requireStaff();
+
   try {
     const { data, error } = await supabaseAdmin
       .from("bookings")
@@ -144,6 +149,8 @@ export async function getRecentBookings(limit: number = 10) {
 }
 
 export async function getTodaysSchedule() {
+  await requireStaff();
+
   try {
     const today = new Date().toISOString().split('T')[0];
 
@@ -176,6 +183,8 @@ export async function getTodaysSchedule() {
 }
 
 export async function getQuickStats() {
+  await requireStaff();
+
   try {
     const today = new Date().toISOString().split('T')[0];
     const now = new Date();
@@ -244,6 +253,8 @@ export async function getQuickStats() {
 }
 
 export async function getTodaysRevenueDetails() {
+  await requireStaff();
+
   try {
     const today = new Date().toISOString().split('T')[0];
 
@@ -298,6 +309,8 @@ export async function getTodaysRevenueDetails() {
 }
 
 export async function getActiveSessionsDetails() {
+  await requireStaff();
+
   try {
     const today = new Date().toISOString().split('T')[0];
 
@@ -332,6 +345,8 @@ export async function getActiveSessionsDetails() {
 }
 
 export async function getUpcomingBookingsDetails() {
+  await requireStaff();
+
   try {
     const today = new Date().toISOString().split('T')[0];
     const now = new Date();
@@ -373,6 +388,8 @@ export async function getUpcomingBookingsDetails() {
 }
 
 export async function getAvailableDevicesDetails() {
+  await requireStaff();
+
   try {
     const { data, error } = await supabaseAdmin
       .from("devices")

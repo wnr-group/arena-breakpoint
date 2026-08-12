@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 export interface ReportFilters {
   dateFrom?: string;
@@ -9,6 +10,8 @@ export interface ReportFilters {
 
 // Food Reports
 export async function getFoodReports(filters?: ReportFilters) {
+  await requireAdmin();
+
   try {
     // Get all bookings with food items - only from PAID bookings or PARTIAL bookings where food is actually paid
     // We need to get the full booking data to calculate how much of the payment went to food
@@ -207,6 +210,8 @@ export async function getFoodReports(filters?: ReportFilters) {
 
 // Device Reports
 export async function getDeviceReports(filters?: ReportFilters) {
+  await requireAdmin();
+
   try {
     // Get all bookings with device revenue from PAID and PARTIAL bookings
     const { data: allData, error } = await supabaseAdmin
@@ -402,6 +407,8 @@ export async function getDeviceReports(filters?: ReportFilters) {
 
 // Revenue Reports
 export async function getRevenueReports(filters?: ReportFilters) {
+  await requireAdmin();
+
   try {
     let query = supabaseAdmin
       .from("bookings")
@@ -604,6 +611,8 @@ export async function getRevenueReports(filters?: ReportFilters) {
 
 // Dashboard Summary (Overview)
 export async function getDashboardSummary(filters?: ReportFilters) {
+  await requireAdmin();
+
   try {
     const [foodResult, deviceResult, revenueResult] = await Promise.all([
       getFoodReports(filters),
@@ -654,6 +663,8 @@ export interface ExpenseFilters {
 }
 
 export async function getExpenses(filters?: ExpenseFilters) {
+  await requireAdmin();
+
   try {
     let query = supabaseAdmin
       .from("expenses")
@@ -687,6 +698,8 @@ export async function addExpense(expense: {
   category: 'operational' | 'capital';
   created_by?: string;
 }) {
+  await requireAdmin();
+
   try {
     const { data, error } = await supabaseAdmin
       .from("expenses")
@@ -717,6 +730,8 @@ export async function updateExpense(
     category?: 'operational' | 'capital';
   }
 ) {
+  await requireAdmin();
+
   try {
     const { data, error} = await supabaseAdmin
       .from("expenses")
@@ -737,6 +752,8 @@ export async function updateExpense(
 }
 
 export async function deleteExpense(id: string) {
+  await requireAdmin();
+
   try {
     const { error } = await supabaseAdmin
       .from("expenses")
@@ -756,6 +773,8 @@ export async function deleteExpense(id: string) {
 // ============================================
 
 export async function getProfitAndLoss(filters: { dateFrom: string; dateTo: string }) {
+  await requireAdmin();
+
   try {
     // Get revenue from PAID and PARTIAL bookings (count only amount_paid)
     const { data: allPaidBookings, error: revenueError } = await supabaseAdmin
