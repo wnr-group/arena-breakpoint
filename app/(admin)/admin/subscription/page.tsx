@@ -1,24 +1,14 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
-import { PlusCircle, Loader2 } from 'lucide-react'
+import { PlusCircle } from 'lucide-react'
 import { AddSubscriptionModal } from '@/components/admin/subscription/AddSubscriptionModal'
 import { EditSubscriptionModal } from '@/components/admin/subscription/EditSubscriptionModal'
+import { BreakpointLoader } from '@/components/shared/BreakpointLoader'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { SubscriptionTable } from '@/components/admin/subscription/SubscriptionTable'
-
-// Import AlertDialog components
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
 
 // Import your server actions
 import {
@@ -35,7 +25,9 @@ export default function SubscriptionPage() {
   const [planToDelete, setPlanToDelete] = useState<string | null>(null)
 
   const [isLoading, setIsLoading] = useState(true)
-  const [isPending, startTransition] = useTransition()
+  // No isPending here: ConfirmDialog closes on confirm and the outcome is
+  // reported by a toast, matching the promo code screen.
+  const [, startTransition] = useTransition()
 
   // Function to fetch data from Supabase
   const loadPlans = async () => {
@@ -67,15 +59,15 @@ export default function SubscriptionPage() {
 
   // Executes the actual database deletion
   const confirmDelete = () => {
-    if (!planToDelete) return
+    const targetId = planToDelete
+    if (!targetId) return
 
     startTransition(async () => {
-      const result = await deleteSubscriptionPlan(planToDelete)
+      const result = await deleteSubscriptionPlan(targetId)
 
       if (result.success) {
         toast.success('Plan Deleted Successfully')
         await loadPlans()
-        setPlanToDelete(null) // Close the modal
       } else {
         toast.error('Deletion Failed', { description: result.error })
       }
@@ -85,27 +77,27 @@ export default function SubscriptionPage() {
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-8 bg-[var(--background)] min-h-screen text-white animate-in fade-in duration-700">
       {/* HEADER PANEL */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
-        <div className="space-y-1 animate-in slide-in-from-left-4 duration-500">
-          <h1 className="text-2xl font-bold tracking-tight text-white">Subscription Management</h1>
-          <p className="text-[#a1a1aa] text-sm">
-            Configure and monitor Subscription plans for gaming and refreshments.
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-900 pb-5">
+        <div className="animate-in slide-in-from-left-4 duration-500">
+          <h1 className="text-2xl font-black uppercase tracking-tight">Subscription Management</h1>
+          <p className="text-xs text-secondary-content font-medium mt-0.5">
+            Configure and monitor subscription plans for gaming and refreshments.
           </p>
         </div>
         <Button
           onClick={() => setIsAddOpen(true)}
-          className="bg-gradient-primary hover:bg-gradient-primary-hover text-black font-semibold rounded-md px-6 transition-all duration-300 hover:scale-[1.02] shadow-[0_0_15px_rgba(184,134,11,0.15)]"
+          variant="gradient"
+          className="font-black uppercase text-xs h-11 px-5 rounded-lg tracking-wider flex items-center gap-2"
         >
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Subscription
+          <PlusCircle className="h-4 w-4 stroke-[3]" /> Add Subscription
         </Button>
       </div>
 
       {/* MAIN TABLE AREA */}
       <div className="mt-2 animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 bg-[var(--surface)] border border-[#27272a] rounded-xl text-[#a1a1aa] gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm font-medium">Loading subscription data...</p>
+          <div className="text-center py-12 bg-[var(--surface)] border border-zinc-900 rounded-xl flex justify-center items-center gap-3 text-[11px] font-black uppercase tracking-wider text-muted-content">
+            <BreakpointLoader size="sm" /> Loading subscription plans
           </div>
         ) : (
           <SubscriptionTable
@@ -128,39 +120,17 @@ export default function SubscriptionPage() {
         />
       )}
 
-      {/* DELETE CONFIRMATION ALERT DIALOG */}
-      <AlertDialog open={!!planToDelete} onOpenChange={open => !open && setPlanToDelete(null)}>
-        <AlertDialogContent className="bg-[var(--surface)] border border-[#27272a] text-white">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl font-bold">
-              Remove Subscription Plan?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-[#a1a1aa] text-sm">
-              Are you sure you want to delete this subscription plan? This drops the plan completely
-              from your database configuration mapping.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-4">
-            <AlertDialogCancel
-              disabled={isPending}
-              className="bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800"
-            >
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={e => {
-                e.preventDefault() // Prevents dialog from closing before DB action finishes
-                confirmDelete()
-              }}
-              disabled={isPending}
-              className="bg-gradient-primary text-black hover:bg-gradient-primary-hover font-semibold flex items-center justify-center"
-            >
-              {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              {isPending ? 'Deleting...' : 'Confirm Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* DELETE CONFIRMATION - shared dialog, same as the promo code screen */}
+      <ConfirmDialog
+        isOpen={!!planToDelete}
+        onClose={() => setPlanToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Remove Subscription Plan"
+        description="Are you sure you want to delete this subscription plan? This drops the plan completely from your database configuration mapping and cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   )
 }

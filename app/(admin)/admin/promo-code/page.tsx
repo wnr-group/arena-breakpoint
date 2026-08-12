@@ -9,7 +9,7 @@ import { EditPromoCodeModal } from "@/components/admin/promo-code/EditPromoCodeM
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PromoCodeRow } from "@/lib/types/promo-code";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminPromoCodeDashboard() {
@@ -75,7 +75,7 @@ export default function AdminPromoCodeDashboard() {
           variant="gradient"
           className="font-black uppercase text-xs h-11 px-5 rounded-lg tracking-wider flex items-center gap-2"
         >
-          <Plus className="h-4 w-4 stroke-[3]" /> Create Promo Code
+          <PlusCircle className="h-4 w-4 stroke-[3]" /> Create Promo Code
         </Button>
       </div>
 

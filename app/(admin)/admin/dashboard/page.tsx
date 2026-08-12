@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   DollarSign, TrendingUp, Calendar, Users, Clock,
   Gamepad2, UtensilsCrossed, Activity, ArrowRight,
-  CheckCircle2, Loader2, AlertCircle, Plus, Eye, RefreshCw
+  CheckCircle2, Loader2, AlertCircle, PlusCircle, Eye, RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
@@ -187,7 +187,7 @@ export default function AdminDashboardPage() {
             onClick={() => router.push("/admin/bookings/walk-in")}
             className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-10 px-6"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <PlusCircle className="h-4 w-4 mr-2 stroke-[3]" />
             New Walk-In
           </Button>
         </div>

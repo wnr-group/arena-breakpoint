@@ -24,29 +24,32 @@ interface DeviceTableProps {
 
 export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTableProps) {
   return (
-    <div className="border border-[#27272a] rounded-xl bg-[var(--surface)] overflow-hidden">
-      <table className="w-full text-left text-sm">
-        <thead className="bg-[var(--background)] border-b border-[#27272a]">
+    <div className="border border-zinc-900 rounded-xl bg-[var(--surface)] overflow-hidden shadow-2xl">
+      <div className="p-4 bg-[var(--background)]/40 border-b border-zinc-900 font-black text-xs uppercase text-muted-content tracking-wider">
+        Device Inventory List
+      </div>
+      <table className="w-full text-left text-xs">
+        <thead className="bg-[var(--background)]/20 text-secondary-content font-black uppercase text-[11px] tracking-wider border-b border-zinc-900 select-none">
           <tr>
-            <th className="py-4 px-6 text-[10px] text-[#a1a1aa] font-semibold uppercase tracking-wider">Image</th>
-            <th className="py-4 px-6 text-[10px] text-[#a1a1aa] font-semibold uppercase tracking-wider">Station #</th>
-            <th className="py-4 px-6 text-[10px] text-[#a1a1aa] font-semibold uppercase tracking-wider">Type</th>
-            <th className="py-4 px-6 text-[10px] text-[#a1a1aa] font-semibold uppercase tracking-wider">Specs</th>
-            <th className="py-4 px-6 text-[10px] text-[#a1a1aa] font-semibold uppercase tracking-wider">Hourly Rate</th>
-            <th className="py-4 px-6 text-[10px] text-[#a1a1aa] font-semibold uppercase tracking-wider">Qty</th>
-            <th className="py-4 px-6 text-[10px] text-[#a1a1aa] font-semibold uppercase tracking-wider">Status</th>
-            <th className="py-4 px-6 text-[10px] text-[#a1a1aa] font-semibold uppercase tracking-wider text-right">Actions</th>
+            <th className="py-4 px-6">Image</th>
+            <th className="py-4 px-6">Station #</th>
+            <th className="py-4 px-6">Type</th>
+            <th className="py-4 px-6">Specs</th>
+            <th className="py-4 px-6">Hourly Rate</th>
+            <th className="py-4 px-6">Qty</th>
+            <th className="py-4 px-6">Status</th>
+            <th className="py-4 px-6 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#27272a]">
+        <tbody className="divide-y divide-zinc-900/60 font-medium">
           {devices.map((device) => {
             const statusClean = String(device.status || "").toLowerCase().trim();
             const isAvailable = statusClean === "available";
 
             return (
-              <tr key={device.id} className="group hover:bg-[var(--surface-hover)] transition-all duration-300">
+              <tr key={device.id} className="group hover:bg-[var(--background)]/30 transition-all duration-300">
                 <td className="py-3 px-6">
-                  <div className="h-10 w-14 bg-[var(--surface-hover)] border border-[#27272a] rounded overflow-hidden flex items-center justify-center">
+                  <div className="h-10 w-14 bg-[var(--surface-hover)] border border-zinc-900 rounded overflow-hidden flex items-center justify-center">
                     {device.image_url ? (
                       <img src={device.image_url} alt="Cover" className="w-full h-full object-cover p-1" />
                     ) : (
@@ -54,19 +57,19 @@ export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTabl
                     )}
                   </div>
                 </td>
-                <td className="py-4 px-6 font-bold text-primary transition-all duration-300">
+                <td className="py-4 px-6 font-black text-primary tracking-wide uppercase transition-all duration-300">
                   {device.station_number}
                 </td>
-                <td className="py-4 px-6 text-[#a1a1aa]">{device.device_type?.display_name || 'N/A'}</td>
-                <td className="py-4 px-6 text-sm text-[#a1a1aa] max-w-xs truncate">
-                  {device.specs || <span className="text-muted-content italic text-xs">None listed</span>}
+                <td className="py-4 px-6 text-white font-bold">{device.device_type?.display_name || 'N/A'}</td>
+                <td className="py-4 px-6 text-muted-content max-w-xs truncate">
+                  {device.specs || <span className="text-muted-content italic">None listed</span>}
                 </td>
-                <td className="py-4 px-6 font-semibold text-primary">
+                <td className="py-4 px-6 text-white font-bold font-mono">
                   ₹{device.device_type?.regular_hourly_rate ? Number(device.device_type.regular_hourly_rate).toLocaleString('en-IN') : "0"}/hr
                 </td>
 
-                <td className="py-4 px-6 font-medium text-[#a1a1aa]">
-                  <span className="text-xs text-data-placeholder">{device.device_type?.included_players || 1}p inc.</span>
+                <td className="py-4 px-6">
+                  <span className="text-[11px] font-mono text-muted-content">{device.device_type?.included_players || 1}p inc.</span>
                 </td>
 
                 <td className="py-4 px-6">
@@ -78,7 +81,7 @@ export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTabl
                       variant="ghost"
                       size="icon"
                       onClick={() => onEdit(device)}
-                      className="h-8 w-8 text-[#a1a1aa] hover:text-white"
+                      className="h-8 w-8 text-muted-content hover:text-white"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -89,7 +92,7 @@ export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTabl
                           variant="ghost"
                           size="icon"
                           disabled={isPending}
-                          className="h-8 w-8 text-[#a1a1aa] hover:text-[#ef4444] hover:bg-red-950/20"
+                          className="h-8 w-8 text-muted-content hover:text-[#ef4444] hover:bg-red-950/20"
                         >
                           {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-red" />}
                         </Button>

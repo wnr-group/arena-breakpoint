@@ -10,7 +10,6 @@ import { Search, Phone, Calendar, Clock, QrCode, UtensilsCrossed, User, CheckCir
 import { toast } from "sonner";
 import { getBookingsByPhone } from "./actions";
 import { formatDbTime, formatDbTimeRange } from "@/lib/utils/timeSlots";
-import { formatDateForDisplay } from "@/lib/utils/dates";
 import { QRCodeSVG } from "qrcode.react";
 
 export default function RetrieveBookingPage() {
@@ -562,30 +561,26 @@ export default function RetrieveBookingPage() {
                   </div>
                   Customer Information
                 </h3>
+                {/* `last:` on every row so the trailing divider lands correctly
+                    whether or not the customer has an email on file. */}
                 <div className="space-y-4 text-sm">
-                  <div className="flex items-center justify-between pb-3 border-b border-zinc-900">
+                  <div className="flex items-center justify-between pb-3 border-b border-zinc-900 last:pb-0 last:border-b-0">
                     <span className="text-zinc-500 font-bold">Customer:</span>
                     <span className="text-white font-black">{selectedBooking.customer_name}</span>
                   </div>
-                  <div className="flex items-center justify-between pb-3 border-b border-zinc-900">
+                  <div className="flex items-center justify-between pb-3 border-b border-zinc-900 last:pb-0 last:border-b-0">
                     <span className="text-zinc-500 font-bold">Phone:</span>
                     <span className="text-primary font-black">{selectedBooking.customer_phone}</span>
                   </div>
                   {selectedBooking.customer_email && (
-                    <div className="flex items-center justify-between pb-3 border-b border-zinc-900">
+                    <div className="flex items-center justify-between pb-3 border-b border-zinc-900 last:pb-0 last:border-b-0">
                       <span className="text-zinc-500 font-bold">Email:</span>
                       <span className="text-white font-bold truncate ml-2 text-right">{selectedBooking.customer_email}</span>
                     </div>
                   )}
-                  <div className="flex items-center justify-between">
-                    <span className="text-zinc-500 font-bold">DOB:</span>
-                    {/* Stored as a DATE, so it arrives as YYYY-MM-DD. Shown the
-                        way the arena writes dates - day, month, year - matching
-                        the DOB field on the booking form. */}
-                    <span className="text-white font-black">
-                      {formatDateForDisplay(selectedBooking.customer_dob) || '—'}
-                    </span>
-                  </div>
+                  {/* Date of birth is deliberately not shown here. It is still
+                      captured at booking time and stored on the customer, but it
+                      is only ever displayed in the admin customers table. */}
                 </div>
               </Card>
 

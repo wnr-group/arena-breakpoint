@@ -156,20 +156,11 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
-import { PlusCircle, Timer, Loader2 } from 'lucide-react'
+import { PlusCircle, Timer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { EditHappyHourModal } from '@/components/admin/happy-hours/EditHappyHourModal'
 import { AddHappyHourModal } from '@/components/admin/happy-hours/AddHappyHourModal'
 import { HappyHourTable } from '@/components/admin/happy-hours/HappyHourTable'
@@ -187,7 +178,9 @@ export default function HappyHoursPage() {
   const [ruleToDelete, setRuleToDelete] = useState<string | null>(null)
   
   const [isLoading, setIsLoading] = useState(true)
-  const [isPending, startTransition] = useTransition()
+  // No isPending here: ConfirmDialog closes on confirm and the outcome is
+  // reported by a toast, matching the promo code screen.
+  const [, startTransition] = useTransition()
 
   // Fetch data dynamically from Supabase
   const loadRules = async () => {
@@ -219,15 +212,15 @@ export default function HappyHoursPage() {
 
   // Executes the actual database deletion dynamically
   const confirmDelete = () => {
-    if (!ruleToDelete) return
-    
+    const targetId = ruleToDelete
+    if (!targetId) return
+
     startTransition(async () => {
-      const result = await deleteHappyHour(ruleToDelete)
-      
+      const result = await deleteHappyHour(targetId)
+
       if (result.success) {
         toast.success('Rule Deleted Successfully')
         await loadRules()
-        setRuleToDelete(null) // Close the modal
       } else {
         toast.error('Failed to delete rule', { description: result.error })
       }
@@ -235,62 +228,60 @@ export default function HappyHoursPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-3 md:p-8 bg-[#0a0a0a] min-h-screen text-white animate-in fade-in duration-700">
+    <div className="flex flex-col gap-6 p-3 md:p-8 bg-[var(--background)] min-h-screen text-white animate-in fade-in duration-700">
       
       {/* HEADER PANEL */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
-        <div className="space-y-1 animate-in slide-in-from-left-4 duration-500">
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white">Happy Hours Management</h1>
-          <p className="text-[#a1a1aa] text-sm leading-snug">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-zinc-900 pb-5">
+        <div className="animate-in slide-in-from-left-4 duration-500">
+          <h1 className="text-2xl font-black uppercase tracking-tight">Happy Hours Management</h1>
+          <p className="text-xs text-secondary-content font-medium mt-0.5">
             Configure automated pricing rules for peak and off-peak gaming sessions.
           </p>
         </div>
         <Button
           onClick={() => setIsAddOpen(true)}
-          className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-black font-semibold rounded-md px-6 py-5 md:py-2 transition-all duration-300 shadow-[0_0_15px_rgba(255,193,7,0.15)]"
+          variant="gradient"
+          className="w-full md:w-auto font-black uppercase text-xs h-11 px-5 rounded-lg tracking-wider flex items-center gap-2"
         >
-          <PlusCircle className="mr-2 h-5 w-5 md:h-4 md:w-4" /> Create Rule
+          <PlusCircle className="h-4 w-4 stroke-[3]" /> Create Rule
         </Button>
       </div>
 
       {/* SUMMARY CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-in slide-in-from-bottom-4 duration-700">
-        <div className="bg-[var(--surface)] border border-[#27272a] rounded-xl p-5 flex flex-col gap-2">
+        <div className="bg-[var(--surface)] border border-zinc-900 rounded-xl p-5 flex flex-col gap-2">
           <div className="flex justify-between items-center w-full">
             <Timer className="text-primary h-5 w-5" />
-            <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded-md">Active Now</span>
+            <span className="text-[9px] font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">Active Now</span>
           </div>
-          <p className="text-[#a1a1aa] text-xs uppercase tracking-wider mt-2">Currently Running</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-content mt-2">Currently Running</p>
           {/* You could make this dynamic by filtering the 'rules' array for status === 'LIVE' */}
-          <h2 className="text-xl font-bold text-white">
+          <h2 className="text-xl font-black text-white uppercase tracking-tight">
             {rules.find(r => r.status === 'LIVE')?.name || 'None Active'}
           </h2>
-          <p className="text-[#a1a1aa] text-sm mt-1">Status check complete</p>
+          <p className="text-xs text-secondary-content font-medium mt-1">Status check complete</p>
         </div>
 
-        <div className="bg-[var(--surface)] border border-[#27272a] rounded-xl p-5 flex flex-col gap-2">
+        <div className="bg-[var(--surface)] border border-zinc-900 rounded-xl p-5 flex flex-col gap-2">
           <div className="flex justify-between items-center w-full">
              <div className="text-primary flex gap-1">
                 <div className="h-4 w-3 border-2 border-current rounded-sm"></div>
                 <div className="h-5 w-4 border-2 border-current rounded-sm"></div>
              </div>
           </div>
-          <p className="text-[#a1a1aa] text-xs uppercase tracking-wider mt-2">Total Rules</p>
-          <h2 className="text-xl font-bold text-white">{rules.length} Configured</h2>
-          <p className="text-[#a1a1aa] text-sm mt-1">Across all devices</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-content mt-2">Total Rules</p>
+          <h2 className="text-xl font-black text-white uppercase tracking-tight">{rules.length} Configured</h2>
+          <p className="text-xs text-secondary-content font-medium mt-1">Across all devices</p>
         </div>
       </div>
 
       {/* MAIN TABLE AREA */}
-      <div className="mt-2 animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both bg-[var(--surface)] border border-[#27272a] rounded-xl p-4 md:p-6">
-        <div className="flex justify-between items-center mb-6">
-            <h2 className="text-base md:text-lg font-bold text-white">Active Rules Configuration</h2>
-        </div>
-        
+      {/* No card styling here - HappyHourTable is itself the bordered card, the
+          same shape the subscription screen uses. */}
+      <div className="mt-2 animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-[#a1a1aa] gap-3">
-            <BreakpointLoader size="lg" />
-            <p className="text-sm font-medium">Loading rules from database...</p>
+          <div className="text-center py-12 bg-[var(--surface)] border border-zinc-900 rounded-xl flex justify-center items-center gap-3 text-[11px] font-black uppercase tracking-wider text-muted-content">
+            <BreakpointLoader size="sm" /> Loading happy hour rules
           </div>
         ) : (
           <HappyHourTable data={rules} onEdit={setEditingRule} onDelete={handleDeleteClick} />
@@ -300,24 +291,17 @@ export default function HappyHoursPage() {
       <AddHappyHourModal open={isAddOpen} setOpen={setIsAddOpen} onFormSuccess={handleRefresh} />
       {editingRule && <EditHappyHourModal rule={editingRule} open={!!editingRule} setOpen={val => !val && setEditingRule(null)} onFormSuccess={handleRefresh} />}
 
-      <AlertDialog open={!!ruleToDelete} onOpenChange={open => !open && setRuleToDelete(null)}>
-        <AlertDialogContent className="w-[90vw] max-w-[500px] bg-[var(--surface)] border border-[#27272a] text-white rounded-xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg md:text-xl font-bold">Remove Pricing Rule?</AlertDialogTitle>
-            <AlertDialogDescription className="text-[#a1a1aa] text-sm">
-              Are you sure you want to delete this happy hour rule? It will no longer apply to your configured devices. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="mt-4 flex-col sm:flex-row gap-3">
-            <AlertDialogCancel disabled={isPending} className="w-full sm:w-auto bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={e => { e.preventDefault(); confirmDelete(); }} disabled={isPending} className="w-full sm:w-auto bg-gradient-primary text-black hover:bg-gradient-primary-hover font-semibold flex items-center justify-center">
-              {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 'Confirm Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* DELETE CONFIRMATION - shared dialog, same as the promo code screen */}
+      <ConfirmDialog
+        isOpen={!!ruleToDelete}
+        onClose={() => setRuleToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Remove Pricing Rule"
+        description="Are you sure you want to delete this happy hour rule? It will no longer apply to your configured devices. This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   )
 }

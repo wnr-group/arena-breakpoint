@@ -55,25 +55,30 @@ export function HappyHourTable({ data = [], onEdit, onDelete }: TableProps) {
     return pages
   }
 
+  // Same palette as the promo code and subscription tables: green for running,
+  // amber for waiting to run, muted for switched off.
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'LIVE':
-        return 'text-primary border-primary/20 bg-primary/10'
-      case 'PAUSED':
-        return 'text-gray-400 border-gray-600/50 bg-gray-800/50'
+        return 'text-green-400 border-green-500/20 bg-green-500/10'
       case 'SCHEDULED':
-        return 'text-primary-hover border-primary-hover/20 bg-primary-hover/10'
+        return 'text-amber-400 border-amber-500/20 bg-amber-500/10'
+      case 'PAUSED':
       default:
-        return 'text-gray-400 border-gray-600 bg-gray-800'
+        return 'text-muted-content border-zinc-800 bg-[var(--background)]/80'
     }
   }
 
   return (
-    <div className="bg-[var(--surface)] border border-[#27272a] rounded-xl overflow-hidden flex flex-col">
+    <div className="bg-[var(--surface)] border border-zinc-900 rounded-xl overflow-hidden flex flex-col shadow-2xl">
+      <div className="p-4 bg-[var(--background)]/40 border-b border-zinc-900 font-black text-xs uppercase text-muted-content tracking-wider">
+        Active Rules Configuration
+      </div>
+
       {/* RESPONSIVE SCROLLABLE TABLE */}
       <div className="overflow-x-auto min-h-75">
-        <table className="w-full text-left text-sm whitespace-nowrap">
-          <thead className="bg-[#0a0a0a] text-[#a1a1aa] text-[10px] uppercase font-bold tracking-wider border-b border-[#27272a]">
+        <table className="w-full text-left text-xs whitespace-nowrap">
+          <thead className="bg-[var(--background)]/20 text-secondary-content font-black uppercase text-[11px] tracking-wider border-b border-zinc-900 select-none">
             <tr>
               <th className="px-6 py-4">Rule Name</th>
               <th className="px-6 py-4">Discount</th>
@@ -83,25 +88,25 @@ export function HappyHourTable({ data = [], onEdit, onDelete }: TableProps) {
               <th className="px-6 py-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#27272a]">
+          <tbody className="divide-y divide-zinc-900/60 font-medium">
             {paginatedData.length > 0 ? (
               paginatedData.map((row) => (
-                <tr key={row.id} className="hover:bg-[#1a1a1a]/50 transition-colors group">
+                <tr key={row.id} className="group hover:bg-[var(--background)]/30 transition-colors">
                   {/* RULE NAME */}
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-white font-medium">
-                      <div className={`h-1.5 w-1.5 rounded-full ${row.status === 'LIVE' ? 'bg-primary' : 'bg-gray-500'}`}></div>
+                    <div className="flex items-center gap-2 font-black text-primary tracking-wide uppercase">
+                      <div className={`h-1.5 w-1.5 rounded-full ${row.status === 'LIVE' ? 'bg-green-400' : 'bg-zinc-500'}`}></div>
                       {row.name}
                     </div>
                   </td>
 
                   {/* DISCOUNT */}
-                  <td className="px-6 py-4 text-primary font-bold">
+                  <td className="px-6 py-4 text-white font-bold font-mono">
                     {row.discount}% OFF
                   </td>
 
                   {/* DEVICES */}
-                  <td className="px-6 py-4 text-[#a1a1aa]">
+                  <td className="px-6 py-4 text-muted-content">
                     {row.devices.includes('PS') ? (
                       <div className="flex gap-1 items-center">
                         <span className="bg-[#27272a] text-xs px-2 py-1 rounded-full text-white">PS</span>
@@ -117,22 +122,22 @@ export function HappyHourTable({ data = [], onEdit, onDelete }: TableProps) {
                   {/* SCHEDULE & TIME RANGE */}
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <span className="text-white font-medium text-sm">{row.schedule}</span>
+                      <span className="text-white font-bold">{row.schedule}</span>
                       {/* Displays the time range immediately below the schedule days */}
-                      <span className="text-[#a1a1aa] text-xs mt-0.5">{row.time_range}</span>
+                      <span className="text-[11px] font-mono text-muted-content mt-0.5">{row.time_range}</span>
                     </div>
                   </td>
 
                   {/* STATUS */}
                   <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 border rounded-md text-[10px] font-bold tracking-widest uppercase ${getStatusStyle(row.status)}`}>
+                    <span className={`px-2 py-0.5 border rounded text-[9px] font-black tracking-wider uppercase ${getStatusStyle(row.status)}`}>
                       {row.status}
                     </span>
                   </td>
 
                   {/* ACTIONS */}
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-3 text-[#a1a1aa]">
+                    <div className="flex items-center justify-end gap-3 text-muted-content">
                       {row.status === 'PAUSED' && (
                         <button className="hover:text-white transition-colors" title="Resume">
                           <Play className="h-4 w-4" />
@@ -150,7 +155,7 @@ export function HappyHourTable({ data = [], onEdit, onDelete }: TableProps) {
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-[#a1a1aa]">
+                <td colSpan={6} className="px-6 py-12 text-center text-xs font-medium text-muted-content">
                   No active rules found. Create one to get started.
                 </td>
               </tr>
@@ -160,25 +165,25 @@ export function HappyHourTable({ data = [], onEdit, onDelete }: TableProps) {
       </div>
 
       {/* PAGINATION FOOTER */}
-      <div className="p-4 border-t border-[#27272a] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#a1a1aa]">
+      <div className="p-4 border-t border-zinc-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] font-bold uppercase tracking-wider text-muted-content">
         <span>
-          Showing <strong className="text-white">{data.length === 0 ? 0 : startIndex + 1}</strong>{' '}
-          to <strong className="text-white">{Math.min(endIndex, data.length)}</strong> of{' '}
-          <strong className="text-white">{data.length}</strong> rules
+          Showing <strong className="text-white font-black">{data.length === 0 ? 0 : startIndex + 1}</strong>{' '}
+          to <strong className="text-white font-black">{Math.min(endIndex, data.length)}</strong> of{' '}
+          <strong className="text-white font-black">{data.length}</strong> rules
         </span>
 
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className="w-7 h-7 flex items-center justify-center rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#1a1a1a] hover:text-white"
+            className="w-7 h-7 flex items-center justify-center rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-white"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
 
           {getPageNumbers().map((page, index) =>
             page === '...' ? (
-              <span key={`ellipsis-${index}`} className="px-1 text-[#a1a1aa]">
+              <span key={`ellipsis-${index}`} className="px-1 text-muted-content">
                 ..
               </span>
             ) : (
@@ -188,7 +193,7 @@ export function HappyHourTable({ data = [], onEdit, onDelete }: TableProps) {
                 className={`w-7 h-7 flex items-center justify-center rounded-md transition-colors font-medium ${
                   currentPage === page
                     ? 'bg-[#27272a] text-white'
-                    : 'text-[#a1a1aa] hover:bg-[#1a1a1a] hover:text-white'
+                    : 'text-muted-content hover:bg-[var(--surface-hover)] hover:text-white'
                 }`}
               >
                 {page}
@@ -199,7 +204,7 @@ export function HappyHourTable({ data = [], onEdit, onDelete }: TableProps) {
           <button
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages || data.length === 0}
-            className="w-7 h-7 flex items-center justify-center rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#1a1a1a] hover:text-white"
+            className="w-7 h-7 flex items-center justify-center rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--surface-hover)] hover:text-white"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
