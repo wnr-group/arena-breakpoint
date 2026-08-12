@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { requireStaff } from "@/lib/auth/require-admin";
 
 interface DBCustomer {
   id: string;
@@ -25,6 +26,8 @@ interface DBSubscriptionPlan {
 }
 
 export async function getLiveCustomerRegistryAction() {
+  await requireStaff();
+
   const { data: customersData, error: customerError } = await supabaseAdmin
     .from("customers")
     .select("id, name, phone, email, date_of_birth,created_at")

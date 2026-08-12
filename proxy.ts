@@ -30,23 +30,34 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  // Check if user is authenticated
+  // getUser(), not getSession(): getSession() decodes whatever is in the cookie
+  // without guaranteeing it is revalidated against the auth server, so it must
+  // never be the basis of an access decision. getUser() verifies the token.
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  // Role comes from app_metadata only. user_metadata is writable by the user
+  // via supabase.auth.updateUser(), so a staff account could otherwise promote
+  // itself to admin. An account with no explicit staff role is not staff -
+  // there is deliberately no default, because public signup means a stranger
+  // can hold a perfectly valid Supabase session.
+  const role = user?.app_metadata?.role
+  const isStaff = role === 'admin' || role === 'staff'
 
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
   const isLoginPage = request.nextUrl.pathname === '/admin/login'
 
-  // If trying to access admin routes without session, redirect to login
-  if (isAdminRoute && !isLoginPage && !session) {
+  // Anyone who is not staff is sent to the login page, signed in or not.
+  if (isAdminRoute && !isLoginPage && !isStaff) {
     const loginUrl = new URL('/admin/login', request.url)
     loginUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
+    if (user) loginUrl.searchParams.set('error', 'not-staff')
     return NextResponse.redirect(loginUrl)
   }
 
-  // If already logged in and trying to access login page, redirect to admin dashboard
-  if (isLoginPage && session) {
+  // Already signed in as staff and heading to the login page - go to the panel.
+  if (isLoginPage && isStaff) {
     return NextResponse.redirect(new URL('/admin', request.url))
   }
 

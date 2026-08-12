@@ -2,8 +2,11 @@
 
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { requireStaff } from "@/lib/auth/require-admin";
 
 export async function getLivePromoListAction() {
+  await requireStaff();
+
   const { data, error } = await supabaseAdmin
     .from("promo_codes")
     .select("*")
@@ -21,6 +24,8 @@ export async function commitNewPromoAction(payload: {
   valid_until: string;
   is_active: boolean;
 }) {
+  await requireStaff();
+
   // Backend validation
   if (!payload.code || payload.code.trim().length === 0) {
     return { success: false, error: "Promo code is required" };
@@ -71,6 +76,8 @@ export async function updateExistingPromoAction(
     is_active: boolean;
   }
 ) {
+  await requireStaff();
+
   // Backend validation
   if (!payload.code || payload.code.trim().length === 0) {
     return { success: false, error: "Promo code is required" };
@@ -109,6 +116,8 @@ export async function updateExistingPromoAction(
 }
 
 export async function executePromoDeletionAction(id: number) {
+  await requireStaff();
+
   const { error } = await supabaseAdmin
     .from("promo_codes")
     .delete()
