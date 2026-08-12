@@ -698,7 +698,9 @@ export default function CustomerDetailsPage() {
               <div className="flex justify-between"><span className="text-zinc-500">Customer:</span> <span className="text-white font-bold">{customerName || existingCustomerData?.name}</span></div>
               <div className="flex justify-between"><span className="text-zinc-500">Phone:</span> <span className="text-primary font-bold">+91 {mobileNumber}</span></div>
               <div className="flex justify-between"><span className="text-zinc-500">Email:</span> <span className="text-white font-bold truncate ml-4">{customerEmail || existingCustomerData?.email}</span></div>
-              <div className="flex justify-between"><span className="text-zinc-500">DOB:</span> <span className="text-white font-bold">{customerDob}</span></div>
+              {/* Date of birth is still collected on the form above and stored
+                  against the customer, but it is only ever displayed in the
+                  admin customers table - never back to the customer. */}
             </div>
           </div>
 

@@ -29,13 +29,6 @@ const slides: SlideData[] = [
     title: "PLAYSTATION 5 GAMING",
     subtitle: "Immerse yourself in next-gen gaming with our PlayStation 5 stations. Experience lightning-fast loading and stunning visuals.",
     price: "12.99"
-  },
-  {
-    id: 3,
-    image: "https://demo.bravisthemes.com/playhost/wp-content/uploads/2023/12/Slide1.webp",
-    title: "STARFLEET COMMAND",
-    subtitle: "Lead your fleet to victory. Deploy custom mods effortlessly with our one-click installer and 24/7 priority customer support.",
-    price: "19.99"
   }
 ];
 
