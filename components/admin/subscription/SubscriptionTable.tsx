@@ -104,7 +104,7 @@ export function SubscriptionTable({ data = [], onEdit, onDelete }: SubscriptionT
 
                   {/* DISCOUNT */}
                   <td className="px-6 py-4">
-                    <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold text-cyan-400 bg-cyan-400/10 border border-cyan-400/20 rounded-md">
+                    <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold text-primary bg-primary/10 border border-primary/20 rounded-md">
                       {row.discount_percentage}% OFF
                     </span>
                   </td>
@@ -112,11 +112,11 @@ export function SubscriptionTable({ data = [], onEdit, onDelete }: SubscriptionT
                   {/* STATUS */}
                   <td className="px-6 py-4">
                     {row.is_active ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold text-green-400 border border-green-400/20 rounded-full bg-green-400/5">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold text-green-400 border border-green-500/20 rounded-full bg-green-500/10">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span> Active
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold text-muted-content border border-zinc-600/50 rounded-full bg-zinc-800/50">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold text-muted-content border border-zinc-800 rounded-full bg-[var(--background)]/80">
                         <span className="w-1.5 h-1.5 rounded-full bg-zinc-500"></span> Inactive
                       </span>
                     )}

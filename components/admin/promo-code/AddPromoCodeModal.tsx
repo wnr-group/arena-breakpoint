@@ -128,7 +128,7 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
                 value={discountType} 
                 onChange={(e) => { setDiscountType(e.target.value as any); setDiscountValue(""); }}
                 className="w-full bg-[var(--background)] border border-zinc-800 rounded-xl h-12 px-3.5 text-xs text-white font-black focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent cursor-pointer appearance-none transition-all hover:border-zinc-700"
-                style={{ backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23FFC107' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', backgroundSize: '14px' }}
+                style={{ backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23B8860B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', backgroundSize: '14px' }}
               >
                 <option value="percentage">Percentage (%)</option>
                 <option value="fixed">Fixed Amount (₹)</option>

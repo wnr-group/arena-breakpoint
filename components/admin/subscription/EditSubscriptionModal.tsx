@@ -83,7 +83,7 @@ export function EditSubscriptionModal({ plan, onFormSuccess, open, setOpen }: Ed
                   name="name"
                   maxLength={50}
                   defaultValue={plan?.name}
-                  className="w-full h-11 rounded-lg border border-[#27272a] bg-[var(--background)] px-3 text-sm text-primary font-bold focus:ring-1 focus:ring-[#FFC107] outline-none"
+                  className="w-full h-11 rounded-lg border border-[#27272a] bg-[var(--background)] px-3 text-sm text-primary font-bold focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-colors"
                   required
                 />
               </div>
@@ -100,7 +100,7 @@ export function EditSubscriptionModal({ plan, onFormSuccess, open, setOpen }: Ed
                     step="0.01"
                     min="1"
                     defaultValue={plan?.price}
-                    className="w-full h-11 rounded-lg border border-[#27272a] bg-[var(--background)] pl-10 pr-3 text-sm text-white focus:ring-1 focus:ring-[#FFC107] outline-none"
+                    className="w-full h-11 rounded-lg border border-[#27272a] bg-[var(--background)] pl-10 pr-3 text-sm text-white focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-colors"
                     required
                   />
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#a1a1aa]">
@@ -121,7 +121,7 @@ export function EditSubscriptionModal({ plan, onFormSuccess, open, setOpen }: Ed
                     min="1"
                     max="60"
                     defaultValue={plan?.duration_months}
-                    className="w-full h-11 rounded-lg border border-[#27272a] bg-[var(--background)] pl-10 pr-3 text-sm text-white focus:ring-1 focus:ring-[#FFC107] outline-none"
+                    className="w-full h-11 rounded-lg border border-[#27272a] bg-[var(--background)] pl-10 pr-3 text-sm text-white focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-colors"
                     required
                   />
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#a1a1aa]">
@@ -142,7 +142,7 @@ export function EditSubscriptionModal({ plan, onFormSuccess, open, setOpen }: Ed
                     min="0"
                     max="100"
                     defaultValue={plan?.discount_percentage}
-                    className="w-full h-11 rounded-lg border border-[#27272a] bg-[var(--background)] pl-10 pr-3 text-sm text-white focus:ring-1 focus:ring-[#FFC107] outline-none"
+                    className="w-full h-11 rounded-lg border border-[#27272a] bg-[var(--background)] pl-10 pr-3 text-sm text-white focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-colors"
                   />
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[#a1a1aa]">
                     <Percent className="h-4 w-4" />
@@ -158,7 +158,7 @@ export function EditSubscriptionModal({ plan, onFormSuccess, open, setOpen }: Ed
                 <textarea
                   name="description"
                   defaultValue={plan?.description}
-                  className="w-full h-24 rounded-lg border border-[#27272a] bg-[var(--background)] p-3 text-sm text-white focus:ring-1 focus:ring-[#FFC107] outline-none resize-none"
+                  className="w-full h-24 rounded-lg border border-[#27272a] bg-[var(--background)] p-3 text-sm text-white focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-colors resize-none"
                   required
                   minLength={10}
                   maxLength={500}

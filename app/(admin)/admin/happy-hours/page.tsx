@@ -316,7 +316,7 @@ export default function HappyHoursPage() {
             <AlertDialogCancel disabled={isPending} className="w-full sm:w-auto bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800">
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction onClick={e => { e.preventDefault(); confirmDelete(); }} disabled={isPending} className="w-full sm:w-auto bg-gradient-primary text-black hover:bg-gradient-primary/90 font-semibold flex items-center justify-center">
+            <AlertDialogAction onClick={e => { e.preventDefault(); confirmDelete(); }} disabled={isPending} className="w-full sm:w-auto bg-gradient-primary text-black hover:bg-gradient-primary-hover font-semibold flex items-center justify-center">
               {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 'Confirm Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -152,7 +152,7 @@ export function AddHappyHourModal({ open, setOpen, onFormSuccess }: AddModalProp
                   onClick={() => toggleDay(idx)} 
                   className={`flex-1 sm:flex-initial w-9 h-9 min-w-8 flex items-center justify-center rounded-lg text-xs md:text-sm font-medium transition-colors border ${
                     selectedDays.includes(idx) 
-                      ? 'border-[var(--primary)] text-primary bg-gradient-primary/10' 
+                      ? 'border-[var(--primary)] text-primary bg-primary/10'
                       : 'border-[#333] text-[#a1a1aa] bg-[var(--surface)] hover:border-gray-500'
                   }`}
                 >

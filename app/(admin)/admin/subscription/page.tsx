@@ -104,7 +104,7 @@ export default function SubscriptionPage() {
       <div className="mt-2 animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 bg-[var(--surface)] border border-[#27272a] rounded-xl text-[#a1a1aa] gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-[#FFC107]" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-sm font-medium">Loading subscription data...</p>
           </div>
         ) : (
@@ -153,7 +153,7 @@ export default function SubscriptionPage() {
                 confirmDelete()
               }}
               disabled={isPending}
-              className="bg-gradient-primary text-black hover:bg-gradient-primary/90 font-semibold flex items-center justify-center"
+              className="bg-gradient-primary text-black hover:bg-gradient-primary-hover font-semibold flex items-center justify-center"
             >
               {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               {isPending ? 'Deleting...' : 'Confirm Delete'}

@@ -127,7 +127,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                 <select
                   value={previewCategory}
                   onChange={(e) => setPreviewCategory(e.target.value as FoodCategory)}
-                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[var(--surface)] px-3 text-sm focus:border-primary focus:ring-1 focus:ring-[#FFC107] outline-none text-white cursor-pointer transition-colors"
+                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[var(--surface)] px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white cursor-pointer transition-colors"
                 >
                   <option value="Snacks">Snacks</option>
                   <option value="Drinks">Drinks</option>
@@ -150,7 +150,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                     min="0"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-[#27272a] bg-[var(--surface)] pl-7 pr-3 text-sm focus:ring-1 focus:ring-[#FFC107] focus:border-primary outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
+                    className="flex h-10 w-full rounded-md border border-[#27272a] bg-[var(--surface)] pl-7 pr-3 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
                     required
                   />
                 </div>
@@ -165,7 +165,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                   min="0"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[var(--surface)] px-3 text-sm focus:ring-1 focus:ring-[#FFC107] focus:border-primary outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
+                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[var(--surface)] px-3 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
                   required
                 />
               </div>
@@ -198,7 +198,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
 
             <div className="space-y-2">
               <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Description</label>
-              <textarea name="description" placeholder="Describe flavors, cooking styles, textures, or key details..." className="w-full rounded-md border border-[#27272a] bg-[var(--surface)] px-3 py-2.5 text-sm text-white focus:ring-1 focus:ring-[#FFC107] focus:border-primary h-24 outline-none resize-none transition-colors" />
+              <textarea name="description" placeholder="Describe flavors, cooking styles, textures, or key details..." className="w-full rounded-md border border-[#27272a] bg-[var(--surface)] px-3 py-2.5 text-sm text-white focus:ring-1 focus:ring-primary focus:border-primary h-24 outline-none resize-none transition-colors" />
             </div>
           </div>
 
