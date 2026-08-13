@@ -6,7 +6,7 @@
  */
 
 import crypto from 'crypto';
-import { isTestMode, sendOTPViaTestMode } from './msg91-test';
+import { isTestMode, isLiveSmsAllowed, sendOTPViaTestMode } from './msg91-test';
 
 const MSG91_AUTH_KEY = process.env.MSG91_AUTH_KEY;
 const MSG91_SENDER_ID = process.env.MSG91_SENDER_ID || 'BRKPNT';
@@ -67,6 +67,13 @@ export async function sendOTPViaSMS(
         success: false,
         message: 'Invalid phone number format. Must be 10 digits.',
       };
+    }
+
+    // Allowlist check sits after validation and before the paid API call, so a
+    // development run can exercise the whole flow while spending credits on one
+    // handset only. No-op when MSG91_LIVE_SMS_NUMBERS is unset.
+    if (!isLiveSmsAllowed(cleanPhone)) {
+      return await sendOTPViaTestMode(cleanPhone, otp, 'not-allowlisted');
     }
 
     console.log(`[MSG91] Sending OTP to ${cleanPhone}`);

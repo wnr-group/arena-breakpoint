@@ -25,7 +25,8 @@
     "test:walkin": "tsx scripts/verify-walkin-session.ts",
     "test:midnight": "tsx scripts/verify-midnight-booking.ts",
     "check:guards": "tsx scripts/check-admin-guards.ts",
-    "check:clock": "tsx scripts/check-arena-clock.ts"
+    "check:clock": "tsx scripts/check-arena-clock.ts",
+    "otp:reset": "tsx scripts/reset-otp-limit.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "3.3.4",
