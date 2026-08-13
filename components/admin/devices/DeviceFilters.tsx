@@ -33,7 +33,7 @@ export function DeviceFilters({
       <div className="flex items-center gap-6 border-b border-[#27272a] px-2 overflow-x-auto scrollbar-none">
         <button
           onClick={() => setTypeTab("All Devices")}
-          className={`pb-3 text-sm font-medium transition-all duration-300 whitespace-nowrap ${
+          className={`pb-3 text-base font-medium transition-all duration-300 whitespace-nowrap ${
             typeTab === "All Devices" ? "text-primary border-b-2 border-primary" : "text-[#a1a1aa] hover:text-white"
           }`}
         >
@@ -43,7 +43,7 @@ export function DeviceFilters({
           <button
             key={dt.id}
             onClick={() => setTypeTab(dt.id)}
-            className={`pb-3 text-sm font-medium transition-all duration-300 whitespace-nowrap ${
+            className={`pb-3 text-base font-medium transition-all duration-300 whitespace-nowrap ${
               typeTab === dt.id ? "text-primary border-b-2 border-primary" : "text-[#a1a1aa] hover:text-white"
             }`}
           >
@@ -60,7 +60,7 @@ export function DeviceFilters({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by station ID or type..."
-            className="bg-transparent border-none pl-9 text-sm text-white focus-visible:ring-0"
+            className="bg-transparent border-none pl-9 text-base text-white focus-visible:ring-0"
           />
         </div>
 
@@ -69,7 +69,7 @@ export function DeviceFilters({
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-transparent text-[#a1a1aa] hover:text-white text-sm border-none focus:ring-0 cursor-pointer outline-none px-2"
+          className="bg-transparent text-[#a1a1aa] hover:text-white text-base border-none focus:ring-0 cursor-pointer outline-none px-2"
         >
           <option value="All" className="bg-[var(--surface)]">All Statuses</option>
           <option value="available" className="bg-[var(--surface)]">Available</option>
@@ -87,7 +87,7 @@ export function DeviceFilters({
             setTypeTab("All Devices");
             setStatusFilter("All");
           }}
-          className="text-[#a1a1aa] text-sm hover:bg-[var(--surface-hover)]"
+          className="text-[#a1a1aa] text-base hover:bg-[var(--surface-hover)]"
         >
           Reset
         </Button>

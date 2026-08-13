@@ -3,6 +3,7 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { annotateRemovableFoodItems } from "@/lib/bookings/foodItems";
 import { formatLocalDate } from "@/lib/utils/dates";
+import { requireStaff } from "@/lib/auth/require-admin";
 
 /** Rupee tolerance for float comparisons on money. */
 const MONEY_EPSILON = 0.01
@@ -93,6 +94,8 @@ function isBookingInDateRange(
 }
 
 export async function getAllBookings(filters?: BookingFilters) {
+  await requireStaff();
+
   try {
     let query = supabaseAdmin
       .from("bookings")
@@ -203,6 +206,8 @@ export async function getAllBookings(filters?: BookingFilters) {
 }
 
 export async function getBookingDetails(bookingId: string) {
+  await requireStaff();
+
   try {
     const { data, error } = await supabaseAdmin
       .from("bookings")
@@ -299,6 +304,8 @@ export async function getBookingDetails(bookingId: string) {
 }
 
 export async function updateBookingStatus(bookingId: string, newStatus: string) {
+  await requireStaff();
+
   try {
     const { data, error } = await supabaseAdmin
       .from("bookings")
@@ -320,6 +327,8 @@ export async function updateBookingStatus(bookingId: string, newStatus: string) 
 }
 
 export async function checkInBooking(bookingId: string) {
+  await requireStaff();
+
   try {
     const now = new Date().toISOString();
 
@@ -344,6 +353,8 @@ export async function checkInBooking(bookingId: string) {
 }
 
 export async function checkOutBooking(bookingId: string) {
+  await requireStaff();
+
   try {
     const now = new Date().toISOString();
 
@@ -368,6 +379,8 @@ export async function checkOutBooking(bookingId: string) {
 }
 
 export async function cancelBooking(bookingId: string, reason?: string) {
+  await requireStaff();
+
   try {
     const now = new Date().toISOString();
 
@@ -393,6 +406,8 @@ export async function cancelBooking(bookingId: string, reason?: string) {
 export async function getBookingStats(
   filters?: Pick<BookingFilters, "dateFrom" | "dateTo">
 ) {
+  await requireStaff();
+
   try {
     // Get counts by status. The slot dates come along so the counts can be
     // scoped to the same range as the list they sit above.
@@ -457,6 +472,8 @@ export async function addFoodToBooking(
     unitPrice: number;
   }>
 ) {
+  await requireStaff();
+
   try {
     // VALIDATION: Check stock availability before adding
     const itemIds = items.map(item => item.menuItemId);
@@ -798,6 +815,8 @@ export async function createWalkInBooking(payload: {
   happyHourDiscount?: number;
   happyHourRuleId?: string | null;
 }) {
+  await requireStaff();
+
   try {
     // Convert time format from "10:00 AM" to "10:00:00"
     const formatTime = (timeStr: string) => {
@@ -1002,6 +1021,8 @@ export async function createWalkInBooking(payload: {
  * Update player count for a booking slot
  */
 export async function updatePlayerCount(slotId: string, newPlayerCount: number, maxPlayers: number) {
+  await requireStaff();
+
   try {
     // Validate player count
     if (newPlayerCount < 1) {
@@ -1084,6 +1105,8 @@ export async function updatePlayerCount(slotId: string, newPlayerCount: number, 
  * Get bookings for timeline view - specific date
  */
 export async function getTimelineBookings(date: string): Promise<{ success: boolean; bookings: TimelineBooking[]; error?: string }> {
+  await requireStaff();
+
   try {
     const { data, error } = await supabaseAdmin
       .from("booking_device_slots")
@@ -1133,6 +1156,8 @@ export async function getTimelineBookings(date: string): Promise<{ success: bool
 }
 
 export async function closeBooking(bookingId: string) {
+  await requireStaff();
+
   try {
     const { error } = await supabaseAdmin
       .from("bookings")
@@ -1153,6 +1178,8 @@ export async function closeBooking(bookingId: string) {
 }
 
 export async function getBookingBillingDetails(bookingId: string) {
+  await requireStaff();
+
   try {
     const { data, error } = await supabaseAdmin
       .from("bookings")
@@ -1246,6 +1273,8 @@ export async function markBookingAsPaid(
     upiAmount: number;
   }
 ) {
+  await requireStaff();
+
   try {
     // Get booking details including current payment status
     const { data: booking, error: fetchError } = await supabaseAdmin
@@ -1345,6 +1374,8 @@ export async function createFoodOnlyWalkInBooking(payload: {
   foodItems: { menuItemId: string; quantity: number; notes: string }[];
   totalAmount: number;
 }) {
+  await requireStaff();
+
   try {
     // Step 1: Get or create customer
     let customerId = payload.customerId;

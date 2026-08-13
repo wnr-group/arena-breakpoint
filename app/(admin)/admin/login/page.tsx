@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, FormEvent, Suspense } from 'react'
+import { useState, useEffect, FormEvent, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase/client'
@@ -20,6 +20,17 @@ function LoginForm() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+
+  // A signed-in account without a staff role is bounced back here by the
+  // middleware. Without this they would sign in "successfully" and land on the
+  // login page again with no explanation, looking like a broken redirect loop.
+  useEffect(() => {
+    if (searchParams.get('error') === 'not-staff') {
+      toast.error('Access Denied', {
+        description: 'This account does not have staff access to the admin panel.',
+      })
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()

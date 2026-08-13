@@ -2,8 +2,11 @@
 
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { requireStaff } from "@/lib/auth/require-admin";
 
 export async function getDeviceTypes() {
+  await requireStaff();
+
   const { data, error } = await supabaseAdmin
     .from('device_types')
     .select('*')
@@ -19,6 +22,8 @@ export async function getDeviceTypes() {
 }
 
 export async function getDevices() {
+  await requireStaff();
+
   const { data, error } = await supabaseAdmin
     .from('devices')
     .select(`
@@ -36,6 +41,8 @@ export async function getDevices() {
 }
 
 export async function createDevice(formData: FormData) {
+  await requireStaff();
+
   const device_type_id = formData.get('device_type_id') as string;
   const station_number = formData.get('station_number') as string;
   const status = formData.get('status') as string;
@@ -61,6 +68,8 @@ export async function createDevice(formData: FormData) {
 }
 
 export async function updateDevice(formData: FormData) {
+  await requireStaff();
+
   const id = formData.get('id') as string;
   const device_type_id = formData.get('device_type_id') as string;
   const station_number = formData.get('station_number') as string;
@@ -106,6 +115,8 @@ export async function updateDevice(formData: FormData) {
 }
 
 export async function deleteDevice(id: string) {
+  await requireStaff();
+
   const { error } = await supabaseAdmin
     .from('devices')
     .delete()

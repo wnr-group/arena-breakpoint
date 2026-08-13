@@ -2,8 +2,11 @@
 
 import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { requireStaff } from "@/lib/auth/require-admin";
 
 export async function getSubscriptionPlans() {
+  await requireStaff();
+
   try {
     const { data, error } = await supabaseAdmin
       .from('subscription_plans')
@@ -27,6 +30,8 @@ export async function getSubscriptionPlans() {
 }
 
 export async function createSubscriptionPlan(formData: FormData) {
+  await requireStaff();
+
   // Parse boolean correctly depending on if it comes from a hidden input ("true") or a checkbox ("on")
   const isActiveRaw = formData.get('is_active')
   const isActive = isActiveRaw === 'true' || isActiveRaw === 'on'
@@ -77,6 +82,8 @@ export async function createSubscriptionPlan(formData: FormData) {
 }
 
 export async function updateSubscriptionPlan(formData: FormData) {
+  await requireStaff();
+
   const id = formData.get('id') as string
 
   const isActiveRaw = formData.get('is_active')
@@ -126,6 +133,8 @@ export async function updateSubscriptionPlan(formData: FormData) {
 }
 
 export async function deleteSubscriptionPlan(id: string) {
+  await requireStaff();
+
   const { error } = await supabaseAdmin.from('subscription_plans').delete().eq('id', id)
 
   if (error) return { success: false, error: error.message }
@@ -135,6 +144,8 @@ export async function deleteSubscriptionPlan(id: string) {
 }
 
 export async function getSubscriptionPlanDetails(id: string) {
+  await requireStaff();
+
   try {
     const { data, error } = await supabaseAdmin
       .from('subscription_plans')

@@ -25,11 +25,11 @@ interface DeviceTableProps {
 export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTableProps) {
   return (
     <div className="border border-zinc-900 rounded-xl bg-[var(--surface)] overflow-hidden shadow-2xl">
-      <div className="p-4 bg-[var(--background)]/40 border-b border-zinc-900 font-black text-xs uppercase text-muted-content tracking-wider">
+      <div className="p-4 bg-[var(--background)]/40 border-b border-zinc-900 font-black text-sm uppercase text-muted-content tracking-wider">
         Device Inventory List
       </div>
-      <table className="w-full text-left text-xs">
-        <thead className="bg-[var(--background)]/20 text-secondary-content font-black uppercase text-[11px] tracking-wider border-b border-zinc-900 select-none">
+      <table className="w-full text-left text-sm">
+        <thead className="bg-[var(--background)]/20 text-secondary-content font-black uppercase text-xs tracking-wider border-b border-zinc-900 select-none">
           <tr>
             <th className="py-4 px-6">Image</th>
             <th className="py-4 px-6">Station #</th>
@@ -69,7 +69,7 @@ export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTabl
                 </td>
 
                 <td className="py-4 px-6">
-                  <span className="text-[11px] font-mono text-muted-content">{device.device_type?.included_players || 1}p inc.</span>
+                  <span className="text-xs font-mono text-muted-content">{device.device_type?.included_players || 1}p inc.</span>
                 </td>
 
                 <td className="py-4 px-6">
@@ -101,7 +101,7 @@ export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTabl
                       <AlertDialogContent className="bg-[var(--surface)] border border-[#27272a] text-white">
                         <AlertDialogHeader>
                           <AlertDialogTitle className="text-xl font-bold">Remove Terminal Record?</AlertDialogTitle>
-                          <AlertDialogDescription className="text-[#a1a1aa] text-sm">
+                          <AlertDialogDescription className="text-[#a1a1aa] text-base">
                             Are you sure you want to delete **Station {device.station_number}**? This action will remove the hardware machine data completely from your system inventory.
                           </AlertDialogDescription>
                         </AlertDialogHeader>

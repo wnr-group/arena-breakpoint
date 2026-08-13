@@ -131,7 +131,7 @@ export default function DevicesPage() {
       <div className="flex items-center justify-between mb-2">
         <div className="space-y-1 animate-in slide-in-from-left-4 duration-500">
           <h1 className="text-2xl font-bold tracking-tight text-white">DEVICES MANAGEMENT</h1>
-          <p className="text-[#a1a1aa] text-sm">
+          <p className="text-[#a1a1aa] text-base">
             Manage all gaming platforms, stations and availability across the arena.
           </p>
         </div>
@@ -151,11 +151,13 @@ export default function DevicesPage() {
           <Card key={stat.title} className="bg-[var(--surface)] border-[#27272a] hover:border-primary/70 hover:-translate-y-1 transition-all duration-500 group">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <stat.icon className="h-5 w-5 text-primary group-hover:scale-110 transition-transform duration-500" />
-              <span className="text-stat-label">{stat.title}</span>
+              {/* was .text-stat-label (12px); inlined one step larger so the shared
+                  class stays as-is for the other admin pages that use it */}
+              <span className="text-sm font-bold uppercase tracking-wider text-zinc-300">{stat.title}</span>
             </CardHeader>
             <CardContent>
               <div className={`text-2xl lg:text-3xl font-bold mb-1 ${stat.color || 'text-white'}`}>{stat.count}</div>
-              <p className="text-min-enhanced text-secondary-content truncate">{stat.label}</p>
+              <p className="text-sm font-semibold text-secondary-content truncate">{stat.label}</p>
             </CardContent>
           </Card>
         ))}
