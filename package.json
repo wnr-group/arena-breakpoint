@@ -18,7 +18,8 @@
     "prepare": "husky || true",
     "seed:admin": "tsx scripts/seed-admin.ts",
     "seed:staff": "tsx scripts/seed-staff.ts",
-    "test:pricing": "tsx scripts/verify-membership-discount.ts"
+    "test:pricing": "tsx scripts/verify-membership-discount.ts",
+    "check:guards": "tsx scripts/check-admin-guards.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "3.3.4",

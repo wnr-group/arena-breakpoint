@@ -119,7 +119,7 @@ export default function AdminBookingsPage() {
     if (dateFrom && next < dateFrom) setDateFrom(next);
   };
 
-  const setQuickDateRange = (preset: "today" | "7days" | "30days" | "month" | "90days" | "all") => {
+  const setQuickDateRange = (preset: "today" | "future" | "7days" | "30days" | "month" | "90days" | "all") => {
     const now = new Date();
     const todayStr = formatLocalDate(now);
 
@@ -130,6 +130,17 @@ export default function AdminBookingsPage() {
         setDateFrom(todayStr);
         setDateTo(todayStr);
         break;
+      case "future": {
+        // Tomorrow onwards, with no upper bound - a booking three months out
+        // still belongs here. Every other preset looks backwards, so a future
+        // reservation was only visible under "All Time", buried among the
+        // history. This is the view for "what is coming".
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        setDateFrom(formatLocalDate(tomorrow));
+        setDateTo("");
+        break;
+      }
       case "7days": {
         const week = new Date(now);
         week.setDate(week.getDate() - 7);
@@ -592,6 +603,7 @@ export default function AdminBookingsPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-2">
             {([
               { id: "today", label: "Today" },
+              { id: "future", label: "Future" },
               { id: "7days", label: "Last 7 Days" },
               { id: "30days", label: "Last 30 Days" },
               { id: "month", label: "This Month" },

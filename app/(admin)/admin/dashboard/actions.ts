@@ -11,71 +11,87 @@ export async function getDashboardStats() {
     const today = new Date().toISOString().split('T')[0];
     const now = new Date();
 
-    // Today's bookings
-    const { data: todaysBookings, error: bookingsError } = await supabaseAdmin
-      .from("booking_device_slots")
-      .select(`
-        slot_total,
-        slot_date,
-        slot_start_time,
-        bookings!inner(
-          id,
-          status,
-          total_amount,
-          device_subtotal,
-          food_subtotal,
-          cash_amount,
-          card_amount,
-          upi_amount,
-          online_amount
-        )
-      `)
-      .eq("slot_date", today)
-      .in("bookings.status", ["confirmed", "checked_in", "completed"]);
-
-    if (bookingsError) throw bookingsError;
-
-    // Active sessions (checked in today)
-    const { count: activeSessions, error: activeError } = await supabaseAdmin
-      .from("bookings")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "checked_in");
-
-    if (activeError) throw activeError;
-
-    // Upcoming bookings (next 2 hours)
     const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000);
     const currentTime = now.toTimeString().split(' ')[0];
     const twoHoursTime = twoHoursLater.toTimeString().split(' ')[0];
 
-    const { data: upcomingBookings, error: upcomingError } = await supabaseAdmin
-      .from("booking_device_slots")
-      .select(`
-        id,
-        bookings!inner(status)
-      `)
-      .eq("slot_date", today)
-      .gte("slot_start_time", currentTime)
-      .lte("slot_start_time", twoHoursTime)
-      .eq("bookings.status", "confirmed");
+    // Issued together rather than one after another. None of these depends on
+    // another's result, and against a remote database each await was its own
+    // ~100ms round trip - five of them in series was most of this page's load
+    // time for queries that could all have been in flight at once.
+    const [
+      { data: todaysBookings, error: bookingsError },
+      { count: activeSessions, error: activeError },
+      { data: upcomingBookings, error: upcomingError },
+      { data: paymentsToday, error: paymentsError },
+      { data: devices, error: devicesError },
+    ] = await Promise.all([
+      // Today's bookings
+      supabaseAdmin
+        .from("booking_device_slots")
+        .select(`
+          slot_total,
+          slot_date,
+          slot_start_time,
+          bookings!inner(
+            id,
+            status,
+            total_amount,
+            device_subtotal,
+            food_subtotal,
+            cash_amount,
+            card_amount,
+            upi_amount,
+            online_amount
+          )
+        `)
+        .eq("slot_date", today)
+        .in("bookings.status", ["confirmed", "checked_in", "completed"]),
 
+      // Active sessions (checked in)
+      supabaseAdmin
+        .from("bookings")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "checked_in"),
+
+      // Upcoming bookings (next 2 hours)
+      supabaseAdmin
+        .from("booking_device_slots")
+        .select(`
+          id,
+          bookings!inner(status)
+        `)
+        .eq("slot_date", today)
+        .gte("slot_start_time", currentTime)
+        .lte("slot_start_time", twoHoursTime)
+        .eq("bookings.status", "confirmed"),
+
+      // Everything settled or part-settled, filtered to today below
+      supabaseAdmin
+        .from("bookings")
+        .select(`
+          amount_paid,
+          payment_status,
+          created_at,
+          updated_at,
+          payment_groups(paid_at)
+        `)
+        .in("payment_status", ["paid", "partial"])
+        .neq("status", "cancelled"),
+
+      // Device availability
+      supabaseAdmin
+        .from("devices")
+        .select("id, status")
+        .eq("status", "available"),
+    ]);
+
+    if (bookingsError) throw bookingsError;
+    if (activeError) throw activeError;
     if (upcomingError) throw upcomingError;
+    if (devicesError) throw devicesError;
 
-    // Calculate today's revenue based on payment date (same as reports page)
-    // Only count actual amount paid, not calculated total
     let todaysRevenue = 0;
-
-    const { data: paymentsToday, error: paymentsError } = await supabaseAdmin
-      .from("bookings")
-      .select(`
-        amount_paid,
-        payment_status,
-        created_at,
-        updated_at,
-        payment_groups(paid_at)
-      `)
-      .in("payment_status", ["paid", "partial"])
-      .neq("status", "cancelled");
 
     if (!paymentsError && paymentsToday) {
       paymentsToday.forEach((booking: any) => {
@@ -86,17 +102,7 @@ export async function getDashboardStats() {
       });
     }
 
-    // Get total bookings count for today
     const todaysBookingsCount = todaysBookings?.length || 0;
-
-    // Get device availability
-    const { data: devices, error: devicesError } = await supabaseAdmin
-      .from("devices")
-      .select("id, status")
-      .eq("status", "available");
-
-    if (devicesError) throw devicesError;
-
     const availableDevices = devices?.length || 0;
 
     return {
@@ -191,14 +197,41 @@ export async function getQuickStats() {
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    // This week's revenue - only count amount paid
-    const { data: weekBookings, error: weekError } = await supabaseAdmin
-      .from("bookings")
-      .select("amount_paid, payment_status, created_at, updated_at, payment_groups(paid_at)")
-      .in("payment_status", ["paid", "partial"])
-      .neq("status", "cancelled");
+    // Same reasoning as getDashboardStats: independent queries, so they go out
+    // together instead of paying three round trips in series.
+    const [
+      { data: weekBookings, error: weekError },
+      { data: foodOrders, error: foodError },
+      { data: allSlots, error: slotsError },
+    ] = await Promise.all([
+      // This week's revenue - only count amount paid
+      supabaseAdmin
+        .from("bookings")
+        .select("amount_paid, payment_status, created_at, updated_at, payment_groups(paid_at)")
+        .in("payment_status", ["paid", "partial"])
+        .neq("status", "cancelled"),
+
+      // Today's food orders
+      supabaseAdmin
+        .from("booking_food_items")
+        .select(`
+          id,
+          created_at,
+          bookings!inner(status)
+        `)
+        .gte("created_at", `${today}T00:00:00`)
+        .lte("created_at", `${today}T23:59:59`),
+
+      // Peak hour analysis
+      supabaseAdmin
+        .from("booking_device_slots")
+        .select("slot_start_time")
+        .eq("slot_date", today),
+    ]);
 
     if (weekError) throw weekError;
+    if (foodError) throw foodError;
+    if (slotsError) throw slotsError;
 
     // Filter by payment date (paid_at) being within last 7 days
     const thisWeekRevenue = (weekBookings || [])
@@ -208,27 +241,6 @@ export async function getQuickStats() {
         return paidAt.split('T')[0] >= sevenDaysAgo;
       })
       .reduce((sum: number, b: any) => sum + Number(b.amount_paid || 0), 0);
-
-    // Today's food orders
-    const { data: foodOrders, error: foodError } = await supabaseAdmin
-      .from("booking_food_items")
-      .select(`
-        id,
-        created_at,
-        bookings!inner(status)
-      `)
-      .gte("created_at", `${today}T00:00:00`)
-      .lte("created_at", `${today}T23:59:59`);
-
-    if (foodError) throw foodError;
-
-    // Peak hour analysis (most bookings)
-    const { data: allSlots, error: slotsError } = await supabaseAdmin
-      .from("booking_device_slots")
-      .select("slot_start_time")
-      .eq("slot_date", today);
-
-    if (slotsError) throw slotsError;
 
     const hourCounts: Record<string, number> = {};
     (allSlots || []).forEach((slot: any) => {

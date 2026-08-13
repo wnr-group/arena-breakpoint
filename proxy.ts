@@ -9,6 +9,28 @@ export async function proxy(request: NextRequest) {
     },
   })
 
+  /**
+   * Server actions verify their own caller, so they skip this gate.
+   *
+   * A server action POSTs to the page it was called from, which means it used
+   * to pay for two auth round trips: this middleware's getUser(), and then
+   * requireStaff()'s. On a database a hundred milliseconds away that doubled
+   * the fixed cost of every admin operation, and the dashboard issues four at
+   * once.
+   *
+   * Skipping is safe because it is not what protects them: every one of the
+   * admin server actions calls requireStaff() or requireAdmin() itself, which
+   * is the check that actually decides. Redirecting a POST here was never
+   * useful either - a login page returned to an action call is not something
+   * the customer or the staff member ever sees.
+   *
+   * IF YOU ADD AN ADMIN SERVER ACTION, IT MUST CALL requireStaff() OR
+   * requireAdmin(). There is no longer a middleware backstop behind it.
+   */
+  if (request.method === 'POST' && request.headers.has('next-action')) {
+    return response
+  }
+
   // Create a Supabase client configured to use cookies
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
