@@ -10,6 +10,7 @@ import { createMenuItem } from "@/app/(admin)/admin/food/actions";
 import { supabase } from "@/lib/supabase/client";
 import { FoodCategory, FoodStatus } from "@/lib/types/food";
 import { toast } from "sonner";
+import { useRequiredFields } from "@/lib/hooks/useRequiredFields";
 
 interface AddFoodModalProps {
   onFormSuccess: () => Promise<void>;
@@ -19,6 +20,7 @@ interface AddFoodModalProps {
 
 export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps) {
   const [isPending, startTransition] = useTransition();
+  const { formRef, isComplete, recheck } = useRequiredFields();
 
   const [previewName, setPreviewName] = useState("");
   const [previewCategory, setPreviewCategory] = useState<FoodCategory>("Snacks");
@@ -100,19 +102,19 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
       <DialogContent className="bg-[var(--background)] border-[#27272a] text-white max-w-[900px] w-[95vw] p-0 overflow-hidden shadow-2xl h-auto max-h-[90vh] flex flex-col justify-between">
         
         {/* Header Panel */}
-        <div className="p-6 border-b border-[#27272a]/70 bg-[var(--surface)] flex-shrink-0">
+        <div className="p-6 pr-14 border-b border-[#27272a]/70 bg-[var(--surface)] flex-shrink-0">
           <DialogTitle className="text-xl font-black tracking-tight text-white">Add New Food Item</DialogTitle>
           <p className="text-xs text-[#a1a1aa] mt-1">Configure menu item details and check real-time layout card output syncs</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 flex flex-col md:flex-row overflow-y-auto min-h-0">
+        <form ref={formRef} onChange={recheck} onSubmit={handleSubmit} className="flex-1 flex flex-col md:flex-row overflow-y-auto min-h-0">
           
           {/* Left Form Input Matrix Column */}
           <div className="flex-1 p-8 space-y-6 bg-[var(--background)] overflow-y-auto">
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Item Name</label>
+                <label className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">Item Name <span className="text-red-500">*</span></label>
                 <Input
                   name="name"
                   placeholder="e.g. Cyber Steak Burger"
@@ -123,11 +125,11 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Category</label>
+                <label className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">Category <span className="text-red-500">*</span></label>
                 <select
                   value={previewCategory}
                   onChange={(e) => setPreviewCategory(e.target.value as FoodCategory)}
-                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[var(--surface)] px-3 text-sm focus:border-primary focus:ring-1 focus:ring-[#FFC107] outline-none text-white cursor-pointer transition-colors"
+                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[var(--surface)] px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none text-white cursor-pointer transition-colors"
                 >
                   <option value="Snacks">Snacks</option>
                   <option value="Drinks">Drinks</option>
@@ -138,7 +140,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Price</label>
+                <label className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">Price <span className="text-red-500">*</span></label>
                 <div className="relative rounded-md shadow-sm">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <span className="text-[#a1a1aa] text-sm">₹</span>
@@ -150,14 +152,14 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                     min="0"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-[#27272a] bg-[var(--surface)] pl-7 pr-3 text-sm focus:ring-1 focus:ring-[#FFC107] focus:border-primary outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
+                    className="flex h-10 w-full rounded-md border border-[#27272a] bg-[var(--surface)] pl-7 pr-3 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Available Quantity</label>
+                <label className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">Available Quantity <span className="text-red-500">*</span></label>
                 <input
                   type="number"
                   name="quantity"
@@ -165,14 +167,14 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                   min="0"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[var(--surface)] px-3 text-sm focus:ring-1 focus:ring-[#FFC107] focus:border-primary outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
+                  className="flex h-10 w-full rounded-md border border-[#27272a] bg-[var(--surface)] px-3 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Food Visual Asset</label>
+              <label className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">Food Visual Asset</label>
               <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-[#27272a] border-dashed rounded-xl cursor-pointer bg-[var(--surface)] hover:bg-[#161616] hover:border-primary/40 transition-all group">
                 <div className="flex items-center gap-3">
                   <UploadCloud className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
@@ -185,7 +187,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
             </div>
 
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Availability Status</label>
+              <label className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">Availability Status <span className="text-red-500">*</span></label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {['available', 'out_of_stock', 'hidden'].map((status) => (
                   <label key={status} className={`flex items-center justify-center cursor-pointer rounded-lg border py-2.5 text-xs font-bold transition-all ${previewStatus === status ? 'border-primary bg-primary/10 text-primary' : 'border-[#27272a] bg-[var(--surface)] text-[#a1a1aa] hover:border-zinc-700'}`}>
@@ -197,15 +199,15 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
             </div>
 
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Description</label>
-              <textarea name="description" placeholder="Describe flavors, cooking styles, textures, or key details..." className="w-full rounded-md border border-[#27272a] bg-[var(--surface)] px-3 py-2.5 text-sm text-white focus:ring-1 focus:ring-[#FFC107] focus:border-primary h-24 outline-none resize-none transition-colors" />
+              <label className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">Description</label>
+              <textarea name="description" placeholder="Describe flavors, cooking styles, textures, or key details..." className="w-full rounded-md border border-[#27272a] bg-[var(--surface)] px-3 py-2.5 text-sm text-white focus:ring-1 focus:ring-primary focus:border-primary h-24 outline-none resize-none transition-colors" />
             </div>
           </div>
 
           {/* Right Static Preview Column — Non Scrolling */}
           <div className="w-full md:w-[350px] bg-[var(--surface)] border-l border-[#27272a]/70 p-6 flex flex-col justify-start space-y-6 flex-shrink-0 overflow-hidden select-none h-full md:sticky md:top-0">
             <div className="w-full text-center md:text-left flex-shrink-0">
-              <p className="text-[11px] font-bold text-[#a1a1aa] uppercase tracking-wider">Card Display Preview</p>
+              <p className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">Card Display Preview</p>
             </div>
             
             <div className="w-full flex-shrink-0 flex items-center justify-center">
@@ -216,7 +218,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                   ) : (
                     <div className="flex flex-col items-center text-zinc-700 gap-1.5">
                       <ImageIcon className="h-5 w-5 text-muted-content" />
-                      <span className="text-[10px]">No image file selected</span>
+                      <span className="text-xs">No image file selected</span>
                     </div>
                   )}
                 </div>
@@ -227,7 +229,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                   </div>
                   <div className="space-y-0.5">
                     <h3 className="text-base font-black text-white tracking-tight truncate">{previewName || "FOOD ITEM TITLE"}</h3>
-                    <p className="text-[#a1a1aa] text-[11px] flex items-center gap-1.5 truncate"><span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></span>{previewCategory}</p>
+                    <p className="text-[#a1a1aa] text-xs flex items-center gap-1.5 truncate"><span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></span>{previewCategory}</p>
                   </div>
                   <div className="flex items-center justify-between border-t border-zinc-900/60 pt-2 text-xs">
                     <span className="text-[#a1a1aa] font-medium">Menu Price</span>
@@ -244,7 +246,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
             {/* Form control tracking footer alignment */}
             <div className="w-full flex justify-end gap-3 pt-6 border-t border-[#27272a]/40 flex-shrink-0 mt-auto">
               <Button type="button" variant="ghost" className="text-[#a1a1aa] hover:bg-zinc-900 hover:text-white transition-colors text-xs font-semibold" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={isPending} className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-bold px-5 h-9 text-xs rounded-md shadow-md transition-all flex items-center justify-center gap-1.5">
+              <Button type="submit" disabled={isPending || !isComplete} className="disabled:opacity-50 disabled:pointer-events-none bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-bold px-5 h-9 text-xs rounded-md shadow-md transition-all flex items-center justify-center gap-1.5">
                 {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save Food Item"}
               </Button>
             </div>
@@ -257,7 +259,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
 }
 
 function PreviewFoodBadge({ previewStatus }: { previewStatus: string }) {
-  if (previewStatus === 'available') return <span className="inline-flex px-2 py-0.5 text-[10px] font-bold text-primary border border-primary/30 rounded uppercase bg-primary/5">Available</span>;
-  if (previewStatus === 'out_of_stock') return <span className="inline-flex px-2 py-0.5 text-[10px] font-bold text-[#f43f5e] border border-[#f43f5e]/30 rounded uppercase bg-[#f43f5e]/5">Out of Stock</span>;
-  return <span className="inline-flex px-2 py-0.5 text-[10px] font-bold text-secondary-content border border-zinc-800 rounded uppercase bg-zinc-900">Hidden</span>;
+  if (previewStatus === 'available') return <span className="inline-flex px-2 py-0.5 text-xs font-bold text-primary border border-primary/30 rounded uppercase bg-primary/5">Available</span>;
+  if (previewStatus === 'out_of_stock') return <span className="inline-flex px-2 py-0.5 text-xs font-bold text-[#f43f5e] border border-[#f43f5e]/30 rounded uppercase bg-[#f43f5e]/5">Out of Stock</span>;
+  return <span className="inline-flex px-2 py-0.5 text-xs font-bold text-secondary-content border border-zinc-800 rounded uppercase bg-zinc-900">Hidden</span>;
 }

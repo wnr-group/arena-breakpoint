@@ -86,6 +86,32 @@ export function formatTo12Hour(time24: string): string {
   return `${hour12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${period}`;
 }
 
+export function formatDbTime(time24: string | null | undefined, fallback = 'N/A'): string {
+  if (!time24) return fallback;
+
+  const match = /^(\d{1,2}):([0-5]\d)/.exec(time24.trim());
+  if (!match) return fallback;
+
+  const hours = Number(match[1]);
+  if (hours > 23) return fallback;
+
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
+  return `${hour12.toString().padStart(2, '0')}:${match[2]} ${period}`;
+}
+
+/**
+ * Format a pair of Postgres `time` values as a display range:
+ * "14:30:00", "16:00:00" -> "02:30 PM - 04:00 PM".
+ */
+export function formatDbTimeRange(
+  start: string | null | undefined,
+  end: string | null | undefined,
+  fallback = 'N/A'
+): string {
+  return `${formatDbTime(start, fallback)} - ${formatDbTime(end, fallback)}`;
+}
+
 /**
  * Convert 12-hour time to 24-hour format
  */

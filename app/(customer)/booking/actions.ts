@@ -1,12 +1,21 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { isBookingDateStringWithinWindow, BOOKING_WINDOW_ERROR } from "@/lib/utils/dates";
+import { shiftDate, timeToMinutes } from "@/lib/payments/availability";
 
 export interface AddonSelection {
   id: string;
   name: string;
   price: number;
   quantity: number;
+}
+
+/** A held station window, in minutes from midnight of the date being checked. */
+interface OccupiedRange {
+  deviceId: string;
+  start: number;
+  end: number;
 }
 
 export interface DatabaseBookingRow {
@@ -101,6 +110,16 @@ export async function checkAvailabilityByDeviceType(
   deviceTypeId: string
 ) {
   try {
+    // Slots are only offered inside the rolling booking window
+    if (!isBookingDateStringWithinWindow(dateString)) {
+      return {
+        success: false,
+        error: BOOKING_WINDOW_ERROR,
+        unavailableSlots: [],
+        slotAvailability: {}
+      };
+    }
+
     // Step 1: Get total available devices of this type
     const { count: totalDevices, error: devicesError } = await supabaseAdmin
       .from("devices")
@@ -280,6 +299,11 @@ export async function initializeSoftLockReservation(payload: {
   durationMinutes?: number; // Optional: for flexible bookings
 }) {
   try {
+    // Slots can only be held inside the rolling booking window
+    if (!isBookingDateStringWithinWindow(payload.date)) {
+      return { success: false, error: BOOKING_WINDOW_ERROR };
+    }
+
     // Convert time format from "10:00 AM" to "10:00:00"
     const formatTime = (timeStr: string) => {
       const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
@@ -447,11 +471,13 @@ export async function checkFlexibleAvailability(
   console.log(`[Availability ${requestId}] Duration: ${durationMinutes} minutes`);
 
   try {
-    // Helper: Convert 24h time to minutes since midnight
-    const timeToMinutes = (time: string): number => {
-      const [hours, minutes] = time.split(':').map(Number);
-      return hours * 60 + minutes;
-    };
+    // Slots are only offered inside the rolling booking window
+    if (!isBookingDateStringWithinWindow(dateString)) {
+      console.log(`[Availability ${requestId}] ❌ Date outside booking window - returning empty`);
+      return { success: false, error: BOOKING_WINDOW_ERROR, availableStartTimes: [] };
+    }
+
+    const MINUTES_PER_DAY = 24 * 60;
 
     // Helper: Convert minutes to 12h format
     const minutesTo12h = (mins: number): string => {
@@ -484,18 +510,29 @@ export async function checkFlexibleAvailability(
       };
     }
 
-    // Step 2: Get all bookings for this device type on this date
+    // Step 2: Get every booking for this device type that could touch this date.
+    // The neighbouring days are in range because bookings cross midnight: an
+    // overnight booking made yesterday still holds the early hours of
+    // `dateString`, and a request starting late lands on tomorrow. This is the
+    // same window `assign_device_slot` checks when it claims the station.
+    const dayBefore = shiftDate(dateString, -1);
+    const dayAfter = shiftDate(dateString, 1);
+
     const { data: bookings, error: bookingsError } = await supabaseAdmin
       .from("booking_device_slots")
       .select(`
+        device_id,
         slot_start_time,
         slot_end_time,
         slot_date,
-        device:devices!inner(device_type_id),
+        device:devices!inner(device_type_id, status),
         bookings!inner(status, lock_expires_at)
       `)
       .eq("device.device_type_id", deviceTypeId)
-      .eq("slot_date", dateString)
+      // Stations out of service are not in `totalAvailable`, so their bookings
+      // must not count against it either.
+      .eq("device.status", "available")
+      .in("slot_date", [dayBefore, dateString, dayAfter])
       .in("bookings.status", ["locked", "confirmed", "checked_in"]);
 
     if (bookingsError) {
@@ -506,14 +543,19 @@ export async function checkFlexibleAvailability(
 
     const rightNow = new Date().toISOString();
 
-    console.log(`[Availability ${requestId}] Found ${bookings?.length || 0} bookings for this device type on ${dateString}`);
+    console.log(`[Availability ${requestId}] Found ${bookings?.length || 0} bookings for this device type across ${dayBefore}..${dayAfter}`);
     if (bookings && bookings.length > 0) {
       console.log(`[Availability ${requestId}] Sample bookings:`, bookings.slice(0, 3).map((b: any) =>
         `${b.slot_start_time}-${b.slot_end_time} (date: ${b.slot_date}, status: ${b.bookings.status})`
       ));
     }
 
-    // Step 3: Build array of occupied time ranges per device (we have totalAvailable devices)
+    // Step 3: Normalise every booking to minutes from midnight of `dateString`.
+    // An end at or before its start has wrapped past midnight, so it is
+    // unwrapped to keep the range contiguous; the neighbouring days are then
+    // rebased onto this date's timeline, which puts yesterday's rows in
+    // negative minutes and tomorrow's beyond 1440. Overlap is then a plain
+    // comparison, with no midnight special cases left to get wrong.
     const activeBookings = (bookings || [])
       .filter((booking: any) => {
         const bookingRecord = booking.bookings;
@@ -524,75 +566,46 @@ export async function checkFlexibleAvailability(
         return true;
       })
       .map((booking: any) => {
-        const start = timeToMinutes(booking.slot_start_time);
-        const end = timeToMinutes(booking.slot_end_time);
-        return {
-          start,
-          end,
-          isOvernight: end < start // Booking spans midnight (e.g., 23:00 to 02:00)
-        };
-      });
+        let start = timeToMinutes(booking.slot_start_time);
+        let end = timeToMinutes(booking.slot_end_time);
 
-    // Helper function to check if two time ranges overlap
-    const doTimeRangesOverlap = (
-      reqStart: number,
-      reqEnd: number,
-      reqIsOvernight: boolean,
-      bookingStart: number,
-      bookingEnd: number,
-      bookingIsOvernight: boolean
-    ): boolean => {
-      // Case 1: Neither is overnight - simple overlap check
-      if (!reqIsOvernight && !bookingIsOvernight) {
-        return bookingStart < reqEnd && bookingEnd > reqStart;
-      }
+        if (end <= start) end += MINUTES_PER_DAY;
 
-      // Case 2: Request is overnight, booking is not
-      if (reqIsOvernight && !bookingIsOvernight) {
-        // Request spans [reqStart, 1440) and [0, reqEnd)
-        // Check if booking overlaps with either part
-        const overlapBeforeMidnight = bookingStart < 1440 && bookingEnd > reqStart;
-        const overlapAfterMidnight = bookingStart < reqEnd && bookingEnd > 0;
-        return overlapBeforeMidnight || overlapAfterMidnight;
-      }
+        if (booking.slot_date === dayBefore) {
+          start -= MINUTES_PER_DAY;
+          end -= MINUTES_PER_DAY;
+        } else if (booking.slot_date === dayAfter) {
+          start += MINUTES_PER_DAY;
+          end += MINUTES_PER_DAY;
+        }
 
-      // Case 3: Booking is overnight, request is not
-      if (!reqIsOvernight && bookingIsOvernight) {
-        // Booking spans [bookingStart, 1440) and [0, bookingEnd)
-        // Check if request overlaps with either part
-        const overlapBeforeMidnight = reqStart < 1440 && reqEnd > bookingStart;
-        const overlapAfterMidnight = reqStart < bookingEnd && reqEnd > 0;
-        return overlapBeforeMidnight || overlapAfterMidnight;
-      }
-
-      // Case 4: Both are overnight - they always overlap
-      // (Two overnight bookings will always conflict)
-      return true;
-    };
+        return { deviceId: booking.device_id as string, start, end };
+      })
+      // Yesterday's bookings that finished before midnight cannot touch today
+      .filter((range: OccupiedRange) => range.end > 0);
 
     // Step 4: Generate all possible start times (24-hour operation: 12:00 AM to 11:30 PM in 30-min intervals)
     const availableStartTimes: string[] = [];
 
     // 24-hour operation: check all 30-minute intervals in a day
-    for (let startMins = 0; startMins < 24 * 60; startMins += 30) {
-      const endMins = startMins + durationMinutes;
-      const requestIsOvernight = endMins >= 24 * 60;
-      const requestEndMins = requestIsOvernight ? endMins - 24 * 60 : endMins;
+    for (let startMins = 0; startMins < MINUTES_PER_DAY; startMins += 30) {
+      // A request running past midnight simply extends beyond 1440 on this
+      // timeline, which is where tomorrow's rebased bookings sit.
+      const requestStart = startMins;
+      const requestEnd = startMins + durationMinutes;
 
-      // Count how many devices are busy during this time range
-      const conflictCount = activeBookings.filter((booking: any) => {
-        return doTimeRangesOverlap(
-          startMins,
-          requestEndMins,
-          requestIsOvernight,
-          booking.start,
-          booking.end,
-          booking.isOvernight
-        );
-      }).length;
+      // Count how many *stations* are busy during this time range. Counting
+      // rows would double-count a station holding back-to-back bookings and
+      // hide a slot that still has a free station.
+      const busyDevices = new Set<string>();
+      for (const booking of activeBookings as OccupiedRange[]) {
+        if (booking.start < requestEnd && requestStart < booking.end) {
+          busyDevices.add(booking.deviceId);
+        }
+      }
 
       // If fewer than totalAvailable devices are busy, this slot is available
-      const isAvailable = conflictCount < totalAvailable;
+      const isAvailable = busyDevices.size < totalAvailable;
 
       if (isAvailable) {
         availableStartTimes.push(minutesTo12h(startMins));

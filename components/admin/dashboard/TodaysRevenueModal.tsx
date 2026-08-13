@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DollarSign, TrendingUp, Receipt, Calendar } from "lucide-react";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
+import { formatDbTimeRange } from "@/lib/utils/timeSlots";
 
 interface TodaysRevenueModalProps {
   open: boolean;
@@ -100,28 +101,28 @@ export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBo
             <div className="p-3 bg-[var(--background)] border border-[#27272a] rounded-lg text-center">
               <div className="flex items-center justify-center gap-1.5 mb-1.5">
                 <span className="text-lg">💵</span>
-                <p className="text-[10px] font-black uppercase text-white">Cash</p>
+                <p className="text-xs font-black uppercase text-white">Cash</p>
               </div>
               <p className="text-sm font-black text-green-400">₹{cashRevenue.toLocaleString('en-IN')}</p>
             </div>
             <div className="p-3 bg-[var(--background)] border border-[#27272a] rounded-lg text-center">
               <div className="flex items-center justify-center gap-1.5 mb-1.5">
                 <span className="text-lg">💳</span>
-                <p className="text-[10px] font-black uppercase text-white">Card</p>
+                <p className="text-xs font-black uppercase text-white">Card</p>
               </div>
               <p className="text-sm font-black text-blue-400">₹{cardRevenue.toLocaleString('en-IN')}</p>
             </div>
             <div className="p-3 bg-[var(--background)] border border-[#27272a] rounded-lg text-center">
               <div className="flex items-center justify-center gap-1.5 mb-1.5">
                 <span className="text-lg">📱</span>
-                <p className="text-[10px] font-black uppercase text-white">UPI</p>
+                <p className="text-xs font-black uppercase text-white">UPI</p>
               </div>
               <p className="text-sm font-black text-purple-400">₹{upiRevenue.toLocaleString('en-IN')}</p>
             </div>
             <div className="p-3 bg-[var(--background)] border border-[#27272a] rounded-lg text-center">
               <div className="flex items-center justify-center gap-1.5 mb-1.5">
                 <span className="text-lg">🌐</span>
-                <p className="text-[10px] font-black uppercase text-white">Online</p>
+                <p className="text-xs font-black uppercase text-white">Online</p>
               </div>
               <p className="text-sm font-black text-amber-400">₹{onlineRevenue.toLocaleString('en-IN')}</p>
             </div>
@@ -148,12 +149,12 @@ export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBo
                       </div>
                       <p className="text-xs text-white">{booking.customer_name}</p>
                       <p className="text-label mt-1">
-                        {slot?.device_type} • {slot?.slot_start_time?.substring(0, 5)} - {slot?.slot_end_time?.substring(0, 5)}
+                        {slot?.device_type} • {formatDbTimeRange(slot?.slot_start_time, slot?.slot_end_time)}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-black text-white">₹{Number(booking.amount_paid || 0).toLocaleString('en-IN')}</p>
-                      <p className={`text-[9px] uppercase mt-1 ${booking.payment_status === 'paid' ? 'text-green-500' : booking.payment_status === 'partial' ? 'text-blue-500' : 'text-amber-500'}`}>
+                      <p className={`text-[11px] uppercase mt-1 ${booking.payment_status === 'paid' ? 'text-green-500' : booking.payment_status === 'partial' ? 'text-blue-500' : 'text-amber-500'}`}>
                         {booking.payment_status}
                       </p>
                     </div>

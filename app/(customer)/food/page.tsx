@@ -166,7 +166,7 @@ function FoodMenuPageContent() {
   return (
     <div className="w-full max-w-7xl mx-auto py-4 px-4 space-y-8 pb-36 animate-in fade-in duration-300">
 
-      <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 select-none mt-9 relative z-0">
+      <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-zinc-400 select-none mt-9 relative z-0">
         <Link href="/" className="hover:text-primary transition-colors">
           Home
         </Link>
@@ -187,7 +187,7 @@ function FoodMenuPageContent() {
         {bookingNumber && (
           <div className="bg-[#111] border border-zinc-800/80 px-4 py-2 rounded-xl flex items-center gap-3 shadow-inner glow-box-hover">
             <div>
-              <p className="text-[9px] text-zinc-600 uppercase font-black tracking-widest">Active Hub Track</p>
+              <p className="text-[11px] text-zinc-400 uppercase font-black tracking-widest">Active Hub Track</p>
               <p className="text-xs font-black text-primary font-mono tracking-wide">{bookingNumber}</p>
             </div>
             <div className="h-6 w-[1px] bg-zinc-800" />
@@ -196,32 +196,8 @@ function FoodMenuPageContent() {
         )}
       </div>
 
-      <div className="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center bg-[#0c0c0e]/60 p-4 rounded-2xl border border-zinc-900/80">
-        <div className="flex gap-2 overflow-x-auto w-full xl:w-auto scrollbar-none py-0.5">
-          <button
-            onClick={() => setActiveCategory("all")}
-            className={`px-5 py-2.5 text-xs font-black uppercase border rounded-xl transition-all duration-300 whitespace-nowrap ${activeCategory === "all"
-                ? "bg-gradient-primary text-[var(--button-text)] border-primary"
-                : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
-              }`}
-          >
-            All Items
-          </button>
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setActiveCategory(category)}
-              className={`px-5 py-2.5 text-xs font-black uppercase border rounded-xl transition-all duration-300 whitespace-nowrap ${activeCategory === category
-                  ? "bg-gradient-primary text-[var(--button-text)] border-primary"
-                  : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
-                }`}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-
-        <div className="relative group w-full xl:max-w-xs flex-shrink-0">
+      <div className="flex flex-col gap-4">
+        <div className="relative group w-full xl:max-w-xs">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500 group-focus-within:text-primary transition-colors" />
           <Input
             placeholder="Search menu items..."
@@ -229,6 +205,31 @@ function FoodMenuPageContent() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 bg-zinc-950 border-zinc-800/80 text-xs font-medium text-white h-11 rounded-xl focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-transparent transition-all"
           />
+        </div>
+
+        {/* Plain wrapped pills sitting on the page, matching the in-booking food menu */}
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setActiveCategory("all")}
+            className={`px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs font-black uppercase border rounded-xl transition-all whitespace-nowrap ${activeCategory === "all"
+              ? "bg-gradient-primary text-[var(--button-text)] border-primary"
+              : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
+              }`}
+          >
+            All
+          </button>
+          {categories.map((category) => (
+            <button
+              key={category}
+              onClick={() => setActiveCategory(category)}
+              className={`px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs font-black uppercase border rounded-xl transition-all whitespace-nowrap ${activeCategory === category
+                ? "bg-gradient-primary text-[var(--button-text)] border-primary"
+                : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
+                }`}
+            >
+              {category}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -240,7 +241,7 @@ function FoodMenuPageContent() {
               <UtensilsCrossed className="h-5 w-5" />
             </div>
             <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest">No Items Available</h3>
-            <p className="text-xs text-zinc-600 leading-relaxed">We couldn't locate anything matching your criteria. Try resetting filters or adjust typing variables.</p>
+            <p className="text-xs text-zinc-400 leading-relaxed">We couldn't locate anything matching your criteria. Try resetting filters or adjust typing variables.</p>
           </div>
         </Card>
       ) : (
@@ -277,12 +278,12 @@ function FoodMenuPageContent() {
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center text-zinc-800 bg-zinc-950 select-none">
                             <Sparkles className="h-6 w-6 opacity-30 animate-pulse" />
-                            <span className="text-[9px] uppercase tracking-widest font-black mt-1">Arena Item</span>
+                            <span className="text-[11px] uppercase tracking-widest font-black mt-1">Arena Item</span>
                           </div>
                         )}
 
                         {item.quantity <= 10 && item.quantity > 0 && (
-                          <span className="absolute top-3 right-3 z-10 inline-flex items-center px-2 py-0.5 text-[8px] font-black text-white bg-red-600 border border-red-500/20 rounded uppercase tracking-wider scale-90">
+                          <span className="absolute top-3 right-3 z-10 inline-flex items-center px-2 py-0.5 text-[11px] font-black text-white bg-red-600 border border-red-500/20 rounded uppercase tracking-wider scale-90">
                             LOW STOCK
                           </span>
                         )}
@@ -295,7 +296,7 @@ function FoodMenuPageContent() {
                               {item.name}
                             </h3>
                           </div>
-                          <p className="text-[11px] text-zinc-500 line-clamp-2 leading-relaxed font-medium">
+                          <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed font-medium">
                             {item.description || "Premium operational live kitchen item configuration prepared fresh to order."}
                           </p>
                         </div>
@@ -355,7 +356,7 @@ function FoodMenuPageContent() {
             {/* Expanded Cart Items List */}
             {isCartListOpen && (
               <div className="mb-4 max-h-60 overflow-y-auto border-b border-zinc-900 pb-4 space-y-2.5 animate-in slide-in-from-bottom-2 duration-200">
-                <div className="flex justify-between items-center text-[10px] font-black text-zinc-500 uppercase tracking-widest pb-1 border-b border-zinc-900/60">
+                <div className="flex justify-between items-center text-xs font-black text-zinc-400 uppercase tracking-widest pb-1 border-b border-zinc-900/60">
                   <span>Selected Food Items</span>
                   <span>Quantity & Price</span>
                 </div>
@@ -367,7 +368,7 @@ function FoodMenuPageContent() {
                         <button
                           type="button"
                           onClick={() => dispatch(decrementQuantity(item.menu_item_id))}
-                          className="p-1 text-zinc-500 hover:text-white hover:bg-zinc-900 rounded"
+                          className="p-1 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded"
                         >
                           <Minus className="h-3 w-3" />
                         </button>
@@ -375,7 +376,7 @@ function FoodMenuPageContent() {
                         <button
                           type="button"
                           onClick={() => dispatch(incrementQuantity(item.menu_item_id))}
-                          className="p-1 text-zinc-500 hover:text-white hover:bg-zinc-900 rounded"
+                          className="p-1 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded"
                         >
                           <Plus className="h-3 w-3" />
                         </button>
@@ -395,7 +396,7 @@ function FoodMenuPageContent() {
                     {cartItemCount}
                   </div>
                   <div>
-                    <p className="text-xs text-zinc-500 font-semibold">Cart Total</p>
+                    <p className="text-xs text-zinc-400 font-semibold">Cart Total</p>
                     <p className="text-xl font-black text-primary">₹{cartTotal}</p>
                   </div>
                 </div>
@@ -437,7 +438,7 @@ function FoodMenuPageContent() {
                   {cartItemCount}
                 </div>
                 <div>
-                  <p className="text-xs text-zinc-500 font-semibold">Cart Total</p>
+                  <p className="text-xs text-zinc-400 font-semibold">Cart Total</p>
                   <p className="text-xl font-black text-primary">₹{cartTotal}</p>
                 </div>
               </div>
@@ -446,7 +447,7 @@ function FoodMenuPageContent() {
                 <Button
                   onClick={() => setIsCartListOpen(!isCartListOpen)}
                   variant="outline"
-                  className="font-bold uppercase text-xs h-12 px-6 border-zinc-800 text-zinc-300 hover:bg-zinc-900"
+                  className="font-bold uppercase text-sm h-12 px-6 border-zinc-800 text-zinc-300 hover:bg-zinc-900"
                 >
                   {isCartListOpen ? "Hide Items" : "View Items"}
                 </Button>
@@ -456,7 +457,7 @@ function FoodMenuPageContent() {
                     setIsCartListOpen(false);
                   }}
                   variant="outline"
-                  className="font-bold uppercase text-xs h-12 px-6 border-zinc-800 text-red-400 hover:bg-red-950/20"
+                  className="font-bold uppercase text-sm h-12 px-6 border-zinc-800 text-red-400 hover:bg-red-950/20"
                 >
                   Clear Cart
                 </Button>

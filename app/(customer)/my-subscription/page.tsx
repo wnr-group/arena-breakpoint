@@ -155,17 +155,20 @@ function MySubscriptionPageContent() {
             <Card className="bg-[#111] border border-zinc-900 p-6 shadow-xl rounded-2xl glow-box-hover">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="search-phone" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Label htmlFor="search-phone" className="text-xs font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Phone className="h-3 w-3 text-zinc-600" /> MOBILE NUMBER
                   </Label>
-                  <div className="flex gap-2">
+                  {/* Stacked on mobile: sharing the row with the button left
+                      the monospaced field too narrow to show its placeholder at
+                      all once the +91 prefix took its left padding. */}
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <div className="relative flex-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-600 border-r border-zinc-900 pr-2">+91</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-400 border-r border-zinc-900 pr-2">+91</span>
                       <Input
                         id="search-phone"
                         type="tel"
                         maxLength={10}
-                        placeholder="Enter 10-digit phone number"
+                        placeholder="Enter 10-digit number"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                         onKeyDown={(e) => e.key === "Enter" && fetchSubscription(phone)}
@@ -175,7 +178,7 @@ function MySubscriptionPageContent() {
                     <Button
                       onClick={() => fetchSubscription(phone)}
                       disabled={isLoading}
-                      className="bg-primary hover:bg-primary-hover text-black font-black uppercase text-xs h-12 px-6 rounded-xl"
+                      className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-black font-black uppercase text-sm h-12 px-6 rounded-xl"
                     >
                       {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "SEARCH"}
                     </Button>
@@ -261,7 +264,7 @@ function MySubscriptionPageContent() {
               <div className="mb-8 relative z-10">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-3 gap-2">
                   <div>
-                    <div className="text-zinc-500 text-xs font-black uppercase tracking-wider mb-1">
+                    <div className="text-zinc-400 text-xs font-black uppercase tracking-wider mb-1">
                       Validity Status
                     </div>
                     <div className="text-white font-black text-base md:text-lg">
@@ -271,7 +274,7 @@ function MySubscriptionPageContent() {
                       </span>
                     </div>
                   </div>
-                  <div className="text-zinc-500 text-xs font-black uppercase tracking-wider">{progressPercentage}% Complete</div>
+                  <div className="text-zinc-400 text-xs font-black uppercase tracking-wider">{progressPercentage}% Complete</div>
                 </div>
                 {/* Bar with gaming effect */}
                 <div className="w-full bg-zinc-900 rounded-full h-3 overflow-hidden border border-zinc-800 shadow-inner">
@@ -292,7 +295,7 @@ function MySubscriptionPageContent() {
                     <Percent className="w-5 h-5 text-primary drop-shadow-[0_0_8px_rgba(255,193,7,0.5)]" />
                   </div>
                   <div>
-                    <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1">
+                    <div className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-1">
                       Loyalty Discount
                     </div>
                     <div className="text-transparent bg-gradient-to-r from-primary via-amber-300 to-primary bg-clip-text font-black text-lg drop-shadow-[0_0_10px_rgba(255,193,7,0.3)]">
@@ -305,7 +308,7 @@ function MySubscriptionPageContent() {
                     <Gamepad2 className="w-5 h-5 text-amber-500" />
                   </div>
                   <div>
-                    <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1">Arena Pass</div>
+                    <div className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-1">Arena Pass</div>
                     <div className="text-white font-black text-lg">All Access</div>
                   </div>
                 </div>

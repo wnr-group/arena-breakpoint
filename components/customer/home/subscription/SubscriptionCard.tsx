@@ -100,7 +100,7 @@ export default function PlatformCard({ platform, index }: { platform: Platform; 
         <div className="flex items-start justify-between">
           <div>
             <p
-              className="text-[10px] font-black tracking-[0.2em] uppercase mb-1"
+              className="text-xs font-black tracking-[0.2em] uppercase mb-1"
               style={{ color: platform.accent }}
             >
               {platform.brand}
@@ -136,7 +136,7 @@ export default function PlatformCard({ platform, index }: { platform: Platform; 
             <span className="text-2xl align-top leading-tight">₹</span>
             {platform.price}
           </span>
-          <span className="text-zinc-500 text-sm mb-[3px]">/hr</span>
+          <span className="text-zinc-400 text-sm mb-[3px]">/hr</span>
         </div>
 
         {/* Divider */}

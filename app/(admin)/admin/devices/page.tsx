@@ -8,7 +8,6 @@ import {
   CheckCircle,
   PlayCircle,
   Wrench,
-  Loader2,
   CheckCircle2,
   AlertCircle,
   MonitorPlay
@@ -112,7 +111,7 @@ export default function DevicesPage() {
       if (res.success) {
         toast.success("Terminal Record Deleted", {
           description: "The hardware machine has been removed from inventory.",
-          icon: <CheckCircle2 className="h-5 w-5 text-[#FFC107]" />
+          icon: <CheckCircle2 className="h-5 w-5 text-primary" />
         });
         await fetchFreshDevices();
       } else {
@@ -131,7 +130,7 @@ export default function DevicesPage() {
       <div className="flex items-center justify-between mb-2">
         <div className="space-y-1 animate-in slide-in-from-left-4 duration-500">
           <h1 className="text-2xl font-bold tracking-tight text-white">DEVICES MANAGEMENT</h1>
-          <p className="text-[#a1a1aa] text-sm">
+          <p className="text-[#a1a1aa] text-base">
             Manage all gaming platforms, stations and availability across the arena.
           </p>
         </div>
@@ -148,14 +147,16 @@ export default function DevicesPage() {
           { title: "Alert", count: maintenanceDevices, label: "Under Maintenance", icon: Wrench },
           { title: "Offline", count: inactiveDevices, label: "Deactivated Stations", icon: MonitorPlay, color: "text-secondary-content" }
         ].map((stat) => (
-          <Card key={stat.title} className="bg-[var(--surface)] border-[#27272a] hover:border-[#FFC107]/70 hover:-translate-y-1 transition-all duration-500 group">
+          <Card key={stat.title} className="bg-[var(--surface)] border-[#27272a] hover:border-primary/70 hover:-translate-y-1 transition-all duration-500 group">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <stat.icon className="h-5 w-5 text-[#FFC107] group-hover:scale-110 transition-transform duration-500" />
-              <span className="text-stat-label">{stat.title}</span>
+              <stat.icon className="h-5 w-5 text-primary group-hover:scale-110 transition-transform duration-500" />
+              {/* was .text-stat-label (12px); inlined one step larger so the shared
+                  class stays as-is for the other admin pages that use it */}
+              <span className="text-sm font-bold uppercase tracking-wider text-zinc-300">{stat.title}</span>
             </CardHeader>
             <CardContent>
               <div className={`text-2xl lg:text-3xl font-bold mb-1 ${stat.color || 'text-white'}`}>{stat.count}</div>
-              <p className="text-min-enhanced text-secondary-content truncate">{stat.label}</p>
+              <p className="text-sm font-semibold text-secondary-content truncate">{stat.label}</p>
             </CardContent>
           </Card>
         ))}
@@ -178,7 +179,7 @@ export default function DevicesPage() {
       <div className="mt-2 animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both">
         {isLoadingData ? (
           <div className="text-center py-12 bg-[var(--surface)] border border-[#27272a] rounded-xl text-[#a1a1aa] flex justify-center items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin text-[#FFC107]" /> Fetching device records...
+            <BreakpointLoader size="sm" /> Fetching device records...
           </div>
         ) : filteredDevices.length === 0 ? (
           <div className="text-center py-12 bg-[var(--surface)] border border-[#27272a] rounded-xl text-[#a1a1aa]">

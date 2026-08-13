@@ -551,11 +551,26 @@ main {
   display: block !important;
 }
 
-/* Toast close button */
+/* Toast close button - pinned inside the top-right corner.
+   Sonner defaults it to the top-LEFT, floating half outside the toast, where it
+   reads as a stray control detached from the message it closes. The library
+   drives that placement through custom properties, so the position is restated
+   here rather than only flipping the variables. */
 [data-sonner-toast] [data-close-button] {
+  left: unset !important;
+  right: 8px !important;
+  top: 8px !important;
+  transform: none !important;
   background-color: transparent !important;
   border: 1px solid #3f3f46 !important;
   color: #a1a1aa !important;
+}
+
+/* Reserve that corner so the title and description never run under the button.
+   Scoped to styled toasts - `toast.custom` renders its own card and lays out
+   its own close control. */
+[data-sonner-toast][data-styled="true"] {
+  padding-right: 40px !important;
 }
 
 [data-sonner-toast] [data-close-button]:hover {

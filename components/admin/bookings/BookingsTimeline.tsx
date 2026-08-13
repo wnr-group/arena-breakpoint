@@ -140,7 +140,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
             {/* Hour labels */}
             <div className="sticky top-0 z-10 bg-gradient-to-b from-[var(--background)] to-[var(--surface)] border-b border-primary/20 flex">
               <div className="w-40 flex-shrink-0 border-r border-primary/20 p-3">
-                <span className="text-[10px] font-black text-primary uppercase">Device</span>
+                <span className="text-xs font-black text-primary uppercase">Device</span>
               </div>
               <div className="flex flex-1" style={{ minWidth: '2400px' }}>
                 {timeSlots.map((time, index) => {
@@ -151,7 +151,7 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
                       className={`flex-1 border-r border-zinc-800/50 p-2 ${isHourStart ? 'bg-primary/5' : 'bg-transparent'}`}
                     >
                       {isHourStart && (
-                        <div className="text-[9px] font-black text-muted-content uppercase">
+                        <div className="text-[11px] font-black text-muted-content uppercase">
                           {formatTime12h(time)}
                         </div>
                       )}
@@ -204,7 +204,6 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
                         confirmed: 'bg-blue-500/20 border-blue-500/50 text-blue-300',
                         checked_in: 'bg-green-500/20 border-green-500/50 text-green-300',
                         completed: 'bg-zinc-700/20 border-zinc-600/50 text-muted-content',
-                        cancelled: 'bg-red-500/20 border-red-500/50 text-red-400',
                         locked: 'bg-amber-500/20 border-amber-500/50 text-amber-300'
                       };
                       const colorClass = statusColors[booking.status as keyof typeof statusColors] || statusColors.confirmed;
@@ -218,14 +217,14 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
                         >
                           <div className="flex flex-col h-full justify-between">
                             <div>
-                              <p className="text-[10px] font-black uppercase truncate">{booking.customer_name}</p>
-                              <p className="text-[8px] opacity-80 truncate">{booking.device_type} #{booking.device_station_number}</p>
+                              <p className="text-xs font-black uppercase truncate">{booking.customer_name}</p>
+                              <p className="text-[11px] opacity-80 truncate">{booking.device_type} #{booking.device_station_number}</p>
                             </div>
                             <div className="flex items-center justify-between">
-                              <span className="text-[9px] font-bold">
+                              <span className="text-[11px] font-bold">
                                 {formatTime12h(booking.slot_start_time.substring(0, 5))}
                               </span>
-                              <span className="text-[8px] opacity-60">₹{booking.total_amount}</span>
+                              <span className="text-[11px] opacity-60">₹{booking.total_amount}</span>
                             </div>
                           </div>
                         </div>
@@ -241,28 +240,24 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
 
       {/* Legend */}
       <div className="p-3 border-t border-[#27272a] flex items-center gap-4 bg-[var(--background)]">
-        <span className="text-[10px] font-black text-secondary-content uppercase">Status:</span>
+        <span className="text-xs font-black text-secondary-content uppercase">Status:</span>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-blue-500/20 border border-blue-500/50" />
-            <span className="text-[10px] text-muted-content">Confirmed</span>
+            <span className="text-xs text-muted-content">Confirmed</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-green-500/20 border border-green-500/50" />
-            <span className="text-[10px] text-muted-content">Checked In</span>
+            <span className="text-xs text-muted-content">Checked In</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-zinc-700/20 border border-zinc-600/50" />
-            <span className="text-[10px] text-muted-content">Completed</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-red-500/20 border border-red-500/50" />
-            <span className="text-[10px] text-muted-content">Cancelled</span>
+            <span className="text-xs text-muted-content">Completed</span>
           </div>
           {currentTimePosition && (
             <div className="flex items-center gap-1.5 ml-2">
               <div className="w-0.5 h-3 bg-red-500" />
-              <span className="text-[10px] text-red-400 font-bold">Current Time</span>
+              <span className="text-xs text-red-400 font-bold">Current Time</span>
             </div>
           )}
         </div>

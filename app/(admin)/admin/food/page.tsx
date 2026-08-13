@@ -90,7 +90,7 @@ export default function FoodPage() {
           <Card key={stat.title} className="bg-[var(--surface)] border-[#27272a] hover:border-primary/70 hover:-translate-y-1 transition-all duration-500 group">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <stat.icon className="h-5 w-5 text-primary" />
-              <span className="text-[10px] text-[#a1a1aa] uppercase tracking-wider">{stat.title}</span>
+              <span className="text-xs text-[#a1a1aa] uppercase tracking-wider">{stat.title}</span>
             </CardHeader>
             <CardContent>
               <div className={`text-3xl font-bold ${stat.color || "text-white"}`}>{stat.count}</div>

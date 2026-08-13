@@ -368,8 +368,11 @@ export async function fulfilFoodOrder(
 
         device_subtotal: 0,
         food_subtotal: quote.itemsTotal,
-        promo_discount: quote.promoDiscount,
-        promo_code_id: quote.promoCodeId,
+        // Food is never discounted - written explicitly so the row states the
+        // rule rather than relying on column defaults.
+        subscription_discount: 0,
+        promo_discount: 0,
+        happy_hour_discount: 0,
         total_amount: quote.totalAmount,
 
         ...paidColumns(quote.totalAmount, payment),
@@ -415,23 +418,8 @@ export async function fulfilFoodOrder(
       })
     }
 
-    if (quote.promoDiscount > 0) {
-      lineItems.push({
-        booking_id: booking.id,
-        item_type: 'promo_discount',
-        description: quote.promoCode
-          ? `Promo Code Discount (${quote.promoCode})`
-          : 'Promo Code Discount',
-        quantity: 1,
-        unit_price: -quote.promoDiscount,
-        line_total: -quote.promoDiscount,
-        reference_type: 'promo_code',
-        reference_id: quote.promoCodeId,
-        added_by: 'customer',
-        is_paid: true,
-        display_order: displayOrder++,
-      })
-    }
+    // No discount line items: food carries no membership, promo or happy hour
+    // reduction, so the breakdown is just the items themselves.
 
     const { error: lineItemsError } = await supabaseAdmin
       .from('booking_line_items')
@@ -444,8 +432,6 @@ export async function fulfilFoodOrder(
     await decrementInventory(
       quote.items.map((item) => ({ id: item.id, quantity: item.quantity }))
     )
-
-    await claimPromoCode(quote.promoCodeId)
 
     return { success: true, bookingId: booking.id, bookingNumber: booking.booking_number }
   } catch (err: any) {

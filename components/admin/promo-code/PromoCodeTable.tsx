@@ -1,6 +1,7 @@
 "use client";
 
 import { PromoCodeRow } from "@/lib/types/promo-code";
+import { getPromoStatus, PROMO_STATUS_PRESENTATION } from "@/lib/promo/status";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Edit2, Trash2, Tag } from "lucide-react";
@@ -19,12 +20,12 @@ export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTab
         <Tag className="h-12 w-12 text-zinc-700 mx-auto" />
         <div>
           <h3 className="text-sm font-bold text-secondary-content mb-1">No Promo Codes Yet</h3>
-          <p className="text-xs text-muted-content">Create your first promotional campaign to offer discounts.</p>
+          <p className="text-sm text-muted-content">Create your first promotional campaign to offer discounts.</p>
         </div>
         {onAdd && (
           <Button
             onClick={onAdd}
-            className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs"
+            className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-sm"
           >
             Create First Promo Code
           </Button>
@@ -35,12 +36,12 @@ export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTab
 
   return (
     <Card className="bg-[var(--surface)] border-zinc-900 rounded-xl overflow-hidden shadow-2xl w-full overflow-x-auto">
-      <div className="p-4 bg-[var(--background)]/40 border-b border-zinc-900 font-black text-xs uppercase text-muted-content tracking-wider">
+      <div className="p-4 bg-[var(--background)]/40 border-b border-zinc-900 font-black text-sm uppercase text-muted-content tracking-wider">
         Active Promo Code List
       </div>
-      <table className="w-full text-left border-collapse text-xs table-fixed min-w-[800px]">
+      <table className="w-full text-left border-collapse text-sm table-fixed min-w-[800px]">
         <thead>
-          <tr className="border-b border-zinc-900 bg-[var(--background)]/20 text-secondary-content font-black uppercase text-[11px] tracking-wider select-none">
+          <tr className="border-b border-zinc-900 bg-[var(--background)]/20 text-secondary-content font-black uppercase text-xs tracking-wider select-none">
             <th className="p-4 w-[20%]">Code</th>
             <th className="p-4 w-[30%]">Description</th>
             <th className="p-4 w-[15%]">Discount</th>
@@ -63,11 +64,17 @@ export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTab
                 {new Date(row.valid_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
               </td>
               <td className="p-4 whitespace-nowrap">
-                {row.is_active ? (
-                  <span className="bg-green-500/10 text-green-400 border border-green-500/20 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider">Live</span>
-                ) : (
-                  <span className="bg-[var(--background)]/80 text-red-400 border border-zinc-900 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Inactive</span>
-                )}
+                {(() => {
+                  // Derived, never read straight off `is_active`: a code whose
+                  // validity period has run out is no longer live, however the
+                  // switch is set.
+                  const { label, className } = PROMO_STATUS_PRESENTATION[getPromoStatus(row)];
+                  return (
+                    <span className={`${className} text-xs font-black px-2 py-0.5 rounded uppercase tracking-wider`}>
+                      {label}
+                    </span>
+                  );
+                })()}
               </td>
               <td className="p-4 w-24 min-w-[96px] whitespace-nowrap">
                 <div className="flex justify-end gap-1.5 opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">

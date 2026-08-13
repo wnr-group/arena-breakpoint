@@ -11,14 +11,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BookingStatusBadge } from "./BookingStatusBadge";
-import { getBookingDetails, checkInBooking, checkOutBooking, cancelBooking, addFoodToBooking, updatePlayerCount, markBookingAsPaid } from "@/app/(admin)/admin/bookings/actions";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
+import { getBookingDetails, checkInBooking, checkOutBooking, addFoodToBooking, removeFoodItemFromBooking, updatePlayerCount } from "@/app/(admin)/admin/bookings/actions";
 import { getMenuItems } from "@/app/(admin)/admin/food/actions";
 import { Label } from "@/components/ui/label";
 import { QRCodeSVG } from "qrcode.react";
 import {
   User, Phone, Mail, Calendar, Clock, DollarSign,
-  Loader2, CheckCircle2, XCircle, LogIn, LogOut,
-  UtensilsCrossed, QrCode, MapPin, Gamepad2, Plus, Minus, Search, Filter
+  Loader2, CheckCircle2, LogIn, LogOut,
+  UtensilsCrossed, QrCode, MapPin, Gamepad2, Plus, Minus, Search, Filter, Trash2
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -31,6 +32,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { formatDbTimeRange } from "@/lib/utils/timeSlots";
 
 interface BookingDetailModalProps {
   bookingId: string | null;
@@ -39,28 +41,47 @@ interface BookingDetailModalProps {
   onUpdate?: () => void;
   openFoodModalDirectly?: boolean;
   onPendingPayment?: (bookingId: string, balanceDue: number, bookingNumber: string) => void;
+  /**
+   * "modal" (default) renders inside a Dialog, as every existing caller expects.
+   * "page" renders the same panel as ordinary page content, for the standalone
+   * /admin/bookings/[bookingId] route the dashboard opens in a new tab - so a
+   * booking is never a second dialog stacked on the stat modal behind it.
+   *
+   * The secondary dialogs below (add food, remove item) stay dialogs in
+   * both modes: those confirm an action already under way, they are not a second
+   * thing to browse.
+   */
+  variant?: "modal" | "page";
+  /** Rendered above the title in page mode - used for the back link. */
+  headerSlot?: React.ReactNode;
 }
 
-export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoodModalDirectly, onPendingPayment }: BookingDetailModalProps) {
+export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoodModalDirectly, onPendingPayment, variant = "modal", headerSlot }: BookingDetailModalProps) {
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [markAsPaidModalOpen, setMarkAsPaidModalOpen] = useState(false);
-  const [paymentSplit, setPaymentSplit] = useState({
-    cashAmount: 0,
-    cardAmount: 0,
-    upiAmount: 0
-  });
   const [actionLoading, setActionLoading] = useState(false);
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [addFoodModalOpen, setAddFoodModalOpen] = useState(false);
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [selectedFoodItems, setSelectedFoodItems] = useState<Record<string, number>>({});
   const [updatingPlayerCount, setUpdatingPlayerCount] = useState(false);
+  const [foodItemToRemove, setFoodItemToRemove] = useState<any>(null);
+  const [removingFoodItem, setRemovingFoodItem] = useState(false);
   const [foodSearchQuery, setFoodSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  /**
+   * The fetch only starts in the effect below, i.e. after the first paint, so
+   * without this the first render has `loading === false` and `booking === null`
+   * and briefly shows "No booking data available" before the spinner appears.
+   * Barely visible inside an animating dialog; very visible on the standalone
+   * page, which is a cold load in a fresh tab.
+   */
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
     if (open && bookingId) {
+      // Reset so switching to a different booking shows the loader again rather
+      // than the previous booking's details.
+      setHasLoaded(false);
       loadBookingDetails();
       loadMenuItems();
       if (openFoodModalDirectly) {
@@ -79,6 +100,9 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
       toast.error("Failed to load booking details", { description: result.error });
     }
     setLoading(false);
+    // Set on failure too, so a booking that cannot be fetched falls through to
+    // the empty state instead of spinning forever.
+    setHasLoaded(true);
   };
 
   const loadMenuItems = async () => {
@@ -177,19 +201,25 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
     setActionLoading(false);
   };
 
-  const handleCancel = async () => {
-    if (!bookingId) return;
-    setActionLoading(true);
-    const result = await cancelBooking(bookingId);
+
+  const handleRemoveFoodItem = async () => {
+    if (!bookingId || !foodItemToRemove) return;
+    setRemovingFoodItem(true);
+
+    const result = await removeFoodItemFromBooking(bookingId, foodItemToRemove.id);
+
     if (result.success) {
-      toast.success("Booking cancelled successfully");
-      setCancelDialogOpen(false);
+      toast.success(`${foodItemToRemove.item_name} removed`, {
+        description: `New total: ₹${Number(result.newTotal || 0).toLocaleString('en-IN')}`
+      });
+      setFoodItemToRemove(null);
       loadBookingDetails();
       onUpdate?.();
     } else {
-      toast.error("Cancellation failed", { description: result.error });
+      toast.error("Could not remove item", { description: result.error });
     }
-    setActionLoading(false);
+
+    setRemovingFoodItem(false);
   };
 
   const handleUpdatePlayerCount = async (slotId: string, newCount: number, maxPlayers: number) => {
@@ -209,63 +239,16 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
     setUpdatingPlayerCount(false);
   };
 
-  const handleOpenMarkAsPaidModal = () => {
-    const balanceDue = Number(booking?.balance_due || 0);
-    // Default to full balance in cash
-    setPaymentSplit({
-      cashAmount: balanceDue,
-      cardAmount: 0,
-      upiAmount: 0
-    });
-    setMarkAsPaidModalOpen(true);
-  };
-
-  const handleMarkAsPaid = async () => {
-    if (!bookingId) return;
-
-    const totalSplit = paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount;
-    const balanceDue = Number(booking?.balance_due || 0);
-
-    if (Math.abs(totalSplit - balanceDue) > 0.01) {
-      toast.error("Invalid payment split", {
-        description: `Payment split (₹${totalSplit}) must equal balance due (₹${balanceDue})`
-      });
-      return;
-    }
-
-    setActionLoading(true);
-    const result = await markBookingAsPaid(bookingId, paymentSplit);
-
-    if (result.success) {
-      toast.success("Payment marked as paid", {
-        description: `Booking ${booking.booking_number} fully paid`
-      });
-      setMarkAsPaidModalOpen(false);
-      loadBookingDetails();
-      onUpdate?.();
-    } else {
-      toast.error("Failed to mark as paid", { description: result.error });
-    }
-
-    setActionLoading(false);
-  };
-
   const deviceSlot = booking?.booking_device_slots?.[0];
 
-  return (
+  // The detail panel itself, wrapped either in a Dialog or in plain page markup
+  // further down. Kept as one expression so both modes render exactly the same
+  // thing and cannot drift apart.
+  const detailBody = (
     <>
-      <Dialog open={open && !openFoodModalDirectly} onOpenChange={onClose}>
-        <DialogContent className="bg-[var(--surface)] border-[#27272a] text-white max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center justify-between">
-              BOOKING DETAILS
-              {booking && <BookingStatusBadge status={booking.status} size="lg" />}
-            </DialogTitle>
-          </DialogHeader>
-
-          {loading ? (
+          {loading || (bookingId && !hasLoaded) ? (
             <div className="h-96 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 text-primary animate-spin" />
+              <BreakpointLoader size="md" text="Loading Booking..." />
             </div>
           ) : booking ? (
             <div className="space-y-6 mt-4">
@@ -368,7 +351,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                       <div className="flex-1">
                         <p className="text-label-enhanced text-muted-content mb-1">Time Slot</p>
                         <p className="text-base text-white font-semibold">
-                          {deviceSlot?.slot_start_time} - {deviceSlot?.slot_end_time}
+                          {formatDbTimeRange(deviceSlot?.slot_start_time, deviceSlot?.slot_end_time)}
                         </p>
                         <p className="text-sm-enhanced text-secondary-content mt-1">
                           Duration: {deviceSlot?.duration_hours}h
@@ -382,7 +365,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
               {/* Game Orders */}
               {booking.booking_device_slots && booking.booking_device_slots.length > 0 && (
                 <Card className="bg-[var(--background)] border-[#27272a] p-5 space-y-4">
-                  <h3 className="text-[10px] font-black text-secondary-content uppercase tracking-wider border-b border-[#27272a] pb-2 flex items-center gap-2">
+                  <h3 className="text-xs font-black text-secondary-content uppercase tracking-wider border-b border-[#27272a] pb-2 flex items-center gap-2">
                     <Gamepad2 className="h-4 w-4" />
                     Game Orders
                   </h3>
@@ -407,7 +390,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                             </div>
                             <div className="text-right">
                               <p className="text-sm font-black text-white">₹{Number(slot.slot_total).toLocaleString('en-IN')}</p>
-                              <p className="text-[9px] text-data-placeholder uppercase">Base Rate</p>
+                              <p className="text-[11px] text-data-placeholder uppercase">Base Rate</p>
                             </div>
                           </div>
 
@@ -458,7 +441,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                                 </div>
                                 <div className="text-right">
                                   <p className="text-sm font-black text-primary">₹{extraPlayersCharge.toLocaleString('en-IN')}</p>
-                                  <p className="text-[9px] text-muted-content uppercase">Additional</p>
+                                  <p className="text-[11px] text-muted-content uppercase">Additional</p>
                                 </div>
                               </div>
                             )}
@@ -496,9 +479,23 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                           <p className="text-lg font-bold text-white mb-1">{item.item_name}</p>
                           <p className="text-sm-enhanced text-secondary-content">Qty: <span className="font-bold">{item.quantity}</span> × ₹{Number(item.unit_price).toLocaleString('en-IN')}</p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-xl font-black text-primary">₹{Number(item.line_total).toLocaleString('en-IN')}</p>
-                          <p className="text-min text-muted-content uppercase mt-1">{item.status}</p>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <p className="text-xl font-black text-primary">₹{Number(item.line_total).toLocaleString('en-IN')}</p>
+                            <p className="text-min text-muted-content uppercase mt-1">{item.status}</p>
+                          </div>
+                          {/* Only unpaid food an admin added can be taken back off */}
+                          {item.removable && booking.status !== "cancelled" && booking.status !== "completed" && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setFoodItemToRemove(item)}
+                              className="h-9 w-9 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                              title={`Remove ${item.item_name}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -666,7 +663,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                             {/* Gateway reference, so staff can reconcile against the
                                 Razorpay dashboard when a customer queries a charge. */}
                             {booking.razorpay_payment_id && (
-                              <div className="flex items-center justify-between gap-2 text-[11px] text-blue-300/60 border-t border-blue-500/20 pt-2">
+                              <div className="flex items-center justify-between gap-2 text-xs text-blue-300/60 border-t border-blue-500/20 pt-2">
                                 <span className="uppercase font-bold shrink-0">Payment ID</span>
                                 <span className="font-mono truncate">{booking.razorpay_payment_id}</span>
                               </div>
@@ -723,37 +720,13 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                 )}
 
                 {booking.status === "checked_in" && (
-                  <>
-                    <Button
-                      onClick={handleCheckOut}
-                      disabled={actionLoading || (Number(booking.balance_due || 0) > 0 && booking.payment_status !== 'paid')}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-sm h-12 px-8 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {actionLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogOut className="h-5 w-5" />}
-                      Check Out Customer
-                    </Button>
-                    {Number(booking.balance_due || 0) > 0 && booking.payment_status !== 'paid' && (
-                      <Button
-                        onClick={handleOpenMarkAsPaidModal}
-                        disabled={actionLoading}
-                        className="bg-amber-600 hover:bg-amber-700 text-white font-black uppercase text-sm h-12 px-8 flex items-center gap-2"
-                      >
-                        <DollarSign className="h-5 w-5" />
-                        Mark as Paid
-                      </Button>
-                    )}
-                  </>
-                )}
-
-                {(booking.status === "confirmed" || booking.status === "checked_in") && (
                   <Button
-                    onClick={() => setCancelDialogOpen(true)}
-                    disabled={actionLoading}
-                    variant="outline"
-                    className="bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white border border-red-500/20 font-black uppercase text-sm h-12 px-8 flex items-center gap-2"
+                    onClick={handleCheckOut}
+                    disabled={actionLoading || (Number(booking.balance_due || 0) > 0 && booking.payment_status !== 'paid')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-sm h-12 px-8 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <XCircle className="h-5 w-5" />
-                    Cancel Booking
+                    {actionLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogOut className="h-5 w-5" />}
+                    Check Out Customer
                   </Button>
                 )}
 
@@ -770,8 +743,43 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
               <p className="text-muted-content">No booking data available</p>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+    </>
+  );
+
+  const titleRow = (
+    <>
+      BOOKING DETAILS
+      {booking && (
+        <span className="flex-shrink-0">
+          <BookingStatusBadge status={booking.status} size="lg" />
+        </span>
+      )}
+    </>
+  );
+
+  return (
+    <>
+      {variant === "page" ? (
+        // Standalone route: same panel, no Dialog, so nothing is ever stacked.
+        <div className="max-w-4xl mx-auto w-full">
+          {headerSlot}
+          <h1 className="text-xl font-black uppercase tracking-tight text-white flex flex-wrap items-center justify-between gap-x-3 gap-y-2 mb-2">
+            {titleRow}
+          </h1>
+          {detailBody}
+        </div>
+      ) : (
+        <Dialog open={open && !openFoodModalDirectly} onOpenChange={onClose}>
+          <DialogContent className="bg-[var(--surface)] border-[#27272a] text-white max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-black uppercase tracking-tight flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                {titleRow}
+              </DialogTitle>
+            </DialogHeader>
+            {detailBody}
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Add Food Modal */}
       <Dialog open={addFoodModalOpen} onOpenChange={(val) => {
@@ -944,171 +952,43 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
         </DialogContent>
       </Dialog>
 
-      {/* Cancel Confirmation Dialog */}
-      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+      {/* Remove Food Item Confirmation Dialog */}
+      <AlertDialog
+        open={!!foodItemToRemove}
+        onOpenChange={(open) => !open && setFoodItemToRemove(null)}
+      >
         <AlertDialogContent className="bg-[var(--surface)] border-[#27272a] text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl font-bold">Cancel Booking?</AlertDialogTitle>
+            <AlertDialogTitle className="text-xl font-bold">Remove Food Item?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-content">
-              Are you sure you want to cancel booking <span className="text-primary font-mono">{booking?.booking_number}</span>?
-              This action cannot be undone.
+              <span className="text-primary font-bold">
+                {foodItemToRemove?.quantity} × {foodItemToRemove?.item_name}
+              </span>{" "}
+              (₹{Number(foodItemToRemove?.line_total || 0).toLocaleString('en-IN')}) will be taken
+              off this booking, the amount deducted from the bill and the stock returned to the
+              menu. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800">
-              Keep Booking
+              Keep Item
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleCancel}
-              disabled={actionLoading}
+              onClick={(event) => {
+                // Keep the dialog up while the request is in flight
+                event.preventDefault();
+                handleRemoveFoodItem();
+              }}
+              disabled={removingFoodItem}
               className="bg-red-600 hover:bg-red-700 text-white font-semibold"
             >
-              {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Confirm Cancellation
+              {removingFoodItem ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Remove Item
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Mark as Paid Modal */}
-      <Dialog open={markAsPaidModalOpen} onOpenChange={setMarkAsPaidModalOpen}>
-        <DialogContent className="bg-[var(--surface)] border-[#27272a] text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black uppercase tracking-tight">
-              Mark as Paid
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            {/* Balance Due Display */}
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-amber-400 uppercase">Balance Due:</span>
-                <span className="text-2xl font-black text-amber-300">
-                  ₹{Number(booking?.balance_due || 0).toLocaleString('en-IN')}
-                </span>
-              </div>
-            </div>
-
-            {/* Payment Split Inputs */}
-            <div className="space-y-3">
-              <p className="text-sm font-bold text-muted-content uppercase">Payment Split:</p>
-
-              {/* Quick Select Method */}
-              <div className="grid grid-cols-3 gap-2 pb-2 border-b border-zinc-800/80">
-                <Button
-                  type="button"
-                  onClick={() => setPaymentSplit({ cashAmount: Number(booking?.balance_due || 0), cardAmount: 0, upiAmount: 0 })}
-                  className={`h-9 text-xs font-black uppercase rounded-lg border transition-all ${
-                    paymentSplit.cashAmount === Number(booking?.balance_due || 0)
-                      ? 'bg-green-600 hover:bg-green-700 border-transparent text-white shadow-[0_0_12px_rgba(34,197,94,0.15)]'
-                      : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white'
-                  }`}
-                >
-                  💵 Cash
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => setPaymentSplit({ cashAmount: 0, cardAmount: Number(booking?.balance_due || 0), upiAmount: 0 })}
-                  className={`h-9 text-xs font-black uppercase rounded-lg border transition-all ${
-                    paymentSplit.cardAmount === Number(booking?.balance_due || 0)
-                      ? 'bg-blue-600 hover:bg-blue-700 border-transparent text-white shadow-[0_0_12px_rgba(59,130,246,0.15)]'
-                      : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white'
-                  }`}
-                >
-                  💳 Card
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => setPaymentSplit({ cashAmount: 0, cardAmount: 0, upiAmount: Number(booking?.balance_due || 0) })}
-                  className={`h-9 text-xs font-black uppercase rounded-lg border transition-all ${
-                    paymentSplit.upiAmount === Number(booking?.balance_due || 0)
-                      ? 'bg-purple-600 hover:bg-purple-700 border-transparent text-white shadow-[0_0_12px_rgba(168,85,247,0.15)]'
-                      : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white'
-                  }`}
-                >
-                  📱 UPI
-                </Button>
-              </div>
-
-              {/* Cash */}
-              <div className="space-y-1">
-                <Label htmlFor="cash" className="text-xs font-bold text-zinc-400 uppercase">Cash</Label>
-                <Input
-                  id="cash"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={paymentSplit.cashAmount}
-                  onChange={(e) => setPaymentSplit({ ...paymentSplit, cashAmount: parseFloat(e.target.value) || 0 })}
-                  className="bg-[var(--background)] border-[#27272a] text-white h-11"
-                />
-              </div>
-
-              {/* Card */}
-              <div className="space-y-1">
-                <Label htmlFor="card" className="text-xs font-bold text-zinc-400 uppercase">Card</Label>
-                <Input
-                  id="card"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={paymentSplit.cardAmount}
-                  onChange={(e) => setPaymentSplit({ ...paymentSplit, cardAmount: parseFloat(e.target.value) || 0 })}
-                  className="bg-[var(--background)] border-[#27272a] text-white h-11"
-                />
-              </div>
-
-              {/* UPI */}
-              <div className="space-y-1">
-                <Label htmlFor="upi" className="text-xs font-bold text-zinc-400 uppercase">UPI</Label>
-                <Input
-                  id="upi"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={paymentSplit.upiAmount}
-                  onChange={(e) => setPaymentSplit({ ...paymentSplit, upiAmount: parseFloat(e.target.value) || 0 })}
-                  className="bg-[var(--background)] border-[#27272a] text-white h-11"
-                />
-              </div>
-
-              {/* Total Split Display */}
-              <div className="bg-[var(--background)] border border-[#27272a] rounded-lg p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-zinc-400">Total Split:</span>
-                  <span className={`text-lg font-black ${
-                    Math.abs((paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount) - Number(booking?.balance_due || 0)) < 0.01
-                      ? 'text-green-400'
-                      : 'text-red-400'
-                  }`}>
-                    ₹{(paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount).toFixed(2)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4 border-t border-[#27272a]">
-            <Button
-              variant="ghost"
-              onClick={() => setMarkAsPaidModalOpen(false)}
-              disabled={actionLoading}
-              className="border-[#27272a] text-muted-content hover:text-white"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleMarkAsPaid}
-              disabled={actionLoading}
-              className="bg-green-600 hover:bg-green-700 text-white font-black uppercase"
-            >
-              {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
-              Confirm Payment
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

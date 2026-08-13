@@ -31,7 +31,7 @@ export class MediaErrorBoundary extends Component<Props, State> {
       return (
         this.props.fallback || (
           <div className="flex items-center justify-center p-4 bg-zinc-900/50 border border-zinc-800 rounded-lg">
-            <p className="text-sm text-zinc-500">Media failed to load</p>
+            <p className="text-sm text-zinc-400">Media failed to load</p>
           </div>
         )
       )

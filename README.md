@@ -102,7 +102,7 @@ pnpm type-check    # TypeScript check
 **Migrations:** Located in `supabase/migrations/` (auto-applied on reset)
 
 **Seed Data:** `supabase/seed.sql` includes:
-- 5 Device Types (PS5, Standard Snooker, Medium Snooker, American Pool, Other)
+- 5 Device Types (PS5, Standard Snooker, Medium Snooker, American Pool, Board Games)
 - 5 Sample Devices (one per type)
 - 9 Menu Items (Snacks, Drinks, Meals)
 - 1 Admin User (username: `admin`, password: `admin123`)

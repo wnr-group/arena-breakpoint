@@ -68,7 +68,7 @@ export function ConfirmDialog({
             </div>
             <button
               onClick={onClose}
-              className="p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-900 transition-all"
+              className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition-all"
             >
               <X className="h-4 w-4" />
             </button>

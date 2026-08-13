@@ -2,23 +2,23 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { findApplicableHappyHour, type HappyHourRule } from '@/lib/happy-hours'
 import { calculateEndTime, formatTo24Hour } from '@/lib/utils/timeSlots'
 import { escapeLikePattern } from '@/lib/utils/sqlPattern'
+import {
+  isBookingDateStringWithinWindow,
+  BOOKING_WINDOW_ERROR,
+  isValidStoredDob,
+  DOB_ERROR,
+} from '@/lib/utils/dates'
+import {
+  calculateMembershipDiscount,
+  resolveActiveMembership,
+} from '@/lib/subscriptions/discount'
 import { countAvailableDevicesForRange, toRequestedRange } from './availability'
-
-/**
- * Server-authoritative pricing.
- *
- * The browser sends *what* the customer wants (device type, slot, duration,
- * players, cart, promo code) but never *how much* it costs. Rates, item prices,
- * happy-hour rules, subscription tiers and promo values are all re-read from the
- * database here, so a tampered client cannot pay less than the real price.
- */
+import { round2 } from './money'
 
 const MIN_DURATION_MINUTES = 30
 const MAX_DURATION_MINUTES = 5 * 60
 
-export function round2(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100
-}
+export { round2 }
 
 export interface CustomerDetails {
   phone: string
@@ -79,14 +79,16 @@ export interface DeviceBookingQuote {
   totalAmount: number
 }
 
+/**
+ * Food is never discounted. Membership, promo codes and happy hours all apply to
+ * device charges only - a standalone food order is billed at menu price, exactly
+ * like food added to a device booking or bought at the counter.
+ */
 export interface FoodOrderQuote {
   kind: 'food_order'
   customer: CustomerDetails
   items: QuotedAddon[]
   itemsTotal: number
-  promoCode: string | null
-  promoCodeId: string | null
-  promoDiscount: number
   totalAmount: number
 }
 
@@ -116,6 +118,20 @@ function normaliseCustomer(input: {
     email: input.email?.trim() || null,
     dateOfBirth: input.dateOfBirth?.trim() || null,
   }
+}
+
+/**
+ * The browser validates the date of birth before it ever gets here, but the
+ * browser is not to be trusted: these actions are callable directly. Rejects a
+ * date of birth that is present but outside the accepted window - a supplied
+ * value has to be a real one.
+ *
+ * Absent stays allowed, matching today's behaviour: the column is nullable and
+ * the retrieve -> food flow can legitimately carry an empty date through.
+ */
+function dobRejectionReason(dateOfBirth: string | null): string | null {
+  if (!dateOfBirth) return null
+  return isValidStoredDob(dateOfBirth) ? null : DOB_ERROR
 }
 
 /** Priced from `menu_items` - the client's price field is ignored entirely. */
@@ -216,6 +232,10 @@ async function resolvePromoDiscount(
 
   if (error || !promo || !promo.is_active) return none
 
+  // Both bounds are inclusive instants: `valid_from` is the start of its day and
+  // `valid_until` the end of its day (23:59:59.999), written that way by the
+  // admin modals, so a code lasts through the whole of its final day. Mirrors
+  // validatePromoCode() in app/(customer)/booking/promo-actions.ts.
   const now = new Date()
   if (now < new Date(promo.valid_from) || now > new Date(promo.valid_until)) {
     return none
@@ -241,38 +261,6 @@ async function resolvePromoDiscount(
     promoCode: promo.code,
     promoCodeId: promo.id,
     promoDiscount: round2(Math.max(0, discount)),
-  }
-}
-
-/** Active subscription discount percentage for a phone number, or 0. */
-async function resolveSubscription(
-  phone: string
-): Promise<{ subscriptionId: string | null; discountPercentage: number }> {
-  const none = { subscriptionId: null, discountPercentage: 0 }
-
-  const { data: customer, error } = await supabaseAdmin
-    .from('customers')
-    .select('active_subscription_id')
-    .eq('phone', phone)
-    .single()
-
-  if (error || !customer?.active_subscription_id) return none
-
-  const { data: subscription, error: subError } = await supabaseAdmin
-    .from('subscriptions')
-    .select('id, end_date, status, subscription_plan:subscription_plans(discount_percentage)')
-    .eq('id', customer.active_subscription_id)
-    .eq('status', 'active')
-    .gte('end_date', new Date().toISOString().split('T')[0])
-    .single()
-
-  if (subError || !subscription) return none
-
-  const percentage = Number((subscription as any).subscription_plan?.discount_percentage || 0)
-
-  return {
-    subscriptionId: subscription.id,
-    discountPercentage: Number.isFinite(percentage) ? percentage : 0,
   }
 }
 
@@ -350,9 +338,19 @@ export async function quoteDeviceBooking(
       return { success: false, error: 'Please provide a valid 10-digit phone number and name.' }
     }
 
+    const dobError = dobRejectionReason(customer.dateOfBirth)
+    if (dobError) {
+      return { success: false, error: dobError }
+    }
+
     const bookingDate = parseDateLocal(input.selectedDate)
     if (!bookingDate) {
       return { success: false, error: 'Please select a valid booking date.' }
+    }
+
+    // Bookings only run today through the next 6 days, whatever the client sends
+    if (!isBookingDateStringWithinWindow(input.selectedDate)) {
+      return { success: false, error: BOOKING_WINDOW_ERROR }
     }
 
     const durationMinutes = Number(input.durationMinutes)
@@ -365,10 +363,6 @@ export async function quoteDeviceBooking(
       return { success: false, error: 'Please select a valid booking duration.' }
     }
 
-    // Validate the 12-hour input itself: formatTo24Hour() falls back to '00:00'
-    // for anything it cannot parse, so checking only its output would wave
-    // through garbage as a midnight booking. Hours are bounded to 1-12 and
-    // minutes to 0-59 - '25:99 PM' parses but is not a time.
     const slotStartTime12 = (input.slotStartTime || '').trim()
     if (!/^(0?[1-9]|1[0-2]):[0-5]\d\s*(AM|PM)$/i.test(slotStartTime12)) {
       return { success: false, error: 'Please select a valid start time.' }
@@ -432,9 +426,10 @@ export async function quoteDeviceBooking(
     // --- Discounts: all three stack on device + extra players, never on food ---
     const discountableBase = deviceSubtotal
 
-    const subscription = await resolveSubscription(customer.phone)
-    const subscriptionDiscount = round2(
-      (discountableBase * subscription.discountPercentage) / 100
+    const membership = await resolveActiveMembership(customer.phone)
+    const subscriptionDiscount = calculateMembershipDiscount(
+      discountableBase,
+      membership.discountPercentage
     )
 
     const happyHour = await resolveHappyHour(
@@ -489,7 +484,7 @@ export async function quoteDeviceBooking(
         addons: pricedAddons.items,
         addonsTotal: pricedAddons.total,
 
-        subscriptionId: subscription.subscriptionId,
+        subscriptionId: membership.subscriptionId,
         subscriptionDiscount,
 
         promoCode: promo.promoCode,
@@ -519,7 +514,6 @@ export interface FoodOrderInput {
   email?: string | null
   dateOfBirth?: string | null
   items: Array<{ id: string; quantity: number }>
-  promoCode?: string | null
 }
 
 export async function quoteFoodOrder(
@@ -531,6 +525,11 @@ export async function quoteFoodOrder(
       return { success: false, error: 'Please provide a valid 10-digit phone number and name.' }
     }
 
+    const dobError = dobRejectionReason(customer.dateOfBirth)
+    if (dobError) {
+      return { success: false, error: dobError }
+    }
+
     if (!input.items || input.items.length === 0) {
       return { success: false, error: 'Your cart is empty.' }
     }
@@ -540,9 +539,7 @@ export async function quoteFoodOrder(
       return { success: false, error: priced.error }
     }
 
-    const promo = await resolvePromoDiscount(input.promoCode, priced.total)
-    const totalAmount = round2(Math.max(0, priced.total - promo.promoDiscount))
-
+    // No discounts of any kind on food: the total is simply what the menu says.
     return {
       success: true,
       quote: {
@@ -550,10 +547,7 @@ export async function quoteFoodOrder(
         customer,
         items: priced.items,
         itemsTotal: priced.total,
-        promoCode: promo.promoCode,
-        promoCodeId: promo.promoCodeId,
-        promoDiscount: promo.promoDiscount,
-        totalAmount,
+        totalAmount: priced.total,
       },
     }
   } catch (err: any) {

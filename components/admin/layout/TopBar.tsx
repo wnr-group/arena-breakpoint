@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Grid, Menu, LogOut, Shield, User } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Grid, Menu, LogOut, Shield, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -68,24 +67,15 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
   return (
     <header className="h-[72px] flex-shrink-0 bg-[var(--background)]/80 backdrop-blur-md border-b border-[#27272a] flex items-center justify-between px-4 md:px-8 animate-in slide-in-from-top-full duration-500 z-40">
       <div className="flex items-center gap-3 flex-1 max-w-md md:max-w-xl pr-2">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={onOpenSidebar} 
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onOpenSidebar}
           className="text-white hover:bg-[var(--surface-hover)] md:hidden flex-shrink-0 h-9 w-9"
           aria-label="Open navigation sidebar menu"
         >
           <Menu className="h-5 w-5" />
         </Button>
-
-        <div className="hidden sm:flex items-center w-full relative group transition-all duration-500 focus-within:max-w-lg">
-          <Search className="absolute left-3 h-4 w-4 text-[#a1a1aa] group-focus-within:text-primary transition-colors duration-300" />
-          <Input
-            type="text"
-            placeholder="Search operations..."
-            className="bg-[var(--surface)] border border-transparent pl-10 text-white placeholder:text-[#a1a1aa] focus-visible:ring-1 focus-visible:ring-primary/50 focus-visible:border-primary focus-visible:bg-[var(--surface-hover)] shadow-none text-sm w-full transition-all duration-300 rounded-full"
-          />
-        </div>
       </div>
 
       {/* Right Block: Actions Tray & Profile Widget */}
@@ -93,10 +83,6 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
         
         {/* Action Quick Toggles Utilities */}
         <div className="flex items-center gap-2 md:gap-4 text-[#a1a1aa]">
-          <button className="sm:hidden p-2 hover:text-white transition-colors duration-300">
-            <Search className="h-5 w-5" />
-          </button>
-
           <NotificationBell />
 
           <SoundSettings />
@@ -130,7 +116,7 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
               </p>
               {userRole && (
                 <span
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider ${
                     userRole === 'admin'
                       ? 'bg-gradient-to-r from-primary/20 to-amber-500/20 text-primary border border-primary/30'
                       : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
@@ -142,7 +128,7 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
                 </span>
               )}
             </div>
-            <p className="text-[10px] text-[#a1a1aa] tracking-wide mt-0.5 leading-none truncate max-w-[160px]" title={userEmail}>
+            <p className="text-xs text-[#a1a1aa] tracking-wide mt-0.5 leading-none truncate max-w-[160px]" title={userEmail}>
               {userEmail || "Arena Manager"}
             </p>
           </div>

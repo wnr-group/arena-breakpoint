@@ -62,7 +62,7 @@ export function StationCard({ station, motionProps }: { station: Station; motion
 
                 {/* Availability Badge */}
                 <div
-                    className={`absolute top-3 right-3.5 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[8px] min-[581px]:text-[9px] font-bold tracking-widest uppercase transition-transform duration-400 group-hover:-translate-y-1 ${avail
+                    className={`absolute top-3 right-3.5 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] min-[581px]:text-[11px] font-bold tracking-widest uppercase transition-transform duration-400 group-hover:-translate-y-1 ${avail
                         ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-400/60'
                         : 'bg-red-500/30 text-red-300 border border-red-400/60'
                         }`}
@@ -93,27 +93,27 @@ export function StationCard({ station, motionProps }: { station: Station; motion
                         >
                             ₹{station.regular_hourly_rate}
                         </span>
-                        <span className="text-white/65 text-[9px] font-semibold uppercase tracking-widest">
+                        <span className="text-white/65 text-[11px] font-semibold uppercase tracking-widest">
                             / hr
                         </span>
                     </div>
 
                     {/* Meta Pills */}
                     <div className="flex flex-wrap gap-1 min-[581px]:gap-1.5 mb-2 min-[581px]:mb-3">
-                        <span className="bg-zinc-800/60 border border-zinc-700/60 rounded-full text-[10px] min-[581px]:text-[12px] text-zinc-300 px-2 min-[581px]:px-2.5 py-0.5 min-[581px]:py-1 font-medium tracking-wide">
+                        <span className="bg-zinc-800/60 border border-zinc-700/60 rounded-full text-xs min-[581px]:text-[12px] text-zinc-300 px-2 min-[581px]:px-2.5 py-0.5 min-[581px]:py-1 font-medium tracking-wide">
                             Incl. <span className="text-white font-semibold">{station.included_players}</span>{' '}
                             players
                         </span>
-                        <span className="bg-zinc-800/60 border border-zinc-700/60 rounded-full text-[10px] min-[581px]:text-[12px] text-zinc-300 px-2 min-[581px]:px-2.5 py-0.5 min-[581px]:py-1 font-medium tracking-wide">
+                        <span className="bg-zinc-800/60 border border-zinc-700/60 rounded-full text-xs min-[581px]:text-[12px] text-zinc-300 px-2 min-[581px]:px-2.5 py-0.5 min-[581px]:py-1 font-medium tracking-wide">
                             Max <span className="text-white font-semibold">{station.max_players}</span>
                         </span>
                         {station.extra_player_charge > 0 ? (
-                            <span className="bg-zinc-800/60 border border-zinc-700/60 rounded-full text-[10px] min-[581px]:text-[12px] text-zinc-300 px-2 min-[581px]:px-2.5 py-0.5 min-[581px]:py-1 font-medium tracking-wide">
+                            <span className="bg-zinc-800/60 border border-zinc-700/60 rounded-full text-xs min-[581px]:text-[12px] text-zinc-300 px-2 min-[581px]:px-2.5 py-0.5 min-[581px]:py-1 font-medium tracking-wide">
                                 +<span className="text-white font-semibold">₹{station.extra_player_charge}</span>
                                 /extra
                             </span>
                         ) : (
-                            <span className="bg-zinc-800/60 border border-zinc-700/60 rounded-full text-[10px] min-[581px]:text-[12px] text-zinc-300 px-2 min-[581px]:px-2.5 py-0.5 min-[581px]:py-1 font-medium tracking-wide">
+                            <span className="bg-zinc-800/60 border border-zinc-700/60 rounded-full text-xs min-[581px]:text-[12px] text-zinc-300 px-2 min-[581px]:px-2.5 py-0.5 min-[581px]:py-1 font-medium tracking-wide">
                                 <span className="text-white font-semibold">No</span> extra charge
                             </span>
                         )}

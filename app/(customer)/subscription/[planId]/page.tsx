@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { BreakpointLoader } from '@/components/shared/BreakpointLoader'
 import { toast } from 'sonner'
-import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY } from '@/lib/utils/dates'
+import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY, isValidDob, DOB_ERROR } from '@/lib/utils/dates'
+import { allFilled, isPlausibleEmail } from '@/lib/utils/forms'
 
 // Import server actions
 import { getSubscriptionPlanDetails } from '@/app/(admin)/admin/subscription/actions'
@@ -126,8 +127,9 @@ export default function PlanDetailsPage() {
       return
     }
 
-    if (!customerDob || !isValidDateDDMMYYYY(customerDob)) {
-      toast.error('Invalid Date of Birth', { description: 'Please enter a valid date in DD-MM-YYYY format.' })
+    // isValidDob covers both the DD-MM-YYYY shape and the accepted year range.
+    if (!customerDob || !isValidDob(customerDob)) {
+      toast.error(DOB_ERROR)
       return
     }
 
@@ -173,6 +175,12 @@ export default function PlanDetailsPage() {
     }
   }
 
+  // Gates the details submit: every starred field must be filled.
+  const detailsComplete =
+    allFilled(customerName, customerDob) &&
+    isValidDateDDMMYYYY(customerDob) &&
+    isPlausibleEmail(customerEmail)
+
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = handleDobInput(e.target.value)
     setCustomerDob(formatted)
@@ -198,21 +206,21 @@ export default function PlanDetailsPage() {
           <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6 glow-box-hover">
             <div className="border-b border-zinc-900 pb-4">
               <h3 className="text-lg font-black uppercase text-white tracking-tight">Purchase {plan.name}</h3>
-              <p className="text-xs text-zinc-500 font-medium mt-1">Enter your mobile number to continue</p>
+              <p className="text-xs text-zinc-400 font-medium mt-1">Enter your mobile number to continue</p>
             </div>
 
             {/* Plan Summary */}
             <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-2 glow-box-strong">
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Plan:</span>
+                <span className="text-zinc-400">Plan:</span>
                 <span className="text-white font-bold">{plan.name}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Duration:</span>
+                <span className="text-zinc-400">Duration:</span>
                 <span className="text-white font-bold">{plan.duration_months} {plan.duration_months === 1 ? 'Month' : 'Months'}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Discount:</span>
+                <span className="text-zinc-400">Discount:</span>
                 <span className="text-primary font-bold">{plan.discount_percentage}% off bookings</span>
               </div>
               <div className="flex justify-between text-base border-t border-zinc-800 pt-2 font-black">
@@ -223,11 +231,11 @@ export default function PlanDetailsPage() {
 
             <form onSubmit={handlePhoneSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Label htmlFor="phone" className="text-xs font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
                   <Phone className="h-3 w-3 text-zinc-600" /> MOBILE NUMBER <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-600 border-r border-zinc-900 pr-2">+91</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-400 border-r border-zinc-900 pr-2">+91</span>
                   <Input
                     id="phone"
                     type="tel"
@@ -242,16 +250,16 @@ export default function PlanDetailsPage() {
               </div>
 
               <div className="pt-4 space-y-2">
-                <Button variant="gradient" type="submit" disabled={isSubmitting || mobileNumber.length < 10} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
+                <Button variant="gradient" type="submit" disabled={isSubmitting || mobileNumber.length < 10} className="w-full text-black font-black uppercase text-sm h-12 rounded-xl flex items-center justify-center gap-1.5">
                   {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'CONTINUE'} <ChevronRight className="h-4 w-4 stroke-[3]" />
                 </Button>
-                <Button type="button" onClick={() => router.back()} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
+                <Button type="button" onClick={() => router.back()} variant="ghost" className="w-full border border-zinc-900 text-zinc-400 hover:text-zinc-300 font-bold uppercase text-sm h-11 rounded-xl">
                   ← BACK TO PLANS
                 </Button>
               </div>
             </form>
 
-            <div className="pt-2 flex gap-2 items-center text-[10px] text-zinc-600 justify-center border-t border-zinc-950">
+            <div className="pt-2 flex gap-2 items-center text-xs text-zinc-400 justify-center border-t border-zinc-950">
               <ShieldCheck className="h-3.5 w-3.5 text-zinc-700" />
               <span>Your data is stored securely</span>
             </div>
@@ -269,13 +277,13 @@ export default function PlanDetailsPage() {
           <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6 glow-box-hover">
             <div className="border-b border-zinc-900 pb-4">
               <h3 className="text-lg font-black uppercase text-white tracking-tight">Customer Details</h3>
-              <p className="text-xs text-zinc-500 font-medium mt-1">Please provide your information</p>
+              <p className="text-xs text-zinc-400 font-medium mt-1">Please provide your information</p>
             </div>
 
             <form onSubmit={handleDetailsSubmit} className="space-y-4">
               {/* Name */}
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Label htmlFor="name" className="text-xs font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
                   <User className="h-3 w-3 text-zinc-600" /> FULL NAME <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -291,13 +299,14 @@ export default function PlanDetailsPage() {
 
               {/* Email */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Mail className="h-3 w-3 text-zinc-600" /> EMAIL ADDRESS
+                <Label htmlFor="email" className="text-xs font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Mail className="h-3 w-3 text-zinc-600" /> EMAIL ADDRESS <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Enter your email (optional)"
+                  required
+                  placeholder="Enter your email"
                   value={customerEmail}
                   onChange={(e) => setCustomerEmail(e.target.value)}
                   className="bg-zinc-950 border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary"
@@ -306,7 +315,7 @@ export default function PlanDetailsPage() {
 
               {/* DOB */}
               <div className="space-y-2">
-                <Label htmlFor="dob" className="text-[11px] font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Label htmlFor="dob" className="text-xs font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
                   <Cake className="h-3 w-3 text-zinc-600" /> DATE OF BIRTH <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -322,10 +331,10 @@ export default function PlanDetailsPage() {
               </div>
 
               <div className="pt-4 space-y-2">
-                <Button variant="gradient" type="submit" disabled={!customerName.trim() || !customerDob || !isValidDateDDMMYYYY(customerDob)} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl">
+                <Button variant="gradient" type="submit" disabled={!detailsComplete} className="w-full text-black font-black uppercase text-sm h-12 rounded-xl disabled:opacity-50 disabled:pointer-events-none">
                   CONTINUE <ChevronRight className="h-4 w-4 ml-1 stroke-[3]" />
                 </Button>
-                <Button type="button" onClick={() => setStep('phone')} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
+                <Button type="button" onClick={() => setStep('phone')} variant="ghost" className="w-full border border-zinc-900 text-zinc-400 hover:text-zinc-300 font-bold uppercase text-sm h-11 rounded-xl">
                   ← BACK
                 </Button>
               </div>
@@ -344,24 +353,24 @@ export default function PlanDetailsPage() {
           <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6 glow-box-hover">
             <div className="border-b border-zinc-900 pb-4">
               <h3 className="text-lg font-black uppercase text-white tracking-tight">Purchase Summary</h3>
-              <p className="text-xs text-zinc-500 font-medium mt-1">Review your subscription details</p>
+              <p className="text-xs text-zinc-400 font-medium mt-1">Review your subscription details</p>
             </div>
 
             {/* Customer Info */}
             <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 glow-box-hover">
-              <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Customer Information</h4>
+              <h4 className="text-xs font-black text-zinc-400 uppercase tracking-wider mb-2">Customer Information</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-zinc-500">Name:</span>
+                  <span className="text-zinc-400">Name:</span>
                   <span className="text-white font-bold">{customerName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-500">Phone:</span>
+                  <span className="text-zinc-400">Phone:</span>
                   <span className="text-primary font-bold">+91 {mobileNumber}</span>
                 </div>
                 {customerEmail && (
                   <div className="flex justify-between">
-                    <span className="text-zinc-500">Email:</span>
+                    <span className="text-zinc-400">Email:</span>
                     <span className="text-white font-bold text-right truncate ml-4">{customerEmail}</span>
                   </div>
                 )}
@@ -370,18 +379,18 @@ export default function PlanDetailsPage() {
 
             {/* Plan Details */}
             <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 glow-box-strong">
-              <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-wider mb-2">Subscription Plan</h4>
+              <h4 className="text-xs font-black text-zinc-400 uppercase tracking-wider mb-2">Subscription Plan</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-zinc-500">Plan:</span>
+                  <span className="text-zinc-400">Plan:</span>
                   <span className="text-white font-bold">{plan.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-500">Duration:</span>
+                  <span className="text-zinc-400">Duration:</span>
                   <span className="text-white font-bold">{plan.duration_months} {plan.duration_months === 1 ? 'Month' : 'Months'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-500">Booking Discount:</span>
+                  <span className="text-zinc-400">Booking Discount:</span>
                   <span className="text-primary font-bold">{plan.discount_percentage}% off</span>
                 </div>
                 <div className="flex justify-between border-t border-zinc-800 pt-2 font-black text-base">
@@ -392,10 +401,10 @@ export default function PlanDetailsPage() {
             </div>
 
             <div className="space-y-2">
-              <Button variant="gradient" onClick={handleActivatePlan} disabled={isActivating} className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5">
+              <Button variant="gradient" onClick={handleActivatePlan} disabled={isActivating} className="w-full text-black font-black uppercase text-sm h-12 rounded-xl flex items-center justify-center gap-1.5">
                 {isActivating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'ACTIVATE PLAN'} <CheckCircle2 className="h-4 w-4" />
               </Button>
-              <Button type="button" onClick={() => customerExists ? setStep('phone') : setStep('details')} variant="ghost" className="w-full border border-zinc-900 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl">
+              <Button type="button" onClick={() => customerExists ? setStep('phone') : setStep('details')} variant="ghost" className="w-full border border-zinc-900 text-zinc-400 hover:text-zinc-300 font-bold uppercase text-sm h-11 rounded-xl">
                 ← BACK
               </Button>
             </div>

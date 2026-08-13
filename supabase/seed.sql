@@ -15,7 +15,7 @@ INSERT INTO public.device_types (name, display_name, regular_hourly_rate, includ
   ('medium_snooker', 'Medium Snooker Table', 299.00, 4, 8, 79.00, 'Medium size snooker table - great for smaller groups with up to 4 players included', 2),
   ('american_pool', 'American Pool Table', 249.00, 4, 8, 49.00, 'American pool table - classic billiards experience with up to 4 players included', 3),
   ('ps5', 'PS5 Console', 200.00, 1, 4, 150.00, 'PlayStation 5 gaming console - latest games and titles, 1 player included, ₹150 per additional controller', 4),
-  ('other', 'Other Gaming Device', 200.00, 1, 4, 100.00, 'Other gaming devices and activities', 5);
+  ('other', 'Board Games', 200.00, 1, 4, 100.00, 'Board games and tabletop activities', 5);
 
 -- ================================================
 -- 2. SAMPLE DEVICES (One for each type)
@@ -43,7 +43,7 @@ BEGIN
     (v_medium_snooker_id, 'MS-001', 'available', 'Medium size snooker table perfect for casual play. Includes all accessories. Up to 8 players (4 included in base rate).'),
     (v_american_pool_id, 'AP-001', 'available', 'Professional American pool table with aramith balls. Includes cues and chalk. Up to 8 players (4 included in base rate).'),
     (v_ps5_id, 'PS5-001', 'available', 'PlayStation 5 console with DualSense controller, 4K gaming, and latest game library. Up to 4 players (₹150 per additional controller).'),
-    (v_other_id, 'OTH-001', 'available', 'Other gaming and entertainment options. Contact staff for details.');
+    (v_other_id, 'BG-001', 'available', 'Board games and tabletop entertainment. Contact staff for details.');
 END $$;
 
 -- ================================================
@@ -82,9 +82,11 @@ END $$;
 -- 3. SEED DATA FOR TABLE: promo_codes
 INSERT INTO public.promo_codes (code, description, discount_type, discount_value, valid_from, valid_until, is_active)
 VALUES
-  ('ARENA20', 'Welcome Bonus Voucher providing an introductory 20% discount window across booking balances.', 'percentage', 20.00, CURRENT_DATE - INTERVAL '1 day', CURRENT_DATE + INTERVAL '30 days', true),
-  ('ELITE500', 'Premium high-value absolute flat savings voucher deduction applied directly onto processing checkouts.', 'fixed', 500.00, CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE + INTERVAL '60 days', true),
-  ('HIDDENOFF', 'Undercover administration test code disabled from operational customer execution pathways by default.', 'percentage', 50.00, CURRENT_DATE, CURRENT_DATE + INTERVAL '90 days', false)
+  -- `valid_until` runs to the end of its day: the end date is inclusive, so the
+  -- code is redeemable for the whole of that final day.
+  ('ARENA20', 'Welcome Bonus Voucher providing an introductory 20% discount window across booking balances.', 'percentage', 20.00, CURRENT_DATE - INTERVAL '1 day', CURRENT_DATE + INTERVAL '31 days' - INTERVAL '1 millisecond', true),
+  ('ELITE500', 'Premium high-value absolute flat savings voucher deduction applied directly onto processing checkouts.', 'fixed', 500.00, CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE + INTERVAL '61 days' - INTERVAL '1 millisecond', true),
+  ('HIDDENOFF', 'Undercover administration test code disabled from operational customer execution pathways by default.', 'percentage', 50.00, CURRENT_DATE, CURRENT_DATE + INTERVAL '91 days' - INTERVAL '1 millisecond', false)
 ON CONFLICT (code) DO NOTHING;
 
 -- ================================================

@@ -44,7 +44,7 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
               ) : (
                 <div className="flex flex-col items-center text-zinc-800 gap-1.5">
                   <MonitorPlay className="h-6 w-6" />
-                  <span className="text-[10px]">No Asset Staged</span>
+                  <span className="text-xs">No Asset Staged</span>
                 </div>
               )}
               <div className="absolute top-3 right-3 z-10">
@@ -60,23 +60,22 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
                     <h3 className="font-black text-xl text-primary uppercase tracking-wide truncate max-w-[130px]" title={device.station_number}>
                       {device.station_number}
                     </h3>
-                    <p className="text-xs text-[#a1a1aa] font-medium truncate max-w-[130px]">{device.device_type?.display_name || 'N/A'}</p>
+                    <p className="text-sm text-[#a1a1aa] font-medium truncate max-w-[130px]">{device.device_type?.display_name || 'N/A'}</p>
                   </div>
 
                   {/* HOURLY PRICING NODE */}
                   <div className="text-primary font-black text-xl text-right flex-shrink-0">
                     ₹{device.device_type?.regular_hourly_rate ? Number(device.device_type.regular_hourly_rate).toLocaleString('en-IN') : "0"}
-                    <span className="text-[#a1a1aa] text-[10px] font-normal tracking-tight">/hr</span>
+                    <span className="text-[#a1a1aa] text-xs font-normal tracking-tight">/hr</span>
                   </div>
                 </div>
 
                 {/* HARDWARE SPECIFICATIONS BLOCKS */}
-                <div
-                  className="flex items-start gap-1.5 text-[11px] text-[#a1a1aa]/80 bg-[#161616] border border-[#27272a]/40 p-2 rounded-lg truncate mt-1"
-                  title={device.specs || "No specifications listed"}
-                >
-                  <Cpu className="h-3.5 w-3.5 text-muted-content flex-shrink-0" />
-                  <span className="truncate">
+                {/* The description runs in full here - the grid is the view that
+                    has room for it. The table still truncates to keep rows even. */}
+                <div className="flex items-start gap-1.5 text-xs text-[#a1a1aa]/80 bg-[#161616] border border-[#27272a]/40 p-2 rounded-lg mt-1">
+                  <Cpu className="h-3.5 w-3.5 text-muted-content flex-shrink-0 mt-0.5" />
+                  <span className="min-w-0 flex-1 whitespace-pre-line break-words leading-relaxed">
                     {device.specs || <span className="text-muted-content italic">No specs listed</span>}
                   </span>
                 </div>
@@ -108,7 +107,7 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
                 <AlertDialogContent className="bg-[var(--surface)] border border-[#27272a] text-white">
                   <AlertDialogHeader>
                     <AlertDialogTitle className="text-xl font-bold">Remove Terminal Record?</AlertDialogTitle>
-                    <AlertDialogDescription className="text-[#a1a1aa] text-sm">
+                    <AlertDialogDescription className="text-[#a1a1aa] text-base">
                       Are you sure you want to delete **Station {device.station_number}**? This action will remove the hardware machine data completely from your system inventory.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
@@ -136,7 +135,7 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
 function GridStatusBadge({ status }: { status: string }) {
   if (status === 'available') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-white bg-black/60 border border-green-500/40 rounded-full backdrop-blur-md whitespace-nowrap">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-black text-white bg-black/60 border border-green-500/40 rounded-full backdrop-blur-md whitespace-nowrap">
         <span className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
         AVAILABLE
       </span>
@@ -144,7 +143,7 @@ function GridStatusBadge({ status }: { status: string }) {
   }
   if (status === 'maintenance') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-white bg-black/60 border border-red-500/40 rounded-full backdrop-blur-md whitespace-nowrap">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-black text-white bg-black/60 border border-red-500/40 rounded-full backdrop-blur-md whitespace-nowrap">
         <span className="w-1 h-1 rounded-full bg-red-500" />
         MAINTENANCE
       </span>
@@ -152,14 +151,14 @@ function GridStatusBadge({ status }: { status: string }) {
   }
   if (status === 'inactive') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-muted-content bg-black/60 border border-zinc-700 rounded-full backdrop-blur-md whitespace-nowrap">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-black text-muted-content bg-black/60 border border-zinc-700 rounded-full backdrop-blur-md whitespace-nowrap">
         <span className="w-1 h-1 rounded-full bg-zinc-500" />
         OFFLINE
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-black text-white bg-black/60 border border-amber-500/40 rounded-full backdrop-blur-md whitespace-nowrap">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-black text-white bg-black/60 border border-amber-500/40 rounded-full backdrop-blur-md whitespace-nowrap">
       <span className="w-1 h-1 rounded-full bg-amber-500" />
       FULLY BOOKED
     </span>

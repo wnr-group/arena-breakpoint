@@ -7,10 +7,14 @@ import { setSlot, setPricing, setSlotLockExpiry, setBookingId, setPlayerCount } 
 import { checkAvailabilityByDeviceType, initializeSoftLockReservation as createSoftLockTransaction } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
+import { DateSelector } from "@/components/booking/DateSelector";
 import { Clock, ChevronRight, X, Users, Plus, Minus , Loader2 } from 'lucide-react';
 import { toast } from "sonner";
-import { formatLocalDate } from "@/lib/utils/dates";
+import {
+  formatLocalDate,
+  isDateWithinBookingWindow,
+  BOOKING_WINDOW_ERROR
+} from "@/lib/utils/dates";
 
 const staticDaylightSchedulesMatrix = [
   { id: "s1", label: "10:00 AM - 11:00 AM", start: "10:00 AM", end: "11:00 AM", tier: "Morning Slots" },
@@ -34,7 +38,6 @@ export default function SlotBookingPage() {
   const [queryingDb, setQueryingDb] = useState(false);
   const [submittingLock, setSubmittingLock] = useState(false);
   
-  const [mobileCalendarDrawerOpen, setMobileCalendarDrawerOpen] = useState(false);
   const [mobileTimeDrawerOpen, setMobileTimeDrawerOpen] = useState(false);
   const [mobileSummaryDrawerOpen, setMobileSummaryDrawerOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -49,7 +52,7 @@ export default function SlotBookingPage() {
     if (typeof window === 'undefined') return;
     const mainEl = document.querySelector('main');
     const htmlEl = document.documentElement;
-    if (mobileCalendarDrawerOpen || mobileTimeDrawerOpen || mobileSummaryDrawerOpen) {
+    if (mobileTimeDrawerOpen || mobileSummaryDrawerOpen) {
       document.body.style.overflow = 'hidden';
       document.body.style.height = '100dvh';
       htmlEl.style.overflow = 'hidden';
@@ -69,10 +72,16 @@ export default function SlotBookingPage() {
       htmlEl.style.height = '';
       if (mainEl) mainEl.style.zIndex = '';
     };
-  }, [mobileCalendarDrawerOpen, mobileTimeDrawerOpen, mobileSummaryDrawerOpen]);
+  }, [mobileTimeDrawerOpen, mobileSummaryDrawerOpen]);
 
   useEffect(() => {
     if (!mounted || !calendarDay || !deviceTypeId) return;
+    // Never query slots for a date outside the booking window
+    if (!isDateWithinBookingWindow(calendarDay)) {
+      setDisabledLabelsArray([]);
+      setSlotAvailability({});
+      return;
+    }
     async function checkAvailability() {
       setQueryingDb(true);
       const res = await checkAvailabilityByDeviceType(formatLocalDate(calendarDay!), deviceTypeId!);
@@ -97,6 +106,10 @@ export default function SlotBookingPage() {
 
   const handleRegisterTransactionLock = async () => {
     if (!calendarDay || !selectedSlotNode || !deviceTypeId) return;
+    if (!isDateWithinBookingWindow(calendarDay)) {
+      toast.error(BOOKING_WINDOW_ERROR);
+      return;
+    }
     setSubmittingLock(true);
     const dateQueryString = formatLocalDate(calendarDay);
 
@@ -125,11 +138,11 @@ export default function SlotBookingPage() {
       
       {/* 2. PROGRESS timeline tracks */}
       <div className="w-full max-w-md mx-auto flex items-center justify-between pb-6 px-2 select-none">
-        <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">1</div><span className="text-[8px] font-black uppercase text-primary tracking-wider">Date</span></div>
+        <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[11px] flex items-center justify-center">1</div><span className="text-xs font-black uppercase text-primary tracking-wider">Date</span></div>
         <div className="h-0.5 bg-zinc-800 flex-1 mx-2" />
-        <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">2</div><span className="text-[8px] font-black uppercase text-primary tracking-wider">Time</span></div>
+        <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[11px] flex items-center justify-center">2</div><span className="text-xs font-black uppercase text-primary tracking-wider">Time</span></div>
         <div className="h-0.5 bg-zinc-800 flex-1 mx-2" />
-        <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-bold text-[9px] flex items-center justify-center border border-zinc-800">3</div><span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Summary</span></div>
+        <div className="flex flex-col items-center gap-1"><div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-400 font-bold text-[11px] flex items-center justify-center border border-zinc-800">3</div><span className="text-xs font-black uppercase text-zinc-400 tracking-wider">Summary</span></div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
@@ -137,25 +150,26 @@ export default function SlotBookingPage() {
           <div className="bg-[#111] border border-zinc-900 rounded-xl p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center gap-3 min-w-0">
               <div className="p-2.5 bg-zinc-950 border border-zinc-800 text-primary rounded-lg"><Clock className="h-4 w-4"/></div>
-              <div className="min-w-0"><h4 className="font-black text-xs sm:text-sm text-white uppercase truncate">{deviceTypeName || "PLAYSTATION 5 - STATION #2"}</h4><p className="text-zinc-500 text-[10px] font-bold mt-0.5">₹ {hourlyRate || 300}/hour</p></div>
+              <div className="min-w-0"><h4 className="font-black text-xs sm:text-sm text-white uppercase truncate">{deviceTypeName || "PLAYSTATION 5 - STATION #2"}</h4><p className="text-zinc-400 text-xs font-bold mt-0.5">₹ {hourlyRate || 300}/hour</p></div>
             </div>
-            <Button onClick={() => router.push("/booking")} variant="outline" className="border-zinc-800 text-[10px] uppercase h-8 px-3 text-zinc-400">Change</Button>
+            <Button onClick={() => router.push("/booking")} variant="outline" className="border-zinc-800 text-xs uppercase h-8 px-3 text-zinc-400">Change</Button>
           </div>
 
           {/* MOBILE FLOW CLICK*/}
           <div className="space-y-3 md:hidden">
-            <div onClick={() => setMobileCalendarDrawerOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer">
-              <div className="space-y-0.5"><span className="text-[8px] font-black text-zinc-500 uppercase block">Select Date</span><span className="text-xs font-black text-white">{calendarDay ? calendarDay.toLocaleDateString() : "Choose Target Date"}</span></div>
-              <ChevronRight className="h-4 w-4 text-zinc-600" />
+            {/* Date Selection - today + next 6 days, all on one row */}
+            <div className="space-y-2">
+              <span className="text-[11px] font-black text-zinc-400 uppercase block pl-1">Select Date</span>
+              <DateSelector selected={calendarDay} onSelect={setCalendarDay} />
             </div>
 
             <div onClick={() => setMobileTimeDrawerOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer">
-              <div className="space-y-0.5"><span className="text-[8px] font-black text-zinc-500 uppercase block">Select Time Slot</span><span className="text-xs font-black text-primary">{selectedSlotNode ? selectedSlotNode.label : "Choose Operational Slot"}</span></div>
+              <div className="space-y-0.5"><span className="text-[11px] font-black text-zinc-400 uppercase block">Select Time Slot</span><span className="text-xs font-black text-primary">{selectedSlotNode ? selectedSlotNode.label : "Choose Operational Slot"}</span></div>
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
 
             <div onClick={() => setMobileSummaryDrawerOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer">
-              <div className="space-y-0.5"><span className="text-[8px] font-black text-zinc-500 uppercase block">Booking Summary</span><span className="text-xs font-medium text-zinc-400">Check details before pay</span></div>
+              <div className="space-y-0.5"><span className="text-[11px] font-black text-zinc-400 uppercase block">Booking Summary</span><span className="text-xs font-medium text-zinc-400">Check details before pay</span></div>
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
 
@@ -163,17 +177,18 @@ export default function SlotBookingPage() {
           </div>
 
           {/* WIDESCREEN DESKTOP CONSTANT INLINE CONTAINERS MAPS */}
-          <div className="hidden md:grid grid-cols-2 gap-6 items-start">
+          <div className="hidden md:block space-y-6">
+            {/* Date Selection - today + next 6 days */}
             <div className="space-y-3">
-              <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">📅 Select Date</h3>
-              <Card className="bg-[#111] border border-zinc-900 p-4 w-full flex justify-center rounded-2xl shadow-inner"><Calendar mode="single" selected={calendarDay} onSelect={setCalendarDay} disabled={(day) => day < new Date(new Date().setHours(0,0,0,0))} /></Card>
+              <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest pl-1">📅 Select Date</h3>
+              <DateSelector selected={calendarDay} onSelect={setCalendarDay} />
             </div>
             <div className="space-y-4">
-              <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">🕒 Select Time Slot</h3>
+              <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest pl-1">🕒 Select Time Slot</h3>
               {queryingDb ? <div className="h-32 flex items-center justify-center"><Loader2 className="h-5 w-5 text-primary animate-spin" /></div> : (
                 ["Morning Slots", "Afternoon Slots", "Evening R Night"].map((g) => (
                   <div key={g} className="space-y-1.5">
-                    <p className="text-[9px] font-black uppercase text-zinc-600 tracking-wider flex items-center gap-1"><span className="w-1 h-1 bg-zinc-800 rounded-full"/> {g}</p>
+                    <p className="text-xs font-black uppercase text-zinc-400 tracking-wider flex items-center gap-1"><span className="w-1 h-1 bg-zinc-800 rounded-full"/> {g}</p>
                     <div className="grid grid-cols-1 gap-1.5">
                       {staticDaylightSchedulesMatrix.filter(s => s.tier === g).map((slot) => {
                         const isBooked = disabledLabelsArray.includes(slot.label);
@@ -184,11 +199,11 @@ export default function SlotBookingPage() {
                             <span className="text-xs font-bold tracking-tight">{slot.label}</span>
                             <div className="flex items-center gap-2">
                               {availability && !isBooked && (
-                                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-sm ${isSelected ? "bg-black/10 text-black" : "bg-green-500/10 text-green-400"}`}>
+                                <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-sm ${isSelected ? "bg-black/10 text-black" : "bg-green-500/10 text-green-400"}`}>
                                   {availability.available} LEFT
                                 </span>
                               )}
-                              {slot.peak && !isBooked && <span className={`text-[7px] font-black px-1.5 py-0.5 rounded-sm ${isSelected ? "bg-black/10 text-black" : "bg-orange-600/10 text-amber-400"}`}>PEAK</span>}
+                              {slot.peak && !isBooked && <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-sm ${isSelected ? "bg-black/10 text-black" : "bg-orange-600/10 text-amber-400"}`}>PEAK</span>}
                             </div>
                           </button>
                         );
@@ -216,7 +231,7 @@ export default function SlotBookingPage() {
               <h4 className="text-xs font-black text-zinc-400 uppercase tracking-wider mb-3">Number of Players</h4>
               <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-lg p-3">
                 <div className="flex-1">
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-zinc-400">
                     {includedPlayers} included • Max {maxPlayers}
                   </p>
                 </div>
@@ -248,7 +263,7 @@ export default function SlotBookingPage() {
               </div>
             </div>
 
-            <div className="space-y-2.5 text-xs text-zinc-500">
+            <div className="space-y-2.5 text-xs text-zinc-400">
               <div className="flex justify-between"><span>Base Rate</span><span className="text-white font-bold">₹ {baselineSubtotal}.00</span></div>
               {extraPlayersCount > 0 && (
                 <div className="flex justify-between"><span>Extra Players ({extraPlayersCount})</span><span className="text-primary font-bold">₹ {extraPlayersCharge}.00</span></div>
@@ -260,23 +275,14 @@ export default function SlotBookingPage() {
         </div>
       </div>
 
-      {mobileCalendarDrawerOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end md:hidden animate-in fade-in duration-150">
-          <div className="bg-[#121212] border-t border-zinc-800 rounded-t-2xl w-full p-5 space-y-4 animate-in slide-in-from-bottom duration-250">
-            <div className="flex justify-between items-center border-b border-zinc-900 pb-2"><span className="text-xs font-black uppercase text-zinc-400">Select Date Calendar</span><button onClick={() => setMobileCalendarDrawerOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-500"><X className="h-4 w-4"/></button></div>
-            <div className="flex justify-center bg-zinc-950 p-2 rounded-xl"><Calendar mode="single" selected={calendarDay} onSelect={(day) => { setCalendarDay(day); setMobileCalendarDrawerOpen(false); }} disabled={(day) => day < new Date(new Date().setHours(0,0,0,0))} /></div>
-          </div>
-        </div>
-      )}
-
       {mobileTimeDrawerOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end md:hidden animate-in fade-in duration-150">
           <div className="bg-[#121212] border-t border-zinc-800 rounded-t-2xl w-full p-5 space-y-4 max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom duration-250">
-            <div className="flex justify-between items-center border-b border-zinc-900 pb-2"><span className="text-xs font-black uppercase text-zinc-400">Select Time Slot</span><button onClick={() => setMobileTimeDrawerOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-500"><X className="h-4 w-4"/></button></div>
+            <div className="flex justify-between items-center border-b border-zinc-900 pb-2"><span className="text-xs font-black uppercase text-zinc-400">Select Time Slot</span><button onClick={() => setMobileTimeDrawerOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-400"><X className="h-4 w-4"/></button></div>
             <div className="space-y-4 pt-2">
               {["Morning Slots", "Afternoon Slots", "Evening R Night"].map((tg) => (
                 <div key={tg} className="space-y-1.5">
-                  <p className="text-[10px] font-black uppercase text-zinc-600 pl-1">⚡ {tg}</p>
+                  <p className="text-xs font-black uppercase text-zinc-400 pl-1">⚡ {tg}</p>
                   <div className="grid grid-cols-1 gap-1.5">
                     {staticDaylightSchedulesMatrix.filter(s => s.tier === tg).map((slot) => {
                       const isBooked = disabledLabelsArray.includes(slot.label);
@@ -295,14 +301,14 @@ export default function SlotBookingPage() {
       {mobileSummaryDrawerOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end md:hidden animate-in fade-in duration-150">
           <div className="bg-[#121212] border-t border-zinc-800 rounded-t-2xl w-full p-5 space-y-4 animate-in slide-in-from-bottom duration-250">
-            <div className="flex justify-between items-center border-b border-zinc-900 pb-2"><span className="text-xs font-black uppercase text-zinc-400">Summary Breakdown</span><button onClick={() => setMobileSummaryDrawerOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-500"><X className="h-4 w-4"/></button></div>
+            <div className="flex justify-between items-center border-b border-zinc-900 pb-2"><span className="text-xs font-black uppercase text-zinc-400">Summary Breakdown</span><button onClick={() => setMobileSummaryDrawerOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-400"><X className="h-4 w-4"/></button></div>
 
             {/* Player Selection */}
             <div className="border-b border-zinc-900 pb-3">
               <h4 className="text-xs font-black text-zinc-400 uppercase tracking-wider mb-2">Number of Players</h4>
               <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-lg p-3">
                 <div className="flex-1">
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-zinc-400">
                     {includedPlayers} included • Max {maxPlayers}
                   </p>
                 </div>
@@ -334,7 +340,7 @@ export default function SlotBookingPage() {
               </div>
             </div>
 
-            <div className="space-y-3 pt-1 text-xs text-zinc-500">
+            <div className="space-y-3 pt-1 text-xs text-zinc-400">
               <div className="flex justify-between"><span>Base Rate</span><span className="text-white font-bold">₹ {baselineSubtotal}.00</span></div>
               {extraPlayersCount > 0 && (
                 <div className="flex justify-between"><span>Extra Players ({extraPlayersCount})</span><span className="text-primary font-bold">₹ {extraPlayersCharge}.00</span></div>

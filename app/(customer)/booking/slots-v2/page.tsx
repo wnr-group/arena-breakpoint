@@ -7,10 +7,14 @@ import { setSlot, setPricing, setSlotLockExpiry, setBookingId, setPlayerCount, s
 import { checkFlexibleAvailability, initializeSoftLockReservation as createSoftLockTransaction } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
+import { DateSelector } from "@/components/booking/DateSelector";
 import { Clock, ChevronRight, X, Plus, Minus, AlertCircle, Loader2, Sparkles } from 'lucide-react';
 import { toast } from "sonner";
-import { formatLocalDate } from "@/lib/utils/dates";
+import {
+  formatLocalDate,
+  isDateWithinBookingWindow,
+  BOOKING_WINDOW_ERROR
+} from "@/lib/utils/dates";
 import {
   generateStartTimes,
   filterPastTimeSlots,
@@ -31,29 +35,12 @@ export default function FlexibleSlotBookingPage() {
 
   const [calendarDay, setCalendarDay] = useState<Date | undefined>(undefined);
   const confirmButtonRef = useRef<HTMLDivElement>(null);
-  const today = useMemo(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }, []);
-
-  const isDayDisabled = (day: Date) => {
-    return day < today;  // Only disable past dates
-  };
-
-  const isDayHidden = (day: Date) => {
-    // Hide dates outside current month view to prevent showing overflow dates
-    const viewMonth = calendarDay?.getMonth() ?? today.getMonth();
-    const viewYear = calendarDay?.getFullYear() ?? today.getFullYear();
-    return day.getMonth() !== viewMonth || day.getFullYear() !== viewYear;
-  };
   const [selectedStartTime, setSelectedStartTime] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<number>(60); // Default 1 hour in minutes
   const [availableStartTimes, setAvailableStartTimes] = useState<Set<string>>(new Set());
   const [queryingDb, setQueryingDb] = useState(false);
   const [submittingLock, setSubmittingLock] = useState(false);
 
-  const [mobileCalendarOpen, setMobileCalendarOpen] = useState(false);
   const [mobileStartTimeOpen, setMobileStartTimeOpen] = useState(false);
   const [mobileDurationOpen, setMobileDurationOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -86,7 +73,7 @@ export default function FlexibleSlotBookingPage() {
     if (typeof window === 'undefined') return;
     const mainEl = document.querySelector('main');
     const htmlEl = document.documentElement;
-    if (mobileCalendarOpen || mobileDurationOpen || mobileStartTimeOpen) {
+    if (mobileDurationOpen || mobileStartTimeOpen) {
       document.body.style.overflow = 'hidden';
       document.body.style.height = '100dvh';
       htmlEl.style.overflow = 'hidden';
@@ -106,7 +93,7 @@ export default function FlexibleSlotBookingPage() {
       htmlEl.style.height = '';
       if (mainEl) mainEl.style.zIndex = '';
     };
-  }, [mobileCalendarOpen, mobileDurationOpen, mobileStartTimeOpen]);
+  }, [mobileDurationOpen, mobileStartTimeOpen]);
 
   // Sync selectedDuration to Redux booking state
   useEffect(() => {
@@ -133,6 +120,13 @@ export default function FlexibleSlotBookingPage() {
   const checkAvailability = async () => {
     if (!calendarDay || !deviceTypeId) {
       console.log('[Frontend] Skipping availability check - missing date or deviceTypeId');
+      return;
+    }
+
+    // Never query slots for a date outside the booking window
+    if (!isDateWithinBookingWindow(calendarDay)) {
+      console.log('[Frontend] Skipping availability check - date outside booking window');
+      setAvailableStartTimes(new Set());
       return;
     }
 
@@ -239,6 +233,10 @@ export default function FlexibleSlotBookingPage() {
       toast.error("Please select a date to proceed");
       return;
     }
+    if (!isDateWithinBookingWindow(calendarDay)) {
+      toast.error(BOOKING_WINDOW_ERROR);
+      return;
+    }
     if (!selectedStartTime) {
       toast.error("Please select a start time to proceed");
       return;
@@ -332,19 +330,19 @@ export default function FlexibleSlotBookingPage() {
       {/* Progress Steps */}
       <div className="w-full max-w-md mx-auto flex items-center justify-between pb-6 px-2 select-none">
         <div className="flex flex-col items-center gap-1">
-          <div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">1</div>
-          <span className="text-[8px] font-black uppercase text-primary tracking-wider">Time Slot</span>
+          <div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[11px] flex items-center justify-center">1</div>
+          <span className="text-xs font-black uppercase text-primary tracking-wider">Time Slot</span>
         </div>
         <div className="h-0.5 bg-zinc-800 flex-1 mx-2" />
         <div className="flex flex-col items-center gap-1">
-          <div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-black text-[9px] flex items-center justify-center">2</div>
-          <span className="text-[8px] font-black uppercase text-primary tracking-wider">Details</span>
+          <div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-400 font-black text-[11px] flex items-center justify-center">2</div>
+          <span className="text-xs font-black uppercase text-primary tracking-wider">Details</span>
         </div>
 
         <div className="h-0.5 bg-zinc-800 flex-1 mx-2" />
         <div className="flex flex-col items-center gap-1">
-          <div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-bold text-[9px] flex items-center justify-center border border-zinc-800">3</div>
-          <span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Payment</span>
+          <div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-400 font-bold text-[11px] flex items-center justify-center border border-zinc-800">3</div>
+          <span className="text-xs font-black uppercase text-zinc-400 tracking-wider">Payment</span>
         </div>
       </div>
 
@@ -374,7 +372,7 @@ export default function FlexibleSlotBookingPage() {
                 <p className="text-zinc-400 text-xs font-bold mt-0.5"><span className="text-primary font-black">₹{hourlyRate || 0}</span> / hour</p>
               </div>
             </div>
-            <Button variant="gradient" onClick={() => router.push("/booking")} className="text-black font-black text-[10px] uppercase h-7 px-3 flex-shrink-0">
+            <Button variant="gradient" onClick={() => router.push("/booking")} className="text-black font-black text-xs uppercase h-7 px-3 flex-shrink-0">
               Change
             </Button>
           </div>
@@ -392,12 +390,10 @@ export default function FlexibleSlotBookingPage() {
 
           {/* Mobile Flow Container */}
           <div className="space-y-4 md:hidden">
-            <div onClick={() => setMobileCalendarOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer glow-box-hover">
-              <div className="space-y-1">
-                <span className="text-label-enhanced block">Select Date</span>
-                <span className="text-sm font-black text-white">{calendarDay ? calendarDay.toLocaleDateString() : "Choose Date"}</span>
-              </div>
-              <ChevronRight className="h-4 w-4 text-zinc-600" />
+            {/* Date Selection - today + next 6 days, all on one row */}
+            <div className="space-y-2">
+              <span className="text-label-enhanced block pl-1">Select Date</span>
+              <DateSelector selected={calendarDay} onSelect={setCalendarDay} />
             </div>
 
             <div onClick={() => setMobileDurationOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer glow-box-hover">
@@ -433,7 +429,7 @@ export default function FlexibleSlotBookingPage() {
 
               {/* Player Multiplier Controller */}
               <div className="space-y-2">
-                <h4 className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Number of Players</h4>
+                <h4 className="text-xs font-black text-zinc-400 uppercase tracking-wider">Number of Players</h4>
                 <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-lg p-2.5">
                   <p className="text-xs text-zinc-300 font-bold">{includedPlayers} included • Max {maxPlayers}</p>
                   <div className="flex items-center gap-2">
@@ -488,7 +484,7 @@ export default function FlexibleSlotBookingPage() {
 
             <div ref={confirmButtonRef} className="w-full">
               {!canProceed && (
-                <p className="text-[11px] font-bold text-amber-500 text-center mt-2 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
+                <p className="text-xs font-bold text-amber-500 text-center mt-2 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
                   {!calendarDay
                     ? "⚠️ Please select a date to proceed"
                     : !selectedStartTime
@@ -506,18 +502,17 @@ export default function FlexibleSlotBookingPage() {
           </div>
 
           {/* Desktop Layout */}
-          <div className="hidden md:grid grid-cols-3 gap-6 items-start">
-            {/* Date Picker */}
+          <div className="hidden md:block space-y-6">
+            {/* Date Selection - today + next 6 days */}
             <div className="space-y-3">
-              <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">📅 Select Date</h3>
-              <Card className="bg-[#111] border border-zinc-900 p-4 w-full flex justify-center rounded-2xl glow-box-hover">
-                <Calendar mode="single" selected={calendarDay} onSelect={setCalendarDay} disabled={isDayDisabled} hidden={isDayHidden} />
-              </Card>
+              <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest pl-1">📅 Select Date</h3>
+              <DateSelector selected={calendarDay} onSelect={setCalendarDay} />
             </div>
 
+            <div className="grid grid-cols-2 gap-6 items-start">
             {/* Duration Selection */}
             <div className="space-y-3">
-              <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">⏱️ Duration</h3>
+              <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest pl-1">⏱️ Duration</h3>
               <div className="space-y-1.5">
                 {filteredDurations.map((duration) => {
                   const isSelected = selectedDuration === duration.value;
@@ -548,17 +543,17 @@ export default function FlexibleSlotBookingPage() {
 
             {/* Start Time Selection */}
             <div className="space-y-3">
-              <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">🕒 Start Time</h3>
+              <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest pl-1">🕒 Start Time</h3>
               {queryingDb ? (
                 <div className="h-96 flex flex-col items-center justify-center gap-2">
                   <Loader2 className="h-5 w-5 text-primary animate-spin" />
-                  <p className="text-xs text-zinc-500">Checking availability...</p>
+                  <p className="text-xs text-zinc-400">Checking availability...</p>
                 </div>
               ) : availableStartTimesForDate.length === 0 ? (
                 <div className="h-96 flex flex-col items-center justify-center gap-2 text-center px-4">
                   <Clock className="h-8 w-8 text-zinc-700" />
                   <p className="text-sm text-zinc-400 font-bold">No time slots available</p>
-                  <p className="text-xs text-zinc-600">Try selecting a different date or duration</p>
+                  <p className="text-xs text-zinc-400">Try selecting a different date or duration</p>
                 </div>
               ) : (
                 <div className="space-y-1.5 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-zinc-950">
@@ -594,6 +589,7 @@ export default function FlexibleSlotBookingPage() {
                   })}
                 </div>
               )}
+            </div>
             </div>
           </div>
         </div>
@@ -688,7 +684,7 @@ export default function FlexibleSlotBookingPage() {
             </div>
 
             {!canProceed && (
-              <p className="text-[11px] font-bold text-amber-500 text-center mt-3 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
+              <p className="text-xs font-bold text-amber-500 text-center mt-3 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
                 {!calendarDay
                   ? "⚠️ Please select a date to proceed"
                   : !selectedStartTime
@@ -711,28 +707,12 @@ export default function FlexibleSlotBookingPage() {
       </div>
 
       {/* Mobile Drawers */}
-      {mobileCalendarOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end md:hidden animate-in fade-in duration-150">
-          <div className="bg-[#121212] border-t border-zinc-800 rounded-t-2xl w-full p-5 space-y-4 animate-in slide-in-from-bottom duration-250">
-            <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
-              <span className="text-xs font-black uppercase text-zinc-400">Select Date</span>
-              <button onClick={() => setMobileCalendarOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-500">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="flex justify-center bg-zinc-950 p-2 rounded-xl">
-              <Calendar mode="single" selected={calendarDay} onSelect={(day) => { setCalendarDay(day); setMobileCalendarOpen(false); }} disabled={isDayDisabled} hidden={isDayHidden} />
-            </div>
-          </div>
-        </div>
-      )}
-
       {mobileDurationOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end md:hidden">
           <div className="bg-[#121212] border-t border-zinc-800 rounded-t-2xl w-full p-5 space-y-4 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
               <span className="text-xs font-black uppercase text-zinc-400">Select Duration</span>
-              <button onClick={() => setMobileDurationOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-500">
+              <button onClick={() => setMobileDurationOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-400">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -770,7 +750,7 @@ export default function FlexibleSlotBookingPage() {
           <div className="bg-[#121212] border-t border-zinc-800 rounded-t-2xl w-full p-5 space-y-4 max-h-[75vh] flex flex-col overflow-hidden">
             <div className="flex justify-between items-center border-b border-zinc-900 pb-2 flex-shrink-0">
               <span className="text-xs font-black uppercase text-zinc-400">Select Start Time</span>
-              <button onClick={() => setMobileStartTimeOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-500">
+              <button onClick={() => setMobileStartTimeOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-400">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -808,7 +788,7 @@ export default function FlexibleSlotBookingPage() {
                     <div className="flex flex-col gap-1">
                       <span>{time} - {calculateEndTime(time, 30)}</span>
                       {happyHourCheck.hasHappyHour && !isSelected && (
-                        <span className="flex items-center justify-center gap-0.5 text-[9px] font-black text-yellow-400">
+                        <span className="flex items-center justify-center gap-0.5 text-[11px] font-black text-yellow-400">
                           <Sparkles className="w-2.5 h-2.5" />
                           {happyHourCheck.discount}% OFF
                         </span>

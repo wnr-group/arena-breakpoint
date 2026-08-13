@@ -8,6 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
 import { PaymentStatusBadge } from "@/components/admin/bookings/PaymentStatusBadge";
 import { BookingsGrid } from "@/components/admin/bookings/BookingsGrid";
@@ -15,11 +17,19 @@ import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailMod
 import { CheckoutModal } from "@/components/admin/bookings/CheckoutModal";
 import { getAllBookings, getBookingStats, checkInBooking, checkOutBooking, getBookingBillingDetails, markBookingAsPaid, type BookingFilters } from "./actions";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
-import { Search, Filter, Calendar, DollarSign, Users, CheckCircle2, XCircle, Clock, Loader2, Eye, Receipt, Plus, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List, AlertCircle, RefreshCw } from "lucide-react";
+import { Search, Filter, Calendar, CalendarDays, DollarSign, Users, CheckCircle2, Clock, Loader2, Eye, Receipt, PlusCircle, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List, AlertCircle, RefreshCw, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { CountUp, CurrencyCountUp } from "@/components/shared/CountUp";
 import { roundToTwo, formatCurrency } from "@/lib/currency";
+import { formatDbTime, formatDbTimeRange } from "@/lib/utils/timeSlots";
+import {
+  formatLocalDate,
+  parseLocalDate,
+  startOfLocalDay,
+  validateReportDateRange
+} from "@/lib/utils/dates";
 
 export default function AdminBookingsPage() {
   const router = useRouter();
@@ -29,6 +39,10 @@ export default function AdminBookingsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300); // Debounce search by 300ms
   const [activeStatusFilter, setActiveStatusFilter] = useState("all");
+  // The page opens on today's sessions - the slots the front desk is working.
+  const [dateFrom, setDateFrom] = useState(() => formatLocalDate(new Date()));
+  const [dateTo, setDateTo] = useState(() => formatLocalDate(new Date()));
+  const [activeQuickFilter, setActiveQuickFilter] = useState<string>("today");
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [openFoodModal, setOpenFoodModal] = useState(false);
   const [checkoutBookingId, setCheckoutBookingId] = useState<string | null>(null);
@@ -67,25 +81,118 @@ export default function AdminBookingsPage() {
     }
   }, [pendingPaymentModal.open, pendingPaymentModal.balanceDue]);
 
-  // Initial load
+  // --- Date range validation -------------------------------------------------
+  // Recomputed every render so the pickers stay in step with each other: the
+  // bounds of one are always derived from the current value of the other.
+  const today = startOfLocalDay(new Date());
+  const fromDate = dateFrom ? parseLocalDate(dateFrom) : null;
+  const toDate = dateTo ? parseLocalDate(dateTo) : null;
+  const dateRangeError = validateReportDateRange(dateFrom, dateTo);
+
+  // From Date runs up to the chosen To Date, and is unbounded without one
+  const isFromDateDisabled = (day: Date) => {
+    const candidate = startOfLocalDay(day);
+    return !!toDate && candidate > toDate;
+  };
+
+  // To Date starts at the chosen From Date, and is unbounded without one
+  const isToDateDisabled = (day: Date) => {
+    const candidate = startOfLocalDay(day);
+    return !!fromDate && candidate < fromDate;
+  };
+
+  const handleSelectFromDate = (date?: Date) => {
+    if (!date) return;
+    const next = formatLocalDate(date);
+    setDateFrom(next);
+    setActiveQuickFilter("");
+    // Belt and braces: the picker disables these days, but a preset or a stale
+    // popover must not be able to leave the range inverted.
+    if (dateTo && next > dateTo) setDateTo(next);
+  };
+
+  const handleSelectToDate = (date?: Date) => {
+    if (!date) return;
+    const next = formatLocalDate(date);
+    setDateTo(next);
+    setActiveQuickFilter("");
+    if (dateFrom && next < dateFrom) setDateFrom(next);
+  };
+
+  const setQuickDateRange = (preset: "today" | "7days" | "30days" | "month" | "90days" | "all") => {
+    const now = new Date();
+    const todayStr = formatLocalDate(now);
+
+    setActiveQuickFilter(preset);
+
+    switch (preset) {
+      case "today":
+        setDateFrom(todayStr);
+        setDateTo(todayStr);
+        break;
+      case "7days": {
+        const week = new Date(now);
+        week.setDate(week.getDate() - 7);
+        setDateFrom(formatLocalDate(week));
+        setDateTo(todayStr);
+        break;
+      }
+      case "30days": {
+        const month = new Date(now);
+        month.setDate(month.getDate() - 30);
+        setDateFrom(formatLocalDate(month));
+        setDateTo(todayStr);
+        break;
+      }
+      case "month": {
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        setDateFrom(formatLocalDate(firstDay));
+        setDateTo(formatLocalDate(lastDay));
+        break;
+      }
+      case "90days": {
+        const quarter = new Date(now);
+        quarter.setDate(quarter.getDate() - 90);
+        setDateFrom(formatLocalDate(quarter));
+        setDateTo(todayStr);
+        break;
+      }
+      case "all":
+        setDateFrom("");
+        setDateTo("");
+        break;
+    }
+  };
+
+  // Every reload reads the live filter state, so no call site can silently drop
+  // the selected date range.
+  const buildFilters = (): BookingFilters => ({
+    status: activeStatusFilter === "all" ? undefined : activeStatusFilter,
+    searchQuery: debouncedSearch || undefined,
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined
+  });
+
+  // Reload the list whenever a filter changes; the search box is debounced
   useEffect(() => {
     loadBookings();
-    loadStats();
-  }, []);
+  }, [debouncedSearch, activeStatusFilter, dateFrom, dateTo]);
 
-  // Auto-search when debounced query changes
+  // The status counts are scoped to the date range, not to the status tab
   useEffect(() => {
-    if (debouncedSearch || debouncedSearch === "") {
-      loadBookings({
-        status: activeStatusFilter === "all" ? undefined : activeStatusFilter,
-        searchQuery: debouncedSearch || undefined
-      });
-    }
-  }, [debouncedSearch, activeStatusFilter]);
+    loadStats();
+  }, [dateFrom, dateTo]);
 
-  const loadBookings = async (filters?: BookingFilters) => {
+  const loadBookings = async () => {
+    // Never query on a range the user has been told is invalid
+    if (dateRangeError) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
-    const result = await getAllBookings(filters);
+    const result = await getAllBookings(buildFilters());
     if (result.success) {
       setBookings(result.bookings);
     } else {
@@ -95,10 +202,24 @@ export default function AdminBookingsPage() {
   };
 
   const loadStats = async () => {
-    const result = await getBookingStats();
+    if (dateRangeError) return;
+
+    const result = await getBookingStats({
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined
+    });
     if (result.success) {
       setStats(result.stats);
     }
+  };
+
+  const handleApplyFilters = () => {
+    if (dateRangeError) {
+      toast.error("Invalid date range", { description: dateRangeError });
+      return;
+    }
+    loadBookings();
+    loadStats();
   };
 
   const handleFilterChange = (status: string) => {
@@ -107,10 +228,7 @@ export default function AdminBookingsPage() {
   };
 
   const handleRefresh = () => {
-    loadBookings({
-      status: activeStatusFilter === "all" ? undefined : activeStatusFilter,
-      searchQuery: debouncedSearch || undefined
-    });
+    loadBookings();
     loadStats();
     toast.success("Refreshed", { description: "Bookings data reloaded" });
   };
@@ -119,10 +237,7 @@ export default function AdminBookingsPage() {
     setSelectedBooking(null);
     setOpenFoodModal(false);
     // Reload data when closing booking detail modal
-    loadBookings({
-      status: activeStatusFilter === "all" ? undefined : activeStatusFilter,
-      searchQuery: debouncedSearch || undefined
-    });
+    loadBookings();
     loadStats();
   };
 
@@ -138,7 +253,7 @@ export default function AdminBookingsPage() {
         const confirmed = window.confirm(
           `⚠️ Early Check-In Warning\n\n` +
           `You are checking in ${Math.round(minutesUntilStart)} minutes before the scheduled start time.\n\n` +
-          `Scheduled time: ${deviceSlot.slot_start_time}\n` +
+          `Scheduled time: ${formatDbTime(deviceSlot.slot_start_time)}\n` +
           `Current time: ${now.toLocaleTimeString()}\n\n` +
           `Do you want to proceed with early check-in?`
         );
@@ -172,7 +287,7 @@ export default function AdminBookingsPage() {
         const confirmed = window.confirm(
           `⚠️ Early Check-Out Warning\n\n` +
           `You are checking out ${Math.round(minutesUntilEnd)} minutes before the scheduled end time.\n\n` +
-          `Scheduled end time: ${deviceSlot.slot_end_time}\n` +
+          `Scheduled end time: ${formatDbTime(deviceSlot.slot_end_time)}\n` +
           `Current time: ${now.toLocaleTimeString()}\n\n` +
           `Do you want to proceed with early check-out?`
         );
@@ -303,9 +418,18 @@ export default function AdminBookingsPage() {
     { id: "all", label: "All Bookings", count: stats?.total || 0 },
     { id: "confirmed", label: "Confirmed", count: stats?.confirmed || 0 },
     { id: "checked_in", label: "Checked In", count: stats?.checked_in || 0 },
-    { id: "completed", label: "Completed", count: stats?.completed || 0 },
-    { id: "cancelled", label: "Cancelled", count: stats?.cancelled || 0 }
+    { id: "completed", label: "Completed", count: stats?.completed || 0 }
   ];
+
+  // When a booking happens, for ordering purposes: the slot it reserves, or for
+  // a food-only booking the moment it was raised.
+  const getBookingTime = (booking: any): number => {
+    const slot = booking.booking_device_slots?.[0];
+    if (slot?.slot_date) {
+      return new Date(`${slot.slot_date}T${slot.slot_start_time || "00:00:00"}`).getTime();
+    }
+    return new Date(booking.created_at).getTime();
+  };
 
   // Group bookings by customer
   const groupedBookings = bookings.reduce((groups, booking) => {
@@ -319,13 +443,9 @@ export default function AdminBookingsPage() {
 
   // Sort each group by date/time and calculate stats
   const customerGroups = Object.entries(groupedBookings).map(([phone, customerBookings]) => {
-    const sorted = (customerBookings as any[]).sort((a, b) => {
-      const slotA = a.booking_device_slots?.[0];
-      const slotB = b.booking_device_slots?.[0];
-      const dateA = slotA?.slot_date || a.created_at;
-      const dateB = slotB?.slot_date || b.created_at;
-      return new Date(dateB).getTime() - new Date(dateA).getTime(); // Most recent first
-    });
+    const sorted = (customerBookings as any[]).sort(
+      (a, b) => getBookingTime(b) - getBookingTime(a) // Most recent slot first
+    );
 
     const totalAmount = roundToTwo(sorted.reduce((sum, b) => sum + Number(b.total_amount || 0), 0));
     // Calculate actual revenue after discounts (including happy hour)
@@ -366,7 +486,9 @@ export default function AdminBookingsPage() {
       hasBackToBack,
       earliestBooking: sorted[0] // Now returns most recent booking (sorted desc)
     };
-  });
+  })
+    // Rows read newest slot first, so the session in progress sits at the top
+    .sort((a, b) => getBookingTime(b.earliestBooking) - getBookingTime(a.earliestBooking));
 
   const toggleCustomerExpansion = (phone: string) => {
     setExpandedCustomers(prev => {
@@ -402,7 +524,7 @@ export default function AdminBookingsPage() {
             onClick={() => router.push("/admin/bookings/walk-in")}
             className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-10 px-6"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <PlusCircle className="h-4 w-4 mr-2 stroke-[3]" />
             Create Walk-In Booking
           </Button>
         </div>
@@ -458,18 +580,137 @@ export default function AdminBookingsPage() {
           </div>
         </Card>
 
-        <Card className="bg-[var(--surface)] border-[#27272a] p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-500/10 rounded-lg">
-              <XCircle className="h-5 w-5 text-red-500" />
+      </div>
+
+      {/* Date Filters */}
+      <Card className="bg-[var(--surface)] border-[#27272a] p-4 space-y-4">
+        {/* Quick Filter Buttons */}
+        <div>
+          <Label className="text-label text-muted-content mb-2 block">
+            Quick Filters
+          </Label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-2">
+            {([
+              { id: "today", label: "Today" },
+              { id: "7days", label: "Last 7 Days" },
+              { id: "30days", label: "Last 30 Days" },
+              { id: "month", label: "This Month" },
+              { id: "90days", label: "Last 90 Days" },
+              { id: "all", label: "All Time" }
+            ] as const).map((preset) => (
+              <Button
+                key={preset.id}
+                size="sm"
+                variant="outline"
+                onClick={() => setQuickDateRange(preset.id)}
+                className={`w-full md:w-auto font-bold uppercase text-xs h-9 ${
+                  activeQuickFilter === preset.id
+                    ? "bg-primary text-white border-primary glow-box-hover scale-[1.02] hover:bg-primary hover:text-white hover:scale-[1.02]"
+                    : "text-primary"
+                }`}
+              >
+                {preset.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Custom Date Range */}
+        <div className="flex flex-col md:flex-row gap-4 items-end mt-2">
+
+          {/* Date Pickers Container: 2 columns on mobile */}
+          <div className="flex-1 grid grid-cols-2 gap-3 w-full">
+            {/* FROM DATE POP-OVER */}
+            <div className="space-y-2 w-full">
+              <Label className="text-label text-muted-content ml-2 flex items-center gap-1.5">
+                From Date
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-3 sm:px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary overflow-hidden"
+                  >
+                    <span className="truncate mr-2">{dateFrom ? format(new Date(dateFrom), "dd-MM-yyyy") : <span className="text-muted-content">dd-mm-yyyy</span>}</span>
+                    <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-zinc-800 rounded-xl shadow-2xl" align="start">
+                  <CalendarPicker
+                    mode="single"
+                    selected={fromDate ?? undefined}
+                    onSelect={handleSelectFromDate}
+                    disabled={isFromDateDisabled}
+                    defaultMonth={fromDate ?? toDate ?? today}
+                    endMonth={toDate ?? undefined}
+                    className="text-white"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
-            <div>
-              <p className="text-label text-muted-content">Cancelled</p>
-              <p className="text-xl font-black text-white"><CountUp end={stats?.cancelled || 0} duration={800} /></p>
+
+            {/* TO DATE POP-OVER */}
+            <div className="space-y-2 w-full">
+              <Label className="text-label text-muted-content ml-2 flex items-center gap-1.5">
+                To Date
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-3 sm:px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary overflow-hidden"
+                  >
+                    <span className="truncate mr-2">{dateTo ? format(new Date(dateTo), "dd-MM-yyyy") : <span className="text-muted-content">dd-mm-yyyy</span>}</span>
+                    <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-3 bg-[var(--background)] border border-zinc-800 rounded-xl shadow-2xl" align="start">
+                  <CalendarPicker
+                    mode="single"
+                    selected={toDate ?? undefined}
+                    onSelect={handleSelectToDate}
+                    disabled={isToDateDisabled}
+                    defaultMonth={toDate ?? today}
+                    startMonth={fromDate ?? undefined}
+                    className="text-white "
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
-        </Card>
-      </div>
+
+          {/* Action Buttons Container: 2 columns on mobile, flex on desktop */}
+          <div className="grid grid-cols-2 gap-3 w-full md:w-auto md:flex md:gap-4">
+            <Button
+              onClick={handleApplyFilters}
+              disabled={!!dateRangeError}
+              className="w-full md:w-auto bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-11 rounded-xl px-6 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Apply Range
+            </Button>
+            <Button
+              onClick={() => setQuickDateRange("all")}
+              variant="outline"
+              className="w-full md:w-auto font-bold uppercase text-xs h-11 rounded-xl px-6"
+            >
+              Clear Filters
+            </Button>
+          </div>
+
+        </div>
+
+        {/* Validation message - the pickers disable these days, so this only
+            shows if a range was set some other way */}
+        {dateRangeError && (
+          <p
+            role="alert"
+            className="flex items-center gap-2 text-xs font-bold text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2"
+          >
+            <ShieldAlert className="h-4 w-4 flex-shrink-0" />
+            {dateRangeError}
+          </p>
+        )}
+      </Card>
 
       {/* Filters and Search */}
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
@@ -634,12 +875,12 @@ export default function AdminBookingsPage() {
                               <p className="text-sm-readable text-secondary-content font-mono">{group.phone}</p>
                             </div>
                             {!isSingleBooking && (
-                              <span className="bg-gradient-primary text-black text-[8px] font-black px-2 py-0.5 rounded-full">
+                              <span className="bg-gradient-primary text-black text-[11px] font-black px-2 py-0.5 rounded-full">
                                 ×{group.count}
                               </span>
                             )}
                             {group.hasBackToBack && (
-                              <span className="bg-gradient-secondary text-white text-[8px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <span className="bg-gradient-secondary text-white text-[11px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
                                 <Link2 className="h-2.5 w-2.5" />
                                 B2B
                               </span>
@@ -662,7 +903,7 @@ export default function AdminBookingsPage() {
                                 <UtensilsCrossed className="h-4 w-4 text-amber-400" />
                                 <div>
                                   <p className="text-sm font-bold text-amber-400">Food Only</p>
-                                  <p className="text-[10px] text-secondary-content">
+                                  <p className="text-xs text-secondary-content">
                                     {firstBooking.booking_food_items?.length || 0} item(s)
                                   </p>
                                 </div>
@@ -680,7 +921,7 @@ export default function AdminBookingsPage() {
                                   {new Date(firstSlot.slot_date).toLocaleDateString()}
                                 </p>
                                 <p className="text-sm-readable text-secondary-content">
-                                  {firstSlot.slot_start_time} - {firstSlot.slot_end_time}
+                                  {formatDbTimeRange(firstSlot.slot_start_time, firstSlot.slot_end_time)}
                                 </p>
                               </>
                             ) : (
@@ -831,7 +1072,7 @@ export default function AdminBookingsPage() {
                                 {deviceSlot?.slot_date ? new Date(deviceSlot.slot_date).toLocaleDateString() : "N/A"}
                               </p>
                               <p className="text-sm-readable text-secondary-content">
-                                {deviceSlot?.slot_start_time || "N/A"} - {deviceSlot?.slot_end_time || "N/A"}
+                                {formatDbTimeRange(deviceSlot?.slot_start_time, deviceSlot?.slot_end_time)}
                               </p>
                             </td>
                             <td className="py-3 px-4">
@@ -1000,7 +1241,7 @@ export default function AdminBookingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-2xl">💵</span>
                 <div className="flex-1">
-                  <Label className="text-[10px] text-zinc-500 uppercase">Cash</Label>
+                  <Label className="text-xs text-zinc-400 uppercase">Cash</Label>
                   <Input
                     type="number"
                     min="0"
@@ -1017,7 +1258,7 @@ export default function AdminBookingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-2xl">💳</span>
                 <div className="flex-1">
-                  <Label className="text-[10px] text-zinc-500 uppercase">Card</Label>
+                  <Label className="text-xs text-zinc-400 uppercase">Card</Label>
                   <Input
                     type="number"
                     min="0"
@@ -1034,7 +1275,7 @@ export default function AdminBookingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-2xl">📱</span>
                 <div className="flex-1">
-                  <Label className="text-[10px] text-zinc-500 uppercase">UPI</Label>
+                  <Label className="text-xs text-zinc-400 uppercase">UPI</Label>
                   <Input
                     type="number"
                     min="0"
@@ -1050,13 +1291,13 @@ export default function AdminBookingsPage() {
               {/* Total Validator */}
               <div className="pt-2 border-t border-zinc-800">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-zinc-500">Total Split:</span>
+                  <span className="text-xs text-zinc-400">Total Split:</span>
                   <span className={`text-sm font-black ${Math.abs((paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount) - pendingPaymentModal.balanceDue) < 0.01 ? 'text-green-400' : 'text-red-400'}`}>
                     ₹{(paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount).toFixed(2)}
                   </span>
                 </div>
                 {Math.abs((paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount) - pendingPaymentModal.balanceDue) >= 0.01 && (
-                  <p className="text-[10px] text-red-400 mt-1">
+                  <p className="text-xs text-red-400 mt-1">
                     ⚠️ Total must equal ₹{pendingPaymentModal.balanceDue.toFixed(2)}
                   </p>
                 )}
@@ -1069,7 +1310,7 @@ export default function AdminBookingsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setPaymentSplit({ cashAmount: pendingPaymentModal.balanceDue, cardAmount: 0, upiAmount: 0 })}
-                  className="flex-1 text-[10px] h-7 border-zinc-700 hover:bg-zinc-800"
+                  className="flex-1 text-xs h-7 border-zinc-700 hover:bg-zinc-800"
                 >
                   All Cash
                 </Button>
@@ -1078,7 +1319,7 @@ export default function AdminBookingsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setPaymentSplit({ cashAmount: 0, cardAmount: pendingPaymentModal.balanceDue, upiAmount: 0 })}
-                  className="flex-1 text-[10px] h-7 border-zinc-700 hover:bg-zinc-800"
+                  className="flex-1 text-xs h-7 border-zinc-700 hover:bg-zinc-800"
                 >
                   All Card
                 </Button>
@@ -1087,7 +1328,7 @@ export default function AdminBookingsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setPaymentSplit({ cashAmount: 0, cardAmount: 0, upiAmount: pendingPaymentModal.balanceDue })}
-                  className="flex-1 text-[10px] h-7 border-zinc-700 hover:bg-zinc-800"
+                  className="flex-1 text-xs h-7 border-zinc-700 hover:bg-zinc-800"
                 >
                   All UPI
                 </Button>

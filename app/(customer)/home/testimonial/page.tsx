@@ -182,7 +182,7 @@ export default function Testimonials() {
               className="text-5xl md:text-6xl font-black text-white leading-none"
             >
               4.85{" "}
-              <span className="text-2xl md:text-3xl font-bold text-zinc-500">out of 5</span>
+              <span className="text-2xl md:text-3xl font-bold text-zinc-400">out of 5</span>
             </motion.h2>
           </div>
 
@@ -261,7 +261,7 @@ export default function Testimonials() {
                   </div>
                   <div>
                     <p className="text-white text-sm font-bold leading-none mb-0.5">{t.name}</p>
-                    <p className="text-zinc-500 text-[11px] font-medium">{t.role}</p>
+                    <p className="text-zinc-400 text-xs font-medium">{t.role}</p>
                   </div>
                 </div>
               </div>

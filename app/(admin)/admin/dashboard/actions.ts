@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { formatDbTime } from "@/lib/utils/timeSlots";
 import { requireStaff } from "@/lib/auth/require-admin";
 
 export async function getDashboardStats() {
@@ -242,7 +243,7 @@ export async function getQuickStats() {
       stats: {
         thisWeekRevenue,
         todaysFoodOrders: foodOrders?.length || 0,
-        peakHour: peakHour ? `${peakHour[0]}:00` : "N/A",
+        peakHour: peakHour ? formatDbTime(`${peakHour[0]}:00`) : "N/A",
         peakHourBookings: peakHour ? peakHour[1] : 0
       }
     };

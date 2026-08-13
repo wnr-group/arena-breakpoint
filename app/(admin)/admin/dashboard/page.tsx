@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import {
   DollarSign, TrendingUp, Calendar, Users, Clock,
   Gamepad2, UtensilsCrossed, Activity, ArrowRight,
-  CheckCircle2, Loader2, AlertCircle, Plus, Eye, RefreshCw
+  CheckCircle2, Loader2, AlertCircle, PlusCircle, Eye, RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
+import { formatDbTime } from "@/lib/utils/timeSlots";
 import {
   getDashboardStats,
   getRecentBookings,
@@ -26,7 +27,6 @@ import { ActiveSessionsModal } from "@/components/admin/dashboard/ActiveSessions
 import { UpcomingBookingsModal } from "@/components/admin/dashboard/UpcomingBookingsModal";
 import { AvailableDevicesModal } from "@/components/admin/dashboard/AvailableDevicesModal";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
-import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
 import { CountUp, CurrencyCountUp } from "@/components/shared/CountUp";
 
 export default function AdminDashboardPage() {
@@ -46,15 +46,32 @@ export default function AdminDashboardPage() {
   const [upcomingDetails, setUpcomingDetails] = useState<any[]>([]);
   const [devicesModalOpen, setDevicesModalOpen] = useState(false);
   const [devicesDetails, setDevicesDetails] = useState<any[]>([]);
-  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
-  const [bookingDetailOpen, setBookingDetailOpen] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
   }, []);
 
-  const loadDashboardData = async () => {
-    setLoading(true);
+  /**
+   * A booking opened in another tab can be checked out, marked paid or have food
+   * added, none of which this tab would hear about - it would sit showing stale
+   * revenue until manually refreshed. Refetching when the operator returns to
+   * this tab keeps the figures honest. Silent, so any open stat modal survives.
+   */
+  useEffect(() => {
+    const refreshOnReturn = () => {
+      if (document.visibilityState === "visible") loadDashboardData(true);
+    };
+
+    document.addEventListener("visibilitychange", refreshOnReturn);
+    return () => document.removeEventListener("visibilitychange", refreshOnReturn);
+  }, []);
+
+  /**
+   * `silent` refreshes the figures without flipping `loading`, which would swap
+   * the whole page for the full-screen loader and tear down any open stat modal.
+   */
+  const loadDashboardData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [statsResult, bookingsResult, scheduleResult, quickStatsResult] = await Promise.all([
         getDashboardStats(),
@@ -78,20 +95,13 @@ export default function AdminDashboardPage() {
     } catch (err) {
       console.error("Failed to load dashboard data:", err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   const handleRefresh = () => {
     loadDashboardData();
     toast.success("Refreshed", { description: "Dashboard data reloaded" });
-  };
-
-  const handleBookingDetailClose = () => {
-    setBookingDetailOpen(false);
-    setSelectedBookingId(null);
-    // Reload dashboard data when closing booking detail
-    loadDashboardData();
   };
 
   const getCurrentTime = () => {
@@ -143,9 +153,16 @@ export default function AdminDashboardPage() {
     }
   };
 
+  /**
+   * Opens a booking from one of the stat modals (Today's Revenue, Active
+   * Sessions, Upcoming Bookings) in a new tab rather than a second dialog on top
+   * of the one already open. The stat modal stays put behind it, so the figure
+   * being reviewed is not lost.
+   *
+   * noopener/noreferrer because the new tab must not get a handle on this one.
+   */
   const handleBookingClick = (bookingId: string) => {
-    setSelectedBookingId(bookingId);
-    setBookingDetailOpen(true);
+    window.open(`/admin/bookings/${bookingId}`, "_blank", "noopener,noreferrer");
   };
 
   if (loading) {
@@ -186,7 +203,7 @@ export default function AdminDashboardPage() {
             onClick={() => router.push("/admin/bookings/walk-in")}
             className="bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-10 px-6"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <PlusCircle className="h-4 w-4 mr-2 stroke-[3]" />
             New Walk-In
           </Button>
         </div>
@@ -291,7 +308,7 @@ export default function AdminDashboardPage() {
               <h3 className="text-2xl font-black text-white mb-1">
                 <CurrencyCountUp amount={quickStats?.thisWeekRevenue || 0} duration={1200} />
               </h3>
-              <div className="flex items-center gap-1 text-[10px] text-green-500">
+              <div className="flex items-center gap-1 text-xs text-green-500">
                 <TrendingUp className="h-3 w-3" />
                 <span>Last 7 days</span>
               </div>
@@ -390,11 +407,11 @@ export default function AdminDashboardPage() {
                 >
                   <div className="flex items-center gap-3 flex-1">
                     <div className="flex flex-col items-center justify-center w-16 h-16 bg-zinc-900 rounded-lg">
-                      <span className="text-xs font-black text-primary">
-                        {slot.slot_start_time.substring(0, 5)}
+                      <span className="text-xs font-black text-primary whitespace-nowrap">
+                        {formatDbTime(slot.slot_start_time)}
                       </span>
-                      <span className="text-[8px] text-muted-content">
-                        {slot.slot_end_time.substring(0, 5)}
+                      <span className="text-[11px] text-muted-content whitespace-nowrap">
+                        {formatDbTime(slot.slot_end_time)}
                       </span>
                     </div>
                     <div className="flex-1">
@@ -470,7 +487,7 @@ export default function AdminDashboardPage() {
                       <p className="text-sm font-black text-primary">
                         ₹{Number(booking.total_amount).toLocaleString('en-IN')}
                       </p>
-                      <p className="text-[9px] text-muted-content uppercase mt-0.5">
+                      <p className="text-[11px] text-muted-content uppercase mt-0.5">
                         {booking.payment_status}
                       </p>
                     </div>
@@ -564,13 +581,8 @@ export default function AdminDashboardPage() {
         devices={devicesDetails}
       />
 
-      {/* Booking Detail Modal */}
-      <BookingDetailModal
-        bookingId={selectedBookingId}
-        open={bookingDetailOpen}
-        onClose={handleBookingDetailClose}
-        onUpdate={loadDashboardData}
-      />
+      {/* Booking detail is not rendered here - it opens as its own page in a new
+          tab (see handleBookingClick), so the stat modals never stack. */}
     </div>
   );
 }

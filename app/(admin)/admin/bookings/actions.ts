@@ -1,7 +1,43 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { annotateRemovableFoodItems } from "@/lib/bookings/foodItems";
+import { formatLocalDate } from "@/lib/utils/dates";
 import { requireStaff } from "@/lib/auth/require-admin";
+
+/** Rupee tolerance for float comparisons on money. */
+const MONEY_EPSILON = 0.01
+
+/**
+ * Payment status derived from the figures actually being displayed.
+ *
+ * These reads already recompute `total_amount` and `balance_due` from the
+ * component columns rather than trusting the stored total, but they used to hand
+ * back the *stored* `payment_status` alongside them - so a booking that was paid
+ * online and later had food added showed a positive balance next to a green
+ * "Paid" badge, because nothing had rewritten the status column. Deriving it
+ * from the same numbers keeps the badge and the balance telling one story.
+ *
+ * `refunded` and `failed` are passed through untouched: neither is recoverable
+ * from amounts, and both are terminal.
+ */
+function derivePaymentStatus(
+  correctTotal: number,
+  amountPaid: number,
+  storedStatus: string | null | undefined
+): string {
+  if (storedStatus === "refunded" || storedStatus === "failed") {
+    return storedStatus;
+  }
+
+  // Nothing to collect - a free or fully discounted booking is settled.
+  if (correctTotal <= MONEY_EPSILON) return "paid";
+
+  if (amountPaid >= correctTotal - MONEY_EPSILON) return "paid";
+  if (amountPaid > MONEY_EPSILON) return "partial";
+
+  return "pending";
+}
 
 export interface BookingFilters {
   status?: string;
@@ -24,6 +60,37 @@ export interface TimelineBooking {
   slot_date: string;
   status: string;
   total_amount: number;
+}
+
+/**
+ * The days a booking belongs to on the bookings page: the sessions it reserves.
+ * Food-only bookings hold no slot, so they fall back to the day they were
+ * raised. Everything is YYYY-MM-DD, which compares correctly as a string.
+ */
+function getBookingDates(booking: any): string[] {
+  const slotDates = (booking?.booking_device_slots || [])
+    .map((slot: any) => slot?.slot_date)
+    .filter(Boolean);
+
+  if (slotDates.length > 0) return slotDates;
+
+  return booking?.created_at ? [String(booking.created_at).split("T")[0]] : [];
+}
+
+/**
+ * A booking is in range when any of its slots falls inside it. An empty bound
+ * means "unbounded" - the All Time filter clears both.
+ */
+function isBookingInDateRange(
+  booking: any,
+  dateFrom?: string,
+  dateTo?: string
+): boolean {
+  return getBookingDates(booking).some((date) => {
+    if (dateFrom && date < dateFrom) return false;
+    if (dateTo && date > dateTo) return false;
+    return true;
+  });
 }
 
 export async function getAllBookings(filters?: BookingFilters) {
@@ -88,14 +155,6 @@ export async function getAllBookings(filters?: BookingFilters) {
       query = query.eq("status", filters.status);
     }
 
-    if (filters?.dateFrom) {
-      query = query.gte("created_at", filters.dateFrom);
-    }
-
-    if (filters?.dateTo) {
-      query = query.lte("created_at", filters.dateTo);
-    }
-
     if (filters?.searchQuery) {
       query = query.or(
         `customer_name.ilike.%${filters.searchQuery}%,customer_phone.ilike.%${filters.searchQuery}%,booking_number.ilike.%${filters.searchQuery}%`
@@ -106,8 +165,16 @@ export async function getAllBookings(filters?: BookingFilters) {
 
     if (error) throw error;
 
+    // Bookings are filtered on the session they reserve, not on when the row
+    // was created: "today" here means today's slots, whenever they were booked.
+    const inRange = (filters?.dateFrom || filters?.dateTo)
+      ? (data || []).filter((booking: any) =>
+          isBookingInDateRange(booking, filters.dateFrom, filters.dateTo)
+        )
+      : (data || []);
+
     // Calculate correct total_amount and balance_due for each booking
-    const bookingsWithBalance = (data || []).map((booking: any) => {
+    const bookingsWithBalance = inRange.map((booking: any) => {
       const deviceSubtotal = Number(booking.device_subtotal || 0);
       const foodSubtotal = Number(booking.food_subtotal || 0);
       const subscriptionDiscount = Number(booking.subscription_discount || 0);
@@ -122,7 +189,12 @@ export async function getAllBookings(filters?: BookingFilters) {
       return {
         ...booking,
         total_amount: correctTotal, // Override with calculated value
-        balance_due: balanceDue
+        balance_due: balanceDue,
+        payment_status: derivePaymentStatus(
+          correctTotal,
+          amountPaid,
+          booking.payment_status
+        )
       };
     });
 
@@ -216,9 +288,13 @@ export async function getBookingDetails(bookingId: string) {
       booking: {
         ...data,
         total_amount: correctTotal, // Override with calculated value
+        // Flags the food an admin added and nobody has paid for yet, which is
+        // the only food the UI may offer to remove.
+        booking_food_items: annotateRemovableFoodItems(data.booking_food_items, lineItems || []),
         line_items: lineItems || [],
         unpaid_items: unpaidItems,
-        balance_due: balanceDue
+        balance_due: balanceDue,
+        payment_status: derivePaymentStatus(correctTotal, amountPaid, data.payment_status)
       }
     };
   } catch (err: any) {
@@ -302,41 +378,25 @@ export async function checkOutBooking(bookingId: string) {
   }
 }
 
-export async function cancelBooking(bookingId: string, reason?: string) {
+export async function getBookingStats(
+  filters?: Pick<BookingFilters, "dateFrom" | "dateTo">
+) {
   await requireStaff();
 
   try {
-    const now = new Date().toISOString();
-
-    const { data, error } = await supabaseAdmin
+    // Get counts by status. The slot dates come along so the counts can be
+    // scoped to the same range as the list they sit above.
+    const { data: allStatuses, error: statusError } = await supabaseAdmin
       .from("bookings")
-      .update({
-        status: "cancelled",
-        updated_at: now
-      })
-      .eq("id", bookingId)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return { success: true, booking: data };
-  } catch (err: any) {
-    console.error("Cancel booking error:", err);
-    return { success: false, error: err.message };
-  }
-}
-
-export async function getBookingStats() {
-  await requireStaff();
-
-  try {
-    // Get counts by status
-    const { data: statusCounts, error: statusError } = await supabaseAdmin
-      .from("bookings")
-      .select("status", { count: "exact", head: false });
+      .select("status, created_at, booking_device_slots(slot_date)");
 
     if (statusError) throw statusError;
+
+    const statusCounts = (filters?.dateFrom || filters?.dateTo)
+      ? (allStatuses || []).filter((booking: any) =>
+          isBookingInDateRange(booking, filters.dateFrom, filters.dateTo)
+        )
+      : (allStatuses || []);
 
     // Calculate today's revenue
     const today = new Date().toISOString().split("T")[0];
@@ -366,7 +426,6 @@ export async function getBookingStats() {
         confirmed: grouped.confirmed || 0,
         checked_in: grouped.checked_in || 0,
         completed: grouped.completed || 0,
-        cancelled: grouped.cancelled || 0,
         locked: grouped.locked || 0,
         todayRevenue
       }
@@ -553,6 +612,163 @@ export async function addFoodToBooking(
   }
 }
 
+/**
+ * Remove a food item an admin added to an existing booking - the undo for a
+ * mistaken "Add Food". Reverses everything addFoodToBooking() did: the food
+ * row, its billing line item, the booking totals and the stock it took.
+ */
+export async function removeFoodItemFromBooking(bookingId: string, foodItemId: string) {
+  await requireStaff();
+
+  try {
+    // Scoped to the booking, so an id belonging to another booking cannot be removed
+    const { data: foodItem, error: foodItemError } = await supabaseAdmin
+      .from("booking_food_items")
+      .select("id, booking_id, menu_item_id, item_name, quantity, line_total")
+      .eq("id", foodItemId)
+      .eq("booking_id", bookingId)
+      .maybeSingle();
+
+    if (foodItemError) throw foodItemError;
+    if (!foodItem) {
+      return { success: false, error: "That food item is no longer on this booking." };
+    }
+
+    const { data: booking, error: bookingError } = await supabaseAdmin
+      .from("bookings")
+      .select(
+        "status, device_subtotal, subscription_discount, promo_discount, happy_hour_discount, amount_paid"
+      )
+      .eq("id", bookingId)
+      .single();
+
+    if (bookingError) throw bookingError;
+
+    if (booking.status === "cancelled" || booking.status === "completed") {
+      return {
+        success: false,
+        error: `This booking is ${booking.status}. Food can no longer be changed.`
+      };
+    }
+
+    // Find the line item this food row was billed through. menu_item_id is
+    // nullable (the menu item may have been deleted since), so fall back to the
+    // stored name in that case.
+    let lineItemQuery = supabaseAdmin
+      .from("booking_line_items")
+      .select("id, item_type, added_by, is_paid, quantity, reference_id, description")
+      .eq("booking_id", bookingId)
+      .eq("item_type", "food")
+      .eq("added_by", "admin")
+      .eq("is_paid", false)
+      .eq("quantity", foodItem.quantity)
+      .order("display_order", { ascending: false });
+
+    lineItemQuery = foodItem.menu_item_id
+      ? lineItemQuery.eq("reference_id", foodItem.menu_item_id)
+      : lineItemQuery.is("reference_id", null).eq("description", foodItem.item_name);
+
+    const { data: lineItems, error: lineItemError } = await lineItemQuery;
+
+    if (lineItemError) throw lineItemError;
+
+    const lineItem = (lineItems || [])[0];
+
+    if (!lineItem) {
+      return {
+        success: false,
+        error: `${foodItem.item_name} has already been paid for. Refund it instead of removing it.`
+      };
+    }
+
+    // Delete the food row first: it is what the operator sees, and the totals
+    // below are recomputed from what is actually left, so a failure after this
+    // point still leaves the booking charging the right amount.
+    const { error: deleteFoodError } = await supabaseAdmin
+      .from("booking_food_items")
+      .delete()
+      .eq("id", foodItem.id)
+      .eq("booking_id", bookingId);
+
+    if (deleteFoodError) throw deleteFoodError;
+
+    const { error: deleteLineItemError } = await supabaseAdmin
+      .from("booking_line_items")
+      .delete()
+      .eq("id", lineItem.id);
+
+    if (deleteLineItemError) {
+      // The charge is already off the booking; a stale audit row is worth
+      // logging but not worth failing the removal over.
+      console.error("Failed to delete booking line item:", deleteLineItemError);
+    }
+
+    // Recompute from the rows that remain rather than subtracting from the
+    // stored value, so the totals cannot drift.
+    const { data: remainingFood, error: remainingError } = await supabaseAdmin
+      .from("booking_food_items")
+      .select("line_total")
+      .eq("booking_id", bookingId);
+
+    if (remainingError) throw remainingError;
+
+    const newFoodSubtotal = (remainingFood || []).reduce(
+      (sum: number, item: any) => sum + Number(item.line_total || 0),
+      0
+    );
+
+    const deviceSubtotal = Number(booking.device_subtotal || 0);
+    const subscriptionDiscount = Number(booking.subscription_discount || 0);
+    const promoDiscount = Number(booking.promo_discount || 0);
+    const happyHourDiscount = Number(booking.happy_hour_discount || 0);
+    const amountPaid = Number(booking.amount_paid || 0);
+
+    const newTotal =
+      deviceSubtotal + newFoodSubtotal - subscriptionDiscount - promoDiscount - happyHourDiscount;
+
+    // Same rule as addFoodToBooking, so removing the last unpaid item settles
+    // a booking that was only "partial" because of it.
+    let newPaymentStatus: "pending" | "partial" | "paid";
+    if (amountPaid >= newTotal) {
+      newPaymentStatus = "paid";
+    } else if (amountPaid > 0) {
+      newPaymentStatus = "partial";
+    } else {
+      newPaymentStatus = "pending";
+    }
+
+    const { error: updateError } = await supabaseAdmin
+      .from("bookings")
+      .update({
+        food_subtotal: newFoodSubtotal,
+        total_amount: newTotal,
+        payment_status: newPaymentStatus,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", bookingId);
+
+    if (updateError) throw updateError;
+
+    // Give the stock back. addFoodToBooking() is the only path that decremented
+    // it, and the line item check above guarantees we came from there.
+    if (foodItem.menu_item_id) {
+      const { error: inventoryError } = await supabaseAdmin.rpc("increment_menu_item_quantity", {
+        item_id: foodItem.menu_item_id,
+        increment_by: foodItem.quantity
+      });
+
+      if (inventoryError) {
+        console.error("Failed to restore menu item stock:", inventoryError);
+      }
+    }
+
+    return { success: true, newTotal, newFoodSubtotal, removedItemName: foodItem.item_name };
+  } catch (err: any) {
+    console.error("Remove food item from booking error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
 export async function createWalkInBooking(payload: {
   customerName: string;
   customerPhone: string;
@@ -606,54 +822,7 @@ export async function createWalkInBooking(payload: {
 
     if (customerError) throw customerError;
 
-    // Step 2: Find available device of this type
-    const { data: devices, error: devicesError } = await supabaseAdmin
-      .from("devices")
-      .select("id, station_number")
-      .eq("device_type_id", payload.deviceTypeId)
-      .eq("status", "available");
-
-    if (devicesError || !devices || devices.length === 0) {
-      return { success: false, error: "No devices available" };
-    }
-
-    // Get all bookings for these devices at this time slot
-    const { data: bookedDevices, error: bookingsError } = await supabaseAdmin
-      .from("booking_device_slots")
-      .select(`
-        device_id,
-        bookings!inner(status, lock_expires_at)
-      `)
-      .in("device_id", devices.map((d: any) => d.id))
-      .eq("slot_date", payload.selectedDate)
-      .eq("slot_start_time", startTime)
-      .in("bookings.status", ["locked", "confirmed", "checked_in"]);
-
-    if (bookingsError) throw bookingsError;
-
-    const rightNow = new Date().toISOString();
-
-    // Filter out expired locks
-    const activelyBookedDeviceIds = (bookedDevices || [])
-      .filter((booking: any) => {
-        const bookingRecord = booking.bookings;
-        if (bookingRecord.status === "locked" && bookingRecord.lock_expires_at) {
-          return new Date(bookingRecord.lock_expires_at) > new Date(rightNow);
-        }
-        return true;
-      })
-      .map((booking: any) => booking.device_id);
-
-    // Find first available device
-    const availableDevice = devices.find(
-      (device: any) => !activelyBookedDeviceIds.includes(device.id)
-    );
-
-    if (!availableDevice) {
-      return { success: false, error: "No devices available for this time slot" };
-    }
-
-    // Step 3: Generate booking number
+    // Step 2: Generate booking number
     const { data: bookingNumber, error: bookingNumberError } = await supabaseAdmin
       .rpc("generate_booking_number");
 
@@ -667,7 +836,17 @@ export async function createWalkInBooking(payload: {
     const happyHourDiscount = payload.happyHourDiscount || 0;
     const totalAmount = deviceSubtotal - subscriptionDiscount - happyHourDiscount;
 
-    // Step 4: Create booking
+    // A walk-in is someone standing at the counter, so the front desk should not
+    // have to check them in as a second step - the booking starts already
+    // checked in. Only same-day walk-ins though: this form also takes bookings up
+    // to 6 days out (see isDateWithinBookingWindow), and marking one of those
+    // checked_in would put a session that has not started into the dashboard's
+    // active-session count and offer staff a Check Out button for it. Those stay
+    // 'confirmed' and get checked in by hand when the customer turns up.
+    const isToday = payload.selectedDate === formatLocalDate(new Date());
+    const now = new Date().toISOString();
+
+    // Step 3: Create booking
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
       .insert({
@@ -682,7 +861,8 @@ export async function createWalkInBooking(payload: {
         subscription_discount: subscriptionDiscount,
         happy_hour_discount: happyHourDiscount,
         total_amount: totalAmount,
-        status: "confirmed", // Walk-in bookings are immediately confirmed
+        status: isToday ? "checked_in" : "confirmed",
+        checked_in_at: isToday ? now : null,
         payment_status: "pending",
         booking_source: "walk-in",
         lock_expires_at: null
@@ -692,25 +872,29 @@ export async function createWalkInBooking(payload: {
 
     if (bookingError) throw bookingError;
 
-    // Step 5: Create device slot
-    const { error: slotError } = await supabaseAdmin
-      .from("booking_device_slots")
-      .insert({
-        booking_id: booking.id,
-        device_id: availableDevice.id,
-        device_type: payload.deviceTypeName,
-        device_station_number: availableDevice.station_number,
-        slot_date: payload.selectedDate,
-        slot_start_time: startTime,
-        slot_end_time: endTime,
-        duration_hours: payload.durationHours,
-        hourly_rate: payload.hourlyRate,
-        slot_total: payload.subtotal,
-        player_count: payload.playerCount,
-        included_players: payload.includedPlayers,
-        extra_player_charge: payload.extraPlayerCharge,
-        extra_players_total: extraPlayersTotal
-      });
+    // Step 4: Claim a station and write the slot
+    // Station selection and the insert happen inside one locked transaction,
+    // the same path a customer booking takes. Picking the station here instead
+    // meant an exact-start-time check, which cannot see a 10:00-12:00 booking
+    // when asked about 11:00-12:00 and so hands out a station already in use.
+    const { data: assignment, error: slotError } = await supabaseAdmin.rpc(
+      "assign_device_slot",
+      {
+        p_booking_id: booking.id,
+        p_device_type_id: payload.deviceTypeId,
+        p_slot_date: payload.selectedDate,
+        p_slot_start_time: startTime,
+        p_slot_end_time: endTime,
+        p_duration_hours: payload.durationHours,
+        p_hourly_rate: payload.hourlyRate,
+        p_slot_total: payload.subtotal,
+        p_device_type: payload.deviceTypeName,
+        p_player_count: payload.playerCount,
+        p_included_players: payload.includedPlayers,
+        p_extra_player_charge: payload.extraPlayerCharge,
+        p_extra_players_total: extraPlayersTotal
+      }
+    );
 
     if (slotError) {
       // Rollback booking if slot creation fails
@@ -718,7 +902,16 @@ export async function createWalkInBooking(payload: {
       throw slotError;
     }
 
-    // Step 6: Create booking line items for audit trail & receipt presentation
+    // Zero rows back means every station of this type is busy for the window
+    if (!assignment || (assignment as any[]).length === 0) {
+      await supabaseAdmin.from("bookings").delete().eq("id", booking.id);
+      return {
+        success: false,
+        error: "No station of this type is free for the selected time. Pick another time or device."
+      };
+    }
+
+    // Step 5: Create booking line items for audit trail & receipt presentation
     const lineItems: any[] = [];
     let displayOrder = 1;
 
@@ -793,7 +986,7 @@ export async function createWalkInBooking(payload: {
       throw lineItemsError;
     }
 
-    return { success: true, bookingId: booking.id, bookingNumber };
+    return { success: true, bookingId: booking.id, bookingNumber, checkedIn: isToday };
   } catch (err: any) {
     console.error("Create walk-in booking error:", err);
     return { success: false, error: err.message };
@@ -1034,7 +1227,8 @@ export async function getBookingBillingDetails(bookingId: string) {
         line_items: lineItems,
         unpaid_items: unpaidItems,
         unpaid_amount: unpaidAmount,
-        balance_due: balanceDue
+        balance_due: balanceDue,
+        payment_status: derivePaymentStatus(correctTotal, amountPaid, data.payment_status)
       }
     };
   } catch (err: any) {

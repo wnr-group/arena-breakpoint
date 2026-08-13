@@ -20,7 +20,7 @@ export default function WalkInSelectPage() {
           </button>
           <div>
             <h1 className="text-3xl font-black text-white">Walk-In Booking</h1>
-            <p className="text-zinc-500 mt-1">Select booking type</p>
+            <p className="text-zinc-400 mt-1">Select booking type</p>
           </div>
         </div>
 
@@ -42,7 +42,7 @@ export default function WalkInSelectPage() {
                 </p>
               </div>
               <div className="pt-4 border-t border-zinc-800 w-full">
-                <ul className="text-sm text-zinc-500 space-y-2">
+                <ul className="text-sm text-zinc-400 space-y-2">
                   <li>✓ Select device type</li>
                   <li>✓ Choose time slot</li>
                   <li>✓ Add players</li>
@@ -68,7 +68,7 @@ export default function WalkInSelectPage() {
                 </p>
               </div>
               <div className="pt-4 border-t border-zinc-800 w-full">
-                <ul className="text-sm text-zinc-500 space-y-2">
+                <ul className="text-sm text-zinc-400 space-y-2">
                   <li>✓ Customer lookup</li>
                   <li>✓ Select menu items</li>
                   <li>✓ Quick checkout</li>
@@ -81,7 +81,7 @@ export default function WalkInSelectPage() {
 
         {/* Helper Text */}
         <div className="mt-8 text-center">
-          <p className="text-sm text-zinc-600">
+          <p className="text-sm text-zinc-400">
             Choose the appropriate booking type based on customer needs
           </p>
         </div>

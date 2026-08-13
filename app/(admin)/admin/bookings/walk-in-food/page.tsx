@@ -27,11 +27,14 @@ import {
 import { toast } from "sonner";
 import { checkCustomerExists } from "@/app/(customer)/booking/actions";
 import { createFoodOnlyWalkInBooking } from "../actions";
-import { formatDateForDB, handleDobInput, isValidDateDDMMYYYY } from "@/lib/utils/dates";
+import { formatDateForDB, handleDobInput, isValidDob, DOB_ERROR } from "@/lib/utils/dates";
+import { allFilled, isPlausibleEmail } from "@/lib/utils/forms";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
+import { useNotifications } from "@/lib/contexts/NotificationContext";
 
 export default function WalkInFoodOnlyPage() {
   const router = useRouter();
+  const { addNotification } = useNotifications();
   const [step, setStep] = useState(1); // 1: Customer Lookup, 2: Food Selection, 3: Confirm
 
   // Customer details
@@ -76,6 +79,12 @@ export default function WalkInFoodOnlyPage() {
     }
     setLoadingMenu(false);
   };
+
+  // Gates "Continue to Food Selection": every starred field must be filled.
+  const registrationComplete =
+    allFilled(customerName, customerDob) &&
+    customerDob.length === 10 &&
+    isPlausibleEmail(customerEmail);
 
   const handlePhoneLookup = async () => {
     if (customerPhone.length < 10) {
@@ -123,8 +132,9 @@ export default function WalkInFoodOnlyPage() {
       return;
     }
 
-    if (!customerDob || !isValidDateDDMMYYYY(customerDob)) {
-      toast.error("Please enter a valid date of birth (DD-MM-YYYY)");
+    // isValidDob covers both the DD-MM-YYYY shape and the accepted year range.
+    if (!customerDob || !isValidDob(customerDob)) {
+      toast.error(DOB_ERROR);
       return;
     }
 
@@ -216,8 +226,14 @@ export default function WalkInFoodOnlyPage() {
       });
 
       if (result.success) {
-        toast.success("Food order created successfully!", {
-          description: `Order #${result.bookingNumber}`
+        // One notification for the confirmed order: it toasts, chimes and lands
+        // in the bell. The poller skips walk-ins so this is not repeated.
+        addNotification({
+          type: "food",
+          title: "Walk-In Food Order Confirmed",
+          message: `${customerName.trim()} • #${result.bookingNumber} • ₹${Math.round(totalAmount).toLocaleString("en-IN")}`,
+          bookingId: result.bookingId || "",
+          bookingNumber: result.bookingNumber || ""
         });
         router.push("/admin/bookings");
       } else {
@@ -265,7 +281,7 @@ export default function WalkInFoodOnlyPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-black text-white">Food-Only Walk-In</h1>
-            <p className="text-sm text-zinc-500">Create a food order without device booking</p>
+            <p className="text-sm text-zinc-400">Create a food order without device booking</p>
           </div>
         </div>
 
@@ -294,7 +310,7 @@ export default function WalkInFoodOnlyPage() {
 
             <div className="space-y-4">
               <div>
-                <Label className="text-zinc-400">Phone Number</Label>
+                <Label className="text-zinc-400">Phone Number <span className="text-red-500">*</span></Label>
                 <div className="flex gap-2">
                   <Input
                     type="tel"
@@ -319,7 +335,7 @@ export default function WalkInFoodOnlyPage() {
               {showFullRegistrationFields && (
                 <>
                   <div>
-                    <Label className="text-zinc-400">Full Name *</Label>
+                    <Label className="text-zinc-400">Full Name <span className="text-red-500">*</span></Label>
                     <Input
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
@@ -329,7 +345,7 @@ export default function WalkInFoodOnlyPage() {
                   </div>
 
                   <div>
-                    <Label className="text-zinc-400">Email *</Label>
+                    <Label className="text-zinc-400">Email <span className="text-red-500">*</span></Label>
                     <Input
                       type="email"
                       value={customerEmail}
@@ -340,7 +356,7 @@ export default function WalkInFoodOnlyPage() {
                   </div>
 
                   <div>
-                    <Label className="text-zinc-400">Date of Birth (DD-MM-YYYY) *</Label>
+                    <Label className="text-zinc-400">Date of Birth (DD-MM-YYYY) <span className="text-red-500">*</span></Label>
                     <Input
                       value={customerDob}
                       onChange={(e) => setCustomerDob(handleDobInput(e.target.value))}
@@ -352,8 +368,9 @@ export default function WalkInFoodOnlyPage() {
 
                   <Button
                     onClick={handleRegisterAndProceed}
+                    disabled={!registrationComplete}
                     variant="gradient"
-                    className="w-full"
+                    className="w-full disabled:opacity-50 disabled:pointer-events-none"
                   >
                     Continue to Food Selection
                   </Button>
@@ -412,11 +429,11 @@ export default function WalkInFoodOnlyPage() {
                           <div className="flex-1">
                             <h5 className="text-white font-bold">{item.name}</h5>
                             {item.description && (
-                              <p className="text-xs text-zinc-500 mt-1">{item.description}</p>
+                              <p className="text-xs text-zinc-400 mt-1">{item.description}</p>
                             )}
                             <div className="flex items-center gap-2 mt-2">
                               <p className="text-primary font-bold">₹{item.price}</p>
-                              <span className="text-xs text-zinc-600">• Stock: {item.quantity}</span>
+                              <span className="text-xs text-zinc-400">• Stock: {item.quantity}</span>
                             </div>
                           </div>
                           {isAvailable ? (
@@ -446,7 +463,7 @@ export default function WalkInFoodOnlyPage() {
                               </Button>
                             )
                           ) : (
-                            <span className="text-xs font-bold text-zinc-600 uppercase">Out of Stock</span>
+                            <span className="text-xs font-bold text-zinc-400 uppercase">Out of Stock</span>
                           )}
                         </div>
                       </div>
@@ -458,7 +475,7 @@ export default function WalkInFoodOnlyPage() {
               {filteredMenuItems.length === 0 && !loadingMenu && (
                 <div className="py-12 text-center">
                   <Coffee className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-                  <p className="text-zinc-500">No items available in this category.</p>
+                  <p className="text-zinc-400">No items available in this category.</p>
                 </div>
               )}
             </Card>
@@ -476,7 +493,7 @@ export default function WalkInFoodOnlyPage() {
                     <div key={item.id} className="flex items-center justify-between py-2 px-3 bg-zinc-950 rounded-lg border border-zinc-800">
                       <div className="flex-1">
                         <p className="text-white font-bold text-sm">{item.name}</p>
-                        <p className="text-xs text-zinc-500">₹{item.price} × {item.quantity}</p>
+                        <p className="text-xs text-zinc-400">₹{item.price} × {item.quantity}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
@@ -521,7 +538,7 @@ export default function WalkInFoodOnlyPage() {
                 >
                   {isCartOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
                   <div className="text-left">
-                    <p className="text-xs text-zinc-500 font-bold uppercase">
+                    <p className="text-xs text-zinc-400 font-bold uppercase">
                       {selectedItems.reduce((sum, item) => sum + item.quantity, 0)} Items
                     </p>
                     <p className="text-lg font-black text-primary">₹{totalAmount.toFixed(2)}</p>
@@ -529,9 +546,9 @@ export default function WalkInFoodOnlyPage() {
                 </button>
                 <Button
                   onClick={handleSubmit}
-                  disabled={submitting}
+                  disabled={submitting || selectedItems.length === 0}
                   variant="gradient"
-                  className="flex-1 font-black uppercase text-xs h-12"
+                  className="flex-1 font-black uppercase text-xs h-12 disabled:opacity-50 disabled:pointer-events-none"
                 >
                   {submitting ? (
                     <>

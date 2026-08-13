@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Calendar, Clock, User, MapPin, Phone } from "lucide-react";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
+import { formatDbTimeRange } from "@/lib/utils/timeSlots";
 
 interface UpcomingBookingsModalProps {
   open: boolean;
@@ -70,9 +71,9 @@ export function UpcomingBookingsModal({ open, onClose, bookings, onBookingClick 
                         <Phone className="h-3 w-3" />
                         {slot.bookings?.customer_phone}
                       </p>
-                      <p className="text-[10px] text-primary font-mono mt-1">{slot.bookings?.booking_number}</p>
+                      <p className="text-xs text-primary font-mono mt-1">{slot.bookings?.booking_number}</p>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-[10px] font-black ${
+                    <div className={`px-3 py-1 rounded-full text-xs font-black ${
                       isStartingSoon
                         ? 'bg-amber-500/20 text-amber-400'
                         : 'bg-blue-500/20 text-blue-400'
@@ -102,7 +103,7 @@ export function UpcomingBookingsModal({ open, onClose, bookings, onBookingClick 
                       <Clock className="h-3.5 w-3.5 text-secondary-content" />
                       <div>
                         <p className="text-xs text-white font-bold">
-                          {slot.slot_start_time.substring(0, 5)} - {slot.slot_end_time.substring(0, 5)}
+                          {formatDbTimeRange(slot.slot_start_time, slot.slot_end_time)}
                         </p>
                         <p className="text-label">
                           {new Date(slot.slot_date).toLocaleDateString('en-IN', {

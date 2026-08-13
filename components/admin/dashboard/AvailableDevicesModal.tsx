@@ -52,8 +52,8 @@ export function AvailableDevicesModal({ open, onClose, devices }: AvailableDevic
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="bg-[var(--background)] border-primary/30 max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-black uppercase text-white flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <DialogTitle className="text-xl font-black uppercase text-white flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+            <div className="flex items-center gap-2 min-w-0">
               {selectedType && (
                 <Button
                   onClick={handleBack}
@@ -71,7 +71,7 @@ export function AvailableDevicesModal({ open, onClose, devices }: AvailableDevic
               onClick={handleViewAllDevices}
               size="sm"
               variant="ghost"
-              className="text-xs text-primary hover:text-primary-hover"
+              className="text-xs text-primary hover:text-primary-hover flex-shrink-0"
             >
               <Eye className="h-3.5 w-3.5 mr-1" />
               Manage Devices
@@ -224,11 +224,11 @@ export function AvailableDevicesModal({ open, onClose, devices }: AvailableDevic
                       </div>
 
                       {device.specs && (
-                        <p className="text-[9px] text-muted-content truncate mb-2">{device.specs}</p>
+                        <p className="text-[11px] text-muted-content truncate mb-2">{device.specs}</p>
                       )}
 
                       <div className="flex items-center gap-1">
-                        <p className={`text-[9px] font-bold uppercase ${config.labelColor}`}>{config.label}</p>
+                        <p className={`text-[11px] font-bold uppercase ${config.labelColor}`}>{config.label}</p>
                       </div>
                     </div>
                   );

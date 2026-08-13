@@ -108,6 +108,20 @@ export default function FoodOrderPage() {
 
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [confirmedItems, setConfirmedItems] = useState<any[]>([]);
+  const [showSummary, setShowSummary] = useState(false);
+
+  /**
+   * Place Order opens the review step rather than submitting. The order is added
+   * straight to the booking tab and cannot be edited afterwards, so the summary is
+   * the only chance to catch a wrong item or quantity.
+   */
+  const handleReviewOrder = () => {
+    if (cartItemsCount === 0) {
+      toast.error("Cart Empty", { description: "Please add items to your cart." });
+      return;
+    }
+    setShowSummary(true);
+  };
 
   const handleSubmitOrder = async () => {
     if (cartItemsCount === 0) {
@@ -130,6 +144,7 @@ export default function FoodOrderPage() {
 
     if (result.success) {
       setConfirmedItems(foodItems);
+      setShowSummary(false);
       setOrderConfirmed(true);
       toast.success("Order Placed!", { description: "Your food order has been added to the booking." });
     } else {
@@ -143,6 +158,88 @@ export default function FoodOrderPage() {
     return (
       <div className="min-h-screen bg-[#0d0a14] flex items-center justify-center">
         <BreakpointLoader size="lg" />
+      </div>
+    );
+  }
+
+  // Order Review View — last chance to check the order before it hits the booking
+  if (showSummary && !orderConfirmed) {
+    const summaryItems = Object.values(cart);
+
+    return (
+      <div className="w-full max-w-2xl mx-auto py-4 px-2 animate-in fade-in duration-300">
+        <Card className="bg-[#111] border border-zinc-900 p-6 sm:p-8 shadow-2xl rounded-2xl space-y-6 glow-box-hover">
+          <div className="text-center space-y-2 border-b border-zinc-900 pb-5">
+            <div className="flex justify-center mb-3">
+              <div className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center">
+                <ShoppingBag className="h-8 w-8 text-primary" />
+              </div>
+            </div>
+            <h3 className="text-2xl font-black uppercase text-white tracking-tight">Review Your Order</h3>
+            <p className="text-sm text-zinc-400">
+              Check the items below before confirming — this order is added to your booking and cannot be changed afterwards.
+            </p>
+          </div>
+
+          {/* Itemised breakdown */}
+          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3">
+            <div className="flex justify-between text-xs font-black text-zinc-400 uppercase tracking-widest pb-2 border-b border-zinc-900">
+              <span>Item</span>
+              <span>Amount</span>
+            </div>
+
+            {summaryItems.map(({ item, quantity }) => (
+              <div key={item.id} className="flex justify-between items-start gap-3 py-1">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-white leading-snug break-words">{item.name}</p>
+                  <p className="text-xs text-zinc-400 tabular-nums mt-0.5">
+                    ₹{Number(item.price).toFixed(2)} × {quantity}
+                  </p>
+                </div>
+                <span className="text-sm font-black text-white tabular-nums flex-shrink-0">
+                  ₹{(item.price * quantity).toFixed(2)}
+                </span>
+              </div>
+            ))}
+
+            <div className="flex justify-between items-baseline border-t border-zinc-800 pt-3 mt-1">
+              <span className="text-xs font-black uppercase tracking-widest text-zinc-400">
+                Total ({cartItemsCount} {cartItemsCount === 1 ? "item" : "items"})
+              </span>
+              <span className="text-2xl font-black text-primary tabular-nums">₹{cartTotal.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <p className="text-xs text-amber-300 font-bold bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl text-center">
+            This amount is added to your booking — pay at the counter.
+          </p>
+
+          <div className="space-y-2 pt-1">
+            <Button
+              onClick={handleSubmitOrder}
+              disabled={isSubmitting}
+              variant="gradient"
+              className="w-full text-black font-black uppercase text-sm h-12 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
+            >
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <ShoppingCart className="h-4 w-4" />
+                  Confirm Order
+                </>
+              )}
+            </Button>
+            <Button
+              onClick={() => setShowSummary(false)}
+              disabled={isSubmitting}
+              variant="ghost"
+              className="w-full text-zinc-300 border border-zinc-800 hover:text-white font-bold uppercase text-sm h-11 rounded-xl disabled:opacity-50"
+            >
+              ← Back to Menu
+            </Button>
+          </div>
+        </Card>
       </div>
     );
   }
@@ -167,15 +264,15 @@ export default function FoodOrderPage() {
 
           {/* Order Items */}
           <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-3 text-sm glow-box-hover">
-            <h4 className="text-[10px] font-black text-zinc-500 uppercase">Order Items</h4>
+            <h4 className="text-xs font-black text-zinc-400 uppercase">Order Items</h4>
             {confirmedItems.map((item, index) => (
               <div key={index} className="flex justify-between">
-                <span className="text-zinc-500">{item.item_name} (x{item.quantity}):</span>
+                <span className="text-zinc-400">{item.item_name} (x{item.quantity}):</span>
                 <span className="text-white font-bold">₹{item.line_total.toFixed(2)}</span>
               </div>
             ))}
             <div className="flex justify-between border-t border-zinc-800 pt-2 font-black">
-              <span className="text-zinc-500">Total Amount:</span>
+              <span className="text-zinc-400">Total Amount:</span>
               <span className="text-white">₹{confirmedItems.reduce((sum, item) => sum + item.line_total, 0).toFixed(2)}</span>
             </div>
           </div>
@@ -191,7 +288,7 @@ export default function FoodOrderPage() {
                 }
               }}
               variant="gradient"
-              className="w-full text-black font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-2"
+              className="w-full text-black font-black uppercase text-sm h-12 rounded-xl flex items-center justify-center gap-2"
             >
               <ShoppingCart className="h-4 w-4" />
               VIEW BOOKING DETAILS
@@ -203,21 +300,21 @@ export default function FoodOrderPage() {
                 setConfirmedItems([]);
               }}
               variant="ghost"
-              className="w-full border-2 border-primary text-zinc-300 hover:text-zinc-300 font-bold uppercase text-[11px] h-11 rounded-xl"
+              className="w-full border-2 border-primary text-zinc-300 hover:text-zinc-300 font-bold uppercase text-sm h-11 rounded-xl"
             >
               ORDER MORE ITEMS
             </Button>
             <Button
               onClick={() => router.push("/")}
               variant="ghost"
-              className="w-full text-zinc-300 border border-zinc-800 hover:text-zinc-400 font-bold uppercase text-[11px] h-10 rounded-xl"
+              className="w-full text-zinc-300 border border-zinc-800 hover:text-zinc-400 font-bold uppercase text-xs h-10 rounded-xl"
             >
               BACK TO HOME
             </Button>
           </div>
 
           {/* Footer Note */}
-          <div className="pt-2 flex gap-2 items-center text-[10px] text-zinc-600 justify-center border-t border-zinc-950">
+          <div className="pt-2 flex gap-2 items-center text-xs text-zinc-400 justify-center border-t border-zinc-950">
             <UtensilsCrossed className="h-3.5 w-3.5 text-zinc-700" />
             <span>Your food order will be prepared and served at your station</span>
           </div>
@@ -236,16 +333,16 @@ export default function FoodOrderPage() {
             <UtensilsCrossed className="h-5 w-5 md:h-6 md:w-6 text-primary" />
             ORDER FOOD & DRINKS
           </h1>
-          <p className="text-sm text-zinc-500">Add food items to your booking</p>
+          <p className="text-sm text-zinc-400">Add food items to your booking</p>
         </div>
 
-        {/* Category Filter */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-none pb-2">
+        {/* Category Filter — wraps onto multiple rows on mobile so no category is hidden off-screen */}
+        <div className="flex flex-wrap gap-2 pb-2">
           {categories.map((category) => (
             <button
               key={category}
               onClick={() => setActiveCategory(category)}
-              className={`px-4 py-2.5 text-xs font-black uppercase border rounded-xl transition-all whitespace-nowrap ${activeCategory === category
+              className={`px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs font-black uppercase border rounded-xl transition-all whitespace-nowrap ${activeCategory === category
                 ? "bg-gradient-primary text-[var(--button-text)] border-primary"
                 : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700"
                 }`}
@@ -275,7 +372,7 @@ export default function FoodOrderPage() {
                   <div className="space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="text-sm md:text-base font-black uppercase text-white leading-tight">{item.name}</h3>
-                      <span className={`text-[10px] px-2 py-1 rounded-md font-bold uppercase whitespace-nowrap ${item.category === 'Snacks' ? 'bg-orange-500/10 text-orange-500 border border-orange-500/30' :
+                      <span className={`text-xs px-2 py-1 rounded-md font-bold uppercase whitespace-nowrap ${item.category === 'Snacks' ? 'bg-orange-500/10 text-orange-500 border border-orange-500/30' :
                         item.category === 'Drinks' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/30' :
                           'bg-green-500/10 text-green-500 border border-green-500/30'
                         }`}>
@@ -283,7 +380,7 @@ export default function FoodOrderPage() {
                       </span>
                     </div>
                     {item.description && (
-                      <p className="text-xs text-zinc-500 line-clamp-2 leading-relaxed">{item.description}</p>
+                      <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">{item.description}</p>
                     )}
                   </div>
 
@@ -317,7 +414,7 @@ export default function FoodOrderPage() {
                         </Button>
                       )
                     ) : (
-                      <span className="text-xs font-bold text-zinc-600 uppercase">Out of Stock</span>
+                      <span className="text-xs font-bold text-zinc-400 uppercase">Out of Stock</span>
                     )}
                   </div>
                 </div>
@@ -330,7 +427,7 @@ export default function FoodOrderPage() {
         {filteredItems.length === 0 && (
           <Card className="bg-[#111] border border-zinc-900 p-12 text-center">
             <Coffee className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-            <p className="text-zinc-500">No items available in this category.</p>
+            <p className="text-zinc-400">No items available in this category.</p>
           </Card>
         )}
 
@@ -343,7 +440,7 @@ export default function FoodOrderPage() {
             {/* Expanded Cart Items List */}
             {isCartListOpen && (
               <div className="mb-4 max-h-60 overflow-y-auto border-b border-zinc-900 pb-4 space-y-2.5 animate-in slide-in-from-bottom-2 duration-200">
-                <div className="flex justify-between items-center text-[10px] font-black text-zinc-500 uppercase tracking-widest pb-1 border-b border-zinc-900/60">
+                <div className="flex justify-between items-center text-xs font-black text-zinc-400 uppercase tracking-widest pb-1 border-b border-zinc-900/60">
                   <span>Selected Food Items</span>
                   <span>Quantity & Price</span>
                 </div>
@@ -355,7 +452,7 @@ export default function FoodOrderPage() {
                         <button
                           type="button"
                           onClick={() => removeFromCart(item.id)}
-                          className="p-1 text-zinc-500 hover:text-white hover:bg-zinc-900 rounded"
+                          className="p-1 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded"
                         >
                           <Minus className="h-3 w-3" />
                         </button>
@@ -363,7 +460,7 @@ export default function FoodOrderPage() {
                         <button
                           type="button"
                           onClick={() => addToCart(item)}
-                          className="p-1 text-zinc-500 hover:text-white hover:bg-zinc-900 rounded"
+                          className="p-1 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded"
                         >
                           <Plus className="h-3 w-3" />
                         </button>
@@ -383,7 +480,7 @@ export default function FoodOrderPage() {
                     {cartItemsCount}
                   </div>
                   <div>
-                    <p className="text-xs text-zinc-500 font-semibold">Cart Total</p>
+                    <p className="text-xs text-zinc-400 font-semibold">Cart Total</p>
                     <p className="text-xl font-black text-primary">₹{cartTotal}</p>
                   </div>
                 </div>
@@ -410,12 +507,12 @@ export default function FoodOrderPage() {
                 </div>
               </div>
               <Button
-                onClick={handleSubmitOrder}
+                onClick={handleReviewOrder}
                 disabled={isSubmitting}
                 className="w-full bg-gradient-primary text-[var(--button-text)] font-black uppercase text-sm h-12 rounded-xl flex items-center justify-center gap-2"
               >
-                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
-                Place Order
+                <ShoppingCart className="h-4 w-4" />
+                Review Order
               </Button>
             </div>
 
@@ -426,7 +523,7 @@ export default function FoodOrderPage() {
                   {cartItemsCount}
                 </div>
                 <div>
-                  <p className="text-xs text-zinc-500 font-semibold">Cart Total</p>
+                  <p className="text-xs text-zinc-400 font-semibold">Cart Total</p>
                   <p className="text-xl font-black text-primary">₹{cartTotal}</p>
                 </div>
               </div>
@@ -435,7 +532,7 @@ export default function FoodOrderPage() {
                 <Button
                   onClick={() => setIsCartListOpen(!isCartListOpen)}
                   variant="outline"
-                  className="font-bold uppercase text-xs h-12 px-6 border-zinc-800 text-zinc-300 hover:bg-zinc-900"
+                  className="font-bold uppercase text-sm h-12 px-6 border-zinc-800 text-zinc-300 hover:bg-zinc-900"
                 >
                   {isCartListOpen ? "Hide Items" : "View Items"}
                 </Button>
@@ -445,17 +542,17 @@ export default function FoodOrderPage() {
                     setIsCartListOpen(false);
                   }}
                   variant="outline"
-                  className="font-bold uppercase text-xs h-12 px-6 border-zinc-800 text-red-400 hover:bg-red-950/20"
+                  className="font-bold uppercase text-sm h-12 px-6 border-zinc-800 text-red-400 hover:bg-red-950/20"
                 >
                   Clear Cart
                 </Button>
                 <Button
-                  onClick={handleSubmitOrder}
+                  onClick={handleReviewOrder}
                   disabled={isSubmitting}
                   className="bg-gradient-primary text-[var(--button-text)] font-black uppercase text-sm h-12 px-8 flex items-center gap-2 rounded-xl"
                 >
-                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
-                  Place Order
+                  <ShoppingCart className="h-4 w-4" />
+                  Review Order
                 </Button>
               </div>
             </div>

@@ -2,6 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Activity, Clock, User, MapPin, Timer } from "lucide-react";
+import { formatDbTimeRange } from "@/lib/utils/timeSlots";
 
 interface ActiveSessionsModalProps {
   open: boolean;
@@ -61,9 +62,9 @@ export function ActiveSessionsModal({ open, onClose, sessions, onBookingClick }:
                     <div className="flex-1">
                       <p className="text-sm font-bold text-white mb-1">{session.bookings?.customer_name}</p>
                       <p className="text-xs text-secondary-content font-mono">{session.bookings?.customer_phone}</p>
-                      <p className="text-[10px] text-primary font-mono mt-1">{session.bookings?.booking_number}</p>
+                      <p className="text-xs text-primary font-mono mt-1">{session.bookings?.booking_number}</p>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-[10px] font-black ${
+                    <div className={`px-3 py-1 rounded-full text-xs font-black ${
                       isOvertime
                         ? 'bg-red-500/20 text-red-400'
                         : 'bg-green-500/20 text-green-400'
@@ -93,7 +94,7 @@ export function ActiveSessionsModal({ open, onClose, sessions, onBookingClick }:
                       <Clock className="h-3.5 w-3.5 text-secondary-content" />
                       <div>
                         <p className="text-xs text-white font-bold">
-                          {session.slot_start_time.substring(0, 5)} - {session.slot_end_time.substring(0, 5)}
+                          {formatDbTimeRange(session.slot_start_time, session.slot_end_time)}
                         </p>
                         <p className="text-label">Booked slot</p>
                       </div>
