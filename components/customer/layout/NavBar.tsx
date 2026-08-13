@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAppSelector } from '@/lib/redux/hooks';
+import { CustomerSessionMenu } from '@/components/customer/layout/CustomerSessionMenu';
 
 const navLinks = [
   { label: "Home", path: "/" },
@@ -173,6 +174,9 @@ export default function Navbar() {
 
         {/* CTA & Mobile Toggle */}
         <div className="flex items-center gap-4">
+          {/* Renders nothing unless a session is live. */}
+          <CustomerSessionMenu />
+
           <Link
             href="/booking"
             className="hidden lg:inline-block px-6 py-2.5 border-gradient-animated cursor-pointer font-bold text-xs tracking-widest uppercase hover:bg-[var(--primary)] text-black transition-all duration-300 text-center"
@@ -237,6 +241,11 @@ export default function Navbar() {
               >
                 Book Slot
               </Link>
+            </motion.div>
+
+            {/* Sign-out, mobile. Self-hides when there is no session. */}
+            <motion.div variants={linkItemVariants} className="w-full max-w-xs mt-6">
+              <CustomerSessionMenu compact />
             </motion.div>
           </motion.div>
         )}

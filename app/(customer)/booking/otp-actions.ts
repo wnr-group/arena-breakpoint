@@ -56,7 +56,7 @@ export async function resendOTPAction(phone: string) {
  *
  * Takes no phone argument by design. The old `checkActiveSessionAction(phone)`
  * answered for any number you passed it, so typing a stranger's number during
- * their 15-minute window skipped verification altogether.
+ * their active session window skipped verification altogether.
  */
 export async function checkActiveSessionAction(): Promise<{
   isValid: boolean;
