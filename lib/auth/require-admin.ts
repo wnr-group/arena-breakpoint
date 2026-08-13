@@ -53,9 +53,24 @@ const resolveRole = cache(async function resolveRole(): Promise<{
         getAll() {
           return cookieStore.getAll();
         },
-        // Server actions read the session; token refresh is handled by the
-        // middleware, so there is nothing to write back here.
-        setAll() {},
+        /**
+         * Server actions can write cookies, so a token refreshed here is kept.
+         *
+         * This matters because the middleware deliberately skips server-action
+         * requests (see proxy.ts) - if the refresh were dropped, an admin whose
+         * access token expired while sitting on a page would start getting
+         * failures from every action until they happened to navigate.
+         */
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // Called from a Server Component, where cookies are read-only.
+            // Refresh is then the middleware's job on the next navigation.
+          }
+        },
       },
     }
   );
