@@ -45,6 +45,7 @@ export default function CustomerDetailsPage() {
   const [customerExists, setCustomerExists] = useState(false);
   const [existingCustomerData, setExistingCustomerData] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
+  const [resumingSession, setResumingSession] = useState(true);
   const [bookingNumber, setBookingNumber] = useState<string>("");
   const [bookingId, setBookingId] = useState<string>("");
   const [amountPaid, setAmountPaid] = useState<number>(0);
@@ -65,6 +66,63 @@ export default function CustomerDetailsPage() {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  /**
+   * Resume an existing login instead of asking for the number again.
+   *
+   * The session check used to run only after the customer typed their number
+   * and pressed continue, so someone already signed in was still made to enter
+   * it - the session spared them the OTP but not the typing. Checking on mount
+   * takes a signed-in customer straight to their booking summary.
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    checkActiveSessionAction()
+      .then(async (session) => {
+        if (cancelled || !session.isValid || !session.phone) return;
+        setMobileNumber(session.phone);
+        await proceedAfterPhoneVerification(session.phone);
+      })
+      .finally(() => {
+        if (!cancelled) setResumingSession(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // Mount-only: resuming once is the whole point.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /**
+   * Resume an existing login instead of asking for the number again.
+   *
+   * The session check used to run only after the customer typed their number
+   * and pressed continue, so someone already signed in was still made to enter
+   * it - the session saved them the OTP but not the typing. Checking on mount
+   * means a signed-in customer goes straight to the booking summary.
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    checkActiveSessionAction().then(async (session) => {
+      if (cancelled || !session.isValid || !session.phone) {
+        if (!cancelled) setResumingSession(false);
+        return;
+      }
+
+      setMobileNumber(session.phone);
+      await proceedAfterPhoneVerification(session.phone);
+      if (!cancelled) setResumingSession(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+    // Runs once on mount; proceedAfterPhoneVerification is stable enough here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Force scroll to top on mount and step changes to prevent landing at the bottom/footer
@@ -224,7 +282,7 @@ export default function CustomerDetailsPage() {
 
     setIsSubmitting(true);
 
-    // Does THIS browser already hold a verified session (15 min window)?
+    // Does THIS browser already hold a verified session?
     const sessionCheck = await checkActiveSessionAction();
 
     // Skip OTP only when the live session belongs to the number being entered.
@@ -595,6 +653,19 @@ export default function CustomerDetailsPage() {
   };
 
   if (!mounted) return null;
+
+  // Held until the session check settles, so an already-signed-in customer
+  // never sees the phone form flash up before being moved past it.
+  if (resumingSession) {
+    return (
+      <div className="w-full max-w-md mx-auto flex flex-col items-center justify-center py-24 space-y-4">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="text-sm font-bold text-zinc-400 uppercase tracking-wider">
+          Checking your session...
+        </p>
+      </div>
+    );
+  }
 
   // Phone Step UI
   if (step === "phone") {

@@ -104,6 +104,7 @@ export default function FoodCheckoutPage() {
   }, [bookingContext.customerPhone, bookingContext.customerName]);
 
 
+
   // Warm up the Razorpay SDK once the customer starts checking out, so tapping
   // "Pay" opens the checkout immediately. Not needed for the pay-at-counter tab.
   useEffect(() => {
@@ -149,11 +150,29 @@ export default function FoodCheckoutPage() {
   const summaryName = bookingContext.customerName || name;
   const summaryPhone = bookingContext.customerPhone || phone;
 
-  const handleProceedToCheckout = () => {
+  const handleProceedToCheckout = async () => {
     // On-tab orders already know who the customer is from the session, so they
     // skip identification - but they still get the review screen before the
     // items are committed to the tab.
-    setStep(isOnTab ? "summary" : "phone");
+    if (isOnTab) {
+      setStep("summary");
+      return;
+    }
+
+    // Already signed in? Go straight to the summary. Asking a logged-in
+    // customer to retype the number they just verified is friction with no
+    // security value - the session already proves it.
+    setIsSubmitting(true);
+    const session = await checkActiveSessionAction();
+
+    if (session.isValid && session.phone) {
+      setPhone(session.phone);
+      await proceedAfterPhoneVerification(session.phone);
+    } else {
+      setStep("phone");
+    }
+
+    setIsSubmitting(false);
   };
 
   const handlePhoneLookupSubmit = async (e: React.FormEvent) => {
@@ -406,6 +425,7 @@ export default function FoodCheckoutPage() {
   };
 
   if (!mounted) return null;
+
 
   if (cartItems.length === 0 && step !== "success") {
     return (
