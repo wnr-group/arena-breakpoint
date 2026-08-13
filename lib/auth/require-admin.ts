@@ -11,6 +11,7 @@
 
 import 'server-only';
 
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 
@@ -33,8 +34,15 @@ export class AuthorizationError extends Error {
  * The role is read from `app_metadata` only. `user_metadata` is writable by the
  * user themselves via supabase.auth.updateUser(), so trusting it would let any
  * signed-in staff member promote themselves to admin.
+ *
+ * Memoised per request: getUser() is a network call to the auth server, so an
+ * action that checks more than once - directly or through a helper - should not
+ * pay for it twice.
  */
-async function resolveRole(): Promise<{ userId: string; role: StaffRole } | null> {
+const resolveRole = cache(async function resolveRole(): Promise<{
+  userId: string;
+  role: StaffRole;
+} | null> {
   const cookieStore = await cookies();
 
   const supabase = createServerClient(
@@ -67,7 +75,7 @@ async function resolveRole(): Promise<{ userId: string; role: StaffRole } | null
   if (role !== 'admin' && role !== 'staff') return null;
 
   return { userId: user.id, role };
-}
+});
 
 /** Any staff member (admin or staff). Throws if the caller is neither. */
 export async function requireStaff(): Promise<{ userId: string; role: StaffRole }> {
