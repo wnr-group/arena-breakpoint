@@ -5,6 +5,7 @@ import { quoteDeviceBooking, type DeviceBookingInput, type DeviceBookingQuote } 
 import { createPaymentOrder } from '@/lib/payments/orders'
 import { fulfilDeviceBooking } from '@/lib/payments/fulfil'
 import { verifyAndFulfilPayment, type CheckoutResponse } from '@/lib/payments/verify'
+import { requireVerifiedPhone } from '@/lib/auth/customer-session'
 
 /**
  * Razorpay payment flow for device slot bookings.
@@ -16,6 +17,8 @@ import { verifyAndFulfilPayment, type CheckoutResponse } from '@/lib/payments/ve
 export interface CreateBookingOrderResult {
   success: boolean
   error?: string
+  /** Set when the customer must (re)verify their phone before continuing. */
+  verificationRequired?: boolean
   /** True when the booking is free after discounts and no payment is needed. */
   freeBooking?: boolean
   keyId?: string
@@ -52,7 +55,15 @@ export async function createDeviceBookingPaymentOrder(
   input: DeviceBookingInput
 ): Promise<CreateBookingOrderResult> {
   try {
-    const quoted = await quoteDeviceBooking(input)
+    // Proof of phone ownership, before anything is priced or reserved. This is a
+    // public HTTP endpoint, so the phone in `input` is only a claim until the
+    // session cookie backs it up.
+    const auth = await requireVerifiedPhone(input.phone)
+    if (!auth.ok) {
+      return { success: false, error: auth.error, verificationRequired: true }
+    }
+
+    const quoted = await quoteDeviceBooking({ ...input, phone: auth.phone })
 
     if (!quoted.success) {
       return { success: false, error: quoted.error }
