@@ -1,12 +1,8 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/server";
-<<<<<<< HEAD
-import { BOOKING_WINDOW_ERROR, arenaToday, isBookingDateStringWithinWindow } from "@/lib/utils/dates";
-=======
 import { requireVerifiedPhone } from "@/lib/auth/customer-session";
-import { isBookingDateStringWithinWindow, BOOKING_WINDOW_ERROR } from "@/lib/utils/dates";
->>>>>>> 796abc3 (feat: customer login across booking, food, retrieve and subscription)
+import { BOOKING_WINDOW_ERROR, arenaToday, isBookingDateStringWithinWindow } from "@/lib/utils/dates";
 import { shiftDate, timeToMinutes } from "@/lib/payments/availability";
 import { createSlotHold, releaseSlotHoldRow } from "@/lib/bookings/slotHold";
 import { headers } from "next/headers";
