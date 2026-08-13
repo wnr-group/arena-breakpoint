@@ -9,7 +9,14 @@ import { Label } from "@/components/ui/label";
 import { Search, Phone, Calendar, Clock, QrCode, UtensilsCrossed, User, CheckCircle2, Sparkles, Zap, CreditCard , Loader2 } from 'lucide-react';
 import { BreakpointLoader } from '@/components/shared/BreakpointLoader';
 import { toast } from "sonner";
-import { getBookingsByPhone } from "./actions";
+import { getMyBookings } from "./actions";
+import {
+  sendOTPAction,
+  verifyOTPAction,
+  resendOTPAction,
+  checkActiveSessionAction,
+} from "../booking/otp-actions";
+import OTPVerification from "@/components/auth/OTPVerification";
 import { formatDbTime, formatDbTimeRange } from "@/lib/utils/timeSlots";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -21,6 +28,38 @@ export default function RetrieveBookingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [showOtp, setShowOtp] = useState(false);
+
+  /**
+   * Loads the verified caller's bookings. Takes no phone: the server reads it
+   * from the session, so the number in the form only decides who to verify.
+   */
+  const loadBookings = async () => {
+    setIsLoading(true);
+    setHasSearched(true);
+    setSelectedBooking(null);
+
+    const result = await getMyBookings();
+
+    if (result.success) {
+      setShowOtp(false);
+      setBookings(result.bookings || []);
+      if ((result.bookings || []).length === 0) {
+        toast.info("No Bookings Found", { description: "No bookings found for this phone number." });
+      } else {
+        toast.success("Bookings Found!", { description: `Found ${result.bookings!.length} booking(s).` });
+      }
+    } else if (result.verificationRequired) {
+      // Session lapsed between verifying and loading - verify again.
+      setBookings([]);
+      setShowOtp(true);
+    } else {
+      toast.error("Error", { description: result.error || "Failed to fetch bookings." });
+      setBookings([]);
+    }
+
+    setIsLoading(false);
+  };
 
   const handleSearch = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -31,25 +70,25 @@ export default function RetrieveBookingPage() {
     }
 
     setIsLoading(true);
-    setHasSearched(true);
-    setBookings([]);
-    setSelectedBooking(null);
 
-    const result = await getBookingsByPhone(phone);
+    // Reuse a live session only when it belongs to the number being entered -
+    // otherwise anyone could read a previous customer's bookings from a shared
+    // device simply by typing a different number.
+    const session = await checkActiveSessionAction();
 
-    if (result.success) {
-      setBookings(result.bookings || []);
-      if (result.bookings.length === 0) {
-        toast.info("No Bookings Found", { description: "No bookings found for this phone number." });
-      } else {
-        toast.success("Bookings Found!", { description: `Found ${result.bookings.length} booking(s).` });
-      }
-    } else {
-      toast.error("Error", { description: result.error || "Failed to fetch bookings." });
-      setBookings([]);
+    if (session.isValid && session.phone === phone) {
+      await loadBookings();
+      return;
     }
 
+    setBookings([]);
+    setSelectedBooking(null);
+    setShowOtp(true);
     setIsLoading(false);
+  };
+
+  const handleOTPVerified = async () => {
+    await loadBookings();
   };
 
   const getStatusBadge = (status: string) => {
@@ -170,6 +209,21 @@ export default function RetrieveBookingPage() {
             </div>
           </form>
         </Card>
+
+        {/* Verification gate. Bookings carry name, date of birth and payment
+            history, so the number has to be proven before any of it is shown. */}
+        {showOtp && !isLoading && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <OTPVerification
+              phone={phone}
+              onVerified={handleOTPVerified}
+              onBack={() => setShowOtp(false)}
+              onSendOTP={sendOTPAction}
+              onVerifyOTP={verifyOTPAction}
+              onResendOTP={resendOTPAction}
+            />
+          </div>
+        )}
 
         {/* Loading State with Animation */}
         {isLoading && (
