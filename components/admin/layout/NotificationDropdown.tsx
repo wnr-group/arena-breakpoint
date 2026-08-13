@@ -75,7 +75,7 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
                     </div>
                     <p className="text-xs text-muted-content mt-1">{notification.message}</p>
                     <div className="flex items-center justify-between mt-2">
-                      <p className="text-[10px] text-muted-content font-mono">
+                      <p className="text-xs text-muted-content font-mono">
                         {formatDistanceToNow(notification.timestamp, { addSuffix: true })}
                       </p>
                       <ExternalLink className="h-3 w-3 text-muted-content group-hover:text-primary transition-colors" />

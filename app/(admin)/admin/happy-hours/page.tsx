@@ -252,7 +252,7 @@ export default function HappyHoursPage() {
         <div className="bg-[var(--surface)] border border-zinc-900 rounded-xl p-5 flex flex-col gap-2">
           <div className="flex justify-between items-center w-full">
             <Timer className="text-primary h-5 w-5" />
-            <span className="text-[11px] font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">Active Now</span>
+            <span className="text-xs font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">Active Now</span>
           </div>
           <p className="text-xs font-black uppercase tracking-widest text-muted-content mt-2">Currently Running</p>
           {/* You could make this dynamic by filtering the 'rules' array for status === 'LIVE' */}

@@ -204,7 +204,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
           <table className="w-full text-left border-collapse text-sm table-fixed min-w-[1200px]">
             <thead>
               <tr className="border-b border-zinc-900 bg-[var(--background)]/20 text-label-enhanced select-none">
-                <th className="p-4 w-[20%]">
+                <th className="p-4 w-[17%]">
                   <button
                     onClick={() => handleSort("name")}
                     className="flex items-center gap-2 hover:text-primary transition-colors"
@@ -213,7 +213,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                     <SortIcon field="name" />
                   </button>
                 </th>
-                <th className="p-4 w-[15%]">
+                <th className="p-4 w-[14%]">
                   <button
                     onClick={() => handleSort("phone")}
                     className="flex items-center gap-2 hover:text-primary transition-colors"
@@ -222,7 +222,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                     <SortIcon field="phone" />
                   </button>
                 </th>
-                <th className="p-4 w-[13%]">
+                <th className="p-4 w-[12%]">
                   <button
                     onClick={() => handleSort("date_of_birth")}
                     className="flex items-center gap-2 hover:text-primary transition-colors"
@@ -231,7 +231,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                     <SortIcon field="date_of_birth" />
                   </button>
                 </th>
-                <th className="p-4 w-[20%]">
+                <th className="p-4 w-[18%]">
                   <button
                     onClick={() => handleSort("email")}
                     className="flex items-center gap-2 hover:text-primary transition-colors"
@@ -240,9 +240,9 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                     <SortIcon field="email" />
                   </button>
                 </th>
-                <th className="p-4 w-[12%]">Membership</th>
-                <th className="p-4 w-[10%] text-right">Expiration</th>
-                <th className="p-4 w-[10%] text-right">
+                <th className="p-4 w-[19%]">Membership</th>
+                <th className="p-4 w-[9%] text-right">Expiration</th>
+                <th className="p-4 w-[11%] text-right">
                   <button
                     onClick={() => handleSort("created_at")}
                     className="flex items-center gap-2 hover:text-primary transition-colors ml-auto"
@@ -262,13 +262,17 @@ export function CustomerTable({ customers }: CustomerTableProps) {
               <tr key={row.id} className="group hover:bg-[var(--background)]/40 transition-all duration-200 border-l-2 border-transparent hover:border-l-primary">
  
                 {/* Customer Details Name Block */}
-                <td className="p-4 font-black tracking-wide flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-muted-content group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-200 shadow-inner flex-shrink-0">
-                    <User className="h-4 w-4 text-primary transition-colors" />
+                <td className="p-4 font-black tracking-wide">
+                  {/* flex lives on an inner div: `display:flex` on a <td> drops it out of the
+                      table's column layout, so it stops honouring the fixed column width */}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-9 w-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-muted-content group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-200 shadow-inner flex-shrink-0">
+                      <User className="h-4 w-4 text-primary transition-colors" />
+                    </div>
+                    <span className="text-zinc-200 group-hover:text-primary transition-colors font-black text-[15px] tracking-normal truncate">
+                      {row.name}
+                    </span>
                   </div>
-                  <span className="text-zinc-200 group-hover:text-primary transition-colors font-black text-[15px] tracking-normal truncate">
-                    {row.name}
-                  </span>
                 </td>
  
                 {/* Phone Terminal Output */}
@@ -303,7 +307,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 <td className="p-4 text-muted-content font-medium">
                   <div className="flex items-center gap-2 group/email">
                     <Mail className="h-4 w-4 text-primary flex-shrink-0" />
-                    <span className="truncate text-muted-content text-sm">{row.email || "No mail configured"}</span>
+                    <span title={row.email ?? undefined} className="truncate text-muted-content text-sm">{row.email || "No mail configured"}</span>
                     {row.email && (
                       <button
                         onClick={() => handleCopy(row.email!, `email-${row.id}`)}
@@ -320,14 +324,20 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 </td>
  
                 {/* Membership Track */}
-                <td className="p-4 whitespace-nowrap">
+                <td className="p-4 overflow-hidden">
                   {hasSub ? (
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 border text-[9px] font-black uppercase rounded-lg tracking-widest ${isActive ? "bg-green-500/10 text-green-400 border-green-500/30" : "bg-zinc-900 text-secondary-content border-zinc-800"}`}>
-                      {isActive ? <ShieldCheck className="h-3 w-3" /> : <ShieldAlert className="h-3 w-3" />}
-                      {row.subscription_name}
+                    /* Plan names are free text, so the badge caps at the column width and
+                       truncates instead of spilling over the Expiration column */
+                    <span
+                      title={row.subscription_name ?? undefined}
+                      className={`inline-flex items-center gap-1.5 max-w-full px-2.5 py-1 border text-[11px] font-black uppercase rounded-lg tracking-wide leading-tight ${isActive ? "bg-green-500/10 text-green-400 border-green-500/30" : "bg-zinc-900 text-secondary-content border-zinc-800"}`}
+                    >
+                      {isActive ? <ShieldCheck className="h-3 w-3 flex-shrink-0" /> : <ShieldAlert className="h-3 w-3 flex-shrink-0" />}
+                      {/* wraps rather than truncates, so a long plan name stays fully readable */}
+                      <span className="min-w-0 break-words">{row.subscription_name}</span>
                     </span>
                   ) : (
-                    <span className="bg-[var(--background)]/80 text-red-400 border border-zinc-900 text-[9px] font-black px-2.5 py-1 rounded-lg uppercase">No Plan Active</span>
+                    <span className="bg-[var(--background)]/80 text-red-400 border border-zinc-900 text-[11px] font-black px-2.5 py-1 rounded-lg uppercase whitespace-nowrap">No Plan Active</span>
                   )}
                 </td>
  
@@ -412,7 +422,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 (pageNum === totalPages - 1 && currentPage < totalPages - 2)
               ) {
                 return (
-                  <span key={pageNum} className="text-zinc-600 px-1 text-xs select-none">
+                  <span key={pageNum} className="text-zinc-400 px-1 text-xs select-none">
                     ...
                   </span>
                 );

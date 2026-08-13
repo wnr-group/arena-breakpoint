@@ -103,13 +103,13 @@ export function FoodCard({
         </h4>
 
         {/* Description  */}
-        <p className="text-[#a1a1aa] text-[10px] sm:text-[11px] leading-snug mb-2 sm:mb-3 line-clamp-2">
+        <p className="text-[#a1a1aa] text-xs leading-snug mb-2 sm:mb-3 line-clamp-2">
           {food.description}
         </p>
 
         {/* Price & Mobile ADD Button */}
         <div className="flex items-center justify-between mt-auto sm:mt-0 sm:block">
-          <span className="text-[#ADB7BE] text-[11px] sm:text-[12px] font-medium block">
+          <span className="text-[#ADB7BE] text-xs sm:text-[12px] font-medium block">
             <span className="hidden sm:inline">Price </span>
             <span className="text-white font-bold text-[14px] sm:text-[15px]">{food.price}</span>
           </span>
@@ -120,7 +120,7 @@ export function FoodCard({
               e.stopPropagation()
               handleClick()
             }}
-            className="sm:hidden px-4 py-1.5 rounded-md text-[10px] font-bold tracking-widest text-[#0a0a0a] shadow-lg active:scale-95 transition-transform bg-gradient-primary">
+            className="sm:hidden px-4 py-1.5 rounded-md text-xs font-bold tracking-widest text-[#0a0a0a] shadow-lg active:scale-95 transition-transform bg-gradient-primary">
             BUY
           </button>
         </div>

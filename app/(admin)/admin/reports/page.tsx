@@ -402,7 +402,7 @@ export default function AdminReportsPage() {
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-3 sm:px-4 text-[10px] sm:text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary overflow-hidden"
+                    className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-3 sm:px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary overflow-hidden"
                   >
                     <span className="truncate mr-2">{dateFrom ? format(new Date(dateFrom), "dd-MM-yyyy") : <span className="text-muted-content">dd-mm-yyyy</span>}</span>
                     <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
@@ -431,7 +431,7 @@ export default function AdminReportsPage() {
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-3 sm:px-4 text-[10px] sm:text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary overflow-hidden"
+                    className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-3 sm:px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary overflow-hidden"
                   >
                     <span className="truncate mr-2">{dateTo ? format(new Date(dateTo), "dd-MM-yyyy") : <span className="text-muted-content">dd-mm-yyyy</span>}</span>
                     <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
@@ -739,7 +739,7 @@ export default function AdminReportsPage() {
                           <p className="text-lg font-black text-white">
                             <CurrencyCountUp amount={category.totalRevenue} duration={1100} />
                           </p>
-                          <p className="text-[10px] text-secondary-content uppercase mt-1">
+                          <p className="text-xs text-secondary-content uppercase mt-1">
                             <CountUp end={(category.totalRevenue / foodData.summary.totalRevenue) * 100} duration={900} decimals={1} suffix="% of total" />
                           </p>
                         </div>
@@ -789,7 +789,7 @@ export default function AdminReportsPage() {
                           <p className="text-base font-black text-primary">
                             <CurrencyCountUp amount={item.totalRevenue} duration={1000} />
                           </p>
-                          <p className="text-[10px] text-secondary-content uppercase mt-1">
+                          <p className="text-xs text-secondary-content uppercase mt-1">
                             <CountUp end={item.orderCount} duration={800} /> orders
                           </p>
                         </div>
@@ -908,25 +908,25 @@ export default function AdminReportsPage() {
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                           <div className="p-3 bg-[var(--background)]/50 rounded-lg">
-                            <p className="text-[10px] text-secondary-content uppercase font-bold mb-1">Bookings</p>
+                            <p className="text-xs text-secondary-content uppercase font-bold mb-1">Bookings</p>
                             <p className="text-base font-black text-white">
                               <CountUp end={device.totalBookings} duration={800} />
                             </p>
                           </div>
                           <div className="p-3 bg-[var(--background)]/50 rounded-lg">
-                            <p className="text-[10px] text-secondary-content uppercase font-bold mb-1">Hours</p>
+                            <p className="text-xs text-secondary-content uppercase font-bold mb-1">Hours</p>
                             <p className="text-base font-black text-white">
                               <CountUp end={device.totalHours} duration={800} />h
                             </p>
                           </div>
                           <div className="p-3 bg-[var(--background)]/50 rounded-lg">
-                            <p className="text-[10px] text-secondary-content uppercase font-bold mb-1">Avg Players</p>
+                            <p className="text-xs text-secondary-content uppercase font-bold mb-1">Avg Players</p>
                             <p className="text-base font-black text-white">
                               <CountUp end={device.averagePlayersPerBooking} duration={900} decimals={1} />
                             </p>
                           </div>
                           <div className="p-3 bg-[var(--background)]/50 rounded-lg">
-                            <p className="text-[10px] text-secondary-content uppercase font-bold mb-1">Extra Rev</p>
+                            <p className="text-xs text-secondary-content uppercase font-bold mb-1">Extra Rev</p>
                             <p className={`text-base font-black ${color.text}`}>
                               <CurrencyCountUp amount={device.extraPlayerRevenue} duration={1000} />
                             </p>
@@ -1173,7 +1173,7 @@ export default function AdminReportsPage() {
                             />
                           </div>
                         </div>
-                        <div className="flex justify-between text-[10px] mt-1">
+                        <div className="flex justify-between text-xs mt-1">
                           <span className="text-blue-400">
                             Device: <CurrencyCountUp amount={day.deviceRevenue} duration={800} />
                           </span>

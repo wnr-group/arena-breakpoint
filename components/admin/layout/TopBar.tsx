@@ -116,7 +116,7 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
               </p>
               {userRole && (
                 <span
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider ${
                     userRole === 'admin'
                       ? 'bg-gradient-to-r from-primary/20 to-amber-500/20 text-primary border border-primary/30'
                       : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
@@ -128,7 +128,7 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
                 </span>
               )}
             </div>
-            <p className="text-[10px] text-[#a1a1aa] tracking-wide mt-0.5 leading-none truncate max-w-[160px]" title={userEmail}>
+            <p className="text-xs text-[#a1a1aa] tracking-wide mt-0.5 leading-none truncate max-w-[160px]" title={userEmail}>
               {userEmail || "Arena Manager"}
             </p>
           </div>

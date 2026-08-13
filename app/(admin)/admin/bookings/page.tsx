@@ -17,7 +17,7 @@ import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailMod
 import { CheckoutModal } from "@/components/admin/bookings/CheckoutModal";
 import { getAllBookings, getBookingStats, checkInBooking, checkOutBooking, getBookingBillingDetails, markBookingAsPaid, type BookingFilters } from "./actions";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
-import { Search, Filter, Calendar, CalendarDays, DollarSign, Users, CheckCircle2, XCircle, Clock, Loader2, Eye, Receipt, PlusCircle, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List, AlertCircle, RefreshCw, ShieldAlert } from "lucide-react";
+import { Search, Filter, Calendar, CalendarDays, DollarSign, Users, CheckCircle2, Clock, Loader2, Eye, Receipt, PlusCircle, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List, AlertCircle, RefreshCw, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useDebounce } from "@/lib/hooks/useDebounce";
@@ -418,8 +418,7 @@ export default function AdminBookingsPage() {
     { id: "all", label: "All Bookings", count: stats?.total || 0 },
     { id: "confirmed", label: "Confirmed", count: stats?.confirmed || 0 },
     { id: "checked_in", label: "Checked In", count: stats?.checked_in || 0 },
-    { id: "completed", label: "Completed", count: stats?.completed || 0 },
-    { id: "cancelled", label: "Cancelled", count: stats?.cancelled || 0 }
+    { id: "completed", label: "Completed", count: stats?.completed || 0 }
   ];
 
   // When a booking happens, for ordering purposes: the slot it reserves, or for
@@ -581,17 +580,6 @@ export default function AdminBookingsPage() {
           </div>
         </Card>
 
-        <Card className="bg-[var(--surface)] border-[#27272a] p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-500/10 rounded-lg">
-              <XCircle className="h-5 w-5 text-red-500" />
-            </div>
-            <div>
-              <p className="text-label text-muted-content">Cancelled</p>
-              <p className="text-xl font-black text-white"><CountUp end={stats?.cancelled || 0} duration={800} /></p>
-            </div>
-          </div>
-        </Card>
       </div>
 
       {/* Date Filters */}
@@ -641,7 +629,7 @@ export default function AdminBookingsPage() {
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-3 sm:px-4 text-[10px] sm:text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary overflow-hidden"
+                    className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-3 sm:px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary overflow-hidden"
                   >
                     <span className="truncate mr-2">{dateFrom ? format(new Date(dateFrom), "dd-MM-yyyy") : <span className="text-muted-content">dd-mm-yyyy</span>}</span>
                     <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
@@ -670,7 +658,7 @@ export default function AdminBookingsPage() {
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-3 sm:px-4 text-[10px] sm:text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary overflow-hidden"
+                    className="w-full bg-[var(--background)] border border-zinc-900 h-12 rounded-xl px-3 sm:px-4 text-xs font-mono font-bold text-left flex items-center justify-between transition-all hover:border-zinc-700 text-white focus:outline-none focus:ring-1 focus:ring-primary overflow-hidden"
                   >
                     <span className="truncate mr-2">{dateTo ? format(new Date(dateTo), "dd-MM-yyyy") : <span className="text-muted-content">dd-mm-yyyy</span>}</span>
                     <CalendarDays className="h-4 w-4 text-primary flex-shrink-0" />
@@ -887,12 +875,12 @@ export default function AdminBookingsPage() {
                               <p className="text-sm-readable text-secondary-content font-mono">{group.phone}</p>
                             </div>
                             {!isSingleBooking && (
-                              <span className="bg-gradient-primary text-black text-[8px] font-black px-2 py-0.5 rounded-full">
+                              <span className="bg-gradient-primary text-black text-[11px] font-black px-2 py-0.5 rounded-full">
                                 ×{group.count}
                               </span>
                             )}
                             {group.hasBackToBack && (
-                              <span className="bg-gradient-secondary text-white text-[8px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <span className="bg-gradient-secondary text-white text-[11px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
                                 <Link2 className="h-2.5 w-2.5" />
                                 B2B
                               </span>
@@ -915,7 +903,7 @@ export default function AdminBookingsPage() {
                                 <UtensilsCrossed className="h-4 w-4 text-amber-400" />
                                 <div>
                                   <p className="text-sm font-bold text-amber-400">Food Only</p>
-                                  <p className="text-[10px] text-secondary-content">
+                                  <p className="text-xs text-secondary-content">
                                     {firstBooking.booking_food_items?.length || 0} item(s)
                                   </p>
                                 </div>
@@ -1253,7 +1241,7 @@ export default function AdminBookingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-2xl">💵</span>
                 <div className="flex-1">
-                  <Label className="text-[10px] text-zinc-500 uppercase">Cash</Label>
+                  <Label className="text-xs text-zinc-400 uppercase">Cash</Label>
                   <Input
                     type="number"
                     min="0"
@@ -1270,7 +1258,7 @@ export default function AdminBookingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-2xl">💳</span>
                 <div className="flex-1">
-                  <Label className="text-[10px] text-zinc-500 uppercase">Card</Label>
+                  <Label className="text-xs text-zinc-400 uppercase">Card</Label>
                   <Input
                     type="number"
                     min="0"
@@ -1287,7 +1275,7 @@ export default function AdminBookingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-2xl">📱</span>
                 <div className="flex-1">
-                  <Label className="text-[10px] text-zinc-500 uppercase">UPI</Label>
+                  <Label className="text-xs text-zinc-400 uppercase">UPI</Label>
                   <Input
                     type="number"
                     min="0"
@@ -1303,13 +1291,13 @@ export default function AdminBookingsPage() {
               {/* Total Validator */}
               <div className="pt-2 border-t border-zinc-800">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-zinc-500">Total Split:</span>
+                  <span className="text-xs text-zinc-400">Total Split:</span>
                   <span className={`text-sm font-black ${Math.abs((paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount) - pendingPaymentModal.balanceDue) < 0.01 ? 'text-green-400' : 'text-red-400'}`}>
                     ₹{(paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount).toFixed(2)}
                   </span>
                 </div>
                 {Math.abs((paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount) - pendingPaymentModal.balanceDue) >= 0.01 && (
-                  <p className="text-[10px] text-red-400 mt-1">
+                  <p className="text-xs text-red-400 mt-1">
                     ⚠️ Total must equal ₹{pendingPaymentModal.balanceDue.toFixed(2)}
                   </p>
                 )}
@@ -1322,7 +1310,7 @@ export default function AdminBookingsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setPaymentSplit({ cashAmount: pendingPaymentModal.balanceDue, cardAmount: 0, upiAmount: 0 })}
-                  className="flex-1 text-[10px] h-7 border-zinc-700 hover:bg-zinc-800"
+                  className="flex-1 text-xs h-7 border-zinc-700 hover:bg-zinc-800"
                 >
                   All Cash
                 </Button>
@@ -1331,7 +1319,7 @@ export default function AdminBookingsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setPaymentSplit({ cashAmount: 0, cardAmount: pendingPaymentModal.balanceDue, upiAmount: 0 })}
-                  className="flex-1 text-[10px] h-7 border-zinc-700 hover:bg-zinc-800"
+                  className="flex-1 text-xs h-7 border-zinc-700 hover:bg-zinc-800"
                 >
                   All Card
                 </Button>
@@ -1340,7 +1328,7 @@ export default function AdminBookingsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setPaymentSplit({ cashAmount: 0, cardAmount: 0, upiAmount: pendingPaymentModal.balanceDue })}
-                  className="flex-1 text-[10px] h-7 border-zinc-700 hover:bg-zinc-800"
+                  className="flex-1 text-xs h-7 border-zinc-700 hover:bg-zinc-800"
                 >
                   All UPI
                 </Button>

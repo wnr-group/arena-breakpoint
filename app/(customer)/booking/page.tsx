@@ -64,7 +64,7 @@ export default function GamingStationPage() {
     <div className="space-y-6 animate-in fade-in duration-200 pb-12">
       <div className="pt-15 pb-4 px-4">
         <div className="space-y-1 relative z-0">
-          <nav className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">
+          <nav className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-2">
             <Link href="/" className="hover:text-primary transition-colors">
               HOME
             </Link>
@@ -78,7 +78,7 @@ export default function GamingStationPage() {
             </h2>
             <Button
               onClick={() => router.push("/")}
-              className="bg-gradient-primary text-[var(--button-text)] font-black text-[11px] uppercase h-9 px-4 w-full md:w-auto"
+              className="bg-gradient-primary text-[var(--button-text)] font-black text-xs uppercase h-9 px-4 w-full md:w-auto"
             >
               ← BACK TO HOME
             </Button>
@@ -130,7 +130,7 @@ export default function GamingStationPage() {
                     </div>
                   )}
 
-                  <span className={`absolute top-2 right-2 md:top-4 md:right-4 backdrop-blur-md border text-[8px] md:text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-md shadow-2xl z-30 ${isAvail ? "bg-black/90 border-green-500/30 text-green-400" : "bg-black/95 border-red-500/30 text-red-500"
+                  <span className={`absolute top-2 right-2 md:top-4 md:right-4 backdrop-blur-md border text-xs font-black uppercase tracking-wider px-2 py-1 rounded-md shadow-2xl z-30 ${isAvail ? "bg-black/90 border-green-500/30 text-green-400" : "bg-black/95 border-red-500/30 text-red-500"
                     }`}>
                     {isAvail ? `${deviceType.available_devices_count} AVAILABLE` : "FULLY BOOKED"}
                   </span>
@@ -154,7 +154,10 @@ export default function GamingStationPage() {
                       </div>
                     </div>
 
-                    <p className="text-description leading-relaxed line-clamp-2 font-medium bg-zinc-950/40 p-2 rounded border border-zinc-900/60 glow-box-hover">
+                    {/* No clamp: the card is normal flow inside a grid, so rows equalise
+                        height and `justify-between` keeps the buttons aligned. Clamping to
+                        2 lines was cutting the longer blurbs (e.g. the PS5 one). */}
+                    <p className="text-description leading-relaxed font-medium bg-zinc-950/40 p-2 rounded border border-zinc-900/60 glow-box-hover">
                       {deviceType.description || "Premium gaming experience with top-tier equipment."}
                     </p>
                   </div>
@@ -169,7 +172,7 @@ export default function GamingStationPage() {
                         SELECT {deviceType.display_name.toUpperCase()}
                       </Button>
                     ) : (
-                      <Button disabled className="w-full text-xs font-black uppercase py-5 bg-zinc-900 border border-zinc-800 text-zinc-600 rounded-lg cursor-not-allowed">
+                      <Button disabled className="w-full text-xs font-black uppercase py-5 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-lg cursor-not-allowed">
                         FULLY BOOKED
                       </Button>
                     )}

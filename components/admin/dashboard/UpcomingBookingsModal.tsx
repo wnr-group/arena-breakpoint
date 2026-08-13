@@ -71,9 +71,9 @@ export function UpcomingBookingsModal({ open, onClose, bookings, onBookingClick 
                         <Phone className="h-3 w-3" />
                         {slot.bookings?.customer_phone}
                       </p>
-                      <p className="text-[10px] text-primary font-mono mt-1">{slot.bookings?.booking_number}</p>
+                      <p className="text-xs text-primary font-mono mt-1">{slot.bookings?.booking_number}</p>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-[10px] font-black ${
+                    <div className={`px-3 py-1 rounded-full text-xs font-black ${
                       isStartingSoon
                         ? 'bg-amber-500/20 text-amber-400'
                         : 'bg-blue-500/20 text-blue-400'

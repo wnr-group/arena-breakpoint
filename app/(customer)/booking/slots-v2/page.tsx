@@ -330,19 +330,19 @@ export default function FlexibleSlotBookingPage() {
       {/* Progress Steps */}
       <div className="w-full max-w-md mx-auto flex items-center justify-between pb-6 px-2 select-none">
         <div className="flex flex-col items-center gap-1">
-          <div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">1</div>
-          <span className="text-[8px] font-black uppercase text-primary tracking-wider">Time Slot</span>
+          <div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[11px] flex items-center justify-center">1</div>
+          <span className="text-xs font-black uppercase text-primary tracking-wider">Time Slot</span>
         </div>
         <div className="h-0.5 bg-zinc-800 flex-1 mx-2" />
         <div className="flex flex-col items-center gap-1">
-          <div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-black text-[9px] flex items-center justify-center">2</div>
-          <span className="text-[8px] font-black uppercase text-primary tracking-wider">Details</span>
+          <div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-400 font-black text-[11px] flex items-center justify-center">2</div>
+          <span className="text-xs font-black uppercase text-primary tracking-wider">Details</span>
         </div>
 
         <div className="h-0.5 bg-zinc-800 flex-1 mx-2" />
         <div className="flex flex-col items-center gap-1">
-          <div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-bold text-[9px] flex items-center justify-center border border-zinc-800">3</div>
-          <span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Payment</span>
+          <div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-400 font-bold text-[11px] flex items-center justify-center border border-zinc-800">3</div>
+          <span className="text-xs font-black uppercase text-zinc-400 tracking-wider">Payment</span>
         </div>
       </div>
 
@@ -372,7 +372,7 @@ export default function FlexibleSlotBookingPage() {
                 <p className="text-zinc-400 text-xs font-bold mt-0.5"><span className="text-primary font-black">₹{hourlyRate || 0}</span> / hour</p>
               </div>
             </div>
-            <Button variant="gradient" onClick={() => router.push("/booking")} className="text-black font-black text-[10px] uppercase h-7 px-3 flex-shrink-0">
+            <Button variant="gradient" onClick={() => router.push("/booking")} className="text-black font-black text-xs uppercase h-7 px-3 flex-shrink-0">
               Change
             </Button>
           </div>
@@ -429,7 +429,7 @@ export default function FlexibleSlotBookingPage() {
 
               {/* Player Multiplier Controller */}
               <div className="space-y-2">
-                <h4 className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Number of Players</h4>
+                <h4 className="text-xs font-black text-zinc-400 uppercase tracking-wider">Number of Players</h4>
                 <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-lg p-2.5">
                   <p className="text-xs text-zinc-300 font-bold">{includedPlayers} included • Max {maxPlayers}</p>
                   <div className="flex items-center gap-2">
@@ -484,7 +484,7 @@ export default function FlexibleSlotBookingPage() {
 
             <div ref={confirmButtonRef} className="w-full">
               {!canProceed && (
-                <p className="text-[11px] font-bold text-amber-500 text-center mt-2 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
+                <p className="text-xs font-bold text-amber-500 text-center mt-2 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
                   {!calendarDay
                     ? "⚠️ Please select a date to proceed"
                     : !selectedStartTime
@@ -505,14 +505,14 @@ export default function FlexibleSlotBookingPage() {
           <div className="hidden md:block space-y-6">
             {/* Date Selection - today + next 6 days */}
             <div className="space-y-3">
-              <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">📅 Select Date</h3>
+              <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest pl-1">📅 Select Date</h3>
               <DateSelector selected={calendarDay} onSelect={setCalendarDay} />
             </div>
 
             <div className="grid grid-cols-2 gap-6 items-start">
             {/* Duration Selection */}
             <div className="space-y-3">
-              <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">⏱️ Duration</h3>
+              <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest pl-1">⏱️ Duration</h3>
               <div className="space-y-1.5">
                 {filteredDurations.map((duration) => {
                   const isSelected = selectedDuration === duration.value;
@@ -543,17 +543,17 @@ export default function FlexibleSlotBookingPage() {
 
             {/* Start Time Selection */}
             <div className="space-y-3">
-              <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest pl-1">🕒 Start Time</h3>
+              <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest pl-1">🕒 Start Time</h3>
               {queryingDb ? (
                 <div className="h-96 flex flex-col items-center justify-center gap-2">
                   <Loader2 className="h-5 w-5 text-primary animate-spin" />
-                  <p className="text-xs text-zinc-500">Checking availability...</p>
+                  <p className="text-xs text-zinc-400">Checking availability...</p>
                 </div>
               ) : availableStartTimesForDate.length === 0 ? (
                 <div className="h-96 flex flex-col items-center justify-center gap-2 text-center px-4">
                   <Clock className="h-8 w-8 text-zinc-700" />
                   <p className="text-sm text-zinc-400 font-bold">No time slots available</p>
-                  <p className="text-xs text-zinc-600">Try selecting a different date or duration</p>
+                  <p className="text-xs text-zinc-400">Try selecting a different date or duration</p>
                 </div>
               ) : (
                 <div className="space-y-1.5 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-zinc-950">
@@ -684,7 +684,7 @@ export default function FlexibleSlotBookingPage() {
             </div>
 
             {!canProceed && (
-              <p className="text-[11px] font-bold text-amber-500 text-center mt-3 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
+              <p className="text-xs font-bold text-amber-500 text-center mt-3 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
                 {!calendarDay
                   ? "⚠️ Please select a date to proceed"
                   : !selectedStartTime
@@ -712,7 +712,7 @@ export default function FlexibleSlotBookingPage() {
           <div className="bg-[#121212] border-t border-zinc-800 rounded-t-2xl w-full p-5 space-y-4 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
               <span className="text-xs font-black uppercase text-zinc-400">Select Duration</span>
-              <button onClick={() => setMobileDurationOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-500">
+              <button onClick={() => setMobileDurationOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-400">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -750,7 +750,7 @@ export default function FlexibleSlotBookingPage() {
           <div className="bg-[#121212] border-t border-zinc-800 rounded-t-2xl w-full p-5 space-y-4 max-h-[75vh] flex flex-col overflow-hidden">
             <div className="flex justify-between items-center border-b border-zinc-900 pb-2 flex-shrink-0">
               <span className="text-xs font-black uppercase text-zinc-400">Select Start Time</span>
-              <button onClick={() => setMobileStartTimeOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-500">
+              <button onClick={() => setMobileStartTimeOpen(false)} className="p-1.5 rounded-full bg-zinc-950 text-zinc-400">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -788,7 +788,7 @@ export default function FlexibleSlotBookingPage() {
                     <div className="flex flex-col gap-1">
                       <span>{time} - {calculateEndTime(time, 30)}</span>
                       {happyHourCheck.hasHappyHour && !isSelected && (
-                        <span className="flex items-center justify-center gap-0.5 text-[9px] font-black text-yellow-400">
+                        <span className="flex items-center justify-center gap-0.5 text-[11px] font-black text-yellow-400">
                           <Sparkles className="w-2.5 h-2.5" />
                           {happyHourCheck.discount}% OFF
                         </span>

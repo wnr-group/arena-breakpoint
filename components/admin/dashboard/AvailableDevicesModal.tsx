@@ -224,11 +224,11 @@ export function AvailableDevicesModal({ open, onClose, devices }: AvailableDevic
                       </div>
 
                       {device.specs && (
-                        <p className="text-[9px] text-muted-content truncate mb-2">{device.specs}</p>
+                        <p className="text-[11px] text-muted-content truncate mb-2">{device.specs}</p>
                       )}
 
                       <div className="flex items-center gap-1">
-                        <p className={`text-[9px] font-bold uppercase ${config.labelColor}`}>{config.label}</p>
+                        <p className={`text-[11px] font-bold uppercase ${config.labelColor}`}>{config.label}</p>
                       </div>
                     </div>
                   );

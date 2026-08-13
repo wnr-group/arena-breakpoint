@@ -147,7 +147,7 @@ export default function SubscriptionsCards() {
             viewport={{ once: true, margin: '-50px' }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
           >
-            <p className="text-[11px] tracking-[0.3em] uppercase font-bold text-orange-600 mt-3">
+            <p className="text-xs tracking-[0.3em] uppercase font-bold text-orange-600 mt-3">
               Premium performance for every platform. No hidden charges.
             </p>
           </motion.div>

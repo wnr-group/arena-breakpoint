@@ -281,7 +281,7 @@ export default function WalkInFoodOnlyPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-black text-white">Food-Only Walk-In</h1>
-            <p className="text-sm text-zinc-500">Create a food order without device booking</p>
+            <p className="text-sm text-zinc-400">Create a food order without device booking</p>
           </div>
         </div>
 
@@ -429,11 +429,11 @@ export default function WalkInFoodOnlyPage() {
                           <div className="flex-1">
                             <h5 className="text-white font-bold">{item.name}</h5>
                             {item.description && (
-                              <p className="text-xs text-zinc-500 mt-1">{item.description}</p>
+                              <p className="text-xs text-zinc-400 mt-1">{item.description}</p>
                             )}
                             <div className="flex items-center gap-2 mt-2">
                               <p className="text-primary font-bold">₹{item.price}</p>
-                              <span className="text-xs text-zinc-600">• Stock: {item.quantity}</span>
+                              <span className="text-xs text-zinc-400">• Stock: {item.quantity}</span>
                             </div>
                           </div>
                           {isAvailable ? (
@@ -463,7 +463,7 @@ export default function WalkInFoodOnlyPage() {
                               </Button>
                             )
                           ) : (
-                            <span className="text-xs font-bold text-zinc-600 uppercase">Out of Stock</span>
+                            <span className="text-xs font-bold text-zinc-400 uppercase">Out of Stock</span>
                           )}
                         </div>
                       </div>
@@ -475,7 +475,7 @@ export default function WalkInFoodOnlyPage() {
               {filteredMenuItems.length === 0 && !loadingMenu && (
                 <div className="py-12 text-center">
                   <Coffee className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-                  <p className="text-zinc-500">No items available in this category.</p>
+                  <p className="text-zinc-400">No items available in this category.</p>
                 </div>
               )}
             </Card>
@@ -493,7 +493,7 @@ export default function WalkInFoodOnlyPage() {
                     <div key={item.id} className="flex items-center justify-between py-2 px-3 bg-zinc-950 rounded-lg border border-zinc-800">
                       <div className="flex-1">
                         <p className="text-white font-bold text-sm">{item.name}</p>
-                        <p className="text-xs text-zinc-500">₹{item.price} × {item.quantity}</p>
+                        <p className="text-xs text-zinc-400">₹{item.price} × {item.quantity}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
@@ -538,7 +538,7 @@ export default function WalkInFoodOnlyPage() {
                 >
                   {isCartOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
                   <div className="text-left">
-                    <p className="text-xs text-zinc-500 font-bold uppercase">
+                    <p className="text-xs text-zinc-400 font-bold uppercase">
                       {selectedItems.reduce((sum, item) => sum + item.quantity, 0)} Items
                     </p>
                     <p className="text-lg font-black text-primary">₹{totalAmount.toFixed(2)}</p>

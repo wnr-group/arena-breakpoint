@@ -70,7 +70,7 @@ export function PromoCodeTable({ promos, onEdit, onDelete, onAdd }: PromoCodeTab
                   // switch is set.
                   const { label, className } = PROMO_STATUS_PRESENTATION[getPromoStatus(row)];
                   return (
-                    <span className={`${className} text-[11px] font-black px-2 py-0.5 rounded uppercase tracking-wider`}>
+                    <span className={`${className} text-xs font-black px-2 py-0.5 rounded uppercase tracking-wider`}>
                       {label}
                     </span>
                   );

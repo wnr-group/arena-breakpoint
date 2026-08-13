@@ -378,31 +378,6 @@ export async function checkOutBooking(bookingId: string) {
   }
 }
 
-export async function cancelBooking(bookingId: string, reason?: string) {
-  await requireStaff();
-
-  try {
-    const now = new Date().toISOString();
-
-    const { data, error } = await supabaseAdmin
-      .from("bookings")
-      .update({
-        status: "cancelled",
-        updated_at: now
-      })
-      .eq("id", bookingId)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return { success: true, booking: data };
-  } catch (err: any) {
-    console.error("Cancel booking error:", err);
-    return { success: false, error: err.message };
-  }
-}
-
 export async function getBookingStats(
   filters?: Pick<BookingFilters, "dateFrom" | "dateTo">
 ) {
@@ -451,7 +426,6 @@ export async function getBookingStats(
         confirmed: grouped.confirmed || 0,
         checked_in: grouped.checked_in || 0,
         completed: grouped.completed || 0,
-        cancelled: grouped.cancelled || 0,
         locked: grouped.locked || 0,
         todayRevenue
       }

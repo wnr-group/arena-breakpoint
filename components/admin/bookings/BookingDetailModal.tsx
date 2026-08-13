@@ -12,13 +12,13 @@ import {
 } from "@/components/ui/dialog";
 import { BookingStatusBadge } from "./BookingStatusBadge";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
-import { getBookingDetails, checkInBooking, checkOutBooking, cancelBooking, addFoodToBooking, removeFoodItemFromBooking, updatePlayerCount } from "@/app/(admin)/admin/bookings/actions";
+import { getBookingDetails, checkInBooking, checkOutBooking, addFoodToBooking, removeFoodItemFromBooking, updatePlayerCount } from "@/app/(admin)/admin/bookings/actions";
 import { getMenuItems } from "@/app/(admin)/admin/food/actions";
 import { Label } from "@/components/ui/label";
 import { QRCodeSVG } from "qrcode.react";
 import {
   User, Phone, Mail, Calendar, Clock, DollarSign,
-  Loader2, CheckCircle2, XCircle, LogIn, LogOut,
+  Loader2, CheckCircle2, LogIn, LogOut,
   UtensilsCrossed, QrCode, MapPin, Gamepad2, Plus, Minus, Search, Filter, Trash2
 } from "lucide-react";
 import { toast } from "sonner";
@@ -47,7 +47,7 @@ interface BookingDetailModalProps {
    * /admin/bookings/[bookingId] route the dashboard opens in a new tab - so a
    * booking is never a second dialog stacked on the stat modal behind it.
    *
-   * The secondary dialogs below (add food, cancel, remove item) stay dialogs in
+   * The secondary dialogs below (add food, remove item) stay dialogs in
    * both modes: those confirm an action already under way, they are not a second
    * thing to browse.
    */
@@ -60,7 +60,6 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [addFoodModalOpen, setAddFoodModalOpen] = useState(false);
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [selectedFoodItems, setSelectedFoodItems] = useState<Record<string, number>>({});
@@ -202,20 +201,6 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
     setActionLoading(false);
   };
 
-  const handleCancel = async () => {
-    if (!bookingId) return;
-    setActionLoading(true);
-    const result = await cancelBooking(bookingId);
-    if (result.success) {
-      toast.success("Booking cancelled successfully");
-      setCancelDialogOpen(false);
-      loadBookingDetails();
-      onUpdate?.();
-    } else {
-      toast.error("Cancellation failed", { description: result.error });
-    }
-    setActionLoading(false);
-  };
 
   const handleRemoveFoodItem = async () => {
     if (!bookingId || !foodItemToRemove) return;
@@ -380,7 +365,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
               {/* Game Orders */}
               {booking.booking_device_slots && booking.booking_device_slots.length > 0 && (
                 <Card className="bg-[var(--background)] border-[#27272a] p-5 space-y-4">
-                  <h3 className="text-[10px] font-black text-secondary-content uppercase tracking-wider border-b border-[#27272a] pb-2 flex items-center gap-2">
+                  <h3 className="text-xs font-black text-secondary-content uppercase tracking-wider border-b border-[#27272a] pb-2 flex items-center gap-2">
                     <Gamepad2 className="h-4 w-4" />
                     Game Orders
                   </h3>
@@ -405,7 +390,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                             </div>
                             <div className="text-right">
                               <p className="text-sm font-black text-white">₹{Number(slot.slot_total).toLocaleString('en-IN')}</p>
-                              <p className="text-[9px] text-data-placeholder uppercase">Base Rate</p>
+                              <p className="text-[11px] text-data-placeholder uppercase">Base Rate</p>
                             </div>
                           </div>
 
@@ -456,7 +441,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                                 </div>
                                 <div className="text-right">
                                   <p className="text-sm font-black text-primary">₹{extraPlayersCharge.toLocaleString('en-IN')}</p>
-                                  <p className="text-[9px] text-muted-content uppercase">Additional</p>
+                                  <p className="text-[11px] text-muted-content uppercase">Additional</p>
                                 </div>
                               </div>
                             )}
@@ -678,7 +663,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                             {/* Gateway reference, so staff can reconcile against the
                                 Razorpay dashboard when a customer queries a charge. */}
                             {booking.razorpay_payment_id && (
-                              <div className="flex items-center justify-between gap-2 text-[11px] text-blue-300/60 border-t border-blue-500/20 pt-2">
+                              <div className="flex items-center justify-between gap-2 text-xs text-blue-300/60 border-t border-blue-500/20 pt-2">
                                 <span className="uppercase font-bold shrink-0">Payment ID</span>
                                 <span className="font-mono truncate">{booking.razorpay_payment_id}</span>
                               </div>
@@ -742,18 +727,6 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                   >
                     {actionLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogOut className="h-5 w-5" />}
                     Check Out Customer
-                  </Button>
-                )}
-
-                {(booking.status === "confirmed" || booking.status === "checked_in") && (
-                  <Button
-                    onClick={() => setCancelDialogOpen(true)}
-                    disabled={actionLoading}
-                    variant="outline"
-                    className="bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white border border-red-500/20 font-black uppercase text-sm h-12 px-8 flex items-center gap-2"
-                  >
-                    <XCircle className="h-5 w-5" />
-                    Cancel Booking
                   </Button>
                 )}
 
@@ -978,32 +951,6 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Cancel Confirmation Dialog */}
-      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-        <AlertDialogContent className="bg-[var(--surface)] border-[#27272a] text-white">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl font-bold">Cancel Booking?</AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-content">
-              Are you sure you want to cancel booking <span className="text-primary font-mono">{booking?.booking_number}</span>?
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-[#27272a] text-white border-zinc-700 hover:bg-zinc-800">
-              Keep Booking
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleCancel}
-              disabled={actionLoading}
-              className="bg-red-600 hover:bg-red-700 text-white font-semibold"
-            >
-              {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Confirm Cancellation
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Remove Food Item Confirmation Dialog */}
       <AlertDialog

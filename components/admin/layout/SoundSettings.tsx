@@ -117,7 +117,7 @@ export function SoundSettings() {
             </>
           )}
 
-          <p className="text-[10px] text-muted-content pt-2 border-t border-[#27272a]">
+          <p className="text-xs text-muted-content pt-2 border-t border-[#27272a]">
             Sounds play for new bookings, food orders, and notifications
           </p>
         </div>

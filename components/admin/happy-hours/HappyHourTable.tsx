@@ -130,7 +130,7 @@ export function HappyHourTable({ data = [], onEdit, onDelete }: TableProps) {
 
                   {/* STATUS */}
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-0.5 border rounded text-[11px] font-black tracking-wider uppercase ${getStatusStyle(row.status)}`}>
+                    <span className={`px-2 py-0.5 border rounded text-xs font-black tracking-wider uppercase ${getStatusStyle(row.status)}`}>
                       {row.status}
                     </span>
                   </td>

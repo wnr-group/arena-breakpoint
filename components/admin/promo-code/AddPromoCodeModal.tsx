@@ -154,7 +154,7 @@ export function AddPromoCodeModal({ onClose, onRefresh }: AddPromoModalProps) {
                   onChange={(e) => setDiscountValue(e.target.value)}
                   className="bg-[var(--background)] border-zinc-800 h-12 text-sm text-white placeholder-zinc-700 font-black rounded-xl focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-transparent transition-all pr-14"
                 />
-                <span className="absolute right-2 text-[11px] font-black text-black bg-primary border border-primary px-2 py-1.5 rounded-lg select-none shadow-[0_0_10px_rgba(184,134,11,0.2)]">
+                <span className="absolute right-2 text-xs font-black text-black bg-primary border border-primary px-2 py-1.5 rounded-lg select-none shadow-[0_0_10px_rgba(184,134,11,0.2)]">
                   {discountType === "percentage" ? "PCT" : "INR"}
                 </span>
               </div>

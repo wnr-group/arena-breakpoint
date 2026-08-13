@@ -46,7 +46,7 @@ const nextConfig: NextConfig = {
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    // Next.js 16 made `quality` an allowlist that defaults to [75]; FoodCard passes 85.
+    // Next.js 16 turned `quality` into an allowlist (default [75]); 85 is used by FoodCard.
     qualities: [75, 85],
   },
 };

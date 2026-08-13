@@ -39,7 +39,7 @@ export default function BookingDetailPage({
         headerSlot={
           <Link
             href="/admin/bookings"
-            className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-muted-content hover:text-primary transition-colors mb-4"
+            className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-muted-content hover:text-primary transition-colors mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
             All Bookings

@@ -107,8 +107,8 @@ export function DateSelector({ selected, onSelect, className }: DateSelectorProp
           >
             <span
               className={cn(
-                "text-[9px] md:text-[10px] font-black uppercase tracking-wide md:tracking-widest",
-                isSelected ? "text-black/70" : "text-zinc-500"
+                "text-[11px] md:text-xs font-black uppercase tracking-wide md:tracking-widest",
+                isSelected ? "text-black/70" : "text-zinc-400"
               )}
             >
               {date.toLocaleDateString("en-US", { weekday: "short" })}
@@ -123,8 +123,8 @@ export function DateSelector({ selected, onSelect, className }: DateSelectorProp
             </span>
             <span
               className={cn(
-                "text-[9px] md:text-[10px] font-black uppercase tracking-wide md:tracking-widest",
-                isSelected ? "text-black/70" : "text-zinc-500"
+                "text-[11px] md:text-xs font-black uppercase tracking-wide md:tracking-widest",
+                isSelected ? "text-black/70" : "text-zinc-400"
               )}
             >
               {date.toLocaleDateString("en-US", { month: "short" })}

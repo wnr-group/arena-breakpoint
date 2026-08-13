@@ -308,7 +308,7 @@ export default function AdminDashboardPage() {
               <h3 className="text-2xl font-black text-white mb-1">
                 <CurrencyCountUp amount={quickStats?.thisWeekRevenue || 0} duration={1200} />
               </h3>
-              <div className="flex items-center gap-1 text-[10px] text-green-500">
+              <div className="flex items-center gap-1 text-xs text-green-500">
                 <TrendingUp className="h-3 w-3" />
                 <span>Last 7 days</span>
               </div>
@@ -407,10 +407,10 @@ export default function AdminDashboardPage() {
                 >
                   <div className="flex items-center gap-3 flex-1">
                     <div className="flex flex-col items-center justify-center w-16 h-16 bg-zinc-900 rounded-lg">
-                      <span className="text-[10px] font-black text-primary whitespace-nowrap">
+                      <span className="text-xs font-black text-primary whitespace-nowrap">
                         {formatDbTime(slot.slot_start_time)}
                       </span>
-                      <span className="text-[8px] text-muted-content whitespace-nowrap">
+                      <span className="text-[11px] text-muted-content whitespace-nowrap">
                         {formatDbTime(slot.slot_end_time)}
                       </span>
                     </div>
@@ -487,7 +487,7 @@ export default function AdminDashboardPage() {
                       <p className="text-sm font-black text-primary">
                         ₹{Number(booking.total_amount).toLocaleString('en-IN')}
                       </p>
-                      <p className="text-[9px] text-muted-content uppercase mt-0.5">
+                      <p className="text-[11px] text-muted-content uppercase mt-0.5">
                         {booking.payment_status}
                       </p>
                     </div>

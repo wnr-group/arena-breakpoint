@@ -62,7 +62,7 @@ export default function CustomerRouteGroupLayout({ children }: { children: React
 
         {/* 10-Minute Hold HUD Alert Banner */}
         {mounted && timeLeftStr && (
-          <div className="w-full h-10 bg-[#E53e3e] text-white text-[11px] font-black tracking-widest uppercase text-center flex items-center justify-center gap-2 relative z-50 shadow-xl select-none">
+          <div className="w-full h-10 bg-[#E53e3e] text-white text-xs font-black tracking-widest uppercase text-center flex items-center justify-center gap-2 relative z-50 shadow-xl select-none">
             <Timer className="h-3.5 w-3.5 animate-pulse text-white" />
             <span>Slot Held For: <span className="font-mono bg-black/30 px-1.5 py-0.5 rounded text-primary ml-1">{timeLeftStr}</span></span>
           </div>

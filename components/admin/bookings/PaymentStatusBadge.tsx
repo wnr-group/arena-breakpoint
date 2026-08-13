@@ -5,8 +5,8 @@ interface PaymentStatusBadgeProps {
 
 export function PaymentStatusBadge({ status, size = "md" }: PaymentStatusBadgeProps) {
   const sizeClasses = {
-    sm: "text-[9px] px-2 py-0.5",
-    md: "text-[10px] px-2.5 py-1",
+    sm: "text-[11px] px-2 py-0.5",
+    md: "text-xs px-2.5 py-1",
     lg: "text-xs px-3 py-1.5",
   };
 

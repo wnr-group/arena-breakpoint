@@ -54,7 +54,7 @@ export function BookingsGrid({
               {/* Header - Booking ID & Status */}
               <div className="p-4 bg-gradient-to-br from-[var(--background)] to-[var(--surface)] border-b border-[#27272a]/50">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[10px] font-mono text-primary/70">{booking.booking_number}</p>
+                  <p className="text-xs font-mono text-primary/70">{booking.booking_number}</p>
                   <BookingStatusBadge status={booking.status} size="sm" />
                 </div>
 
@@ -91,7 +91,7 @@ export function BookingsGrid({
                         <p className="text-sm font-bold text-white">
                           {new Date(booking.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </p>
-                        <p className="text-[10px] text-muted-content flex items-center gap-1">
+                        <p className="text-xs text-muted-content flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           {new Date(booking.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                         </p>
@@ -121,7 +121,7 @@ export function BookingsGrid({
                         <p className="text-sm font-bold text-white">
                           {deviceSlot?.slot_date ? new Date(deviceSlot.slot_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : "N/A"}
                         </p>
-                        <p className="text-[10px] text-muted-content flex items-center gap-1">
+                        <p className="text-xs text-muted-content flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           {formatDbTimeRange(deviceSlot?.slot_start_time, deviceSlot?.slot_end_time)}
                         </p>
@@ -141,7 +141,7 @@ export function BookingsGrid({
                       ₹{formatCurrency(booking.total_amount)}
                     </p>
                     {booking.payment_status === 'partial' && booking.balance_due && (
-                      <p className="text-[10px] text-amber-400 font-bold mt-0.5">
+                      <p className="text-xs text-amber-400 font-bold mt-0.5">
                         Due: ₹{formatCurrency(booking.balance_due)}
                       </p>
                     )}
@@ -205,7 +205,7 @@ export function BookingsGrid({
                 <Button
                   size="sm"
                   onClick={() => onBookingClick(booking)}
-                  className="h-8 px-3 bg-[var(--surface)] hover:bg-primary/10 border border-[#27272a] hover:border-primary/50 text-white hover:text-primary text-[10px] font-black uppercase rounded-lg transition-all"
+                  className="h-8 px-3 bg-[var(--surface)] hover:bg-primary/10 border border-[#27272a] hover:border-primary/50 text-white hover:text-primary text-xs font-black uppercase rounded-lg transition-all"
                 >
                   <Eye className="h-3.5 w-3.5 mr-1" />
                   View

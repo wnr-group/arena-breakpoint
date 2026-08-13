@@ -82,14 +82,14 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
               ) : (
                 <div className="flex flex-col items-center text-zinc-800 gap-1.5">
                   <Utensils className="h-6 w-6" />
-                  <span className="text-[10px]">No Cover Asset</span>
+                  <span className="text-xs">No Cover Asset</span>
                 </div>
               )}
 
               {/* Dynamic Stock Volume Metric Tag */}
               {isCurrentlyAvailable && (
                 <div className="absolute top-3 right-3 z-10 animate-in fade-in zoom-in-95 duration-200">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[9px] font-black text-white bg-black/60 border border-green-500/30 rounded-md backdrop-blur-md">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-black text-white bg-black/60 border border-green-500/30 rounded-md backdrop-blur-md">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1 inline-block animate-pulse" />
                     {totalQty} UNITS
                   </span>
@@ -106,7 +106,7 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
                     {item.name}
                   </h3>
                   
-                  <span className={`text-[10px] font-extrabold uppercase tracking-wide transition-colors mt-0.5 flex-shrink-0 ${
+                  <span className={`text-xs font-extrabold uppercase tracking-wide transition-colors mt-0.5 flex-shrink-0 ${
                     isCurrentlyAvailable ? "text-primary" : "text-red-500"
                   }`}>
                     {isCurrentlyAvailable ? "Available" : "Not Available"}
@@ -135,14 +135,14 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
                 </div>
 
                 {/* Short Description Field Area */}
-                <p className="text-[11px] text-[#a1a1aa]/70 line-clamp-2 h-8 leading-relaxed pt-0.5">
+                <p className="text-xs text-[#a1a1aa]/70 line-clamp-2 h-8 leading-relaxed pt-0.5">
                   {item.description || "Premium operational kitchen item configuration with zero details logged."}
                 </p>
               </div>
 
               {/* Category Pill Badge fixed securely on the bottom-left area */}
               <div className="pt-1 flex justify-start items-center">
-                <span className="inline-flex items-center px-2 py-1 text-[9px] font-black text-primary bg-[var(--surface-hover)] border border-[#27272a] rounded-md uppercase tracking-wider select-none">
+                <span className="inline-flex items-center px-2 py-1 text-[11px] font-black text-primary bg-[var(--surface-hover)] border border-[#27272a] rounded-md uppercase tracking-wider select-none">
                   {item.category}
                 </span>
               </div>

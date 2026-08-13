@@ -71,12 +71,6 @@ export default function RetrieveBookingPage() {
         border: 'border-zinc-700',
         glow: ''
       },
-      cancelled: {
-        bg: 'bg-gradient-to-r from-red-500/20 to-rose-500/20',
-        text: 'text-red-400',
-        border: 'border-red-500/40',
-        glow: 'shadow-[0_0_15px_rgba(239,68,68,0.3)]'
-      },
       locked: {
         bg: 'bg-gradient-to-r from-amber-500/20 to-pink-500/20',
         text: 'text-amber-400',
@@ -88,7 +82,7 @@ export default function RetrieveBookingPage() {
     const config = statusConfig[status] || statusConfig.confirmed;
 
     return (
-      <span className={`text-[10px] px-3 py-1.5 rounded-full font-black uppercase ${config.bg} ${config.text} border ${config.border} ${config.glow} backdrop-blur-sm animate-in fade-in duration-300`}>
+      <span className={`text-xs px-3 py-1.5 rounded-full font-black uppercase ${config.bg} ${config.text} border ${config.border} ${config.glow} backdrop-blur-sm animate-in fade-in duration-300`}>
         {status.replace('_', ' ')}
       </span>
     );
@@ -114,7 +108,7 @@ export default function RetrieveBookingPage() {
               </p>
             </div>
           </div>
-          <p className="text-sm text-zinc-500 pl-15">Enter your phone number to view all your bookings and access QR codes</p>
+          <p className="text-sm text-zinc-400 pl-15">Enter your phone number to view all your bookings and access QR codes</p>
         </div>
 
         {/* Search Card with Enhanced Styling */}
@@ -135,7 +129,7 @@ export default function RetrieveBookingPage() {
               </Label>
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-zinc-600 border-r border-zinc-800 pr-3">+91</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-zinc-400 border-r border-zinc-800 pr-3">+91</span>
                   {/* The field is monospaced and starts behind the +91 prefix,
                       so on a narrow phone the placeholder ran past the right
                       edge and showed nothing at all. Mobile reclaims that room
@@ -183,7 +177,7 @@ export default function RetrieveBookingPage() {
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
               <div className="absolute inset-0 blur-xl bg-primary/30 animate-pulse" />
             </div>
-            <p className="text-sm font-bold text-zinc-500 uppercase tracking-wider">Searching bookings...</p>
+            <p className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Searching bookings...</p>
           </div>
         )}
 
@@ -194,7 +188,7 @@ export default function RetrieveBookingPage() {
               <Search className="h-10 w-10 text-zinc-700" />
             </div>
             <h3 className="text-xl font-black text-zinc-400 mb-3 uppercase">No Bookings Found</h3>
-            <p className="text-sm text-zinc-600 max-w-md mx-auto">No bookings were found for this phone number. Try a different number or create a new booking.</p>
+            <p className="text-sm text-zinc-400 max-w-md mx-auto">No bookings were found for this phone number. Try a different number or create a new booking.</p>
             <Button
               onClick={() => router.push("/booking")}
               variant="gradient"
@@ -210,7 +204,7 @@ export default function RetrieveBookingPage() {
         {!isLoading && !selectedBooking && bookings.length > 0 && (
           <div className="space-y-6">
             <div className="flex items-center justify-between animate-in fade-in slide-in-from-left-4 duration-500 delay-200">
-              <h2 className="text-sm font-black text-zinc-500 uppercase tracking-wider flex items-center gap-2">
+              <h2 className="text-sm font-black text-zinc-400 uppercase tracking-wider flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                   <CheckCircle2 className="h-4 w-4 text-primary" />
                 </div>
@@ -258,7 +252,7 @@ export default function RetrieveBookingPage() {
                                 {/* nowrap: a station like "SS-001" gives the
                                     browser a break opportunity at the hyphen,
                                     splitting the tag across two lines. */}
-                                <span className="text-xs font-bold text-zinc-600 bg-zinc-900 px-2 py-1 rounded whitespace-nowrap shrink-0">
+                                <span className="text-xs font-bold text-zinc-400 bg-zinc-900 px-2 py-1 rounded whitespace-nowrap shrink-0">
                                   #{booking.booking_device_slots?.[0]?.device_station_number || 'N/A'}
                                 </span>
                               </>
@@ -271,7 +265,7 @@ export default function RetrieveBookingPage() {
 
                       {/* Booking ID - Small tag */}
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-mono font-bold text-zinc-600 bg-zinc-950/50 px-2 py-1 rounded border border-zinc-800">
+                        <span className="text-xs font-mono font-bold text-zinc-400 bg-zinc-950/50 px-2 py-1 rounded border border-zinc-800">
                           #{booking.booking_number}
                         </span>
                       </div>
@@ -285,7 +279,7 @@ export default function RetrieveBookingPage() {
                                 <UtensilsCrossed className="h-4 w-4 text-orange-400" />
                               </div>
                               <div>
-                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Items</p>
+                                <p className="text-xs text-zinc-400 uppercase font-bold">Items</p>
                                 <p className="text-sm text-white font-black">
                                   {booking.booking_food_items.length} item{booking.booking_food_items.length > 1 ? 's' : ''}
                                 </p>
@@ -297,7 +291,7 @@ export default function RetrieveBookingPage() {
                                 <Calendar className="h-4 w-4 text-primary" />
                               </div>
                               <div>
-                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Ordered</p>
+                                <p className="text-xs text-zinc-400 uppercase font-bold">Ordered</p>
                                 <p className="text-sm text-white font-black">
                                   {new Date(booking.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                 </p>
@@ -309,7 +303,7 @@ export default function RetrieveBookingPage() {
                                 <CreditCard className="h-4 w-4 text-primary" />
                               </div>
                               <div>
-                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Amount</p>
+                                <p className="text-xs text-zinc-400 uppercase font-bold">Amount</p>
                                 <p className="text-sm text-primary font-black">₹{booking.total_amount}</p>
                               </div>
                             </div>
@@ -322,7 +316,7 @@ export default function RetrieveBookingPage() {
                                 <Calendar className="h-4 w-4 text-primary" />
                               </div>
                               <div>
-                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Date</p>
+                                <p className="text-xs text-zinc-400 uppercase font-bold">Date</p>
                                 <p className="text-sm text-white font-black">
                                   {booking.booking_device_slots?.[0]?.slot_date ?
                                     new Date(booking.booking_device_slots[0].slot_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) :
@@ -337,7 +331,7 @@ export default function RetrieveBookingPage() {
                                 <Clock className="h-4 w-4 text-primary" />
                               </div>
                               <div>
-                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Time</p>
+                                <p className="text-xs text-zinc-400 uppercase font-bold">Time</p>
                                 <p className="text-sm text-white font-black">
                                   {formatDbTime(booking.booking_device_slots?.[0]?.slot_start_time)}
                                 </p>
@@ -349,7 +343,7 @@ export default function RetrieveBookingPage() {
                                 <CreditCard className="h-4 w-4 text-primary" />
                               </div>
                               <div>
-                                <p className="text-[10px] text-zinc-600 uppercase font-bold">Amount</p>
+                                <p className="text-xs text-zinc-400 uppercase font-bold">Amount</p>
                                 <p className="text-sm text-primary font-black">₹{booking.total_amount}</p>
                               </div>
                             </div>
@@ -388,8 +382,8 @@ export default function RetrieveBookingPage() {
               <div className="relative z-10">
                 {/* Booking ID - Small tag at top right */}
                 <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <p className="text-[10px] sm:text-xs text-zinc-500 font-bold uppercase tracking-wider">Booking Status</p>
-                  <span className="text-[10px] sm:text-xs font-mono font-bold text-zinc-600 bg-zinc-950/50 px-2 sm:px-3 py-1 rounded-md border border-zinc-800">
+                  <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Booking Status</p>
+                  <span className="text-xs font-mono font-bold text-zinc-400 bg-zinc-950/50 px-2 sm:px-3 py-1 rounded-md border border-zinc-800">
                     #{selectedBooking.booking_number}
                   </span>
                 </div>
@@ -402,15 +396,15 @@ export default function RetrieveBookingPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                       {getStatusBadge(selectedBooking.status)}
-                      <span className="text-xs text-zinc-600 hidden sm:inline">•</span>
-                      <span className={`text-[10px] sm:text-xs font-black uppercase px-2 sm:px-3 py-1 sm:py-1.5 rounded-full ${
+                      <span className="text-xs text-zinc-400 hidden sm:inline">•</span>
+                      <span className={`text-xs font-black uppercase px-2 sm:px-3 py-1 sm:py-1.5 rounded-full ${
                         selectedBooking.payment_status === 'paid'
                           ? 'bg-green-500/20 text-green-400 border border-green-500/40'
                           : selectedBooking.payment_status === 'partial'
                           ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
                           : selectedBooking.payment_status === 'pending'
                           ? 'bg-red-500/20 text-red-400 border border-red-500/40'
-                          : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
+                          : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
                       }`}>
                         {selectedBooking.payment_status === 'partial'
                           ? 'Balance Due'
@@ -433,7 +427,7 @@ export default function RetrieveBookingPage() {
               </div>
 
               <div className="space-y-6 relative z-10">
-                <div className="flex items-center justify-center gap-2 text-xs font-black text-zinc-500 uppercase tracking-wider">
+                <div className="flex items-center justify-center gap-2 text-xs font-black text-zinc-400 uppercase tracking-wider">
                   <QrCode className="h-5 w-5 text-primary" />
                   <span>Booking QR Code</span>
                 </div>
@@ -458,7 +452,7 @@ export default function RetrieveBookingPage() {
                 </div>
 
                 <div className="text-center">
-                  <p className="text-xs text-zinc-500">Show this QR code at the counter for instant check-in</p>
+                  <p className="text-xs text-zinc-400">Show this QR code at the counter for instant check-in</p>
                 </div>
               </div>
             </Card>
@@ -482,12 +476,12 @@ export default function RetrieveBookingPage() {
                         <div className="space-y-4 sm:space-y-5">
                           {/* Device Info - Large and Prominent with Responsive Sizing */}
                           <div className="pb-3 sm:pb-4 border-b-2 border-primary/20">
-                            <p className="text-[10px] sm:text-xs text-zinc-500 uppercase font-bold mb-2 tracking-wider">Gaming Device</p>
+                            <p className="text-xs text-zinc-400 uppercase font-bold mb-2 tracking-wider">Gaming Device</p>
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white leading-tight">
                                 {slot.device_type}
                               </span>
-                              <span className="text-xs sm:text-sm font-bold text-zinc-600 bg-zinc-900 px-2 sm:px-3 py-1 rounded-lg whitespace-nowrap shrink-0">
+                              <span className="text-xs sm:text-sm font-bold text-zinc-400 bg-zinc-900 px-2 sm:px-3 py-1 rounded-lg whitespace-nowrap shrink-0">
                                 #{slot.device_station_number}
                               </span>
                             </div>
@@ -499,7 +493,7 @@ export default function RetrieveBookingPage() {
                               <div className="flex items-center gap-3">
                                 <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
                                 <div className="flex-1">
-                                  <p className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Date</p>
+                                  <p className="text-xs text-zinc-400 uppercase font-bold mb-1">Date</p>
                                   <p className="text-sm sm:text-base md:text-lg font-black text-white leading-tight">
                                     {new Date(slot.slot_date).toLocaleDateString('en-US', {
                                       weekday: 'short',
@@ -513,7 +507,7 @@ export default function RetrieveBookingPage() {
                               <div className="flex items-center gap-3">
                                 <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
                                 <div className="flex-1">
-                                  <p className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Time Slot</p>
+                                  <p className="text-xs text-zinc-400 uppercase font-bold mb-1">Time Slot</p>
                                   <p className="text-sm sm:text-base md:text-lg font-black text-primary leading-tight">
                                     {formatDbTimeRange(slot.slot_start_time, slot.slot_end_time)}
                                   </p>
@@ -526,13 +520,13 @@ export default function RetrieveBookingPage() {
                           <div className="grid grid-cols-2 gap-3 sm:gap-4">
                             {slot.duration_hours && (
                               <div className="bg-zinc-950/30 p-3 sm:p-4 rounded-lg border border-zinc-800">
-                                <p className="text-[10px] text-zinc-500 uppercase font-bold mb-1.5">Duration</p>
+                                <p className="text-xs text-zinc-400 uppercase font-bold mb-1.5">Duration</p>
                                 <p className="text-base sm:text-lg md:text-xl font-black text-white">{slot.duration_hours}h</p>
                               </div>
                             )}
                             {slot.player_count && (
                               <div className="bg-zinc-950/30 p-3 sm:p-4 rounded-lg border border-zinc-800">
-                                <p className="text-[10px] text-zinc-500 uppercase font-bold mb-1.5">Players</p>
+                                <p className="text-xs text-zinc-400 uppercase font-bold mb-1.5">Players</p>
                                 <p className="text-base sm:text-lg md:text-xl font-black text-white">{slot.player_count}</p>
                               </div>
                             )}
@@ -555,7 +549,7 @@ export default function RetrieveBookingPage() {
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Customer Info */}
               <Card className="bg-[#111] border-2 border-zinc-900 p-6 shadow-[0_0_20px_rgba(255,193,7,0.15)] rounded-2xl hover:shadow-[0_0_30px_rgba(255,193,7,0.25)] transition-all animate-in fade-in slide-in-from-left-4 duration-500 delay-200">
-                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-5 flex items-center gap-2">
+                <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider mb-5 flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <User className="h-4 w-4 text-primary" />
                   </div>
@@ -565,16 +559,16 @@ export default function RetrieveBookingPage() {
                     whether or not the customer has an email on file. */}
                 <div className="space-y-4 text-sm">
                   <div className="flex items-center justify-between pb-3 border-b border-zinc-900 last:pb-0 last:border-b-0">
-                    <span className="text-zinc-500 font-bold">Customer:</span>
+                    <span className="text-zinc-400 font-bold">Customer:</span>
                     <span className="text-white font-black">{selectedBooking.customer_name}</span>
                   </div>
                   <div className="flex items-center justify-between pb-3 border-b border-zinc-900 last:pb-0 last:border-b-0">
-                    <span className="text-zinc-500 font-bold">Phone:</span>
+                    <span className="text-zinc-400 font-bold">Phone:</span>
                     <span className="text-primary font-black">{selectedBooking.customer_phone}</span>
                   </div>
                   {selectedBooking.customer_email && (
                     <div className="flex items-center justify-between pb-3 border-b border-zinc-900 last:pb-0 last:border-b-0">
-                      <span className="text-zinc-500 font-bold">Email:</span>
+                      <span className="text-zinc-400 font-bold">Email:</span>
                       <span className="text-white font-bold truncate ml-2 text-right">{selectedBooking.customer_email}</span>
                     </div>
                   )}
@@ -586,7 +580,7 @@ export default function RetrieveBookingPage() {
 
               {/* Payment Summary */}
               <Card className="bg-gradient-to-br from-[#111] via-zinc-950 to-[#111] border-2 border-primary/30 p-6 shadow-[0_0_30px_rgba(255,193,7,0.2)] rounded-2xl animate-in fade-in slide-in-from-right-4 duration-500 delay-200">
-                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-5 flex items-center gap-2">
+                <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider mb-5 flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <CreditCard className="h-4 w-4 text-primary" />
                   </div>
@@ -618,7 +612,7 @@ export default function RetrieveBookingPage() {
                     return (
                       <>
                         <div className="flex items-center justify-between py-2">
-                          <span className="text-zinc-500 font-bold">
+                          <span className="text-zinc-400 font-bold">
                             Device Booking ({durationHours}h × ₹{hourlyRate}):
                           </span>
                           <span className="text-white font-black">₹{deviceCharges.toFixed(2)}</span>
@@ -626,14 +620,14 @@ export default function RetrieveBookingPage() {
 
                         {extraPlayersTotal > 0 && (
                           <div className="flex items-center justify-between py-2">
-                            <span className="text-zinc-500 font-bold">Extra Players:</span>
+                            <span className="text-zinc-400 font-bold">Extra Players:</span>
                             <span className="text-white font-black">₹{extraPlayersTotal.toFixed(2)}</span>
                           </div>
                         )}
 
                         {selectedBooking.food_subtotal > 0 && (
                           <div className="flex items-center justify-between py-2">
-                            <span className="text-zinc-500 font-bold">Food & Beverages:</span>
+                            <span className="text-zinc-400 font-bold">Food & Beverages:</span>
                             <span className="text-white font-black">₹{Number(selectedBooking.food_subtotal).toFixed(2)}</span>
                           </div>
                         )}
@@ -687,7 +681,7 @@ export default function RetrieveBookingPage() {
                           return (
                             <>
                               <div className="flex items-center justify-between text-sm">
-                                <span className="text-zinc-500 font-bold uppercase">
+                                <span className="text-zinc-400 font-bold uppercase">
                                   Paid{Number(selectedBooking.online_amount || 0) > 0 ? " (Online)" : ""}:
                                 </span>
                                 <span className="text-green-400 font-black">₹{paid.toFixed(2)}</span>
@@ -714,7 +708,7 @@ export default function RetrieveBookingPage() {
             {/* Food Items */}
             {selectedBooking.booking_food_items?.length > 0 && (
               <Card className="bg-[#111] border-2 border-zinc-900 p-6 shadow-[0_0_20px_rgba(255,193,7,0.15)] rounded-2xl hover:shadow-[0_0_30px_rgba(255,193,7,0.25)] transition-all animate-in fade-in slide-in-from-bottom-4 duration-500 delay-400">
-                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider mb-5 flex items-center gap-2">
+                <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider mb-5 flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <UtensilsCrossed className="h-4 w-4 text-primary" />
                   </div>
@@ -725,7 +719,7 @@ export default function RetrieveBookingPage() {
                     <div key={idx} className="flex items-center justify-between py-3 px-4 bg-zinc-950/50 rounded-lg border border-zinc-900 hover:border-primary/30 transition-all">
                       <div className="flex items-center gap-3">
                         <span className="text-zinc-300 font-bold">{item.item_name}</span>
-                        <span className="text-xs text-zinc-600 font-black bg-zinc-900 px-2 py-1 rounded">x{item.quantity}</span>
+                        <span className="text-xs text-zinc-400 font-black bg-zinc-900 px-2 py-1 rounded">x{item.quantity}</span>
                       </div>
                       <span className="text-primary font-black">₹{item.line_total}</span>
                     </div>
@@ -757,7 +751,7 @@ export default function RetrieveBookingPage() {
               <Button
                 onClick={() => setSelectedBooking(null)}
                 variant="ghost"
-                className="w-full border-2 border-zinc-800 hover:border-zinc-700 text-zinc-500 hover:text-zinc-300 font-bold uppercase text-xs h-11 rounded-xl"
+                className="w-full border-2 border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-300 font-bold uppercase text-sm h-11 rounded-xl"
               >
                 ← BACK TO SEARCH
               </Button>
@@ -770,7 +764,7 @@ export default function RetrieveBookingPage() {
           <Button
             onClick={() => router.push("/")}
             variant="ghost"
-            className="w-full text-zinc-600 hover:text-zinc-400 font-bold uppercase text-xs h-11 rounded-xl border border-zinc-900 hover:border-zinc-800"
+            className="w-full text-zinc-400 hover:text-zinc-400 font-bold uppercase text-sm h-11 rounded-xl border border-zinc-900 hover:border-zinc-800"
           >
             ← BACK TO HOME
           </Button>

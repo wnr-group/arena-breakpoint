@@ -81,7 +81,7 @@ function Calendar({
           "select-none font-black text-sm uppercase tracking-wider text-zinc-200",
           captionLayout === "label"
             ? "text-sm"
-            : "[&>svg]:text-zinc-500 flex h-8 items-center gap-1 rounded-md pl-2 pr-1 text-sm [&>svg]:size-3.5",
+            : "[&>svg]:text-zinc-400 flex h-8 items-center gap-1 rounded-md pl-2 pr-1 text-sm [&>svg]:size-3.5",
           defaultClassNames.caption_label
         ),
         
@@ -90,7 +90,7 @@ function Calendar({
         
         weekdays: cn("flex justify-between border-b border-zinc-900 pb-2 mb-1", defaultClassNames.weekdays),
         weekday: cn(
-          "text-zinc-500 flex-1 select-none rounded-md text-[10px] font-black uppercase text-center tracking-widest",
+          "text-zinc-400 flex-1 select-none rounded-md text-xs font-black uppercase text-center tracking-widest",
           defaultClassNames.weekday
         ),
         week: cn("mt-1 flex w-full justify-between gap-1", defaultClassNames.week),
@@ -119,7 +119,7 @@ function Calendar({
           defaultClassNames.today
         ),
         outside: cn(
-          "text-zinc-700 aria-selected:text-zinc-500 pointer-events-none",
+          "text-zinc-700 aria-selected:text-zinc-400 pointer-events-none",
           defaultClassNames.outside
         ),
         disabled: cn(

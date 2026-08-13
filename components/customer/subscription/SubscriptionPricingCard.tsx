@@ -269,7 +269,7 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
 
                   {plan.badge && (
                     <div
-                      className={`absolute -top-3.5 left-1/2 transform -translate-x-1/2 px-4 py-1.5 text-[10px] font-black rounded-full uppercase tracking-widest transition-all duration-300 ${
+                      className={`absolute -top-3.5 left-1/2 transform -translate-x-1/2 px-4 py-1.5 text-xs font-black rounded-full uppercase tracking-widest transition-all duration-300 ${
                         isActive
                           ? 'bg-gradient-to-r from-primary via-amber-400 to-primary text-black shadow-[0_0_20px_rgba(255,193,7,0.6)] animate-glow'
                           : 'bg-zinc-900 text-primary border border-primary/30'
@@ -280,7 +280,7 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
                   )}
 
                   <div className="mb-6 mt-2 text-left border-b border-zinc-800/50 pb-6 relative z-10">
-                    <span className="text-zinc-500 text-xs font-black tracking-[0.2em] uppercase block mb-2">
+                    <span className="text-zinc-400 text-xs font-black tracking-[0.2em] uppercase block mb-2">
                       {plan.category}
                     </span>
                     <h3 className={`text-xl md:text-2xl font-black mb-3 tracking-tight transition-all duration-300 ${
@@ -294,7 +294,7 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
                       }`}>
                         ₹{plan.price}
                       </span>
-                      <span className="text-zinc-500 ml-2 text-xs md:text-sm font-bold">
+                      <span className="text-zinc-400 ml-2 text-xs md:text-sm font-bold">
                         {plan.duration}
                       </span>
                     </div>

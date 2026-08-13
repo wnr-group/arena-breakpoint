@@ -62,9 +62,9 @@ export function ActiveSessionsModal({ open, onClose, sessions, onBookingClick }:
                     <div className="flex-1">
                       <p className="text-sm font-bold text-white mb-1">{session.bookings?.customer_name}</p>
                       <p className="text-xs text-secondary-content font-mono">{session.bookings?.customer_phone}</p>
-                      <p className="text-[10px] text-primary font-mono mt-1">{session.bookings?.booking_number}</p>
+                      <p className="text-xs text-primary font-mono mt-1">{session.bookings?.booking_number}</p>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-[10px] font-black ${
+                    <div className={`px-3 py-1 rounded-full text-xs font-black ${
                       isOvertime
                         ? 'bg-red-500/20 text-red-400'
                         : 'bg-green-500/20 text-green-400'

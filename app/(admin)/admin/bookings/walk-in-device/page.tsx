@@ -424,7 +424,7 @@ export default function WalkInBookingPage() {
                 >
                   {s.num}
                 </div>
-                <span className={`text-[9px] font-black uppercase tracking-wider ${step >= s.num ? "text-primary" : "text-muted-content"
+                <span className={`text-[11px] font-black uppercase tracking-wider ${step >= s.num ? "text-primary" : "text-muted-content"
                   }`}>
                   {s.label}
                 </span>
@@ -575,7 +575,7 @@ export default function WalkInBookingPage() {
                           <div className="flex items-center justify-between">
                             <span>{time} - {calculateEndTime(time, 30)}</span>
                             {happyHourCheck.hasHappyHour && !isSelected && (
-                              <span className="text-[10px] bg-yellow-400/20 text-yellow-400 px-2 py-0.5 rounded-full border border-yellow-400/30 font-black">
+                              <span className="text-xs bg-yellow-400/20 text-yellow-400 px-2 py-0.5 rounded-full border border-yellow-400/30 font-black">
                                 {happyHourCheck.discount}% OFF
                               </span>
                             )}
@@ -590,7 +590,7 @@ export default function WalkInBookingPage() {
 
             <div ref={proceedButtonRef} className="flex flex-col items-end mt-8 gap-2">
               {!selectedStartTime && (
-                <p className="text-[11px] font-bold text-amber-500 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl max-w-sm text-right">
+                <p className="text-xs font-bold text-amber-500 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl max-w-sm text-right">
                   ⚠️ Please select a start time to proceed.
                 </p>
               )}
@@ -622,7 +622,7 @@ export default function WalkInBookingPage() {
 
                 <form onSubmit={handleCustomerPhoneLookup} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-[11px] font-black text-muted-content uppercase tracking-wider flex items-center gap-1.5">
+                    <Label htmlFor="phone" className="text-xs font-black text-muted-content uppercase tracking-wider flex items-center gap-1.5">
                       <Phone className="h-3.5 w-3.5 text-muted-content" /> Mobile Number <span className="text-red-500">*</span>
                     </Label>
                     <div className="relative">
@@ -645,7 +645,7 @@ export default function WalkInBookingPage() {
                   </Button>
                 </form>
 
-                <div className="pt-2 flex gap-2 items-center text-[10px] text-muted-content justify-center border-t border-zinc-950">
+                <div className="pt-2 flex gap-2 items-center text-xs text-muted-content justify-center border-t border-zinc-950">
                   <ShieldCheck className="h-4 w-4 text-zinc-700" /><span>Instant index lookup map layers running safely.</span>
                 </div>
               </Card>
@@ -659,7 +659,7 @@ export default function WalkInBookingPage() {
 
                 <div className="bg-[var(--background)] p-3.5 border border-zinc-900 rounded-xl flex items-center justify-between gap-4 text-xs select-none">
                   <div className="space-y-0.5">
-                    <span className="text-[8px] font-black text-muted-content uppercase tracking-widest block">Customer Phone Number:</span>
+                    <span className="text-[11px] font-black text-muted-content uppercase tracking-widest block">Customer Phone Number:</span>
                     <span className="text-primary font-mono font-black tracking-wider">+91 {customerPhone}</span>
                   </div>
                   <button
@@ -668,7 +668,7 @@ export default function WalkInBookingPage() {
                       setShowFullRegistrationFields(false);
                       setActiveSubscription(null);
                     }}
-                    className="px-3 h-8 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[10px] font-black uppercase text-muted-content hover:text-primary rounded-lg tracking-wider flex items-center gap-1.5 transition-colors"
+                    className="px-3 h-8 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-black uppercase text-muted-content hover:text-primary rounded-lg tracking-wider flex items-center gap-1.5 transition-colors"
                   >
                     <RefreshCw className="h-3 w-3" /> Change Number
                   </button>
@@ -676,7 +676,7 @@ export default function WalkInBookingPage() {
 
                 <form onSubmit={handleManualRegistrationSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-[11px] font-black text-muted-content uppercase tracking-wider flex items-center gap-1.5">
+                    <Label htmlFor="name" className="text-xs font-black text-muted-content uppercase tracking-wider flex items-center gap-1.5">
                       <User className="h-3.5 w-3.5 text-muted-content" /> Customer Name *
                     </Label>
                     <Input
@@ -691,7 +691,7 @@ export default function WalkInBookingPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="dob" className="text-[11px] font-black text-muted-content uppercase tracking-wider flex items-center gap-1.5">
+                    <Label htmlFor="dob" className="text-xs font-black text-muted-content uppercase tracking-wider flex items-center gap-1.5">
                       <Cake className="h-3.5 w-3.5 text-muted-content" /> Date of Birth (DD-MM-YYYY) <span className="text-red-500">*</span>
                     </Label>
                     <Input
@@ -707,7 +707,7 @@ export default function WalkInBookingPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-[11px] font-black text-muted-content uppercase tracking-wider flex items-center gap-1.5">
+                    <Label htmlFor="email" className="text-xs font-black text-muted-content uppercase tracking-wider flex items-center gap-1.5">
                       <Mail className="h-3.5 w-3.5 text-muted-content" /> Email <span className="text-red-500">*</span>
                     </Label>
                     <Input
@@ -780,14 +780,14 @@ export default function WalkInBookingPage() {
                     </div>
                     <div>
                       <h4 className="text-xs font-black text-primary uppercase tracking-wider">{activeSubscription.plan_name} Active</h4>
-                      <p className="text-[10px] text-zinc-400">Customer gets {activeSubscription.discount_percentage}% off on this booking!</p>
+                      <p className="text-xs text-zinc-400">Customer gets {activeSubscription.discount_percentage}% off on this booking!</p>
                     </div>
                   </div>
                 </div>
               )}
 
               <div className="bg-[var(--background)]/40 p-4 border border-zinc-900 rounded-xl space-y-3">
-                <Label className="text-[10px] font-black uppercase text-muted-content tracking-wider block">
+                <Label className="text-xs font-black uppercase text-muted-content tracking-wider block">
                   Assign Player Allocation Count
                 </Label>
                 <div className="flex items-center justify-between bg-[var(--background)] border border-zinc-900/60 rounded-lg p-3">

@@ -93,10 +93,13 @@ export default function SubscriptionActivatedPage() {
       <div className="max-w-275 w-full relative z-10">
         {/* Breadcrumb perfectly left-aligned at the top of the content container */}
         <Breadcrumb
+          /* `(customer)` is a route group, so it is not part of the URL — the real
+             paths are /subscription and /subscription/[planId]. The plan crumb is
+             dropped: checkout is finished, so linking back into it would restart
+             the purchase flow for a plan the customer just activated. */
           items={[
             { label: 'Home', href: '/' },
-            { label: 'Subscriptions', href: '/customer/subscription' },
-            { label: plan.name, href: `/customer/subscription/${plan.id}` },
+            { label: 'Subscriptions', href: '/subscription' },
             { label: 'Success' },
           ]}
         />
