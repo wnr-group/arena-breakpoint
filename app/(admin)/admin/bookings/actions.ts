@@ -618,6 +618,8 @@ export async function addFoodToBooking(
  * row, its billing line item, the booking totals and the stock it took.
  */
 export async function removeFoodItemFromBooking(bookingId: string, foodItemId: string) {
+  await requireStaff();
+
   try {
     // Scoped to the booking, so an id belonging to another booking cannot be removed
     const { data: foodItem, error: foodItemError } = await supabaseAdmin
