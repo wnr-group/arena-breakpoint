@@ -2,44 +2,28 @@
 
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { arenaToday } from "@/lib/utils/dates";
+import { getVerifiedCustomerPhone } from '@/lib/auth/customer-session'
 
-export async function getMyActiveSubscription(customerId: string) {
+/**
+ * The verified caller's own subscription.
+ *
+ * Replaces getMyActiveSubscriptionByPhone(phone), which took the number from a
+ * `?phone=` query parameter - so editing the URL showed anyone else's plan,
+ * spend and renewal date. The number now comes from the session instead.
+ */
+export async function getMySubscription() {
   try {
-    const { data, error } = await supabaseAdmin
-      .from('subscriptions')
-      .select(
-        `*,
-            plan:subscription_plans(*)`
-      )
-      .eq('customer_id', customerId)
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
+    const phone = await getVerifiedCustomerPhone()
 
-    if (error && error.code === 'PGRST116') {
-      return { success: true, data: null, message: 'No active subscription found.' }
+    if (!phone) {
+      return {
+        success: false,
+        data: null,
+        verificationRequired: true,
+        message: 'Please verify your mobile number to view your subscription.',
+      }
     }
 
-    if (error) throw new Error(error.message)
-
-    return {
-      success: true,
-      data: data,
-      message: 'Subscription fetched successfully',
-    }
-  } catch (error: any) {
-    console.error('Fetch Subscription Error:', error.message)
-    return {
-      success: false,
-      data: null,
-      message: error.message || 'Failed to fetch subscription details',
-    }
-  }
-}
-
-export async function getMyActiveSubscriptionByPhone(phone: string) {
-  try {
     // 1. Get customer
     const { data: customer, error: customerError } = await supabaseAdmin
       .from('customers')

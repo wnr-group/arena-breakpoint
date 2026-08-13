@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { getVerifiedCustomerPhone } from "@/lib/auth/customer-session";
 
 export async function getMenuItems() {
   try {
@@ -40,6 +41,19 @@ export async function addFoodToBooking(
       .single();
 
     if (bookingError) throw bookingError;
+
+    // The booking id comes from the URL, so it identifies a booking but proves
+    // nothing about who is asking. Without this, anyone holding (or guessing) an
+    // id could load another customer's tab with food they would be billed for.
+    const verifiedPhone = await getVerifiedCustomerPhone();
+
+    if (!verifiedPhone || verifiedPhone !== booking.customer_phone) {
+      return {
+        success: false,
+        error: "Please verify your mobile number to add food to this booking.",
+        verificationRequired: true,
+      };
+    }
 
     // Insert food items
     const foodItemsToInsert = foodItems.map(item => ({

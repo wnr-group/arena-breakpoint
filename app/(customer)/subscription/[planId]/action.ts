@@ -1,5 +1,6 @@
 'use server'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { requireVerifiedPhone } from '@/lib/auth/customer-session'
 import { revalidatePath } from 'next/cache'
 import { addMonthsToDateString, arenaToday } from '@/lib/utils/dates'
 
@@ -21,6 +22,14 @@ export async function activateSubscriptionPlan({
   paymentId,
 }: ActivatePlanParams) {
   try {
+    // Activating a plan writes a subscription against a customer record and
+    // changes what every future booking costs, so the caller has to have proven
+    // the number first. This action is a public HTTP endpoint.
+    const auth = await requireVerifiedPhone(phone)
+    if (!auth.ok) {
+      return { success: false, message: auth.error, verificationRequired: true }
+    }
+
     if (!phone || !name || !planId || !paymentId) {
       return {
         success: false,
