@@ -1,6 +1,6 @@
 'use server'
 
-import { getRazorpayKeyId, isRazorpayConfigured } from '@/lib/razorpay/client'
+import { getRazorpayKeyId, isRazorpayConfigured, describeRazorpayConfig } from '@/lib/razorpay/client'
 import { quoteDeviceBooking, type DeviceBookingInput, type DeviceBookingQuote } from '@/lib/payments/quote'
 import { createPaymentOrder } from '@/lib/payments/orders'
 import { fulfilDeviceBooking } from '@/lib/payments/fulfil'
@@ -93,6 +93,9 @@ export async function createDeviceBookingPaymentOrder(
     }
 
     if (!isRazorpayConfigured()) {
+      // Loud, because the customer-facing message deliberately says nothing
+      // about configuration - without this the cause is invisible.
+      console.error(`Razorpay unusable: ${describeRazorpayConfig()}`)
       return {
         success: false,
         error: 'Online payments are not available right now. Please contact the arena.',

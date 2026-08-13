@@ -8,9 +8,30 @@ const keySecret = process.env.RAZORPAY_KEY_SECRET
  * Razorpay is optional in local/dev environments. Every entry point checks this
  * before touching the SDK so an unconfigured environment fails with a clear
  * message instead of crashing at module load.
+ *
+ * "Present" is not the same as "usable". A freshly copied .env.example leaves
+ * `your-razorpay-test-key-id` in place, which is a non-empty string - so a
+ * naive truthy check called that configured, let the request reach the gateway,
+ * and turned a 401 into the generic "Could not start the payment" catch. Real
+ * keys always carry the rzp_test_ / rzp_live_ prefix, so the placeholder is
+ * recognisable and can be reported as what it is: unconfigured.
  */
 export function isRazorpayConfigured(): boolean {
-  return Boolean(keyId && keySecret)
+  if (!keyId || !keySecret) return false
+  if (!/^rzp_(test|live)_/.test(keyId)) return false
+  if (keySecret.startsWith('your-')) return false
+  return true
+}
+
+/** Explains *why* Razorpay is unusable, for logs - never shown to a customer. */
+export function describeRazorpayConfig(): string {
+  if (!keyId) return 'NEXT_PUBLIC_RAZORPAY_KEY_ID is not set'
+  if (!keySecret) return 'RAZORPAY_KEY_SECRET is not set'
+  if (!/^rzp_(test|live)_/.test(keyId)) {
+    return `NEXT_PUBLIC_RAZORPAY_KEY_ID does not look like a Razorpay key (expected rzp_test_… or rzp_live_…, got "${keyId.slice(0, 12)}…")`
+  }
+  if (keySecret.startsWith('your-')) return 'RAZORPAY_KEY_SECRET is still the placeholder from .env.example'
+  return 'configured'
 }
 
 export function getRazorpayKeyId(): string | null {
