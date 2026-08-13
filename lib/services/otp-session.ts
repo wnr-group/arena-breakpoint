@@ -21,7 +21,15 @@ import { generateOTP, sendOTPViaSMS, validatePhoneNumber } from './msg91';
 import crypto from 'crypto';
 
 const OTP_EXPIRY_MINUTES = parseInt(process.env.OTP_EXPIRY_MINUTES || '5');
-const SESSION_EXPIRY_MINUTES = 15;
+/**
+ * How long a customer stays signed in after verifying.
+ *
+ * Twelve hours covers a full trading day, so someone who books in the morning
+ * can order food and check their booking that evening without paying for
+ * another SMS. The trade is that a session on a shared or public device stays
+ * usable for the rest of the day - which is what the sign-out button is for.
+ */
+const SESSION_EXPIRY_MINUTES = Number(process.env.CUSTOMER_SESSION_MINUTES) || 12 * 60;
 const MAX_OTP_ATTEMPTS = parseInt(process.env.OTP_MAX_ATTEMPTS || '3');
 const MAX_RESEND_COUNT = parseInt(process.env.OTP_MAX_REQUESTS_PER_PHONE || '3');
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -292,7 +300,7 @@ export async function verifyOTP(phone: string, otp: string): Promise<VerifyOTPRe
  * This is the ONLY way to establish who a customer is. There is deliberately no
  * lookup by phone number: the removed `getActiveSessionByPhone()` returned a live
  * session to anyone who typed the right digits, so entering someone else's number
- * inside their 15-minute window skipped verification entirely.
+ * inside their active session window skipped verification entirely.
  */
 export async function validateSession(
   sessionToken: string

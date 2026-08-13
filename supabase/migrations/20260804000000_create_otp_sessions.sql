@@ -123,7 +123,7 @@ $$;
 --
 -- The removed `get_active_session_by_phone()` did the latter: it returned a live
 -- session for any phone passed to it, so entering someone else's number within
--- their 15-minute window skipped verification entirely. Anything that needs to
+-- their active session window skipped verification entirely. Anything that needs to
 -- know who the caller is must go through this function instead.
 CREATE OR REPLACE FUNCTION public.validate_session_token(p_session_token_hash VARCHAR(255))
 RETURNS TABLE (
@@ -295,6 +295,6 @@ GRANT EXECUTE ON FUNCTION public.check_otp_rate_limit(VARCHAR)             TO se
 COMMENT ON TABLE  public.otp_sessions IS 'OTP verification and short-lived customer sessions. Service role only - contains live session credentials and PII.';
 COMMENT ON COLUMN public.otp_sessions.otp_hash IS 'HMAC-SHA256 of the OTP keyed with OTP_HASH_SECRET. The plaintext code is never stored.';
 COMMENT ON COLUMN public.otp_sessions.session_token_hash IS 'SHA-256 of the session token. The token itself only ever exists in the customer''s httpOnly cookie.';
-COMMENT ON COLUMN public.otp_sessions.session_expires_at IS 'Session expires 15 minutes after OTP verification.';
+COMMENT ON COLUMN public.otp_sessions.session_expires_at IS 'When the customer session lapses. Set by the app (CUSTOMER_SESSION_MINUTES, default 12 hours) at verification time.';
 COMMENT ON FUNCTION public.validate_session_token(VARCHAR) IS 'Resolves a session token hash to its verified phone number. The only way to prove who a customer is.';
 COMMENT ON FUNCTION public.consume_otp_attempt(VARCHAR, VARCHAR, INT) IS 'Atomically consumes one attempt and reports the OTP verdict under a row lock.';

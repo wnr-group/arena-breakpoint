@@ -45,7 +45,7 @@ export function CustomerAuthGate({
   const [showOtp, setShowOtp] = useState(false);
 
   // A live session skips the gate entirely, so moving between pages inside the
-  // 15-minute window does not ask for a code each time.
+  // session window does not ask for a code each time.
   useEffect(() => {
     let cancelled = false;
 
