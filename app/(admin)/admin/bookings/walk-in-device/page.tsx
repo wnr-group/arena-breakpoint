@@ -29,7 +29,7 @@ import {
   checkFlexibleAvailability,
   checkCustomerExists
 } from "@/app/(customer)/booking/actions";
-import { createWalkInBooking } from "../actions";
+import { createWalkInBooking, createWalkInSession } from "../actions";
 import {
   formatDateForDB,
   formatDateForDisplay,
@@ -52,6 +52,7 @@ import {
 } from "@/lib/utils/timeSlots";
 import { useHappyHours } from "@/lib/hooks/useHappyHours";
 import { useNotifications } from "@/lib/contexts/NotificationContext";
+import { extraPlayersCharge, perExtraPlayerCharge } from "@/lib/payments/money";
 
 export default function WalkInBookingPage() {
   const router = useRouter();
@@ -67,6 +68,17 @@ export default function WalkInBookingPage() {
   const proceedButtonRef = useRef<HTMLDivElement>(null);
   const [selectedStartTime, setSelectedStartTime] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<number>(60); // Default 1 hour in minutes
+
+  /**
+   * Two different things share this screen.
+   *
+   * "session" is the walk-in proper: somebody standing at the counter now, with
+   * no start time and no duration, billed for however long they end up playing.
+   * "advance" is a counter booking for a slot later in the week, which still
+   * needs a date, a start and a duration because its price has to be known when
+   * it is taken.
+   */
+  const [mode, setMode] = useState<"session" | "advance">("session");
   const [availableStartTimes, setAvailableStartTimes] = useState<Set<string>>(new Set());
   const [loadingSlots, setLoadingSlots] = useState(false);
 
@@ -168,7 +180,9 @@ export default function WalkInBookingPage() {
   const handleSelectDeviceType = (deviceType: any) => {
     setSelectedDeviceType(deviceType);
     setPlayerCount(deviceType.included_players || 1);
-    setStep(2);
+    // A walk-in has no slot to pick: the clock starts when the customer is
+    // checked in, so the date and duration step is skipped entirely.
+    setStep(mode === "session" ? 3 : 2);
   };
 
   const handleCustomerPhoneLookup = async (e: React.FormEvent) => {
@@ -219,7 +233,49 @@ export default function WalkInBookingPage() {
     setStep(4);
   };
 
+  /**
+   * Creates a walk-in that has not started yet.
+   *
+   * Nothing about the session is decided here - no time, no station, no price.
+   * All of that follows from check-in and checkout, which is why this posts so
+   * much less than the fixed-slot path below it.
+   */
+  const handleSubmitSession = async () => {
+    if (!customerName.trim() || !customerPhone.trim()) {
+      toast.error("Please fill in customer name and phone number");
+      return;
+    }
+    if (customerDob && !isValidDob(customerDob)) {
+      toast.error("Invalid Date of Birth", { description: DOB_ERROR });
+      return;
+    }
+
+    setSubmitting(true);
+
+    const result = await createWalkInSession({
+      customerName: customerName.trim(),
+      customerPhone: customerPhone.trim(),
+      customerEmail: customerEmail.trim() || null,
+      customerDob: customerDob ? formatDateForDB(customerDob) : "",
+      deviceTypeId: selectedDeviceType.id,
+      deviceTypeName: selectedDeviceType.display_name,
+      playerCount
+    });
+
+    if (result.success) {
+      toast.success("Walk-in created", {
+        description: `${result.bookingNumber} is waiting for check-in. Check the customer in when they sit down.`
+      });
+      router.push("/admin/bookings");
+    } else {
+      toast.error("Could not create the walk-in", { description: result.error });
+      setSubmitting(false);
+    }
+  };
+
   const handleSubmit = async () => {
+    if (mode === "session") return handleSubmitSession();
+
     if (!customerName.trim() || !customerPhone.trim() || !selectedStartTime || !endTime) {
       toast.error("Please fill in customer name, phone number, and choose a valid time slot");
       return;
@@ -234,7 +290,7 @@ export default function WalkInBookingPage() {
 
     const extraPlayersCount = Math.max(0, playerCount - (selectedDeviceType?.included_players || 1));
     const durationHours = selectedDuration / 60;
-    const extraPlayerCharge = extraPlayersCount * (Number(selectedDeviceType?.extra_player_charge) || 0) * durationHours;
+    const extraPlayerCharge = extraPlayersCharge(extraPlayersCount, Number(selectedDeviceType?.extra_player_charge) || 0, durationHours);
     const baseRate = calculatePrice(Number(selectedDeviceType?.regular_hourly_rate) || 0, selectedDuration);
     const subtotal = baseRate + extraPlayerCharge;
     const subscriptionDiscount = activeSubscription
@@ -298,11 +354,11 @@ export default function WalkInBookingPage() {
     if (result.success) {
       // One notification for the confirmed booking: it toasts, chimes and lands
       // in the bell. The poller skips walk-ins so this is not repeated.
-      // Same-day walk-ins come back already checked in, so say so - the front
-      // desk should not go looking for a Check In button that is not there.
+      // An advance booking is always for later, so it waits for check-in like any
+      // other reservation - there is no "already checked in" case here.
       addNotification({
         type: "booking",
-        title: result.checkedIn ? "Walk-In Checked In" : "Walk-In Booking Confirmed",
+        title: "Advance Booking Confirmed",
         message: `${customerName.trim()} • #${result.bookingNumber} • ₹${Math.round(total).toLocaleString("en-IN")}`,
         bookingId: result.bookingId || "",
         bookingNumber: result.bookingNumber || ""
@@ -315,7 +371,7 @@ export default function WalkInBookingPage() {
 
   const extraPlayersCount = Math.max(0, playerCount - (selectedDeviceType?.included_players || 1));
   const durationHours = selectedDuration / 60;
-  const extraPlayerCharge = extraPlayersCount * (Number(selectedDeviceType?.extra_player_charge) || 0) * durationHours;
+  const extraPlayerCharge = extraPlayersCharge(extraPlayersCount, Number(selectedDeviceType?.extra_player_charge) || 0, durationHours);
   const baseRate = calculatePrice(Number(selectedDeviceType?.regular_hourly_rate) || 0, selectedDuration);
   const subtotal = baseRate + extraPlayerCharge;
   const subscriptionDiscount = activeSubscription
@@ -389,6 +445,8 @@ export default function WalkInBookingPage() {
               onClick={() => {
                 if (step === 4) {
                   setStep(3);
+                } else if (step === 3 && mode === "session") {
+                  setStep(1); // There is no slot step in a walk-in session.
                 } else if (step > 1) {
                   setStep(step - 1);
                 } else {
@@ -401,19 +459,66 @@ export default function WalkInBookingPage() {
               {step > 1 ? "Back" : "Cancel"}
             </Button>
             <h1 className="text-2xl font-black uppercase tracking-tight">
-              Create Walk-In Booking
+              {mode === "session" ? "New Walk-In" : "Advance Counter Booking"}
             </h1>
           </div>
         </div>
 
+        {/* What kind of booking this is. Only offered on the first step: once a
+            device is chosen the two flows diverge, and switching underneath would
+            leave half-entered times behind. */}
+        {step === 1 && (
+          <div className="mb-8 max-w-2xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {([
+                {
+                  value: "session" as const,
+                  title: "Walk-in now",
+                  detail: "No times chosen. The customer is checked in when they arrive and billed for the time they actually play."
+                },
+                {
+                  value: "advance" as const,
+                  title: "Advance booking",
+                  detail: "A fixed slot later today or this week. Date, start time and duration are chosen now, and the price is known up front."
+                }
+              ]).map((option) => {
+                const isSelected = mode === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setMode(option.value)}
+                    className={`text-left p-4 rounded-xl border-2 transition-all ${isSelected
+                      ? "border-primary bg-primary/5"
+                      : "border-zinc-900 bg-[var(--surface)] hover:border-zinc-700"
+                      }`}
+                  >
+                    <p className={`text-sm font-black uppercase tracking-wide ${isSelected ? "text-primary" : "text-white"}`}>
+                      {option.title}
+                    </p>
+                    <p className="text-xs text-muted-content mt-1 leading-relaxed">{option.detail}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Progress Steps HUD Track */}
         <div className="flex items-center justify-between mb-8 max-w-2xl mx-auto select-none">
-          {[
-            { num: 1, label: "Device" },
-            { num: 2, label: "Slot" },
-            { num: 3, label: "Customer" },
-            { num: 4, label: "Confirm" }
-          ].map((s, idx) => (
+          {(mode === "session"
+            ? [
+                { num: 1, label: "Device" },
+                { num: 3, label: "Customer" },
+                { num: 4, label: "Confirm" }
+              ]
+            : [
+                { num: 1, label: "Device" },
+                { num: 2, label: "Slot" },
+                { num: 3, label: "Customer" },
+                { num: 4, label: "Confirm" }
+              ]
+          ).map((s, idx, steps) => (
             <div key={s.num} className="flex items-center flex-1">
               <div className="flex flex-col items-center gap-1 flex-1">
                 <div
@@ -429,7 +534,7 @@ export default function WalkInBookingPage() {
                   {s.label}
                 </span>
               </div>
-              {idx < 3 && (
+              {idx < steps.length - 1 && (
                 <div className={`h-0.5 flex-1 mx-2 ${step > s.num ? "bg-primary" : "bg-zinc-900"}`} />
               )}
             </div>
@@ -609,7 +714,7 @@ export default function WalkInBookingPage() {
         )}
 
         {/* Step 3: Progressive Customer Profile Form */}
-        {step === 3 && selectedDeviceType && selectedStartTime && (
+        {step === 3 && selectedDeviceType && (mode === "session" || selectedStartTime) && (
           <div className="space-y-6 max-w-xl mx-auto">
 
             {/* Phase 1: Primary Mobile Verification */}
@@ -734,7 +839,7 @@ export default function WalkInBookingPage() {
         )}
 
         {/* Step 4: Confirmation Summary Panel */}
-        {step === 4 && selectedDeviceType && selectedStartTime && (
+        {step === 4 && selectedDeviceType && (mode === "session" || selectedStartTime) && (
           <div className="space-y-6 max-w-2xl mx-auto">
             <h2 className="text-xl font-black uppercase text-muted-content">Confirm Booking</h2>
 
@@ -761,15 +866,44 @@ export default function WalkInBookingPage() {
                   <span className="text-secondary-content">Device Configuration:</span>
                   <span className="text-white font-bold uppercase">{selectedDeviceType.display_name}</span>
                 </div>
+                {mode === "advance" && (
+                  <>
+                    <div className="flex justify-between border-b border-zinc-900/60 pb-2">
+                      <span className="text-secondary-content">Target Date:</span>
+                      <span className="text-white font-bold">{selectedDate.toDateString()}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-zinc-900/60 pb-2">
+                      <span className="text-secondary-content">Selected Time Window:</span>
+                      <span className="text-primary font-bold">{selectedStartTime} - {endTime} ({selectedDurationLabel})</span>
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-between border-b border-zinc-900/60 pb-2">
-                  <span className="text-secondary-content">Target Date:</span>
-                  <span className="text-white font-bold">{selectedDate.toDateString()}</span>
-                </div>
-                <div className="flex justify-between border-b border-zinc-900/60 pb-2">
-                  <span className="text-secondary-content">Selected Time Window:</span>
-                  <span className="text-primary font-bold">{selectedStartTime} - {endTime} ({selectedDurationLabel})</span>
+                  <span className="text-secondary-content">Booking Type:</span>
+                  <span className="text-white font-bold uppercase">
+                    {mode === "session" ? "Walk-in — billed on actual play" : "Fixed slot"}
+                  </span>
                 </div>
               </div>
+
+              {/* What creating this booking does, and just as importantly what it
+                  does not do. Staff have to know the customer is not on a machine
+                  yet and that no station is being held for them. */}
+              {mode === "session" && (
+                <div className="bg-blue-950/30 border border-blue-900/40 rounded-xl p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-blue-400" />
+                    <p className="text-xs font-black uppercase tracking-wider text-blue-300">
+                      Waiting for check-in
+                    </p>
+                  </div>
+                  <ul className="text-xs text-blue-200/80 space-y-1 leading-relaxed list-disc pl-4">
+                    <li>The clock starts at <span className="font-bold">check-in</span>, not now.</li>
+                    <li>A station is assigned when the customer checks in, so this booking does not reserve one.</li>
+                    <li>The bill is calculated at checkout from the time actually played.</li>
+                  </ul>
+                </div>
+              )}
 
               {/* Active Subscription Banner (if any) */}
               {activeSubscription && (
@@ -822,6 +956,9 @@ export default function WalkInBookingPage() {
                 </div>
               </div>
 
+              {/* A session has no price until it is played, so there is nothing
+                  to break down here. */}
+              {mode === "advance" && (
               <div className="space-y-2 text-sm border-t border-zinc-900 pt-4 bg-[var(--background)]/20 p-3 rounded-xl">
                 <div className="flex justify-between">
                   <span className="text-secondary-content">Base Station Rate:</span>
@@ -829,8 +966,8 @@ export default function WalkInBookingPage() {
                 </div>
                 {extraPlayersCount > 0 && (
                   <div className="flex justify-between animate-in slide-in-from-top-2 duration-150">
-                    <span className="text-secondary-content">Extra Player Charge Layer ({extraPlayersCount}):</span>
-                    <span className="text-primary font-bold">₹{Math.round(extraPlayerCharge)}.00</span>
+                    <span className="text-secondary-content">Extra Player Charge Layer ({extraPlayersCount} × ₹{perExtraPlayerCharge(Number(selectedDeviceType?.extra_player_charge) || 0, durationHours)}):</span>
+                    <span className="text-primary font-bold">₹{extraPlayerCharge}.00</span>
                   </div>
                 )}
                 {subscriptionDiscount > 0 && (
@@ -854,6 +991,7 @@ export default function WalkInBookingPage() {
                   <span className="text-primary text-2xl font-mono">₹{Math.round(totalAmount)}.00</span>
                 </div>
               </div>
+              )}
 
               <div className="flex gap-3 pt-4 border-t border-zinc-900/60">
                 <Button

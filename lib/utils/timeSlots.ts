@@ -1,5 +1,7 @@
 // Time slot utilities for flexible booking system (24-hour operation)
 
+import { deviceCharge } from "@/lib/payments/money";
+
 export const BUSINESS_START_HOUR = 0; // 12:00 AM (Midnight)
 export const BUSINESS_END_HOUR = 23; // 11:59 PM
 export const MIN_DURATION_MINUTES = 30;
@@ -149,6 +151,38 @@ export function calculateEndTime(startTime12: string, durationMinutes: number): 
 }
 
 /**
+ * Does this booking run past midnight?
+ *
+ * The arena trades round the clock, so a late start with a long duration is a
+ * normal booking rather than an error - 9:30 PM for three hours legitimately ends
+ * at 1:00 AM. `calculateEndTime` wraps at 24 hours to produce that end time, and
+ * the wrap is invisible in the result: "01:00 AM" looks like an hour that has
+ * already passed on the chosen date unless something says otherwise. Every screen
+ * that shows the end of a booking asks this so it can say "next day".
+ */
+export function crossesMidnight(startTime12: string, durationMinutes: number): boolean {
+  const startTime24 = formatTo24Hour(startTime12);
+  const [hours, minutes] = startTime24.split(':').map(Number);
+
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return false;
+
+  return hours * 60 + minutes + durationMinutes >= 24 * 60;
+}
+
+/** The calendar date a booking ends on, given the date it starts on. */
+export function bookingEndDate(
+  startDate: Date,
+  startTime12: string,
+  durationMinutes: number
+): Date {
+  const endDate = new Date(startDate);
+  if (crossesMidnight(startTime12, durationMinutes)) {
+    endDate.setDate(endDate.getDate() + 1);
+  }
+  return endDate;
+}
+
+/**
  * Check if a time range is within business hours (24-hour operation - always true)
  */
 export function isWithinBusinessHours(startTime12: string, endTime12: string): boolean {
@@ -184,8 +218,10 @@ export function getMaxDurationForStartTime(startTime12: string): number {
  * Calculate price based on hourly rate and duration
  */
 export function calculatePrice(hourlyRate: number, durationMinutes: number): number {
-  const hours = durationMinutes / 60;
-  return Math.round(hourlyRate * hours);
+  // Delegates so the screens and the server quote round identically - a 1.5 hour
+  // booking at ₹379/h is ₹568.50 before rounding, and the two must not disagree
+  // about which rupee that becomes.
+  return deviceCharge(hourlyRate, durationMinutes / 60);
 }
 
 /**

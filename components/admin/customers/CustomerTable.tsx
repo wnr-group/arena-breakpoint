@@ -201,7 +201,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
       ) : (
         <>
           <Card className="bg-[#0c0c0e]/40 border-zinc-900 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.6)] w-full overflow-x-auto p-1">
-          <table className="w-full text-left border-collapse text-sm table-fixed min-w-[1200px]">
+          <table className="w-full text-left border-collapse text-sm table-fixed">
             <thead>
               <tr className="border-b border-zinc-900 bg-[var(--background)]/20 text-label-enhanced select-none">
                 <th className="p-4 w-[17%]">
@@ -222,7 +222,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                     <SortIcon field="phone" />
                   </button>
                 </th>
-                <th className="p-4 w-[12%]">
+                <th className="p-4 hidden lg:table-cell w-[12%]">
                   <button
                     onClick={() => handleSort("date_of_birth")}
                     className="flex items-center gap-2 hover:text-primary transition-colors"
@@ -231,7 +231,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                     <SortIcon field="date_of_birth" />
                   </button>
                 </th>
-                <th className="p-4 w-[18%]">
+                <th className="p-4 hidden md:table-cell w-[18%]">
                   <button
                     onClick={() => handleSort("email")}
                     className="flex items-center gap-2 hover:text-primary transition-colors"
@@ -241,8 +241,8 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                   </button>
                 </th>
                 <th className="p-4 w-[19%]">Membership</th>
-                <th className="p-4 w-[9%] text-right">Expiration</th>
-                <th className="p-4 w-[11%] text-right">
+                <th className="p-4 hidden lg:table-cell w-[9%] text-right">Expiration</th>
+                <th className="p-4 hidden xl:table-cell w-[11%] text-right">
                   <button
                     onClick={() => handleSort("created_at")}
                     className="flex items-center gap-2 hover:text-primary transition-colors ml-auto"
@@ -269,7 +269,16 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                     <div className="h-9 w-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-muted-content group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-200 shadow-inner flex-shrink-0">
                       <User className="h-4 w-4 text-primary transition-colors" />
                     </div>
-                    <span className="text-zinc-200 group-hover:text-primary transition-colors font-black text-[15px] tracking-normal truncate">
+                    {/* Wraps rather than truncating: this is the directory staff read
+                        names from, so an ellipsis hides the part they need. The column
+                        is fixed-width, so a long name grows the row instead of the
+                        column and cannot push the other columns out of line.
+                        `break-all` is the fallback for a single unbroken run of
+                        characters with nowhere to wrap. */}
+                    <span
+                      title={row.name}
+                      className="text-zinc-200 group-hover:text-primary transition-colors font-black text-[15px] tracking-normal break-words [overflow-wrap:anywhere]"
+                    >
                       {row.name}
                     </span>
                   </div>
@@ -294,7 +303,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 </td>
  
                 {/* Date of Birth Block */}
-                <td className="p-4 text-zinc-300 font-mono tracking-wider">
+                <td className="p-4 hidden lg:table-cell text-zinc-300 font-mono tracking-wider">
                   <div className="flex items-center gap-2">
                     <Cake className="h-4 w-4 text-primary flex-shrink-0" />
                     <span className="font-bold text-zinc-300 text-[13px]">
@@ -304,7 +313,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 </td>
  
                 {/* Email Address Block */}
-                <td className="p-4 text-muted-content font-medium">
+                <td className="p-4 hidden md:table-cell text-muted-content font-medium">
                   <div className="flex items-center gap-2 group/email">
                     <Mail className="h-4 w-4 text-primary flex-shrink-0" />
                     <span title={row.email ?? undefined} className="truncate text-muted-content text-sm">{row.email || "No mail configured"}</span>
@@ -342,7 +351,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 </td>
  
                 {/* Expiration Date */}
-                <td className="p-4 text-right font-mono text-[13px]">
+                <td className="p-4 hidden lg:table-cell text-right font-mono text-[13px]">
                   {row.expiry_date ? (
                     <span className={isActive ? "text-primary font-bold" : "text-muted-content line-through"}>
                       {format(new Date(row.expiry_date), "dd/MM/yy")}
@@ -351,7 +360,7 @@ export function CustomerTable({ customers }: CustomerTableProps) {
                 </td>
  
                 {/* Our Customer From */}
-                <td className="p-4 text-right font-mono">
+                <td className="p-4 hidden xl:table-cell text-right font-mono">
                   <div className="flex flex-col items-end">
                     <span className="text-[13px] text-white font-bold">
                       {row.created_at ? format(new Date(row.created_at), "dd MMM yy") : "N/A"}

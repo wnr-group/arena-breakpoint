@@ -3,6 +3,7 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { isBookingDateStringWithinWindow, BOOKING_WINDOW_ERROR } from "@/lib/utils/dates";
 import { shiftDate, timeToMinutes } from "@/lib/payments/availability";
+import { createSlotHold, releaseSlotHoldRow } from "@/lib/bookings/slotHold";
 
 export interface AddonSelection {
   id: string;
@@ -284,6 +285,23 @@ export async function fetchLiveActiveBookings(dateString: string, deviceId: stri
   }
 }
 
+/**
+ * Takes the station off the market for ten minutes, before the customer has paid.
+ *
+ * This used to be a read: it counted stations, counted active bookings in
+ * application code, and returned `bookingId: "temp"` having written nothing. Two
+ * customers picking the same PS5 a second apart both passed, both paid, and
+ * whoever's payment settled second was refunded by fulfilment - the only place a
+ * station was ever really claimed.
+ *
+ * Now the claim happens here, in `assign_device_slot`: one transaction, behind an
+ * advisory lock on (device type, date), comparing full time ranges. The loser of
+ * the race is told the slot is gone while they are still on the slot picker,
+ * which is the whole point - nobody reaches Razorpay for a station they cannot have.
+ *
+ * The returned `expiresAt` is the row's real `lock_expires_at`, so the countdown
+ * in the banner is the deadline the database will actually enforce.
+ */
 export async function initializeSoftLockReservation(payload: {
   deviceId: string;  // This is actually deviceTypeId now
   deviceName: string;
@@ -297,6 +315,9 @@ export async function initializeSoftLockReservation(payload: {
   subtotal: number;
   total: number;
   durationMinutes?: number; // Optional: for flexible bookings
+  playerCount?: number;
+  /** A hold this customer already has, released before the new one is taken. */
+  previousHold?: { bookingId: string; holdToken: string } | null;
 }) {
   try {
     // Slots can only be held inside the rolling booking window
@@ -322,75 +343,66 @@ export async function initializeSoftLockReservation(payload: {
     const endTime = formatTime(payload.end);
     const deviceTypeId = payload.deviceId; // This is actually the device type ID
 
-    // Step 1: Get total available devices of this type
-    const { count: totalDevices, error: devicesError } = await supabaseAdmin
-      .from("devices")
-      .select("id", { count: "exact", head: true })
-      .eq("device_type_id", deviceTypeId)
-      .eq("status", "available");
-
-    if (devicesError) throw devicesError;
-
-    const totalAvailable = totalDevices || 0;
-
-    if (totalAvailable === 0) {
-      return { success: false, error: "No devices of this type are currently available." };
+    // Changing the pick gives the previous station straight back rather than
+    // leaving the customer holding two stations for the rest of the countdown.
+    if (payload.previousHold) {
+      await releaseSlotHoldRow(
+        payload.previousHold.bookingId,
+        payload.previousHold.holdToken
+      );
     }
 
-    // Step 2: Get all devices of this type
-    const { data: devices, error: deviceListError } = await supabaseAdmin
-      .from("devices")
-      .select("id")
-      .eq("device_type_id", deviceTypeId)
-      .eq("status", "available");
+    const durationMinutes =
+      payload.durationMinutes && payload.durationMinutes > 0
+        ? payload.durationMinutes
+        : Math.max(30, timeToMinutes(endTime) - timeToMinutes(startTime));
 
-    if (deviceListError) throw deviceListError;
+    const created = await createSlotHold({
+      deviceTypeId,
+      slotDate: payload.date,
+      slotStartTime24: startTime,
+      slotEndTime24: endTime,
+      durationMinutes,
+      playerCount: payload.playerCount ?? 1,
+    });
 
-    const deviceIds = (devices || []).map((d: any) => d.id);
-
-    if (deviceIds.length === 0) {
-      return { success: false, error: "No devices of this type are currently available." };
+    if (!created.success) {
+      return { success: false, error: created.error };
     }
 
-    // Step 3: Check how many devices are already booked for this slot
-    const { data: existingBookings, error: checkError } = await supabaseAdmin
-      .from("booking_device_slots")
-      .select(`
-        device_id,
-        bookings!inner(status, lock_expires_at)
-      `)
-      .in("device_id", deviceIds)
-      .eq("slot_date", payload.date)
-      .eq("slot_start_time", startTime)
-      .in("bookings.status", ["locked", "confirmed", "checked_in"]);
-
-    if (checkError) throw checkError;
-
-    const rightNow = new Date().toISOString();
-
-    // Count active bookings (exclude expired locks)
-    const activeBookingsCount = (existingBookings || []).filter((booking: any) => {
-      const bookingRecord = booking.bookings;
-      if (bookingRecord.status === "locked" && bookingRecord.lock_expires_at) {
-        return new Date(bookingRecord.lock_expires_at) > new Date(rightNow);
-      }
-      return true; // confirmed or checked_in
-    }).length;
-
-    // Step 4: Check if any devices are available
-    const availableDevicesCount = totalAvailable - activeBookingsCount;
-
-    if (availableDevicesCount <= 0) {
-      return {
-        success: false,
-        error: "This time slot is fully booked. Please select a different time slot."
-      };
-    }
-
-    // Slot is available - return success
-    return { success: true, bookingId: "temp", expiresAt: Date.now() + 10 * 60 * 1000 };
+    return {
+      success: true,
+      bookingId: created.hold.bookingId,
+      holdToken: created.hold.holdToken,
+      expiresAt: created.hold.expiresAt,
+      stationNumber: created.hold.stationNumber,
+    };
   } catch (err: any) {
-    return { success: false, error: err.message };
+    console.error("initializeSoftLockReservation error:", err);
+    return { success: false, error: "Could not hold that slot. Please try again." };
+  }
+}
+
+/**
+ * Hands a held station back before the countdown runs out.
+ *
+ * Called when the customer goes back to pick a different slot or device, and when
+ * their countdown reaches zero. Neither is required for correctness - a hold that
+ * is never released simply lapses, and every availability check ignores a lapsed
+ * one - but releasing promptly is what lets the next customer book the station in
+ * the seconds after this one walks away.
+ *
+ * Deliberately not called when Razorpay is dismissed or a payment fails: the
+ * customer is still on the summary screen and will usually retry, and dropping
+ * the hold there would offer their slot to somebody else mid-retry.
+ */
+export async function releaseSlotHold(bookingId: string, holdToken: string) {
+  try {
+    const released = await releaseSlotHoldRow(bookingId, holdToken);
+    return { success: true, released };
+  } catch (err: any) {
+    console.error("releaseSlotHold error:", err);
+    return { success: false, released: false };
   }
 }
 
@@ -461,7 +473,13 @@ export async function checkCustomerExists(phone: string) {
 export async function checkFlexibleAvailability(
   dateString: string,
   deviceTypeId: string,
-  durationMinutes: number
+  durationMinutes: number,
+  /**
+   * A hold belonging to the customer doing the browsing. Their own reservation
+   * would otherwise show up as somebody else's booking, so the slot they are
+   * holding would look unavailable to the one person entitled to it.
+   */
+  excludeBookingId?: string | null
 ) {
   const requestId = Math.random().toString(36).substring(7);
   console.log(`\n[Availability ${requestId}] ========================================`);
@@ -521,6 +539,7 @@ export async function checkFlexibleAvailability(
     const { data: bookings, error: bookingsError } = await supabaseAdmin
       .from("booking_device_slots")
       .select(`
+        booking_id,
         device_id,
         slot_start_time,
         slot_end_time,
@@ -558,6 +577,9 @@ export async function checkFlexibleAvailability(
     // comparison, with no midnight special cases left to get wrong.
     const activeBookings = (bookings || [])
       .filter((booking: any) => {
+        // The browser's own hold is not competition for the browser.
+        if (excludeBookingId && booking.booking_id === excludeBookingId) return false;
+
         const bookingRecord = booking.bookings;
         // Skip expired locks
         if (bookingRecord.status === "locked" && bookingRecord.lock_expires_at) {

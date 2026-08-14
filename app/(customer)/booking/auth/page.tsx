@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShieldCheck, Phone, ChevronRight, User, Mail, CheckCircle2, QrCode, Cake, UtensilsCrossed, Tag, Loader2, Sparkles } from 'lucide-react';
 import { toast } from "sonner";
-import { checkCustomerExists } from "../actions";
+import { checkCustomerExists, releaseSlotHold as releaseSlotHoldOnServer } from "../actions";
 import { createDeviceBookingPaymentOrder, confirmDeviceBookingPayment } from "../payment-actions";
 import {
   openRazorpayCheckout,
@@ -21,9 +21,10 @@ import {
 } from "@/lib/razorpay/checkout";
 import { validatePromoCode, calculatePromoDiscount } from "../promo-actions";
 import { QRCodeSVG } from "qrcode.react";
-import { generateDurationOptions } from "@/lib/utils/timeSlots";
+import { generateDurationOptions, crossesMidnight, bookingEndDate } from "@/lib/utils/timeSlots";
 import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDob, DOB_ERROR } from "@/lib/utils/dates";
 import { allFilled, isPlausibleEmail } from "@/lib/utils/forms";
+import { deviceCharge, extraPlayersCharge, perExtraPlayerCharge } from "@/lib/payments/money";
 
 type Step = "phone" | "details" | "summary" | "success";
 
@@ -85,6 +86,18 @@ export default function CustomerDetailsPage() {
     }
   }, [step]);
 
+  /**
+   * The date a booking that runs past midnight actually ends on.
+   *
+   * Null when it finishes the same day, so the summary only mentions a second
+   * date when there genuinely is one.
+   */
+  const sessionEndDate = useMemo(() => {
+    if (!selectedDate || !slotStartTime || !selectedDuration) return null;
+    if (!crossesMidnight(slotStartTime, selectedDuration)) return null;
+    return bookingEndDate(new Date(selectedDate), slotStartTime, selectedDuration);
+  }, [selectedDate, slotStartTime, selectedDuration]);
+
   const selectedDurationLabel = useMemo(() => {
     const duration = allDurations.find(d => d.value === selectedDuration);
     return duration?.label || (selectedDuration ? `${selectedDuration} mins` : "--");
@@ -111,9 +124,12 @@ export default function CustomerDetailsPage() {
       durationInHours = (parseTime(slotEndTime) - parseTime(slotStartTime)) / 60;
     }
 
-    const deviceCharges = (hourlyRate || 0) * durationInHours;
-    const extraPlayerCharges =
-      Math.max(0, playerCount - includedPlayers) * extraPlayerCharge * durationInHours;
+    const deviceCharges = deviceCharge(hourlyRate || 0, durationInHours);
+    const extraPlayerCharges = extraPlayersCharge(
+      Math.max(0, playerCount - includedPlayers),
+      extraPlayerCharge,
+      durationInHours
+    );
     const addonsTotal = addons.reduce((sum, addon) => sum + addon.price * addon.quantity, 0);
     const subtotalAmount = deviceCharges + extraPlayerCharges + addonsTotal;
     const total =
@@ -238,8 +254,8 @@ export default function CustomerDetailsPage() {
 
         // Calculate subscription discount on device + extra players only (NOT food/addons)
         const durationInHours = (selectedDuration || 60) / 60;
-        const deviceCharges = (hourlyRate || 0) * durationInHours;
-        const extraPlayerCharges = (playerCount - includedPlayers) * extraPlayerCharge * durationInHours;
+        const deviceCharges = deviceCharge(hourlyRate || 0, durationInHours);
+        const extraPlayerCharges = extraPlayersCharge(playerCount - includedPlayers, extraPlayerCharge, durationInHours);
         const discountableAmount = deviceCharges + extraPlayerCharges;
 
         const discountAmount = (discountableAmount * result.subscription.discount_percentage) / 100;
@@ -337,8 +353,8 @@ export default function CustomerDetailsPage() {
         durationInHours = (endMins - startMins) / 60;
       }
 
-      const deviceCharges = (hourlyRate || 0) * durationInHours;
-      const extraPlayerCharges = (playerCount - includedPlayers) * extraPlayerCharge * durationInHours;
+      const deviceCharges = deviceCharge(hourlyRate || 0, durationInHours);
+      const extraPlayerCharges = extraPlayersCharge(playerCount - includedPlayers, extraPlayerCharge, durationInHours);
       const discountableAmount = deviceCharges + extraPlayerCharges; // NOT food
 
       const discount = await calculatePromoDiscount(
@@ -388,8 +404,8 @@ export default function CustomerDetailsPage() {
       durationInHours = (endMins - startMins) / 60;
     }
 
-    const deviceCharges = (hourlyRate || 0) * durationInHours;
-    const extraPlayerCharges = (playerCount - includedPlayers) * extraPlayerCharge * durationInHours;
+    const deviceCharges = deviceCharge(hourlyRate || 0, durationInHours);
+    const extraPlayerCharges = extraPlayersCharge(playerCount - includedPlayers, extraPlayerCharge, durationInHours);
     const addonsTotal = addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
     const calculatedSubtotal = deviceCharges + extraPlayerCharges + addonsTotal;
     const calculatedTotal = calculatedSubtotal - bookingState.subscriptionDiscount - bookingState.happyHourDiscount;
@@ -444,6 +460,11 @@ export default function CustomerDetailsPage() {
         playerCount: playerCount,
         addons: addons.map((addon) => ({ id: addon.id, quantity: addon.quantity })),
         promoCode: bookingState.promoCode,
+        // The reservation taken on the slot picker. The server re-checks it; if it
+        // has lapsed the booking still goes through, it just competes for the
+        // station again instead of converting one already held.
+        holdBookingId: bookingState.bookingId,
+        holdToken: bookingState.holdToken,
       });
 
       if (!order.success) {
@@ -527,6 +548,25 @@ export default function CustomerDetailsPage() {
     router.push("/booking");
   };
 
+  /**
+   * Going back to pick again hands the station back straight away.
+   *
+   * The hold would lapse on its own within ten minutes, but releasing it here is
+   * what lets the next customer book this station in the seconds after this one
+   * walks away from it - which is the difference between a slot being free and a
+   * slot looking taken to everybody else for the rest of the countdown.
+   */
+  const handleChooseAnotherSlot = () => {
+    const { bookingId: heldBookingId, holdToken: heldToken } = bookingState;
+    if (heldBookingId && heldToken) {
+      // Fire and forget: the customer should not wait on this, and a hold that
+      // fails to release simply lapses.
+      void releaseSlotHoldOnServer(heldBookingId, heldToken);
+    }
+    dispatch(releaseSlotHold());
+    router.push("/booking/slots-v2");
+  };
+
   if (!mounted) return null;
 
   // Phone Step UI
@@ -584,7 +624,11 @@ export default function CustomerDetailsPage() {
                 {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "CONTINUE"} <ChevronRight className="h-4 w-4 stroke-[3]" />
               </Button>
 
-              <Button type="button" onClick={() => { dispatch(releaseSlotHold()); router.back(); }} variant="ghost" className="w-full border border-zinc-900 text-zinc-400 hover:text-zinc-300 font-bold uppercase text-sm h-11 rounded-xl">
+              {/* Go to the slot picker explicitly. router.back() followed history, so
+                  a customer who arrived any other way - a refresh, a deep link, a
+                  redirect after the hold lapsed - landed on device selection or left
+                  the flow entirely instead of choosing another time. */}
+              <Button type="button" onClick={handleChooseAnotherSlot} variant="ghost" className="w-full border border-zinc-900 text-zinc-400 hover:text-zinc-300 font-bold uppercase text-sm h-11 rounded-xl">
                 ← CHOOSE ALTERNATIVE TIME SLOT
               </Button>
             </div>
@@ -719,7 +763,13 @@ export default function CustomerDetailsPage() {
             <h4 className="text-xs font-black text-zinc-400 uppercase tracking-wider mb-2">Booking Details</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-zinc-400">Device:</span> <span className="text-white font-bold text-right">{deviceTypeName}</span></div>
-              <div className="flex justify-between"><span className="text-zinc-400">Date:</span> <span className="text-white font-bold">{selectedDate ? `${new Date(selectedDate).toLocaleDateString()}, ${new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'short' })}` : "--"}</span></div>
+              <div className="flex justify-between"><span className="text-zinc-400">Date:</span> <span className="text-white font-bold text-right">{selectedDate ? `${new Date(selectedDate).toLocaleDateString()}, ${new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'short' })}` : "--"}
+                {sessionEndDate && (
+                  <span className="block text-[11px] text-amber-400 font-bold">
+                    ends {sessionEndDate.toLocaleDateString()}, {sessionEndDate.toLocaleDateString('en-US', { weekday: 'short' })}
+                  </span>
+                )}
+              </span></div>
               <div className="flex justify-between"><span className="text-zinc-400">Time Slot:</span> <span className="text-primary font-bold">{selectedSlot}</span></div>
               <div className="flex justify-between"><span className="text-zinc-400">Duration:</span> <span className="text-white font-bold">{selectedDurationLabel}</span></div>
             </div>
@@ -812,7 +862,7 @@ export default function CustomerDetailsPage() {
 
                     {playerCount > includedPlayers && (
                       <div className="flex justify-between">
-                        <span className="text-zinc-400">Extra Players ({playerCount - includedPlayers} × ₹{extraPlayerCharge} × {durationInHours}h):</span>
+                        <span className="text-zinc-400">Extra Players ({playerCount - includedPlayers} × ₹{perExtraPlayerCharge(extraPlayerCharge, durationInHours)}):</span>
                         <span className="text-white">₹{extraPlayerCharges.toFixed(2)}</span>
                       </div>
                     )}
@@ -930,7 +980,7 @@ export default function CustomerDetailsPage() {
             <div className="flex justify-between"><span className="text-zinc-400">Duration:</span> <span className="text-white font-bold">{selectedDurationLabel}</span></div>
             <div className="flex justify-between"><span className="text-zinc-400">Players:</span> <span className="text-white font-bold">{playerCount}</span></div>
             {playerCount > includedPlayers && (
-              <div className="flex justify-between text-xs"><span className="text-zinc-600">Extra Players:</span> <span className="text-zinc-400">+₹{((playerCount - includedPlayers) * extraPlayerCharge * ((selectedDuration || 60) / 60)).toFixed(2)}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-zinc-600">Extra Players:</span> <span className="text-zinc-400">+₹{extraPlayersCharge(playerCount - includedPlayers, extraPlayerCharge, (selectedDuration || 60) / 60).toFixed(2)}</span></div>
             )}
             {effectivePricing.subscriptionDiscount > 0 && (
               <div className="flex justify-between text-xs text-green-500"><span>Subscription Discount ({bookingState.subscriptionDiscountPercentage}%):</span> <span>-₹{effectivePricing.subscriptionDiscount.toFixed(2)}</span></div>

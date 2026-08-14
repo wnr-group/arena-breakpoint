@@ -47,6 +47,7 @@ export function shiftDate(dateString: string, days: number): string {
 }
 
 interface BookedSlotRow {
+  booking_id: string
   device_id: string
   slot_date: string
   slot_start_time: string
@@ -63,7 +64,8 @@ interface BookedSlotRow {
  */
 async function fetchOccupiedRanges(
   deviceIds: string[],
-  slotDate: string
+  slotDate: string,
+  excludeBookingId?: string | null
 ): Promise<Map<string, MinuteRange[]>> {
   const byDevice = new Map<string, MinuteRange[]>()
 
@@ -73,6 +75,7 @@ async function fetchOccupiedRanges(
     .from('booking_device_slots')
     .select(
       `
+      booking_id,
       device_id,
       slot_date,
       slot_start_time,
@@ -90,6 +93,11 @@ async function fetchOccupiedRanges(
 
   for (const row of (data || []) as unknown as BookedSlotRow[]) {
     const booking = row.bookings
+
+    // The caller's own hold is not competition for the caller. Without this, a
+    // customer holding the last station would be told their slot was unavailable
+    // at the moment they tried to pay for it.
+    if (excludeBookingId && row.booking_id === excludeBookingId) continue
 
     // An expired lock no longer holds the slot.
     if (
@@ -146,14 +154,17 @@ async function fetchAvailableDevices(deviceTypeId: string) {
 export async function countAvailableDevicesForRange(
   deviceTypeId: string,
   slotDate: string,
-  requested: MinuteRange
+  requested: MinuteRange,
+  /** A hold belonging to the customer being quoted, which must not count against them. */
+  excludeBookingId?: string | null
 ): Promise<number> {
   const devices = await fetchAvailableDevices(deviceTypeId)
   if (devices.length === 0) return 0
 
   const occupied = await fetchOccupiedRanges(
     devices.map((device) => device.id),
-    slotDate
+    slotDate,
+    excludeBookingId
   )
 
   return devices.filter((device) => {

@@ -13,7 +13,9 @@ import {
   resolveActiveMembership,
 } from '@/lib/subscriptions/discount'
 import { countAvailableDevicesForRange, toRequestedRange } from './availability'
-import { round2 } from './money'
+import { holdMatchesSlot, loadLiveHold } from '@/lib/bookings/slotHold'
+import { resolveHappyHour } from './happyHour'
+import { round2, deviceCharge, extraPlayersCharge } from './money'
 
 const MIN_DURATION_MINUTES = 30
 const MAX_DURATION_MINUTES = 5 * 60
@@ -75,6 +77,14 @@ export interface DeviceBookingQuote {
   happyHourRuleId: string | null
   happyHourRuleName: string | null
   happyHourDiscount: number
+
+  /**
+   * The hold this quote was priced against, verified live at quote time. Carried
+   * into fulfilment so the station the customer reserved is the one they get -
+   * and so fulfilment converts that reservation instead of competing for a second.
+   */
+  holdBookingId: string | null
+  holdToken: string | null
 
   totalAmount: number
 }
@@ -275,39 +285,7 @@ function parseDateLocal(dateString: string): Date | null {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
-async function resolveHappyHour(
-  deviceTypeDisplayName: string,
-  deviceTypeName: string,
-  bookingDate: Date,
-  slotStart12: string,
-  slotEnd12: string,
-  discountableBase: number
-): Promise<{ ruleId: string | null; ruleName: string | null; discount: number }> {
-  const none = { ruleId: null, ruleName: null, discount: 0 }
 
-  const { data, error } = await supabaseAdmin
-    .from('happy_hour_rules')
-    .select('*')
-    .eq('status', 'LIVE')
-
-  // Happy hours are optional - a missing table or query failure must not block payment.
-  if (error || !data || data.length === 0) return none
-
-  const rules = data as HappyHourRule[]
-
-  // The booking screens match on display_name; fall back to the internal name.
-  const rule =
-    findApplicableHappyHour(rules, deviceTypeDisplayName, bookingDate, slotStart12, slotEnd12) ||
-    findApplicableHappyHour(rules, deviceTypeName, bookingDate, slotStart12, slotEnd12)
-
-  if (!rule) return none
-
-  return {
-    ruleId: rule.id,
-    ruleName: rule.name,
-    discount: round2((discountableBase * Number(rule.discount)) / 100),
-  }
-}
 
 // ================================================
 // Device booking quote
@@ -327,6 +305,14 @@ export interface DeviceBookingInput {
 
   addons?: Array<{ id: string; quantity: number }>
   promoCode?: string | null
+
+  /**
+   * The hold taken on the slot picker, if the customer still has one. Proves the
+   * station is already theirs, so the capacity check below does not read their own
+   * reservation as competition.
+   */
+  holdBookingId?: string | null
+  holdToken?: string | null
 }
 
 export async function quoteDeviceBooking(
@@ -393,12 +379,28 @@ export async function quoteDeviceBooking(
       return { success: false, error: `Please select between 1 and ${maxPlayers} players.` }
     }
 
+    // --- The customer's own reservation, if it is still live ---
+    // Checked against the database rather than taken on trust: the ids arrive from
+    // the browser, and a hold only counts when it is unexpired, unspent, carries
+    // the matching token, and covers this exact station-window.
+    const hold = await loadLiveHold(input.holdBookingId, input.holdToken)
+    const heldBookingId =
+      hold &&
+      holdMatchesSlot(hold, {
+        slotDate: input.selectedDate,
+        slotStartTime24,
+        slotEndTime24,
+      })
+        ? hold.id
+        : null
+
     // --- Capacity: confirm a station is actually free before charging ---
     const requestedRange = toRequestedRange(slotStartTime24, durationMinutes)
     const availableCount = await countAvailableDevicesForRange(
       deviceType.id,
       input.selectedDate,
-      requestedRange
+      requestedRange,
+      heldBookingId
     )
 
     if (availableCount <= 0) {
@@ -413,9 +415,16 @@ export async function quoteDeviceBooking(
     const hourlyRate = Number(deviceType.regular_hourly_rate) || 0
     const extraPlayerCharge = Number(deviceType.extra_player_charge) || 0
 
-    const deviceCharges = round2(hourlyRate * durationHours)
+    // Whole rupees, and the extra players rounded one at a time - see money.ts.
+    // Half-hour durations are what make this matter: 79 x 1.5 is 118.50, and the
+    // screens the customer just came from quoted it as ₹119.
+    const deviceCharges = deviceCharge(hourlyRate, durationHours)
     const extraPlayersCount = Math.max(0, playerCount - includedPlayers)
-    const extraPlayersTotal = round2(extraPlayersCount * extraPlayerCharge * durationHours)
+    const extraPlayersTotal = extraPlayersCharge(
+      extraPlayersCount,
+      extraPlayerCharge,
+      durationHours
+    )
     const deviceSubtotal = round2(deviceCharges + extraPlayersTotal)
 
     const pricedAddons = await priceItems(input.addons || [])
@@ -494,6 +503,9 @@ export async function quoteDeviceBooking(
         happyHourRuleId: happyHour.ruleId,
         happyHourRuleName: happyHour.ruleName,
         happyHourDiscount: happyHour.discount,
+
+        holdBookingId: heldBookingId,
+        holdToken: heldBookingId ? input.holdToken ?? null : null,
 
         totalAmount,
       },

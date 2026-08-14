@@ -53,7 +53,19 @@ export interface BookingState {
 
   // Booking state
   bookingId: string | null
+  /** Proves this browser owns the server-side hold behind `bookingId`. */
+  holdToken: string | null
   slotLockExpiry: number | null
+
+  /**
+   * Whether the sessionStorage snapshot has been read back into this store yet.
+   *
+   * Redux starts empty on every page load, so a guard like "no device type, go
+   * back to device selection" would fire on the first tick of a refresh - before
+   * the restore ran - and bounce a customer who was mid-flow. Pages that redirect
+   * on missing booking state must wait for this.
+   */
+  hydrated: boolean
 }
 
 const initialState: BookingState = {
@@ -89,7 +101,9 @@ const initialState: BookingState = {
   subscriptionDiscountPercentage: 0,
   subscriptionEndDate: null,
   bookingId: null,
+  holdToken: null,
   slotLockExpiry: null,
+  hydrated: false,
 }
 
 export const bookingSlice = createSlice({
@@ -224,6 +238,16 @@ export const bookingSlice = createSlice({
       state.bookingId = action.payload
     },
 
+    /** The server-side hold: its booking row, the token proving it is ours, its deadline. */
+    setSlotHold: (
+      state,
+      action: PayloadAction<{ bookingId: string; holdToken: string; expiresAt: number }>
+    ) => {
+      state.bookingId = action.payload.bookingId
+      state.holdToken = action.payload.holdToken
+      state.slotLockExpiry = action.payload.expiresAt
+    },
+
     setSlotLockExpiry: (state, action: PayloadAction<number>) => {
       state.slotLockExpiry = action.payload
     },
@@ -241,9 +265,27 @@ export const bookingSlice = createSlice({
       state.selectedSlot = null;
       state.slotStartTime = null;
       state.slotEndTime = null;
+      // The row on the server is released separately; dropping the token here
+      // stops a stale hold being offered as proof of a reservation we gave up.
+      state.holdToken = null;
+      state.bookingId = null;
     },
 
-    resetBooking: () => initialState,
+    /**
+     * Fold the snapshot left by a previous page load back into the store.
+     *
+     * Dispatched once per load even when there is nothing stored, because the
+     * point is as much to flip `hydrated` as to carry the values across: that is
+     * the signal the routing guards wait on.
+     */
+    restoreBooking: (state, action: PayloadAction<Partial<BookingState> | null>) => ({
+      ...state,
+      ...(action.payload ?? {}),
+      hydrated: true,
+    }),
+
+    /** Starting over clears the booking, not the fact that this tab has hydrated. */
+    resetBooking: (state) => ({ ...initialState, hydrated: state.hydrated }),
   },
 })
 
@@ -260,10 +302,12 @@ export const {
   setCustomerDetails,
   setSubscription,
   setBookingId,
+  setSlotHold,
   setSlotLockExpiry,
   setDuration,
   clearSlotTimer,
   releaseSlotHold,
+  restoreBooking,
   resetBooking,
 } = bookingSlice.actions
 
