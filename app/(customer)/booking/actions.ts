@@ -1,7 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { isBookingDateStringWithinWindow, BOOKING_WINDOW_ERROR } from "@/lib/utils/dates";
+import { BOOKING_WINDOW_ERROR, arenaToday, isBookingDateStringWithinWindow } from "@/lib/utils/dates";
 import { shiftDate, timeToMinutes } from "@/lib/payments/availability";
 import { createSlotHold, releaseSlotHoldRow } from "@/lib/bookings/slotHold";
 import { headers } from "next/headers";
@@ -452,7 +452,7 @@ export async function checkCustomerExists(phone: string) {
         `)
         .eq("id", data.active_subscription_id)
         .eq("status", "active")
-        .gte("end_date", new Date().toISOString().split('T')[0])
+        .gte("end_date", arenaToday())
         .single();
 
       if (!subError && subData) {
