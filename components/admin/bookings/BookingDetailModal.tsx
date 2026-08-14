@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { BookingStatusBadge } from "./BookingStatusBadge";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
-import { getBookingDetails, checkInBooking, checkOutBooking, addFoodToBooking, removeFoodItemFromBooking, updatePlayerCount } from "@/app/(admin)/admin/bookings/actions";
+import { SessionTimeline } from "./SessionTimeline";
+import { getBookingDetails, checkInBooking, checkOutBooking, checkInWalkInSession, checkOutWalkInSession, addFoodToBooking, removeFoodItemFromBooking, updatePlayerCount } from "@/app/(admin)/admin/bookings/actions";
 import { getMenuItems } from "@/app/(admin)/admin/food/actions";
 import { Label } from "@/components/ui/label";
 import { QRCodeSVG } from "qrcode.react";
@@ -154,6 +155,41 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
     setActionLoading(false);
   };
 
+  /** True for a walk-in whose bill comes from the clock, not from a chosen slot. */
+  const isSession = booking?.billed_on_actual_time === true;
+
+  const handleSessionCheckIn = async () => {
+    if (!bookingId) return;
+    setActionLoading(true);
+    const result = await checkInWalkInSession(bookingId);
+    if (result.success) {
+      toast.success("Checked in — playing now", {
+        description: `Station ${result.stationNumber}. Billing starts from this moment.`
+      });
+      loadBookingDetails();
+      onUpdate?.();
+    } else {
+      toast.error("Check-in failed", { description: result.error });
+    }
+    setActionLoading(false);
+  };
+
+  const handleSessionCheckOut = async () => {
+    if (!bookingId) return;
+    setActionLoading(true);
+    const result = await checkOutWalkInSession(bookingId);
+    if (result.success) {
+      toast.success(`Checked out — ${result.durationLabel} played`, {
+        description: `Billed ₹${Number(result.totalAmount).toFixed(2)} for the time actually played.`
+      });
+      loadBookingDetails();
+      onUpdate?.();
+    } else {
+      toast.error("Check-out failed", { description: result.error });
+    }
+    setActionLoading(false);
+  };
+
   const handleCheckIn = async () => {
     if (!bookingId) return;
     setActionLoading(true);
@@ -227,8 +263,13 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
     const result = await updatePlayerCount(slotId, newCount, maxPlayers);
 
     if (result.success) {
+      // A session in progress has no total to quote - its bill is worked out at
+      // checkout - so the message stands on its own there.
       toast.success(result.message, {
-        description: `New total: ₹${result.newTotal?.toLocaleString('en-IN')}`
+        description:
+          typeof result.newTotal === "number"
+            ? `New total: ₹${result.newTotal.toLocaleString('en-IN')}`
+            : undefined
       });
       loadBookingDetails();
       onUpdate?.();
@@ -278,10 +319,14 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                           <span>In: {new Date(booking.checked_in_at).toLocaleString()}</span>
                         </div>
                       )}
-                      {booking.checked_out_at && (
+                      {/* Sessions get the full timeline below instead: for those,
+                          these two stamps are the bill, not just a record. */}
+                      {/* `completed_at` is the checkout stamp - there is no
+                          checked_out_at column, so this row never rendered. */}
+                      {booking.completed_at && (
                         <div className="flex items-center gap-1 text-blue-500">
                           <LogOut className="h-3.5 w-3.5" />
-                          <span>Out: {new Date(booking.checked_out_at).toLocaleString()}</span>
+                          <span>Out: {new Date(booking.completed_at).toLocaleString()}</span>
                         </div>
                       )}
                     </div>
@@ -706,9 +751,43 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                 </div>
               </Card>
 
+              {/* Created / checked in / played / checked out, one under the other,
+                  so the booking time can never be mistaken for the start of play. */}
+              {isSession && (
+                <SessionTimeline
+                  status={booking.status}
+                  createdAt={booking.created_at}
+                  checkedInAt={booking.checked_in_at}
+                  completedAt={booking.completed_at}
+                  totalAmount={booking.total_amount}
+                />
+              )}
+
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-3 pt-6 border-t-2 border-[#27272a]">
-                {booking.status === "confirmed" && (
+                {isSession && booking.status === "confirmed" && (
+                  <Button
+                    onClick={handleSessionCheckIn}
+                    disabled={actionLoading}
+                    className="bg-green-600 hover:bg-green-700 text-white font-black uppercase text-sm h-12 px-8 flex items-center gap-2"
+                  >
+                    {actionLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
+                    Check In &amp; Start Session
+                  </Button>
+                )}
+
+                {isSession && booking.status === "checked_in" && (
+                  <Button
+                    onClick={handleSessionCheckOut}
+                    disabled={actionLoading}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-sm h-12 px-8 flex items-center gap-2"
+                  >
+                    {actionLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogOut className="h-5 w-5" />}
+                    Check Out &amp; Calculate Bill
+                  </Button>
+                )}
+
+                {!isSession && booking.status === "confirmed" && (
                   <Button
                     onClick={handleCheckIn}
                     disabled={actionLoading}
@@ -719,7 +798,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                   </Button>
                 )}
 
-                {booking.status === "checked_in" && (
+                {!isSession && booking.status === "checked_in" && (
                   <Button
                     onClick={handleCheckOut}
                     disabled={actionLoading || (Number(booking.balance_due || 0) > 0 && booking.payment_status !== 'paid')}

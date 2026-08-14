@@ -15,7 +15,7 @@ import { PaymentStatusBadge } from "@/components/admin/bookings/PaymentStatusBad
 import { BookingsGrid } from "@/components/admin/bookings/BookingsGrid";
 import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
 import { CheckoutModal } from "@/components/admin/bookings/CheckoutModal";
-import { getAllBookings, getBookingStats, checkInBooking, checkOutBooking, getBookingBillingDetails, markBookingAsPaid, type BookingFilters } from "./actions";
+import { getAllBookings, getBookingStats, checkInBooking, checkOutBooking, checkInWalkInSession, checkOutWalkInSession, getBookingBillingDetails, markBookingAsPaid, type BookingFilters } from "./actions";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { Search, Filter, Calendar, CalendarDays, DollarSign, Users, CheckCircle2, Clock, Loader2, Eye, Receipt, PlusCircle, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List, AlertCircle, RefreshCw, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ import { useDebounce } from "@/lib/hooks/useDebounce";
 import { CountUp, CurrencyCountUp } from "@/components/shared/CountUp";
 import { roundToTwo, formatCurrency } from "@/lib/currency";
 import { formatDbTime, formatDbTimeRange } from "@/lib/utils/timeSlots";
+import { SessionTimesCell } from "@/components/admin/bookings/SessionTimeline";
 import {
   formatLocalDate,
   parseLocalDate,
@@ -253,6 +254,26 @@ export default function AdminBookingsPage() {
   };
 
   const handleCheckIn = async (bookingId: string, bookingNumber: string, booking: any) => {
+    // A walk-in session has no slot to be early or late for: check-in is what
+    // creates one, and the clock it starts is the clock the bill is read from.
+    if (booking.billed_on_actual_time) {
+      startTransition(async () => {
+        const result = await checkInWalkInSession(bookingId);
+        if (result.success) {
+          toast.success("Checked in — playing now", {
+            description:
+              `Station ${result.stationNumber} · billing starts ` +
+              `${new Date(result.checkedInAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+          });
+          loadBookings();
+          loadStats();
+        } else {
+          toast.error("Check-in failed", { description: result.error });
+        }
+      });
+      return;
+    }
+
     // Check if checking in early (more than 10 minutes before slot start time)
     const deviceSlot = booking.booking_device_slots?.[0];
     if (deviceSlot?.slot_start_time && deviceSlot?.slot_date) {
@@ -287,6 +308,24 @@ export default function AdminBookingsPage() {
   };
 
   const handleCheckOut = async (bookingId: string, bookingNumber: string, booking: any) => {
+    // A session has no scheduled end to be early for. Checking out is what fixes
+    // the end time and, with it, the price.
+    if (booking.billed_on_actual_time) {
+      startTransition(async () => {
+        const result = await checkOutWalkInSession(bookingId);
+        if (result.success) {
+          toast.success(`Checked out — ${result.durationLabel} played`, {
+            description: `Billed ₹${Number(result.totalAmount).toFixed(2)}. Settle payment from Checkout & Billing.`
+          });
+          loadBookings();
+          loadStats();
+        } else {
+          toast.error("Check-out failed", { description: result.error });
+        }
+      });
+      return;
+    }
+
     // Check if checking out early (more than 5 minutes before slot end time)
     const deviceSlot = booking.booking_device_slots?.[0];
     if (deviceSlot?.slot_end_time && deviceSlot?.slot_date) {
@@ -933,7 +972,8 @@ export default function AdminBookingsPage() {
                                   {new Date(firstSlot.slot_date).toLocaleDateString()}
                                 </p>
                                 <p className="text-sm-readable text-secondary-content">
-                                  {formatDbTimeRange(firstSlot.slot_start_time, firstSlot.slot_end_time)}
+                                  {firstBooking.billed_on_actual_time ? <SessionTimesCell booking={firstBooking} /> :
+                                    formatDbTimeRange(firstSlot.slot_start_time, firstSlot.slot_end_time)}
                                 </p>
                               </>
                             ) : (
@@ -942,7 +982,11 @@ export default function AdminBookingsPage() {
                                   {new Date(firstBooking.created_at).toLocaleDateString()}
                                 </p>
                                 <p className="text-sm-readable text-secondary-content">
-                                  {new Date(firstBooking.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                                  {/* A walk-in waiting for check-in has no slot yet, so this
+                                      is the only row that ever shows its creation time - and
+                                      it says so rather than passing it off as a start time. */}
+                                  {firstBooking.billed_on_actual_time ? <SessionTimesCell booking={firstBooking} /> :
+                                    new Date(firstBooking.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                               </>
                             )
@@ -967,19 +1011,12 @@ export default function AdminBookingsPage() {
                         </td>
                         <td className="py-4 px-4">
                           {isSingleBooking ? (
-                            <div className="space-y-1">
-                              <PaymentStatusBadge status={firstBooking.payment_status || 'pending'} size="md" />
-                              {firstBooking.payment_status === 'partial' && (
-                                <div className="space-y-0.5">
-                                  <p className="text-min text-blue-400">
-                                    Paid: ₹{formatCurrency(firstBooking.amount_paid || 0)}
-                                  </p>
-                                  <p className="text-min text-amber-400 font-semibold">
-                                    Due: ₹{formatCurrency(firstBooking.balance_due || 0)}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
+                            <PaymentStatusBadge
+                              status={firstBooking.payment_status || 'pending'}
+                              size="md"
+                              amountPaid={firstBooking.amount_paid}
+                              balanceDue={firstBooking.balance_due}
+                            />
                           ) : (
                             <p className="text-sm-readable text-secondary-content italic">-</p>
                           )}
@@ -1019,29 +1056,32 @@ export default function AdminBookingsPage() {
                                 </Button>
                               )}
                               {(firstBooking.status === "confirmed" || firstBooking.status === "checked_in") && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => {
-                                      setSelectedBooking(firstBooking);
-                                      setOpenFoodModal(true);
-                                    }}
-                                    className="h-8 w-8 p-0 text-primary hover:text-primary-hover hover:bg-primary/10"
-                                    title="Add Food"
-                                  >
-                                    <UtensilsCrossed className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => handleCheckoutBillingClick(firstBooking.id)}
-                                    className="h-8 w-8 p-0 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10"
-                                    title="Checkout & Billing"
-                                  >
-                                    <CreditCard className="h-4 w-4" />
-                                  </Button>
-                                </>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setSelectedBooking(firstBooking);
+                                    setOpenFoodModal(true);
+                                  }}
+                                  className="h-8 w-8 p-0 text-primary hover:text-primary-hover hover:bg-primary/10"
+                                  title="Add Food"
+                                >
+                                  <UtensilsCrossed className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {/* Still reachable once a session is checked out and owes money. */}
+                              {(firstBooking.status === "confirmed" ||
+                                firstBooking.status === "checked_in" ||
+                                Number(firstBooking.balance_due || 0) > 0.01) && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleCheckoutBillingClick(firstBooking.id)}
+                                  className="h-8 w-8 p-0 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10"
+                                  title="Checkout & Billing"
+                                >
+                                  <CreditCard className="h-4 w-4" />
+                                </Button>
                               )}
                               <Button
                                 size="sm"
@@ -1081,10 +1121,13 @@ export default function AdminBookingsPage() {
                             </td>
                             <td className="py-3 px-4">
                               <p className="text-sm font-bold text-date-visible">
-                                {deviceSlot?.slot_date ? new Date(deviceSlot.slot_date).toLocaleDateString() : "N/A"}
+                                {deviceSlot?.slot_date
+                                  ? new Date(deviceSlot.slot_date).toLocaleDateString()
+                                  : new Date(booking.created_at).toLocaleDateString()}
                               </p>
                               <p className="text-sm-readable text-secondary-content">
-                                {formatDbTimeRange(deviceSlot?.slot_start_time, deviceSlot?.slot_end_time)}
+                                {booking.billed_on_actual_time ? <SessionTimesCell booking={booking} /> :
+                                  formatDbTimeRange(deviceSlot?.slot_start_time, deviceSlot?.slot_end_time)}
                               </p>
                             </td>
                             <td className="py-3 px-4">
@@ -1101,7 +1144,12 @@ export default function AdminBookingsPage() {
                               </div>
                             </td>
                             <td className="py-3 px-4">
-                              <PaymentStatusBadge status={booking.payment_status || 'pending'} size="md" />
+                              <PaymentStatusBadge
+                                status={booking.payment_status || 'pending'}
+                                size="md"
+                                amountPaid={booking.amount_paid}
+                                balanceDue={booking.balance_due}
+                              />
                             </td>
                             <td className="py-3 px-4">
                               <BookingStatusBadge status={booking.status} size="md" />
@@ -1133,29 +1181,32 @@ export default function AdminBookingsPage() {
                                   </Button>
                                 )}
                                 {(booking.status === "confirmed" || booking.status === "checked_in") && (
-                                  <>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => {
-                                        setSelectedBooking(booking);
-                                        setOpenFoodModal(true);
-                                      }}
-                                      className="h-8 w-8 p-0 text-primary hover:text-primary-hover hover:bg-primary/10"
-                                      title="Add Food"
-                                    >
-                                      <UtensilsCrossed className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => handleCheckoutBillingClick(booking.id)}
-                                      className="h-8 w-8 p-0 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10"
-                                      title="Checkout & Billing"
-                                    >
-                                      <CreditCard className="h-4 w-4" />
-                                    </Button>
-                                  </>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setSelectedBooking(booking);
+                                      setOpenFoodModal(true);
+                                    }}
+                                    className="h-8 w-8 p-0 text-primary hover:text-primary-hover hover:bg-primary/10"
+                                    title="Add Food"
+                                  >
+                                    <UtensilsCrossed className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {/* Still reachable once a session is checked out and owes money. */}
+                                {(booking.status === "confirmed" ||
+                                  booking.status === "checked_in" ||
+                                  Number(booking.balance_due || 0) > 0.01) && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleCheckoutBillingClick(booking.id)}
+                                    className="h-8 w-8 p-0 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10"
+                                    title="Checkout & Billing"
+                                  >
+                                    <CreditCard className="h-4 w-4" />
+                                  </Button>
                                 )}
                                 <Button
                                   size="sm"

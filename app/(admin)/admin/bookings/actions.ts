@@ -2,6 +2,22 @@
 
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { annotateRemovableFoodItems } from "@/lib/bookings/foodItems";
+import { decideCheckout, type CheckoutDecision } from "@/lib/bookings/checkoutGuard";
+import { extraPlayersCharge, perExtraPlayerCharge } from "@/lib/payments/money";
+import { roundToTwo } from "@/lib/currency";
+import { resolveHappyHour } from "@/lib/payments/happyHour";
+import { formatDbTime } from "@/lib/utils/timeSlots";
+import {
+  calculateMembershipDiscount,
+  resolveActiveMembership
+} from "@/lib/subscriptions/discount";
+import {
+  PROVISIONAL_SESSION_HOURS,
+  formatPlayedDuration,
+  priceSession,
+  toClockTime,
+  toSlotDate
+} from "@/lib/bookings/walkInSession";
 import { formatLocalDate } from "@/lib/utils/dates";
 import { requireStaff } from "@/lib/auth/require-admin";
 
@@ -24,11 +40,20 @@ const MONEY_EPSILON = 0.01
 function derivePaymentStatus(
   correctTotal: number,
   amountPaid: number,
-  storedStatus: string | null | undefined
+  storedStatus: string | null | undefined,
+  /**
+   * A walk-in session that has not been checked out yet. Its total is zero
+   * because the bill has not been worked out, not because there is nothing to
+   * pay - and "nothing to collect" below would otherwise stamp it Paid the moment
+   * it was created, which is the one thing it certainly is not.
+   */
+  awaitingBill = false
 ): string {
   if (storedStatus === "refunded" || storedStatus === "failed") {
     return storedStatus;
   }
+
+  if (awaitingBill) return amountPaid > MONEY_EPSILON ? "partial" : "pending";
 
   // Nothing to collect - a free or fully discounted booking is settled.
   if (correctTotal <= MONEY_EPSILON) return "paid";
@@ -74,7 +99,16 @@ function getBookingDates(booking: any): string[] {
 
   if (slotDates.length > 0) return slotDates;
 
-  return booking?.created_at ? [String(booking.created_at).split("T")[0]] : [];
+  /**
+   * No slot: a food-only order, or a walk-in still waiting to be checked in.
+   *
+   * `created_at` is a timestamptz, so slicing the ISO string took the UTC date -
+   * which is the previous day for anything created before 05:30 in IST. The arena
+   * runs around the clock, so a walk-in booked at 2am was filed under yesterday
+   * and disappeared from the Today filter the front desk works from. Slot dates
+   * do not have this problem: `slot_date` is a DATE, already in local terms.
+   */
+  return booking?.created_at ? [formatLocalDate(new Date(booking.created_at))] : [];
 }
 
 /**
@@ -124,6 +158,9 @@ export async function getAllBookings(filters?: BookingFilters) {
         checked_in_at,
         completed_at,
         lock_expires_at,
+        billed_on_actual_time,
+        walk_in_device_type_name,
+        walk_in_player_count,
         booking_device_slots(
           id,
           slot_date,
@@ -153,6 +190,12 @@ export async function getAllBookings(filters?: BookingFilters) {
     // Apply filters
     if (filters?.status && filters.status !== "all") {
       query = query.eq("status", filters.status);
+    } else {
+      // A customer part-way through the slot picker holds a real `locked` booking
+      // row with no name, no phone and no money on it, and an abandoned one lands
+      // in `expired`. Neither is a booking any member of staff can act on, so they
+      // stay out of the list unless somebody asks for that status by name.
+      query = query.not("status", "in", "(locked,expired,draft)");
     }
 
     if (filters?.searchQuery) {
@@ -193,7 +236,8 @@ export async function getAllBookings(filters?: BookingFilters) {
         payment_status: derivePaymentStatus(
           correctTotal,
           amountPaid,
-          booking.payment_status
+          booking.payment_status,
+          booking.billed_on_actual_time === true && !booking.completed_at
         )
       };
     });
@@ -294,7 +338,12 @@ export async function getBookingDetails(bookingId: string) {
         line_items: lineItems || [],
         unpaid_items: unpaidItems,
         balance_due: balanceDue,
-        payment_status: derivePaymentStatus(correctTotal, amountPaid, data.payment_status)
+        payment_status: derivePaymentStatus(
+          correctTotal,
+          amountPaid,
+          data.payment_status,
+          data.billed_on_actual_time === true && !data.completed_at
+        )
       }
     };
   } catch (err: any) {
@@ -332,6 +381,33 @@ export async function checkInBooking(bookingId: string) {
   try {
     const now = new Date().toISOString();
 
+    // A walk-in session has no station until check-in claims one, so it must go
+    // through checkInWalkInSession. Flipping the status here would start a clock
+    // on a customer sitting at no machine at all.
+    const { data: subject, error: subjectError } = await supabaseAdmin
+      .from("bookings")
+      .select("status, billed_on_actual_time")
+      .eq("id", bookingId)
+      .maybeSingle();
+
+    if (subjectError) throw subjectError;
+    if (!subject) return { success: false, error: "Booking not found." };
+    if (subject.billed_on_actual_time) {
+      return {
+        success: false,
+        error: "This is an open-ended walk-in session. Use Check In on the session instead."
+      };
+    }
+    if (subject.status === "checked_in") {
+      return { success: false, error: "This customer is already checked in." };
+    }
+    if (subject.status !== "confirmed") {
+      return {
+        success: false,
+        error: `A ${String(subject.status).replace(/_/g, " ")} booking cannot be checked in.`
+      };
+    }
+
     const { data, error } = await supabaseAdmin
       .from("bookings")
       .update({
@@ -340,10 +416,14 @@ export async function checkInBooking(bookingId: string) {
         updated_at: now
       })
       .eq("id", bookingId)
+      .eq("status", "confirmed")
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) {
+      return { success: false, error: "This booking changed while you were working on it. Refresh and try again." };
+    }
 
     return { success: true, booking: data };
   } catch (err: any) {
@@ -352,12 +432,36 @@ export async function checkInBooking(bookingId: string) {
   }
 }
 
+/** Look up what `decideCheckout` needs, then apply it. */
+async function resolveCheckoutStatus(bookingId: string): Promise<CheckoutDecision> {
+  const { data, error } = await supabaseAdmin
+    .from("bookings")
+    .select("status, billed_on_actual_time, booking_device_slots(id)")
+    .eq("id", bookingId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return { ok: false, error: "Booking not found." };
+
+  return decideCheckout({
+    status: data.status,
+    hasDeviceSlots: (data.booking_device_slots || []).length > 0,
+    billedOnActualTime: data.billed_on_actual_time === true
+  });
+}
+
 export async function checkOutBooking(bookingId: string) {
   await requireStaff();
 
   try {
+    const allowed = await resolveCheckoutStatus(bookingId);
+    if (!allowed.ok) return { success: false, error: allowed.error };
+
     const now = new Date().toISOString();
 
+    // Re-asserting the status in the WHERE clause closes the gap between the read
+    // above and this write, so two staff checking the same booking out at once
+    // cannot both stamp `completed_at`.
     const { data, error } = await supabaseAdmin
       .from("bookings")
       .update({
@@ -366,10 +470,14 @@ export async function checkOutBooking(bookingId: string) {
         updated_at: now
       })
       .eq("id", bookingId)
+      .eq("status", allowed.from)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) {
+      return { success: false, error: "This booking changed while you were working on it. Refresh and try again." };
+    }
 
     return { success: true, booking: data };
   } catch (err: any) {
@@ -386,9 +494,12 @@ export async function getBookingStats(
   try {
     // Get counts by status. The slot dates come along so the counts can be
     // scoped to the same range as the list they sit above.
+    // Pre-payment holds and the abandoned ones that lapse into `expired` are not
+    // bookings; counting them would inflate every tile above the list.
     const { data: allStatuses, error: statusError } = await supabaseAdmin
       .from("bookings")
-      .select("status, created_at, booking_device_slots(slot_date)");
+      .select("status, created_at, booking_device_slots(slot_date)")
+      .not("status", "in", "(locked,expired,draft)");
 
     if (statusError) throw statusError;
 
@@ -513,26 +624,30 @@ export async function addFoodToBooking(
 
     if (foodError) throw foodError;
 
-    // Update booking food_subtotal and total_amount
-    const additionalAmount = foodLineItems.reduce((sum, item) => sum + item.line_total, 0);
-
+    /**
+     * The insert above already fired `sync_booking_food_subtotal`, which sums the
+     * booking's food rows and rewrites `food_subtotal` and `total_amount` as
+     * `device + food - discounts`. So these figures already include what was just
+     * added, and the job here is to read them, not to work them out again.
+     *
+     * Adding the new items on top of this read is exactly what went wrong: ₹100 of
+     * food landed on the bill as ₹200, and a walk-in - whose device charge is zero
+     * until checkout - showed a total made entirely of food counted twice.
+     *
+     * Note what is *not* in the sum: player count. Food is billed per item, at
+     * menu price, however many people are at the table.
+     */
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
-      .select("food_subtotal, device_subtotal, subscription_discount, promo_discount, happy_hour_discount, amount_paid")
+      .select("food_subtotal, total_amount, amount_paid")
       .eq("id", bookingId)
       .single();
 
     if (bookingError) throw bookingError;
 
-    const newFoodSubtotal = Number(booking.food_subtotal || 0) + additionalAmount;
-    const deviceSubtotal = Number(booking.device_subtotal || 0);
-    const subscriptionDiscount = Number(booking.subscription_discount || 0);
-    const promoDiscount = Number(booking.promo_discount || 0);
-    const happyHourDiscount = Number(booking.happy_hour_discount || 0);
+    const newFoodSubtotal = Number(booking.food_subtotal || 0);
+    const newTotal = Number(booking.total_amount || 0);
     const amountPaid = Number(booking.amount_paid || 0);
-
-    // Total = device + food - all discounts (discounts don't apply to food)
-    const newTotal = deviceSubtotal + newFoodSubtotal - subscriptionDiscount - promoDiscount - happyHourDiscount;
 
     // Get current display_order for line items
     const { data: existingLineItems } = await supabaseAdmin
@@ -575,12 +690,11 @@ export async function addFoodToBooking(
       newPaymentStatus = 'pending'; // Nothing paid yet
     }
 
-    // Update booking
+    // Only the payment status is this function's to set - the money columns belong
+    // to the trigger, and writing them here is what double-counted the food.
     const { error: updateError } = await supabaseAdmin
       .from("bookings")
       .update({
-        food_subtotal: newFoodSubtotal,
-        total_amount: newTotal,
         payment_status: newPaymentStatus,
         updated_at: new Date().toISOString()
       })
@@ -829,21 +943,29 @@ export async function createWalkInBooking(payload: {
     if (bookingNumberError) throw bookingNumberError;
 
     const extraPlayersCount = Math.max(0, payload.playerCount - payload.includedPlayers);
-    const extraPlayersTotal = extraPlayersCount * payload.extraPlayerCharge * payload.durationHours;
+    const extraPlayersTotal = extraPlayersCharge(
+      extraPlayersCount,
+      payload.extraPlayerCharge,
+      payload.durationHours
+    );
     const deviceCharges = payload.subtotal; // Base station rate calculated by duration
     const deviceSubtotal = deviceCharges + extraPlayersTotal;
     const subscriptionDiscount = payload.subscriptionDiscount || 0;
     const happyHourDiscount = payload.happyHourDiscount || 0;
     const totalAmount = deviceSubtotal - subscriptionDiscount - happyHourDiscount;
 
-    // A walk-in is someone standing at the counter, so the front desk should not
-    // have to check them in as a second step - the booking starts already
-    // checked in. Only same-day walk-ins though: this form also takes bookings up
-    // to 6 days out (see isDateWithinBookingWindow), and marking one of those
-    // checked_in would put a session that has not started into the dashboard's
-    // active-session count and offer staff a Check Out button for it. Those stay
-    // 'confirmed' and get checked in by hand when the customer turns up.
-    const isToday = payload.selectedDate === formatLocalDate(new Date());
+    /**
+     * An advance booking is for later, so it is never checked in on creation.
+     *
+     * This used to auto-check-in anything dated today, on the reasoning that a
+     * walk-in is someone already standing at the counter. That reasoning belonged
+     * to a form that only took walk-ins; a customer at the counter now goes
+     * through `createWalkInSession`. What is left here is the advance path, where
+     * "today" says nothing about whether the customer has arrived - a slot booked
+     * at 10am for 8pm was being marked as playing from 10am, which put a session
+     * nobody was at into the dashboard's active count, and left staff unable to
+     * check the customer in when they actually turned up.
+     */
     const now = new Date().toISOString();
 
     // Step 3: Create booking
@@ -861,8 +983,8 @@ export async function createWalkInBooking(payload: {
         subscription_discount: subscriptionDiscount,
         happy_hour_discount: happyHourDiscount,
         total_amount: totalAmount,
-        status: isToday ? "checked_in" : "confirmed",
-        checked_in_at: isToday ? now : null,
+        status: "confirmed",
+        checked_in_at: null,
         payment_status: "pending",
         booking_source: "walk-in",
         lock_expires_at: null
@@ -933,9 +1055,12 @@ export async function createWalkInBooking(payload: {
       lineItems.push({
         booking_id: booking.id,
         item_type: 'extra_players',
-        description: `Extra Players (${extraPlayersCount} × ₹${payload.extraPlayerCharge} × ${payload.durationHours}h)`,
-        quantity: extraPlayersCount * payload.durationHours,
-        unit_price: payload.extraPlayerCharge,
+        description: `Extra Players (${extraPlayersCount} × ₹${perExtraPlayerCharge(
+          payload.extraPlayerCharge,
+          payload.durationHours
+        )})`,
+        quantity: extraPlayersCount,
+        unit_price: perExtraPlayerCharge(payload.extraPlayerCharge, payload.durationHours),
         line_total: extraPlayersTotal,
         added_by: 'admin',
         is_paid: false,
@@ -986,11 +1111,460 @@ export async function createWalkInBooking(payload: {
       throw lineItemsError;
     }
 
-    return { success: true, bookingId: booking.id, bookingNumber, checkedIn: isToday };
+    return { success: true, bookingId: booking.id, bookingNumber, checkedIn: false };
   } catch (err: any) {
     console.error("Create walk-in booking error:", err);
     return { success: false, error: err.message };
   }
+}
+
+// ================================================
+// WALK-IN SESSIONS (billed on actual playing time)
+// ================================================
+
+/**
+ * Books a customer in at the counter without starting their clock.
+ *
+ * Nothing about the session is decided here: no start time, no duration, no
+ * station and no money. The row exists to say somebody is waiting, which is why
+ * it goes in as `confirmed` with `checked_in_at` null - the dashboard counts
+ * `checked_in` as an active session, so a customer who has not sat down yet must
+ * not be in that state.
+ *
+ * A station is deliberately not reserved. The machine is allocated when the
+ * customer actually arrives, so a walk-in that is created and never turns up
+ * costs the floor nothing. The trade-off is that creating the booking does not
+ * guarantee a station: if the floor fills up before they arrive, check-in is what
+ * fails, and it says so.
+ */
+export async function createWalkInSession(payload: {
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string | null;
+  customerDob: string;
+  deviceTypeId: string;
+  deviceTypeName: string;
+  playerCount: number;
+}) {
+  await requireStaff();
+
+  try {
+    const { data: customerId, error: customerError } = await supabaseAdmin
+      .rpc("get_or_create_customer", {
+        p_phone: payload.customerPhone,
+        p_name: payload.customerName,
+        p_email: payload.customerEmail || null,
+        p_dob: payload.customerDob
+      });
+
+    if (customerError) throw customerError;
+
+    const { data: bookingNumber, error: bookingNumberError } = await supabaseAdmin
+      .rpc("generate_booking_number");
+
+    if (bookingNumberError) throw bookingNumberError;
+
+    // Everything priced is left at zero: the bill is worked out at checkout from
+    // the time actually played, and a number written here would only be a guess
+    // that some screen might show as though it meant something.
+    const { data: booking, error: bookingError } = await supabaseAdmin
+      .from("bookings")
+      .insert({
+        booking_number: bookingNumber,
+        customer_id: customerId,
+        customer_name: payload.customerName,
+        customer_phone: payload.customerPhone,
+        customer_email: payload.customerEmail,
+        customer_dob: payload.customerDob,
+        device_subtotal: 0,
+        food_subtotal: 0,
+        subscription_discount: 0,
+        happy_hour_discount: 0,
+        total_amount: 0,
+        status: "confirmed",
+        checked_in_at: null,
+        payment_status: "pending",
+        booking_source: "walk-in",
+        billed_on_actual_time: true,
+        walk_in_device_type_id: payload.deviceTypeId,
+        walk_in_device_type_name: payload.deviceTypeName,
+        walk_in_player_count: payload.playerCount,
+        lock_expires_at: null
+      })
+      .select("id, booking_number")
+      .single();
+
+    if (bookingError) throw bookingError;
+
+    return { success: true, bookingId: booking.id, bookingNumber: booking.booking_number };
+  } catch (err: any) {
+    console.error("Create walk-in session error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * The customer has arrived: claim a station and start the clock.
+ *
+ * Both halves happen inside `checkin_walkin_session`, so the timestamp comes from
+ * the database rather than from whichever machine the front desk is standing at,
+ * and two people pressing the button at once cannot start two sessions. Zero rows
+ * back means either the booking was not waiting or the floor is full; the two are
+ * told apart afterwards so the message says which.
+ */
+export async function checkInWalkInSession(bookingId: string) {
+  await requireStaff();
+
+  try {
+    const { data: booking, error: readError } = await supabaseAdmin
+      .from("bookings")
+      .select(
+        `status, checked_in_at, billed_on_actual_time,
+         walk_in_device_type_id, walk_in_device_type_name, walk_in_player_count`
+      )
+      .eq("id", bookingId)
+      .maybeSingle();
+
+    if (readError) throw readError;
+    if (!booking) return { success: false, error: "Booking not found." };
+    if (!booking.billed_on_actual_time) {
+      return { success: false, error: "This booking is not an open-ended walk-in session." };
+    }
+    if (booking.status === "checked_in") {
+      return { success: false, error: "This customer is already checked in." };
+    }
+    if (booking.status !== "confirmed") {
+      return {
+        success: false,
+        error: `A ${String(booking.status).replace(/_/g, " ")} booking cannot be checked in.`
+      };
+    }
+
+    const { data: deviceType, error: deviceTypeError } = await supabaseAdmin
+      .from("device_types")
+      .select("id, display_name, name, regular_hourly_rate, included_players, extra_player_charge")
+      .eq("id", booking.walk_in_device_type_id)
+      .maybeSingle();
+
+    if (deviceTypeError) throw deviceTypeError;
+    if (!deviceType) return { success: false, error: "That device type no longer exists." };
+
+    const { data, error } = await supabaseAdmin.rpc("checkin_walkin_session", {
+      p_booking_id: bookingId,
+      p_device_type_id: deviceType.id,
+      p_device_type: booking.walk_in_device_type_name || deviceType.display_name,
+      p_hourly_rate: Number(deviceType.regular_hourly_rate || 0),
+      p_player_count: booking.walk_in_player_count || 1,
+      p_included_players: Number(deviceType.included_players || 1),
+      p_extra_player_charge: Number(deviceType.extra_player_charge || 0),
+      p_provisional_hours: PROVISIONAL_SESSION_HOURS
+    });
+
+    if (error) throw error;
+
+    const started = (data as Array<{
+      started_at: string;
+      device_id: string;
+      station_number: string;
+    }>) || [];
+
+    if (started.length === 0) {
+      return {
+        success: false,
+        error:
+          `Every ${booking.walk_in_device_type_name || "station"} is in use right now. ` +
+          `Free one up or move this customer to another device type.`
+      };
+    }
+
+    return {
+      success: true,
+      checkedInAt: started[0].started_at,
+      stationNumber: started[0].station_number
+    };
+  } catch (err: any) {
+    console.error("Check-in walk-in session error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * The customer is leaving: stop the clock and work out what they owe.
+ *
+ * The two timestamps come back from `checkout_walkin_session`, which is also what
+ * refuses a session that never started or has already ended. Everything after
+ * that is bookkeeping against those two numbers: the slot row is rewritten from
+ * the placeholder window claimed at check-in to the window actually played, and
+ * the price is computed with the same helpers the customer flow uses, so an hour
+ * costs the same whoever booked it.
+ */
+export async function checkOutWalkInSession(bookingId: string) {
+  await requireStaff();
+
+  try {
+    const { data, error } = await supabaseAdmin.rpc("checkout_walkin_session", {
+      p_booking_id: bookingId
+    });
+
+    if (error) throw error;
+
+    const ended = (data as Array<{
+      started_at: string;
+      ended_at: string;
+      played_minutes: number;
+    }>) || [];
+
+    if (ended.length === 0) {
+      // The RPC refuses anything that is not a session in progress; say which.
+      const { data: booking } = await supabaseAdmin
+        .from("bookings")
+        .select("status, billed_on_actual_time")
+        .eq("id", bookingId)
+        .maybeSingle();
+
+      if (!booking) return { success: false, error: "Booking not found." };
+      if (!booking.billed_on_actual_time) {
+        return { success: false, error: "This booking is not an open-ended walk-in session." };
+      }
+      if (booking.status === "confirmed") {
+        return {
+          success: false,
+          error: "This customer has not checked in yet, so there is no session to close."
+        };
+      }
+      if (booking.status === "completed") {
+        return { success: false, error: "This session has already been checked out." };
+      }
+      return {
+        success: false,
+        error: `A ${String(booking.status).replace(/_/g, " ")} booking cannot be checked out.`
+      };
+    }
+
+    const session = ended[0];
+    const startedAt = new Date(session.started_at);
+    const endedAt = new Date(session.ended_at);
+
+    const { data: slot, error: slotError } = await supabaseAdmin
+      .from("booking_device_slots")
+      .select("id, hourly_rate, player_count, included_players, extra_player_charge")
+      .eq("booking_id", bookingId)
+      .maybeSingle();
+
+    if (slotError) throw slotError;
+    if (!slot) {
+      return {
+        success: false,
+        error: "This session has no station on it, so it cannot be priced. Contact support."
+      };
+    }
+
+    const pricing = priceSession({
+      playedMinutes: session.played_minutes,
+      hourlyRate: Number(slot.hourly_rate || 0),
+      playerCount: Number(slot.player_count || 1),
+      includedPlayers: Number(slot.included_players || 1),
+      extraPlayerCharge: Number(slot.extra_player_charge || 0)
+    });
+
+    // The window actually played replaces the placeholder claimed at check-in, so
+    // availability, the timeline and the utilisation reports all describe the
+    // session that happened rather than the one that was provisionally held.
+    const { error: slotUpdateError } = await supabaseAdmin
+      .from("booking_device_slots")
+      .update({
+        slot_date: toSlotDate(startedAt),
+        slot_start_time: toClockTime(startedAt),
+        slot_end_time: toClockTime(endedAt),
+        duration_hours: pricing.durationHours,
+        slot_total: pricing.deviceCharges,
+        extra_players_total: pricing.extraPlayersTotal
+      })
+      .eq("id", slot.id);
+
+    if (slotUpdateError) throw slotUpdateError;
+
+    // Food already on the booking stays; only the device side is priced here.
+    const { data: current, error: currentError } = await supabaseAdmin
+      .from("bookings")
+      .select(
+        "customer_phone, food_subtotal, promo_discount, walk_in_device_type_id, walk_in_device_type_name"
+      )
+      .eq("id", bookingId)
+      .single();
+
+    if (currentError) throw currentError;
+
+    // Happy hour rules name devices either way round, so the matcher is given the
+    // display name and the internal one - the same pair the online quote passes.
+    const { data: sessionDeviceType } = await supabaseAdmin
+      .from("device_types")
+      .select("name, display_name")
+      .eq("id", current.walk_in_device_type_id)
+      .maybeSingle();
+
+    // Both discounts are resolved now, against the hours actually played, using
+    // the same helpers the online quote uses. Neither could be worked out when the
+    // walk-in was created: there was no amount to take a percentage of, and no
+    // window to test against a happy hour.
+    const discountable = pricing.deviceSubtotal;
+
+    const membership = await resolveActiveMembership(current.customer_phone || "");
+    const subscriptionDiscount = calculateMembershipDiscount(
+      discountable,
+      membership.discountPercentage
+    );
+
+    // Matched on the real window. `isSlotWithinTimeRange` is strict - the whole
+    // session has to sit inside the rule's hours - so a customer who plays past
+    // the end of a happy hour loses it, exactly as an online booking of those same
+    // hours would have.
+    const happyHour = await resolveHappyHour(
+      sessionDeviceType?.display_name || current.walk_in_device_type_name || "",
+      sessionDeviceType?.name || current.walk_in_device_type_name || "",
+      startedAt,
+      formatDbTime(toClockTime(startedAt)),
+      formatDbTime(toClockTime(endedAt)),
+      discountable
+    );
+
+    const foodSubtotal = Number(current.food_subtotal || 0);
+    const promoDiscount = Number(current.promo_discount || 0);
+
+    // Discounts can never exceed the charges they apply to - the same cap the
+    // online quote applies, and the reason a stacked pair cannot make play free.
+    const totalDiscount = Math.min(
+      roundToTwo(subscriptionDiscount + happyHour.discount + promoDiscount),
+      discountable
+    );
+
+    const totalAmount = Math.max(
+      0,
+      roundToTwo(pricing.deviceSubtotal + foodSubtotal - totalDiscount)
+    );
+
+    const { error: bookingUpdateError } = await supabaseAdmin
+      .from("bookings")
+      .update({
+        device_subtotal: pricing.deviceSubtotal,
+        subscription_discount: subscriptionDiscount,
+        happy_hour_discount: happyHour.discount,
+        total_amount: totalAmount,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", bookingId);
+
+    if (bookingUpdateError) throw bookingUpdateError;
+
+    await rewriteSessionLineItems(bookingId, pricing, Number(slot.hourly_rate || 0), {
+      subscriptionDiscount,
+      subscriptionPercentage: membership.discountPercentage,
+      happyHour
+    });
+
+    return {
+      success: true,
+      startedAt: session.started_at,
+      endedAt: session.ended_at,
+      playedMinutes: pricing.playedMinutes,
+      durationLabel: formatPlayedDuration(pricing.playedMinutes),
+      deviceSubtotal: pricing.deviceSubtotal,
+      subscriptionDiscount,
+      happyHourDiscount: happyHour.discount,
+      happyHourRuleName: happyHour.ruleName,
+      totalAmount
+    };
+  } catch (err: any) {
+    console.error("Check-out walk-in session error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Replaces the device and discount lines on a session with ones describing what
+ * was actually played and what it earned.
+ *
+ * Food added during the session is left alone: it is billed at menu price and has
+ * nothing to do with how long the customer sat at the machine.
+ */
+async function rewriteSessionLineItems(
+  bookingId: string,
+  pricing: ReturnType<typeof priceSession>,
+  hourlyRate: number,
+  discounts: {
+    subscriptionDiscount: number;
+    subscriptionPercentage: number;
+    happyHour: { ruleId: string | null; ruleName: string | null; discount: number };
+  }
+) {
+  await supabaseAdmin
+    .from("booking_line_items")
+    .delete()
+    .eq("booking_id", bookingId)
+    .in("item_type", ["device", "extra_players", "subscription_discount", "happy_hour_discount"]);
+
+  const lineItems: any[] = [
+    {
+      booking_id: bookingId,
+      item_type: "device",
+      description: `Actual Play (${formatPlayedDuration(pricing.playedMinutes)} × ₹${hourlyRate}/hr)`,
+      quantity: pricing.durationHours,
+      unit_price: hourlyRate,
+      line_total: pricing.deviceCharges,
+      added_by: "admin",
+      is_paid: false,
+      display_order: 1
+    }
+  ];
+
+  if (pricing.extraPlayersCount > 0) {
+    lineItems.push({
+      booking_id: bookingId,
+      item_type: "extra_players",
+      description: `Extra Players (${pricing.extraPlayersCount} × ₹${pricing.perExtraPlayer})`,
+      quantity: pricing.extraPlayersCount,
+      unit_price: pricing.perExtraPlayer,
+      line_total: pricing.extraPlayersTotal,
+      added_by: "admin",
+      is_paid: false,
+      display_order: 2
+    });
+  }
+
+  if (discounts.subscriptionDiscount > 0) {
+    lineItems.push({
+      booking_id: bookingId,
+      item_type: "subscription_discount",
+      description: `Subscription Discount (${discounts.subscriptionPercentage}%)`,
+      quantity: 1,
+      unit_price: -discounts.subscriptionDiscount,
+      line_total: -discounts.subscriptionDiscount,
+      added_by: "admin",
+      is_paid: false,
+      display_order: 3
+    });
+  }
+
+  if (discounts.happyHour.discount > 0) {
+    lineItems.push({
+      booking_id: bookingId,
+      item_type: "happy_hour_discount",
+      description: discounts.happyHour.ruleName
+        ? `Happy Hour Discount (${discounts.happyHour.ruleName})`
+        : "Happy Hour Discount",
+      quantity: 1,
+      unit_price: -discounts.happyHour.discount,
+      line_total: -discounts.happyHour.discount,
+      reference_type: discounts.happyHour.ruleId ? "happy_hour" : null,
+      reference_id: discounts.happyHour.ruleId,
+      added_by: "admin",
+      is_paid: false,
+      display_order: 4
+    });
+  }
+
+  const { error } = await supabaseAdmin.from("booking_line_items").insert(lineItems);
+  if (error) console.error("Failed to rewrite session line items:", error);
 }
 
 /**
@@ -1012,24 +1586,51 @@ export async function updatePlayerCount(slotId: string, newPlayerCount: number, 
     // Get current slot details and booking info
     const { data: slot, error: slotError } = await supabaseAdmin
       .from("booking_device_slots")
-      .select("*, bookings!inner(id, device_subtotal, food_subtotal, subscription_discount, promo_discount, happy_hour_discount)")
+      .select("*, bookings!inner(id, device_subtotal, food_subtotal, subscription_discount, promo_discount, happy_hour_discount, billed_on_actual_time, completed_at)")
       .eq("id", slotId)
       .single();
 
     if (slotError || !slot) throw slotError || new Error("Slot not found");
+
+    /**
+     * A session in progress has no bill to adjust.
+     *
+     * Its `duration_hours` is the provisional block claimed at check-in, not
+     * anything the customer has played, so pricing extra players against it would
+     * write a total nobody owes - and checkout recomputes the whole bill from the
+     * real duration anyway. Record who is playing and leave the money alone.
+     */
+    const isLiveSession =
+      slot.bookings.billed_on_actual_time === true && !slot.bookings.completed_at;
+
+    if (isLiveSession) {
+      const { error: playerCountError } = await supabaseAdmin
+        .from("booking_device_slots")
+        .update({ player_count: newPlayerCount })
+        .eq("id", slotId);
+
+      if (playerCountError) throw playerCountError;
+
+      return {
+        success: true,
+        message: `Player count updated to ${newPlayerCount}. The bill is calculated at checkout.`,
+        newPlayerCount,
+        difference: 0
+      };
+    }
 
     const includedPlayers = slot.included_players || 1;
     const extraPlayerCharge = slot.extra_player_charge || 0;
     const durationHours = slot.duration_hours || 1;
     const oldPlayerCount = slot.player_count || includedPlayers;
 
-    // Calculate new extra players charge (per hour * duration)
+    // Each player's share is rounded before they are added up, so adding a player
+    // at the counter costs the same as the one before it.
     const newExtraPlayers = Math.max(0, newPlayerCount - includedPlayers);
-    const newExtraPlayersTotal = newExtraPlayers * extraPlayerCharge * durationHours;
+    const newExtraPlayersTotal = extraPlayersCharge(newExtraPlayers, extraPlayerCharge, durationHours);
 
-    // Calculate old extra players charge (per hour * duration)
     const oldExtraPlayers = Math.max(0, oldPlayerCount - includedPlayers);
-    const oldExtraPlayersTotal = oldExtraPlayers * extraPlayerCharge * durationHours;
+    const oldExtraPlayersTotal = extraPlayersCharge(oldExtraPlayers, extraPlayerCharge, durationHours);
 
     // Calculate difference in total
     const difference = newExtraPlayersTotal - oldExtraPlayersTotal;
@@ -1131,20 +1732,32 @@ export async function getTimelineBookings(date: string): Promise<{ success: bool
   }
 }
 
+/** The billing dialog's checkout. Same completion, so the same rules apply. */
 export async function closeBooking(bookingId: string) {
   await requireStaff();
 
   try {
-    const { error } = await supabaseAdmin
+    const allowed = await resolveCheckoutStatus(bookingId);
+    if (!allowed.ok) return { success: false, error: allowed.error };
+
+    const now = new Date().toISOString();
+
+    const { data, error } = await supabaseAdmin
       .from("bookings")
       .update({
         status: "completed",
-        completed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        completed_at: now,
+        updated_at: now
       })
-      .eq("id", bookingId);
+      .eq("id", bookingId)
+      .eq("status", allowed.from)
+      .select("id")
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) {
+      return { success: false, error: "This booking changed while you were working on it. Refresh and try again." };
+    }
 
     return { success: true };
   } catch (err: any) {
@@ -1173,6 +1786,8 @@ export async function getBookingBillingDetails(bookingId: string) {
         happy_hour_discount,
         payment_status,
         status,
+        completed_at,
+        billed_on_actual_time,
         booking_device_slots(
           id,
           duration_hours,
@@ -1228,7 +1843,12 @@ export async function getBookingBillingDetails(bookingId: string) {
         unpaid_items: unpaidItems,
         unpaid_amount: unpaidAmount,
         balance_due: balanceDue,
-        payment_status: derivePaymentStatus(correctTotal, amountPaid, data.payment_status)
+        payment_status: derivePaymentStatus(
+          correctTotal,
+          amountPaid,
+          data.payment_status,
+          data.billed_on_actual_time === true && !data.completed_at
+        )
       }
     };
   } catch (err: any) {
@@ -1256,12 +1876,23 @@ export async function markBookingAsPaid(
     const { data: booking, error: fetchError } = await supabaseAdmin
       .from("bookings")
       .select(
-        "total_amount, amount_paid, cash_amount, card_amount, upi_amount, online_amount, booking_number"
+        "total_amount, amount_paid, cash_amount, card_amount, upi_amount, online_amount, booking_number, billed_on_actual_time, completed_at"
       )
       .eq("id", bookingId)
       .single();
 
     if (fetchError || !booking) throw new Error("Booking not found");
+
+    // A session in progress has a total of zero because the bill has not been
+    // worked out yet. Settling it would take a zero payment and stamp the row
+    // `paid` - and the reports read that column directly, so the session would be
+    // counted as a completed sale for nothing. The bill exists after checkout.
+    if (booking.billed_on_actual_time && !booking.completed_at) {
+      return {
+        success: false,
+        error: "This session is still in progress. Check the customer out first so the bill can be calculated."
+      };
+    }
 
     // Calculate balance due
     const currentAmountPaid = Number(booking.amount_paid || 0);

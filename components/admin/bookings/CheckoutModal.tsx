@@ -45,6 +45,13 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
   const handleMarkAsPaid = async () => {
     if (!bookingId || !billing) return;
 
+    if (awaitingSessionBill) {
+      toast.error("Nothing to settle yet", {
+        description: "This session is still in progress. Check the customer out so the bill can be calculated."
+      });
+      return;
+    }
+
     setIsProcessing(true);
 
     // Create payment split based on selected method (full amount in selected method)
@@ -74,6 +81,13 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
       return;
     }
 
+    if (awaitingCheckIn) {
+      toast.error("Cannot Close", {
+        description: "This booking was never checked in. Check the customer in first, or cancel the booking if they never arrived."
+      });
+      return;
+    }
+
     setIsProcessing(true);
     const result = await closeBooking(bookingId);
     if (result.success) {
@@ -88,6 +102,26 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
 
   const isPaid = billing?.payment_status === "paid";
   const isPending = billing?.payment_status === "pending";
+
+  /**
+   * Mirrors the server guard in `closeBooking`: a device session has to have
+   * started before it can be closed, so a booking still sitting in `confirmed`
+   * cannot be checked out from here. Food-only orders have no station to take and
+   * never check in, so they settle straight from the billing dialog.
+   *
+   * Settling the payment stays available either way - the money is owed whether or
+   * not the customer turned up.
+   */
+  const awaitingCheckIn =
+    (billing?.booking_device_slots?.length ?? 0) > 0 && billing?.status !== "checked_in";
+
+  /**
+   * A walk-in session whose clock is still running. There is no bill to settle
+   * yet - the total is zero only because checkout has not worked it out - so both
+   * actions here are refused, server-side as well.
+   */
+  const awaitingSessionBill =
+    billing?.billed_on_actual_time === true && !billing?.completed_at;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -278,8 +312,8 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
 
                   <Button
                     onClick={handleMarkAsPaid}
-                    disabled={isProcessing}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white font-black uppercase text-sm h-12 rounded-xl"
+                    disabled={isProcessing || awaitingSessionBill}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-black uppercase text-sm h-12 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isProcessing ? (
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -291,10 +325,36 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
                 </>
               )}
 
+              {awaitingSessionBill && (
+                <div className="bg-blue-950/30 border border-blue-900/40 rounded-lg p-4 flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-bold text-blue-300">Session still in progress</p>
+                    <p className="text-xs text-blue-200/80 mt-1">
+                      The bill is calculated from the time actually played, so there is nothing to
+                      settle until the customer is checked out.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {awaitingCheckIn && !awaitingSessionBill && (
+                <div className="bg-amber-950/40 border border-amber-900/50 rounded-lg p-4 flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-bold text-amber-400">Never Checked In</p>
+                    <p className="text-xs text-amber-300/90 mt-1">
+                      Check the customer in before closing this booking. If they never arrived, cancel it
+                      instead so it is not counted as a played session.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <Button
                 onClick={handleCloseBooking}
-                disabled={isProcessing || !isPaid}
-                className={`w-full font-black uppercase text-sm h-12 rounded-xl ${isPaid
+                disabled={isProcessing || !isPaid || awaitingCheckIn || awaitingSessionBill}
+                className={`w-full font-black uppercase text-sm h-12 rounded-xl ${isPaid && !awaitingCheckIn
                     ? 'bg-primary hover:bg-primary-hover text-black'
                     : 'bg-zinc-800 text-muted-content cursor-not-allowed'
                   }`}
@@ -304,7 +364,11 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
                 ) : (
                   <CheckCircle2 className="h-4 w-4 mr-2" />
                 )}
-                {isPaid ? 'Close Booking' : 'Close Booking (Payment Required)'}
+                {!isPaid
+                  ? 'Close Booking (Payment Required)'
+                  : awaitingCheckIn
+                    ? 'Close Booking (Check-In Required)'
+                    : 'Close Booking'}
               </Button>
 
               <Button

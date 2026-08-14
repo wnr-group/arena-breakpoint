@@ -2,6 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SessionSummaryLine, SessionTimesCell } from "./SessionTimeline";
 import { BookingStatusBadge } from "./BookingStatusBadge";
 import { PaymentStatusBadge } from "./PaymentStatusBadge";
 import { Calendar, Clock, MapPin, DollarSign, Phone, User, Eye, UserCheck, LogOut, UtensilsCrossed, CreditCard, Link2 } from "lucide-react";
@@ -45,6 +46,10 @@ export function BookingsGrid({
           const foodItems = booking.booking_food_items || [];
           const isFoodOnly = !deviceSlot && foodItems.length > 0;
           const hasDevice = !!deviceSlot;
+          // An open-ended walk-in: no station until check-in, no price until checkout.
+          const isSession = booking.billed_on_actual_time === true;
+          const awaitingCheckIn = isSession && booking.status === "confirmed";
+          const isPlaying = isSession && booking.status === "checked_in";
 
           return (
             <Card
@@ -67,8 +72,32 @@ export function BookingsGrid({
 
               {/* Content */}
               <div className="p-4 space-y-3">
+                {/* Where this walk-in is in its lifecycle. Shown above everything
+                    else because "booked at 8:55" and "playing since 9:00" are the
+                    two facts staff must never confuse. */}
+                {isSession && (
+                  <div className={`p-2.5 rounded-lg border text-xs font-bold ${awaitingCheckIn
+                    ? "bg-amber-500/10 border-amber-500/30"
+                    : isPlaying
+                      ? "bg-green-500/10 border-green-500/30"
+                      : "bg-zinc-900/60 border-zinc-800"
+                    }`}>
+                    <SessionSummaryLine
+                      status={booking.status}
+                      createdAt={booking.created_at}
+                      checkedInAt={booking.checked_in_at}
+                      completedAt={booking.completed_at}
+                    />
+                    {awaitingCheckIn && (
+                      <p className="text-[11px] text-amber-300/70 font-medium mt-1">
+                        {booking.walk_in_device_type_name || "Device"} · station assigned on check-in
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {/* Food Only Booking */}
-                {isFoodOnly ? (
+                {isFoodOnly && !isSession ? (
                   <>
                     {/* Food Order Badge */}
                     <div className="flex items-center gap-2 p-2 bg-amber-500/10 rounded-lg border border-amber-500/30">
@@ -107,7 +136,11 @@ export function BookingsGrid({
                       </div>
                       <div className="flex-1">
                         <p className="text-xs text-muted-content">Device</p>
-                        <p className="text-sm font-bold text-white">{deviceSlot?.device_type || "N/A"}</p>
+                        {/* Before check-in there is no station, only the type the
+                            customer is waiting for - "N/A" would read as an error. */}
+                        <p className="text-sm font-bold text-white">
+                          {deviceSlot?.device_type || booking.walk_in_device_type_name || "N/A"}
+                        </p>
                       </div>
                     </div>
 
@@ -119,11 +152,17 @@ export function BookingsGrid({
                       <div className="flex-1">
                         <p className="text-xs text-muted-content">Date & Time</p>
                         <p className="text-sm font-bold text-white">
-                          {deviceSlot?.slot_date ? new Date(deviceSlot.slot_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : "N/A"}
+                          {deviceSlot?.slot_date
+                            ? new Date(deviceSlot.slot_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })
+                            : new Date(booking.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
                         </p>
                         <p className="text-xs text-muted-content flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          {formatDbTimeRange(deviceSlot?.slot_start_time, deviceSlot?.slot_end_time)}
+                          {/* While a session is being played its slot row holds the
+                              provisional block, not an agreed end time - so only the
+                              start is shown until checkout fixes the other end. */}
+                          {booking.billed_on_actual_time ? <SessionTimesCell booking={booking} /> :
+                            formatDbTimeRange(deviceSlot?.slot_start_time, deviceSlot?.slot_end_time)}
                         </p>
                       </div>
                     </div>
@@ -140,13 +179,13 @@ export function BookingsGrid({
                     <p className="text-lg font-black text-primary">
                       ₹{formatCurrency(booking.total_amount)}
                     </p>
-                    {booking.payment_status === 'partial' && booking.balance_due && (
-                      <p className="text-xs text-amber-400 font-bold mt-0.5">
-                        Due: ₹{formatCurrency(booking.balance_due)}
-                      </p>
-                    )}
                   </div>
-                  <PaymentStatusBadge status={booking.payment_status || 'pending'} size="sm" />
+                  <PaymentStatusBadge
+                    status={booking.payment_status || 'pending'}
+                    size="sm"
+                    amountPaid={booking.amount_paid}
+                    balanceDue={booking.balance_due}
+                  />
                 </div>
               </div>
 
@@ -154,7 +193,7 @@ export function BookingsGrid({
               <div className="p-3 bg-[var(--background)]/50 border-t border-[#27272a]/50 flex items-center justify-between gap-2">
                 <div className="flex gap-1">
                   {/* Only show check-in/check-out for bookings with device slots */}
-                  {!isFoodOnly && booking.status === "confirmed" && (
+                  {(awaitingCheckIn || (!isFoodOnly && !isSession && booking.status === "confirmed")) && (
                     <Button
                       size="sm"
                       variant="ghost"
@@ -166,7 +205,7 @@ export function BookingsGrid({
                       <UserCheck className="h-4 w-4" />
                     </Button>
                   )}
-                  {!isFoodOnly && booking.status === "checked_in" && (
+                  {(isPlaying || (!isFoodOnly && !isSession && booking.status === "checked_in")) && (
                     <Button
                       size="sm"
                       variant="ghost"
@@ -178,28 +217,35 @@ export function BookingsGrid({
                       <LogOut className="h-4 w-4" />
                     </Button>
                   )}
-                  {/* Show food button for all bookings, add food button for device bookings */}
+                  {/* Food can only be added while the booking is live. */}
                   {(isFoodOnly || booking.status === "confirmed" || booking.status === "checked_in") && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => onAddFood(booking)}
-                        className="h-8 w-8 p-0 text-primary hover:text-primary-hover hover:bg-primary/10 rounded-lg"
-                        title="Add Food"
-                      >
-                        <UtensilsCrossed className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => onCheckoutBilling(booking.id)}
-                        className="h-8 w-8 p-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 rounded-lg"
-                        title="Checkout & Billing"
-                      >
-                        <CreditCard className="h-4 w-4" />
-                      </Button>
-                    </>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onAddFood(booking)}
+                      className="h-8 w-8 p-0 text-primary hover:text-primary-hover hover:bg-primary/10 rounded-lg"
+                      title="Add Food"
+                    >
+                      <UtensilsCrossed className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {/* Billing stays reachable while money is owed, whatever the status.
+                      A walk-in session is only priced at checkout, which moves it to
+                      `completed` - so gating this on the live statuses alone hid the
+                      one button that could collect the bill just calculated. */}
+                  {(isFoodOnly ||
+                    booking.status === "confirmed" ||
+                    booking.status === "checked_in" ||
+                    Number(booking.balance_due || 0) > 0.01) && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onCheckoutBilling(booking.id)}
+                      className="h-8 w-8 p-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 rounded-lg"
+                      title="Checkout & Billing"
+                    >
+                      <CreditCard className="h-4 w-4" />
+                    </Button>
                   )}
                 </div>
                 <Button

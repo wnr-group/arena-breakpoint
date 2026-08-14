@@ -40,6 +40,20 @@ export async function getDevices() {
   return data || []
 }
 
+/**
+ * Turns a constraint failure into something an admin can act on.
+ *
+ * `devices.station_number` is NOT NULL UNIQUE, so the database is what actually
+ * stops a duplicate - but it reports it as "duplicate key value violates unique
+ * constraint devices_station_number_key", which is not a sentence to put in a toast.
+ */
+function describeDeviceError(error: { code?: string; message: string }): string {
+  if (error.code === '23505') {
+    return 'Station number already exists. Please use a different station number.';
+  }
+  return error.message;
+}
+
 export async function createDevice(formData: FormData) {
   await requireStaff();
 
@@ -60,7 +74,7 @@ export async function createDevice(formData: FormData) {
     }]);
 
   if (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: describeDeviceError(error) };
   }
 
   revalidatePath('/admin/devices');
@@ -94,7 +108,7 @@ export async function updateDevice(formData: FormData) {
     .eq('id', id);
 
   if (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: describeDeviceError(error) };
   }
 
   if (device_type_id && hourly_rate) {

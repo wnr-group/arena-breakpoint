@@ -1,9 +1,24 @@
+import { formatCurrency } from "@/lib/currency";
+
 interface PaymentStatusBadgeProps {
   status: string;
   size?: "sm" | "md" | "lg";
+  /**
+   * Pass both to show what has been collected and what is still owed underneath a
+   * partial badge. "Partial" on its own tells staff a booking is short but not by
+   * how much, which is the number they need at the counter. Omit them where the
+   * split is shown separately, as the booking detail panel does.
+   */
+  amountPaid?: number | null;
+  balanceDue?: number | null;
 }
 
-export function PaymentStatusBadge({ status, size = "md" }: PaymentStatusBadgeProps) {
+export function PaymentStatusBadge({
+  status,
+  size = "md",
+  amountPaid,
+  balanceDue,
+}: PaymentStatusBadgeProps) {
   const sizeClasses = {
     sm: "text-[11px] px-2 py-0.5",
     md: "text-xs px-2.5 py-1",
@@ -38,11 +53,28 @@ export function PaymentStatusBadge({ status, size = "md" }: PaymentStatusBadgePr
     bgClass: "bg-zinc-500/10 border-zinc-500/30 text-muted-content",
   };
 
-  return (
+  const badge = (
     <span
       className={`inline-flex items-center font-bold uppercase tracking-wider rounded-md border ${config.bgClass} ${sizeClasses[size]}`}
     >
       {config.label}
     </span>
+  );
+
+  // Checked explicitly rather than by truthiness: a bare `amountPaid &&` in JSX
+  // renders a literal 0 when the value is zero.
+  const showSplit =
+    status === "partial" &&
+    (amountPaid !== undefined && amountPaid !== null) &&
+    (balanceDue !== undefined && balanceDue !== null);
+
+  if (!showSplit) return badge;
+
+  return (
+    <div className="space-y-0.5">
+      {badge}
+      <p className="text-xs text-blue-400">Paid: ₹{formatCurrency(amountPaid ?? 0)}</p>
+      <p className="text-xs text-amber-400 font-semibold">Due: ₹{formatCurrency(balanceDue ?? 0)}</p>
+    </div>
   );
 }

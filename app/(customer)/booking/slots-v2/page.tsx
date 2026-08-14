@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import { setSlot, setPricing, setSlotLockExpiry, setBookingId, setPlayerCount, setDuration, setHappyHour } from "@/lib/redux/slices/bookingSlice";
+import { setSlot, setPricing, setSlotHold, setPlayerCount, setDuration, setHappyHour } from "@/lib/redux/slices/bookingSlice";
 import { checkFlexibleAvailability, initializeSoftLockReservation as createSoftLockTransaction } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,15 +23,18 @@ import {
   getMaxDurationForStartTime,
   calculatePrice,
   isWithinBusinessHours,
-  isTimeSlotWithinRange
+  isTimeSlotWithinRange,
+  crossesMidnight,
+  bookingEndDate
 } from "@/lib/utils/timeSlots";
 import { useHappyHours } from "@/lib/hooks/useHappyHours";
 import { formatCurrency } from "@/lib/currency";
+import { extraPlayersCharge, perExtraPlayerCharge } from "@/lib/payments/money";
 
 export default function FlexibleSlotBookingPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { deviceTypeId, deviceTypeName, hourlyRate, addons, playerCount, includedPlayers, maxPlayers, extraPlayerCharge } = useAppSelector((state) => state.booking);
+  const { deviceTypeId, deviceTypeName, hourlyRate, addons, playerCount, includedPlayers, maxPlayers, extraPlayerCharge, hydrated, bookingId, holdToken } = useAppSelector((state) => state.booking);
 
   const [calendarDay, setCalendarDay] = useState<Date | undefined>(undefined);
   const confirmButtonRef = useRef<HTMLDivElement>(null);
@@ -60,13 +63,21 @@ export default function FlexibleSlotBookingPage() {
   useEffect(() => {
     setMounted(true);
     setCalendarDay(new Date());
+  }, []);
 
-    // Redirect if no device type selected
-    if (!deviceTypeId) {
-      console.warn('[Frontend] No device type selected, redirecting to booking page');
-      router.push('/booking');
-    }
-  }, [deviceTypeId, router]);
+  /**
+   * Redirect if no device type selected.
+   *
+   * Waits for `hydrated`: Redux is empty on the first tick of every page load, and
+   * this effect runs before the store is refilled from sessionStorage. Firing on
+   * that empty tick is what sent a refreshed customer here - via "choose an
+   * alternative time slot" - straight back to device selection a moment later.
+   */
+  useEffect(() => {
+    if (!hydrated || deviceTypeId) return;
+    console.warn('[Frontend] No device type selected, redirecting to booking page');
+    router.push('/booking');
+  }, [hydrated, deviceTypeId, router]);
 
   // Disable body scroll when mobile drawers are open
   useEffect(() => {
@@ -102,20 +113,46 @@ export default function FlexibleSlotBookingPage() {
     }
   }, [selectedDuration, mounted, dispatch]);
 
+  /**
+   * Changing the date or the duration invalidates the chosen start time - a
+   * 10:00 start for one hour says nothing about whether 10:00 is free for three.
+   *
+   * Deliberately separate from the fetch below, and deliberately not keyed on
+   * `bookingId`. Taking a hold changes the booking id, and while those were one
+   * effect that meant confirming a slot wiped the customer's own selection on the
+   * way out - the picker snapped back to "choose a start time" just as it was
+   * navigating to checkout, which read as the page refusing to move on.
+   */
+  useEffect(() => {
+    if (!mounted || !calendarDay || !deviceTypeId) return;
+    setSelectedStartTime(null);
+    setAvailableStartTimes(new Set());
+  }, [calendarDay, selectedDuration, mounted, deviceTypeId]);
+
   useEffect(() => {
     if (!mounted || !calendarDay || !deviceTypeId) {
       console.log('[Frontend] Skipping availability check:', { mounted, calendarDay: !!calendarDay, deviceTypeId: !!deviceTypeId });
       return;
     }
 
-    console.log('[Frontend] Date/Duration changed, resetting and fetching new availability');
-
-    // Reset states when date/duration changes
-    setSelectedStartTime(null);
-    setAvailableStartTimes(new Set());
-
     checkAvailability();
-  }, [calendarDay, selectedDuration, mounted, deviceTypeId]);
+    /**
+     * Keyed on `hydrated`, never on `bookingId`.
+     *
+     * A hold restored after a refresh still has to be excluded from the grid, and
+     * it arrives a tick after this first runs - but hydration is what delivers it,
+     * so hydration is the thing to wait for.
+     *
+     * `bookingId` looks like the natural dependency and is a trap: taking a hold
+     * changes it, so this effect fired as part of the same state update that
+     * starts the navigation to checkout. `checkFlexibleAvailability` is a server
+     * action, and Next applies a server action's revalidation to the route the
+     * caller is still on - which cancelled the pending push. The navigation
+     * silently did nothing perhaps two times in three, leaving the customer on the
+     * picker with a hold already taken in their name, and their next attempt
+     * refused because their own hold now occupied the station.
+     */
+  }, [calendarDay, selectedDuration, mounted, deviceTypeId, hydrated]);
 
   const checkAvailability = async () => {
     if (!calendarDay || !deviceTypeId) {
@@ -142,7 +179,9 @@ export default function FlexibleSlotBookingPage() {
     console.log(`[Frontend] - Duration: ${selectedDuration} minutes`);
 
     try {
-      const res = await checkFlexibleAvailability(dateStr, deviceTypeId, selectedDuration);
+      // A hold this browser already owns must not make its own slot look taken -
+      // a customer who navigates back here still has ten minutes on it.
+      const res = await checkFlexibleAvailability(dateStr, deviceTypeId, selectedDuration, bookingId);
 
       console.log(`[Frontend] Response received:`, {
         success: res.success,
@@ -173,6 +212,22 @@ export default function FlexibleSlotBookingPage() {
     return calculateEndTime(selectedStartTime, selectedDuration);
   }, [selectedStartTime, selectedDuration]);
 
+  /**
+   * A late start with a long duration finishes tomorrow, and the end time alone
+   * does not say so - "01:00 AM" reads as an hour of the chosen day that has
+   * already gone. Everywhere this screen shows the end of the booking says which
+   * day it lands on.
+   */
+  const endsNextDay = useMemo(
+    () => (selectedStartTime ? crossesMidnight(selectedStartTime, selectedDuration) : false),
+    [selectedStartTime, selectedDuration]
+  );
+
+  const endCalendarDay = useMemo(() => {
+    if (!calendarDay || !selectedStartTime) return null;
+    return bookingEndDate(calendarDay, selectedStartTime, selectedDuration);
+  }, [calendarDay, selectedStartTime, selectedDuration]);
+
   const maxDurationForSelectedStartTime = useMemo(() => {
     if (!selectedStartTime) return 300;
     return getMaxDurationForStartTime(selectedStartTime);
@@ -189,7 +244,10 @@ export default function FlexibleSlotBookingPage() {
 
   const extraPlayersCount = Math.max(0, playerCount - includedPlayers);
   const durationHours = selectedDuration / 60;
-  const extraPlayersCharge = extraPlayersCount * extraPlayerCharge * durationHours;
+  // Same helpers the server prices with, so this screen cannot quote a number the
+  // checkout then disagrees with.
+  const extraPlayersTotal = extraPlayersCharge(extraPlayersCount, extraPlayerCharge, durationHours);
+  const perPlayerCharge = perExtraPlayerCharge(extraPlayerCharge, durationHours);
   const baselineSubtotal = calculatePrice(hourlyRate || 0, selectedDuration);
 
   // Check for Happy Hour discount
@@ -207,13 +265,13 @@ export default function FlexibleSlotBookingPage() {
     );
 
     // Happy hour applies to device booking + extra players (NOT addons/food)
-    const discountableAmount = baselineSubtotal + extraPlayersCharge;
+    const discountableAmount = baselineSubtotal + extraPlayersTotal;
     const discountAmount = rule ? calculateDiscount(discountableAmount, discount) : 0;
 
     return { rule, discount, discountAmount };
-  }, [calendarDay, selectedStartTime, deviceTypeName, selectedDuration, baselineSubtotal, extraPlayersCharge, checkHappyHour, calculateDiscount]);
+  }, [calendarDay, selectedStartTime, deviceTypeName, selectedDuration, baselineSubtotal, extraPlayersTotal, checkHappyHour, calculateDiscount]);
 
-  const aggregatedPayableTotal = baselineSubtotal + extraPlayersCharge + additivesCostAggregated - happyHourInfo.discountAmount;
+  const aggregatedPayableTotal = baselineSubtotal + extraPlayersTotal + additivesCostAggregated - happyHourInfo.discountAmount;
 
   const selectedDurationLabel = useMemo(() => {
     const duration = allDurations.find(d => d.value === selectedDuration);
@@ -249,7 +307,12 @@ export default function FlexibleSlotBookingPage() {
       toast.error("Selected time slot is not available");
       return;
     }
-    if (!endTime) return;
+    if (!endTime) {
+      // Unreachable while a start time is set, but it narrows the type and would
+      // otherwise be the one exit that told the customer nothing.
+      toast.error("Please select a start time to proceed");
+      return;
+    }
 
     if (!isWithinBusinessHours(selectedStartTime, endTime)) {
       toast.error("Selected time range exceeds business hours");
@@ -258,7 +321,10 @@ export default function FlexibleSlotBookingPage() {
 
     setSubmittingLock(true);
     const dateQueryString = formatLocalDate(calendarDay);
-    const slotLabel = `${selectedStartTime} - ${endTime}`;
+    // The marker travels with the label, so every later screen that shows the
+    // reserved slot - checkout, the success card, Retrieve Booking - says which
+    // day it ends on without each having to work it out again.
+    const slotLabel = `${selectedStartTime} - ${endTime}${endsNextDay ? " (next day)" : ""}`;
 
     const res = await createSoftLockTransaction({
       deviceId: deviceTypeId!,
@@ -272,13 +338,20 @@ export default function FlexibleSlotBookingPage() {
       addons,
       subtotal: baselineSubtotal,
       total: aggregatedPayableTotal,
-      durationMinutes: selectedDuration
+      durationMinutes: selectedDuration,
+      playerCount,
+      // Picking again gives the previous station back in the same round trip,
+      // rather than leaving this customer sitting on two of them.
+      previousHold: bookingId && holdToken ? { bookingId, holdToken } : null
     });
 
-    if (res.success && res.bookingId && res.expiresAt) {
+    if (res.success && res.bookingId && res.holdToken && res.expiresAt) {
       dispatch(setSlot({ date: dateQueryString, slot: slotLabel, startTime: selectedStartTime, endTime }));
-      dispatch(setBookingId(res.bookingId));
-      dispatch(setSlotLockExpiry(res.expiresAt));
+      dispatch(setSlotHold({
+        bookingId: res.bookingId,
+        holdToken: res.holdToken,
+        expiresAt: res.expiresAt
+      }));
       dispatch(setPricing({
         subtotal: baselineSubtotal,
         subscriptionDiscount: 0,
@@ -420,10 +493,10 @@ export default function FlexibleSlotBookingPage() {
               <h3 className="text-sm font-black text-zinc-300 uppercase tracking-wider border-b border-zinc-900/60 pb-2">Booking Summary</h3>
 
               <div className="space-y-2.5 text-sm text-zinc-300 border-b border-zinc-900/60 pb-3">
-                <div className="flex justify-between"><span>Date:</span><strong className="text-white font-bold">{calendarDay ? `${calendarDay.toLocaleDateString()} (${calendarDay.toLocaleDateString('en-US', { weekday: 'short' })})` : "Not Selected"}</strong></div>
+                <div className="flex justify-between"><span>Date:</span><strong className="text-white font-bold">{calendarDay ? `${calendarDay.toLocaleDateString()} (${calendarDay.toLocaleDateString('en-US', { weekday: 'short' })})` : "Not Selected"}{endsNextDay && endCalendarDay && <span className="text-amber-400 font-bold block text-xs mt-0.5">ends {endCalendarDay.toLocaleDateString()} ({endCalendarDay.toLocaleDateString('en-US', { weekday: 'short' })})</span>}</strong></div>
                 <div className="flex justify-between"><span>Duration:</span><strong className="text-white font-bold">{selectedDurationLabel}</strong></div>
                 <div className="flex justify-between"><span>Start Time:</span><strong className="text-primary font-black">{selectedStartTime || "Not Selected"}</strong></div>
-                <div className="flex justify-between"><span>End Time:</span><strong className="text-primary font-black">{endTime || "--"}</strong></div>
+                <div className="flex justify-between"><span>End Time:</span><strong className="text-primary font-black">{endTime || "--"}{endsNextDay && <span className="text-amber-400 font-bold ml-1">(next day)</span>}</strong></div>
                 <div className="flex justify-between"><span>Device:</span><strong className="text-xs text-white uppercase truncate max-w-[200px]">{deviceTypeName || "N/A"}</strong></div>
               </div>
 
@@ -464,7 +537,7 @@ export default function FlexibleSlotBookingPage() {
               <div className="space-y-2 text-sm text-zinc-300 pt-1">
                 <div className="flex justify-between"><span>Base Rate ({selectedDurationLabel})</span><span className="text-white font-bold">₹{Math.round(baselineSubtotal)}.00</span></div>
                 {extraPlayersCount > 0 && (
-                  <div className="flex justify-between"><span>Extra Players ({extraPlayersCount} × {selectedDurationLabel})</span><span className="text-primary font-bold">₹{Math.round(extraPlayersCharge)}.00</span></div>
+                  <div className="flex justify-between"><span>Extra Players ({extraPlayersCount} × ₹{perPlayerCharge})</span><span className="text-primary font-bold">₹{extraPlayersTotal}.00</span></div>
                 )}
                 {happyHourInfo.rule && happyHourInfo.discountAmount > 0 && (
                   <div className="flex justify-between items-center">
@@ -602,7 +675,7 @@ export default function FlexibleSlotBookingPage() {
             <div className="space-y-4 text-sm text-zinc-300 border-b border-zinc-900 pb-3">
               <div className="flex justify-between">
                 <span>Date:</span>
-                <strong className="text-white font-bold">{calendarDay ? `${calendarDay.toLocaleDateString()} (${calendarDay.toLocaleDateString('en-US', { weekday: 'short' })})` : "Not Selected"}</strong>
+                <strong className="text-white font-bold">{calendarDay ? `${calendarDay.toLocaleDateString()} (${calendarDay.toLocaleDateString('en-US', { weekday: 'short' })})` : "Not Selected"}{endsNextDay && endCalendarDay && <span className="text-amber-400 font-bold block text-xs mt-0.5">ends {endCalendarDay.toLocaleDateString()} ({endCalendarDay.toLocaleDateString('en-US', { weekday: 'short' })})</span>}</strong>
               </div>
               <div className="flex justify-between">
                 <span>Duration:</span>
@@ -614,7 +687,7 @@ export default function FlexibleSlotBookingPage() {
               </div>
               <div className="flex justify-between">
                 <span>End Time:</span>
-                <strong className="text-primary font-black">{endTime || "--"}</strong>
+                <strong className="text-primary font-black">{endTime || "--"}{endsNextDay && <span className="text-amber-400 font-bold ml-1">(next day)</span>}</strong>
               </div>
               <div className="flex justify-between">
                 <span>Device:</span>
@@ -664,8 +737,8 @@ export default function FlexibleSlotBookingPage() {
               </div>
               {extraPlayersCount > 0 && (
                 <div className="flex justify-between">
-                  <span>Extra Players ({extraPlayersCount} × {selectedDurationLabel})</span>
-                  <span className="text-primary font-bold">₹{Math.round(extraPlayersCharge)}.00</span>
+                  <span>Extra Players ({extraPlayersCount} × ₹{perPlayerCharge})</span>
+                  <span className="text-primary font-bold">₹{extraPlayersTotal}.00</span>
                 </div>
               )}
               {happyHourInfo.rule && happyHourInfo.discountAmount > 0 && (

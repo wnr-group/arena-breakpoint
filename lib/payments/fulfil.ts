@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import type { DeviceBookingQuote, FoodOrderQuote } from './quote'
+import { perExtraPlayerCharge } from './money'
 
 /**
  * Turns a paid Razorpay order into a booking.
@@ -120,6 +121,96 @@ async function decrementInventory(items: Array<{ id: string; quantity: number }>
 // Device booking
 // ================================================
 
+/** The pricing and customer columns a paid booking carries, from the server quote. */
+function bookedColumns(
+  quote: DeviceBookingQuote,
+  customerId: string,
+  payment: PaymentReference
+) {
+  return {
+    customer_id: customerId,
+    customer_phone: quote.customer.phone,
+    customer_name: quote.customer.name,
+    customer_email: quote.customer.email,
+    customer_dob: quote.customer.dateOfBirth,
+
+    device_subtotal: quote.deviceSubtotal,
+    food_subtotal: quote.addonsTotal,
+    subscription_discount: quote.subscriptionDiscount,
+    promo_discount: quote.promoDiscount,
+    promo_code_id: quote.promoCodeId,
+    happy_hour_discount: quote.happyHourDiscount,
+    total_amount: quote.totalAmount,
+
+    ...paidColumns(quote.totalAmount, payment),
+  }
+}
+
+/**
+ * Turns the customer's own hold into their paid booking.
+ *
+ * The station was claimed when they picked the slot, so there is nothing left to
+ * compete for - this is a conversion, not a second assignment. The conditions on
+ * the update are the whole safety argument: one statement, so the hold is either
+ * still live and unspent at the instant it is claimed or the update matches
+ * nothing. Nobody can convert a hold twice, convert a released one, or convert one
+ * whose ten minutes ran out while Razorpay was open.
+ *
+ * Returns null when the hold did not survive, which is not fatal: the caller falls
+ * back to claiming a station outright, so a lapsed hold only costs the customer
+ * their reservation, not their booking.
+ */
+async function convertHeldBooking(
+  quote: DeviceBookingQuote,
+  customerId: string,
+  payment: PaymentReference
+): Promise<{ id: string; booking_number: string } | null> {
+  if (!quote.holdBookingId || !quote.holdToken) return null
+
+  const { data, error } = await supabaseAdmin
+    .from('bookings')
+    .update({
+      ...bookedColumns(quote, customerId, payment),
+      hold_token: null,
+      lock_expires_at: null,
+      // The row was born when the slot was picked, but the booking exists from the
+      // moment it is paid for. Staff notifications poll on created_at, and the
+      // day's revenue is bucketed by it, so both would be wrong by up to the
+      // length of the hold if this kept the reservation's timestamp.
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', quote.holdBookingId)
+    .eq('status', 'locked')
+    .eq('hold_token', quote.holdToken)
+    .gt('lock_expires_at', new Date().toISOString())
+    .select('id, booking_number')
+    .maybeSingle()
+
+  if (error) throw error
+  if (!data) return null
+
+  // The slot row was written from device-type defaults when the hold was taken;
+  // the quote is what the customer has now paid, so it wins.
+  const { error: slotError } = await supabaseAdmin
+    .from('booking_device_slots')
+    .update({
+      duration_hours: quote.durationHours,
+      hourly_rate: quote.hourlyRate,
+      slot_total: quote.deviceCharges,
+      device_type: quote.deviceTypeName,
+      player_count: quote.playerCount,
+      included_players: quote.includedPlayers,
+      extra_player_charge: quote.extraPlayerCharge,
+      extra_players_total: quote.extraPlayersTotal,
+    })
+    .eq('booking_id', data.id)
+
+  if (slotError) throw slotError
+
+  return data
+}
+
 export async function fulfilDeviceBooking(
   quote: DeviceBookingQuote,
   payment: PaymentReference
@@ -128,68 +219,72 @@ export async function fulfilDeviceBooking(
 
   try {
     const customerId = await getOrCreateCustomer(quote)
-    const bookingNumber = await generateBookingNumber()
 
-    const { data: booking, error: bookingError } = await supabaseAdmin
-      .from('bookings')
-      .insert({
-        booking_number: bookingNumber,
-        customer_id: customerId,
-        customer_phone: quote.customer.phone,
-        customer_name: quote.customer.name,
-        customer_email: quote.customer.email,
-        customer_dob: quote.customer.dateOfBirth,
+    // --- Preferred path: the reservation this customer already holds ---
+    const converted = await convertHeldBooking(quote, customerId, payment)
 
-        device_subtotal: quote.deviceSubtotal,
-        food_subtotal: quote.addonsTotal,
-        subscription_discount: quote.subscriptionDiscount,
-        promo_discount: quote.promoDiscount,
-        promo_code_id: quote.promoCodeId,
-        happy_hour_discount: quote.happyHourDiscount,
-        total_amount: quote.totalAmount,
+    let booking: { id: string; booking_number: string }
 
-        ...paidColumns(quote.totalAmount, payment),
-      })
-      .select('id, booking_number')
-      .single()
+    if (converted) {
+      booking = converted
+    } else {
+      // No usable hold - it lapsed, was released, or this booking never had one
+      // (a resumed payment, or a slot picked before holds existed). Claim a
+      // station outright instead, which is still atomic and still refuses rather
+      // than double-books.
+      const bookingNumber = await generateBookingNumber()
 
-    if (bookingError) throw bookingError
-    bookingId = booking.id
+      const { data: created, error: bookingError } = await supabaseAdmin
+        .from('bookings')
+        .insert({
+          booking_number: bookingNumber,
+          ...bookedColumns(quote, customerId, payment),
+        })
+        .select('id, booking_number')
+        .single()
 
-    // --- Device slot ---
-    // Station selection and slot insert happen in one locked transaction, so two
-    // customers paying at the same moment cannot be given the same station.
-    const { data: assignment, error: slotError } = await supabaseAdmin.rpc(
-      'assign_device_slot',
-      {
-        p_booking_id: booking.id,
-        p_device_type_id: quote.deviceTypeId,
-        p_slot_date: quote.selectedDate,
-        p_slot_start_time: quote.slotStartTime24,
-        p_slot_end_time: quote.slotEndTime24,
-        p_duration_hours: quote.durationHours,
-        p_hourly_rate: quote.hourlyRate,
-        p_slot_total: quote.deviceCharges,
-        p_device_type: quote.deviceTypeName,
-        p_player_count: quote.playerCount,
-        p_included_players: quote.includedPlayers,
-        p_extra_player_charge: quote.extraPlayerCharge,
-        p_extra_players_total: quote.extraPlayersTotal,
+      if (bookingError) throw bookingError
+      bookingId = created.id
+
+      // --- Device slot ---
+      // Station selection and slot insert happen in one locked transaction, so two
+      // customers paying at the same moment cannot be given the same station.
+      const { data: assignment, error: slotError } = await supabaseAdmin.rpc(
+        'assign_device_slot',
+        {
+          p_booking_id: created.id,
+          p_device_type_id: quote.deviceTypeId,
+          p_slot_date: quote.selectedDate,
+          p_slot_start_time: quote.slotStartTime24,
+          p_slot_end_time: quote.slotEndTime24,
+          p_duration_hours: quote.durationHours,
+          p_hourly_rate: quote.hourlyRate,
+          p_slot_total: quote.deviceCharges,
+          p_device_type: quote.deviceTypeName,
+          p_player_count: quote.playerCount,
+          p_included_players: quote.includedPlayers,
+          p_extra_player_charge: quote.extraPlayerCharge,
+          p_extra_players_total: quote.extraPlayersTotal,
+        }
+      )
+
+      if (slotError) throw slotError
+
+      // Zero rows back means every station of this type is busy for the window.
+      if (!assignment || (assignment as any[]).length === 0) {
+        await supabaseAdmin.from('bookings').delete().eq('id', created.id)
+        return {
+          success: false,
+          error:
+            'That slot was taken while your payment was processing. Your payment is being refunded.',
+          refundRequired: true,
+        }
       }
-    )
 
-    if (slotError) throw slotError
-
-    // Zero rows back means every station of this type is busy for the window.
-    if (!assignment || (assignment as any[]).length === 0) {
-      await supabaseAdmin.from('bookings').delete().eq('id', booking.id)
-      return {
-        success: false,
-        error:
-          'That slot was taken while your payment was processing. Your payment is being refunded.',
-        refundRequired: true,
-      }
+      booking = created
     }
+
+    bookingId = booking.id
 
     // --- Line items (billing breakdown shown to staff and customer) ---
     const lineItems: any[] = []
@@ -211,9 +306,14 @@ export async function fulfilDeviceBooking(
       lineItems.push({
         booking_id: booking.id,
         item_type: 'extra_players',
-        description: `Extra Players (${quote.extraPlayersCount} × ₹${quote.extraPlayerCharge} × ${quote.durationHours}h)`,
-        quantity: quote.extraPlayersCount * quote.durationHours,
-        unit_price: quote.extraPlayerCharge,
+        // Priced per player for the session, not per player-hour: that is the
+        // number the customer was quoted, and the one this line multiplies by.
+        description: `Extra Players (${quote.extraPlayersCount} × ₹${perExtraPlayerCharge(
+          quote.extraPlayerCharge,
+          quote.durationHours
+        )})`,
+        quantity: quote.extraPlayersCount,
+        unit_price: perExtraPlayerCharge(quote.extraPlayerCharge, quote.durationHours),
         line_total: quote.extraPlayersTotal,
         added_by: 'customer',
         is_paid: true,

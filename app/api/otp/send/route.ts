@@ -3,14 +3,20 @@ import { checkRateLimit } from '@/lib/redis/client'
 import { generateOTP } from '@/lib/utils/otp'
 import { sendOTP } from '@/lib/msg91/client'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { normalizeIndianMobile } from '@/lib/utils/forms'
 
 export async function POST(request: NextRequest) {
   try {
-    const { phone } = await request.json()
+    const { phone: rawPhone } = await request.json()
 
-    if (!phone || !/^\d{10}$/.test(phone)) {
+    // Ten digits alone lets 0000000000 through and an OTP goes nowhere. This also
+    // strips any +91/0 prefix, so the rate-limit key and the stored number are the
+    // same string however the customer typed it.
+    const phone = normalizeIndianMobile(rawPhone)
+
+    if (!phone) {
       return NextResponse.json(
-        { error: 'Invalid phone number' },
+        { error: 'Enter a valid 10-digit Indian mobile number.' },
         { status: 400 }
       )
     }

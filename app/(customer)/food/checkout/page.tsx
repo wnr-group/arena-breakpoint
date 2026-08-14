@@ -248,7 +248,10 @@ export default function FoodCheckoutPage() {
     );
 
     if (!validationResult.success) {
-      toast.error("Inventory Discrepancy", { description: validationResult.error });
+      toast.error("Item no longer available", {
+        description: validationResult.error,
+        duration: 8000
+      });
       setIsSubmitting(false);
       return;
     }

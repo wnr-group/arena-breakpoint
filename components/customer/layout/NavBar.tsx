@@ -99,12 +99,16 @@ export default function Navbar() {
       return;
     }
     const checkHold = () => {
-      setHasActiveHold(slotLockExpiry > Date.now());
+      // Mirrors the banner's own rule in the customer layout: it only renders on the
+      // booking flow, so the nav must only make room for it there. Offsetting
+      // everywhere left a 40px gap above the nav on pages with no banner.
+      const bannerIsVisible = pathname === "/booking/auth";
+      setHasActiveHold(bannerIsVisible && slotLockExpiry > Date.now());
     };
     checkHold();
     const interval = setInterval(checkHold, 1000);
     return () => clearInterval(interval);
-  }, [slotLockExpiry]);
+  }, [slotLockExpiry, pathname]);
 
   return (
     <nav className={`fixed left-0 w-full z-[100] transition-all duration-500 ${(hasActiveHold && !scrolled) ? "top-10" : "top-0"

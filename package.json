@@ -19,6 +19,11 @@
     "seed:admin": "tsx scripts/seed-admin.ts",
     "seed:staff": "tsx scripts/seed-staff.ts",
     "test:pricing": "tsx scripts/verify-membership-discount.ts",
+    "test:checkout": "tsx scripts/verify-checkout-guard.ts",
+    "test:hold": "tsx scripts/verify-slot-hold.ts",
+    "test:players": "tsx scripts/verify-player-charges.ts",
+    "test:walkin": "tsx scripts/verify-walkin-session.ts",
+    "test:midnight": "tsx scripts/verify-midnight-booking.ts",
     "check:guards": "tsx scripts/check-admin-guards.ts"
   },
   "dependencies": {

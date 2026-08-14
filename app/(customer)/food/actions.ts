@@ -59,7 +59,9 @@ export async function validateMenuItems(
       const menuItem = data?.find((item: any) => item.id === orderItem.menu_item_id);
 
       if (!menuItem) {
-        unavailableItems.push(orderItem.menu_item_id);
+        // The row is gone, so there is no name to show. Never surface the raw id -
+        // it means nothing to a customer.
+        unavailableItems.push("An item that is no longer on the menu");
         return;
       }
 
@@ -76,9 +78,23 @@ export async function validateMenuItems(
     });
 
     if (unavailableItems.length > 0 || insufficientStock.length > 0) {
+      // Stock can change between adding to the cart and checking out, so name the
+      // item that is the problem and say what to do about it. "Some items are
+      // unavailable" left the customer with nothing to act on. The structured lists
+      // stay on the response for any caller that wants to highlight rows.
+      const parts: string[] = [];
+      if (unavailableItems.length > 0) {
+        parts.push(
+          `${unavailableItems.join(", ")} ${unavailableItems.length === 1 ? "is" : "are"} out of stock`
+        );
+      }
+      if (insufficientStock.length > 0) {
+        parts.push(`we only have ${insufficientStock.join(", ")}`);
+      }
+
       return {
         success: false,
-        error: "Some items are unavailable",
+        error: `${parts.join(", and ")}. Please remove or reduce the item in your cart, then try again.`,
         unavailableItems,
         insufficientStock,
       };
