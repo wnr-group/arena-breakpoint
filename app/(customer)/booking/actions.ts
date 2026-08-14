@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { isBookingDateStringWithinWindow, BOOKING_WINDOW_ERROR } from "@/lib/utils/dates";
 import { shiftDate, timeToMinutes } from "@/lib/payments/availability";
 import { createSlotHold, releaseSlotHoldRow } from "@/lib/bookings/slotHold";
+import { headers } from "next/headers";
 
 export interface AddonSelection {
   id: string;
@@ -357,8 +358,18 @@ export async function initializeSoftLockReservation(payload: {
         ? payload.durationMinutes
         : Math.max(30, timeToMinutes(endTime) - timeToMinutes(startTime));
 
+    // Behind Vercel the client address arrives in x-forwarded-for; the first
+    // entry is the original caller. Absent it the cap simply does not apply -
+    // it is a brake on repetition, not an authentication check.
+    const headerList = await headers();
+    const clientIp =
+      headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      headerList.get("x-real-ip") ||
+      null;
+
     const created = await createSlotHold({
       deviceTypeId,
+      clientIp,
       slotDate: payload.date,
       slotStartTime24: startTime,
       slotEndTime24: endTime,

@@ -17,8 +17,24 @@ import { deviceCharge, extraPlayersCharge } from '@/lib/payments/money'
  * the station and a lapsed one as free. Nothing here needs those readers to change.
  */
 
-/** How long a customer gets to finish paying. Matches the countdown in the UI. */
-export const HOLD_DURATION_MS = 10 * 60 * 1000
+/**
+ * How long a customer gets to finish paying. Matches the countdown in the UI.
+ *
+ * Five minutes is comfortably enough to verify a number and pay, and it halves
+ * how long a station stays out of circulation when a hold is abandoned - or
+ * taken in bad faith. Both are the same problem seen from different ends.
+ */
+export const HOLD_DURATION_MS = 5 * 60 * 1000
+
+/**
+ * How many live holds one client may have at once.
+ *
+ * A customer needs one. Two leaves room for a stale hold that has not been
+ * released yet - switching device type releases the previous hold, but a dropped
+ * connection mid-switch can leave it behind - without letting a single caller
+ * work through the whole floor.
+ */
+export const MAX_ACTIVE_HOLDS_PER_CLIENT = 2
 
 export interface SlotHold {
   bookingId: string
@@ -52,6 +68,16 @@ export const SLOT_TAKEN_ERROR =
   'That slot has just been taken. Please choose a different time.'
 
 /**
+ * Shown when one caller is already holding as many slots as we allow.
+ *
+ * Worded for the customer who has genuinely left a slot held on another tab,
+ * because that is who will actually read it - it says nothing about limits or
+ * how the cap works.
+ */
+export const HOLD_LIMIT_ERROR =
+  'You already have a slot on hold. Finish or cancel that booking before starting another.'
+
+/**
  * Best-effort tidy-up of holds whose time ran out.
  *
  * Correctness never depends on this: every availability check compares
@@ -79,6 +105,8 @@ export async function createSlotHold(input: {
   slotEndTime24: string
   durationMinutes: number
   playerCount: number
+  /** Whoever asked, used only to cap concurrent holds. Null when unattributable. */
+  clientIp?: string | null
 }): Promise<CreateHoldResult> {
   await sweepLapsedHolds()
 
@@ -109,6 +137,28 @@ export async function createSlotHold(input: {
     durationHours
   )
 
+  // Checked before a booking number is burned or a station is claimed. Expired
+  // holds are excluded by the timestamp, so nothing needs sweeping first.
+  if (input.clientIp) {
+    const { count, error: countError } = await supabaseAdmin
+      .from('bookings')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'locked')
+      .eq('hold_client_ip', input.clientIp)
+      .gt('lock_expires_at', new Date().toISOString())
+
+    if (countError) {
+      // Fail closed. A hold limit that opens up when the database hiccups is
+      // exactly the situation it exists to cover.
+      console.error('Could not count active holds:', countError)
+      return { success: false, error: HOLD_LIMIT_ERROR }
+    }
+
+    if ((count ?? 0) >= MAX_ACTIVE_HOLDS_PER_CLIENT) {
+      return { success: false, error: HOLD_LIMIT_ERROR }
+    }
+  }
+
   const holdToken = randomUUID()
   const expiresAt = Date.now() + HOLD_DURATION_MS
 
@@ -125,6 +175,7 @@ export async function createSlotHold(input: {
       status: 'locked',
       lock_expires_at: new Date(expiresAt).toISOString(),
       hold_token: holdToken,
+      hold_client_ip: input.clientIp || null,
       total_amount: 0,
       // `locked_by` stays null until the booking is paid for: the admin
       // notification poll announces anything stamped 'customer', and a hold is not
