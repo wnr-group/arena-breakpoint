@@ -18,7 +18,7 @@ import {
   toClockTime,
   toSlotDate
 } from "@/lib/bookings/walkInSession";
-import { formatLocalDate } from "@/lib/utils/dates";
+import { arenaToday, formatLocalDate } from "@/lib/utils/dates";
 import { requireStaff } from "@/lib/auth/require-admin";
 
 /** Rupee tolerance for float comparisons on money. */
@@ -510,7 +510,7 @@ export async function getBookingStats(
       : (allStatuses || []);
 
     // Calculate today's revenue
-    const today = new Date().toISOString().split("T")[0];
+    const today = arenaToday();
     const { data: todayBookings, error: revenueError } = await supabaseAdmin
       .from("bookings")
       .select("total_amount")
@@ -2001,7 +2001,7 @@ export async function createFoodOnlyWalkInBooking(payload: {
     }
 
     // Step 2: Generate booking number
-    const bookingNumber = `BP-${new Date().toISOString().split("T")[0].replace(/-/g, "")}-${Date.now().toString().slice(-3)}`;
+    const bookingNumber = `BP-${arenaToday().replace(/-/g, "")}-${Date.now().toString().slice(-3)}`;
 
     // Step 3: Create booking record (food-only, no device)
     const { data: booking, error: bookingError } = await supabaseAdmin

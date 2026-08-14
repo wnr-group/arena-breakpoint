@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { round2 } from '@/lib/payments/money'
+import { arenaToday } from '@/lib/utils/dates'
 
 /**
  * The single place a membership discount is resolved and valued.
@@ -56,7 +57,9 @@ export async function resolveActiveMembership(phone: string): Promise<ActiveMemb
 
   if (error || !customer?.active_subscription_id) return NO_MEMBERSHIP
 
-  const today = new Date().toISOString().split('T')[0]
+  // Arena clock, not the server's: a membership must not lapse (or linger)
+  // five and a half hours out of step with the day the customer is having.
+  const today = arenaToday()
 
   const { data: subscription, error: subError } = await supabaseAdmin
     .from('subscriptions')

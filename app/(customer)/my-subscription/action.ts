@@ -1,6 +1,7 @@
 'use server'
 
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { arenaToday } from "@/lib/utils/dates";
 
 export async function getMyActiveSubscription(customerId: string) {
   try {
@@ -66,7 +67,7 @@ export async function getMyActiveSubscriptionByPhone(phone: string) {
       `)
       .eq('id', customer.active_subscription_id)
       .eq('status', 'active')
-      .gte('end_date', new Date().toISOString().split('T')[0])
+      .gte('end_date', arenaToday())
       .single()
 
     if (subError) {

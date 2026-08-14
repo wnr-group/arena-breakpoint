@@ -370,6 +370,39 @@ export function handleDobInput(value: string): string {
   }
 }
 
+/** The clock the arena actually runs on. */
+export const ARENA_TIME_ZONE = 'Asia/Kolkata';
+
+/**
+ * Today, as the arena reckons it.
+ *
+ * `new Date().toISOString().split('T')[0]` gives the UTC date, and the servers
+ * this runs on are UTC while the arena is UTC+5:30. Between midnight and 05:30
+ * IST the two disagree, so anything asking "what happened today" was reading
+ * yesterday - and this is a venue whose customers are very much still playing
+ * at half past midnight.
+ *
+ * `formatLocalDate` is not a substitute: it reads the *host's* clock, which is
+ * the customer's phone in the browser but UTC on the server. This names the zone
+ * rather than hoping the host is in it.
+ *
+ * en-CA because it formats as YYYY-MM-DD, which is what every date column and
+ * comparison here expects.
+ */
+export function arenaToday(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: ARENA_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+}
+
+/** `arenaToday` shifted by whole days - negative for the past. */
+export function arenaDateOffset(days: number, now: Date = new Date()): string {
+  return arenaToday(new Date(now.getTime() + days * 24 * 60 * 60 * 1000));
+}
+
 /**
  * Safely converts a Date object to local YYYY-MM-DD string without timezone shifting
  */

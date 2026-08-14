@@ -3,12 +3,13 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { formatDbTime } from "@/lib/utils/timeSlots";
 import { requireStaff } from "@/lib/auth/require-admin";
+import { arenaToday, arenaDateOffset } from "@/lib/utils/dates";
 
 export async function getDashboardStats() {
   await requireStaff();
 
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = arenaToday();
     const now = new Date();
 
     const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000);
@@ -159,7 +160,7 @@ export async function getTodaysSchedule() {
   await requireStaff();
 
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = arenaToday();
 
     const { data, error } = await supabaseAdmin
       .from("booking_device_slots")
@@ -193,9 +194,9 @@ export async function getQuickStats() {
   await requireStaff();
 
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = arenaToday();
     const now = new Date();
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const sevenDaysAgo = arenaDateOffset(-7);
 
     // Same reasoning as getDashboardStats: independent queries, so they go out
     // together instead of paying three round trips in series.
@@ -269,7 +270,7 @@ export async function getTodaysRevenueDetails() {
   await requireStaff();
 
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = arenaToday();
 
     const { data, error } = await supabaseAdmin
       .from("bookings")
@@ -325,7 +326,7 @@ export async function getActiveSessionsDetails() {
   await requireStaff();
 
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = arenaToday();
 
     const { data, error } = await supabaseAdmin
       .from("booking_device_slots")
@@ -361,7 +362,7 @@ export async function getUpcomingBookingsDetails() {
   await requireStaff();
 
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = arenaToday();
     const now = new Date();
     const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000);
     const currentTime = now.toTimeString().split(' ')[0];
