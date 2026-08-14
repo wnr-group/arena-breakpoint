@@ -28,6 +28,7 @@ import { UpcomingBookingsModal } from "@/components/admin/dashboard/UpcomingBook
 import { AvailableDevicesModal } from "@/components/admin/dashboard/AvailableDevicesModal";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { CountUp, CurrencyCountUp } from "@/components/shared/CountUp";
+import { RevealAmount } from "@/components/admin/dashboard/RevealAmount";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -221,7 +222,7 @@ export default function AdminDashboardPage() {
                 Today's Revenue
               </p>
               <h3 className="text-2xl font-black text-white mb-1">
-                <CurrencyCountUp amount={stats?.todaysRevenue || 0} duration={1200} />
+                <RevealAmount amount={stats?.todaysRevenue || 0} label="today's revenue" />
               </h3>
               <p className="text-min-enhanced text-secondary-content">
                 From <CountUp end={stats?.todaysBookings || 0} duration={800} /> bookings
@@ -306,7 +307,7 @@ export default function AdminDashboardPage() {
                 This Week
               </p>
               <h3 className="text-2xl font-black text-white mb-1">
-                <CurrencyCountUp amount={quickStats?.thisWeekRevenue || 0} duration={1200} />
+                <RevealAmount amount={quickStats?.thisWeekRevenue || 0} label="this week's revenue" />
               </h3>
               <div className="flex items-center gap-1 text-xs text-green-500">
                 <TrendingUp className="h-3 w-3" />
