@@ -1,6 +1,7 @@
 'use server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { addMonthsToDateString, arenaToday } from '@/lib/utils/dates'
 
 interface ActivatePlanParams {
   phone: string
@@ -85,10 +86,11 @@ export async function activateSubscriptionPlan({
       return { success: false, message: 'Invalid subscription plan.' }
     }
 
-    // Calculate dates
-    const startDate = new Date()
-    const endDate = new Date(startDate)
-    endDate.setMonth(endDate.getMonth() + (plan.duration_months || 1))
+    // Dated by the arena's clock, not the server's. `toISOString()` gave the UTC
+    // date, so a membership bought at half past midnight IST started - and
+    // therefore expired - a day early.
+    const startDate = arenaToday()
+    const endDate = addMonthsToDateString(startDate, plan.duration_months || 1)
 
     // Create subscription record
     const { data: subscription, error: insertError } = await supabaseAdmin
@@ -97,8 +99,8 @@ export async function activateSubscriptionPlan({
         {
           customer_id: customerId,
           subscription_plan_id: planId,
-          start_date: startDate.toISOString().split('T')[0],
-          end_date: endDate.toISOString().split('T')[0],
+          start_date: startDate,
+          end_date: endDate,
           payment_id: paymentId,
           amount_paid: plan.price,
           status: 'active',
@@ -138,7 +140,7 @@ export async function activateSubscriptionPlan({
         subscriptionId: subscription.id,
         planId,
         status: 'active',
-        validUntil: endDate.toISOString().split('T')[0],
+        validUntil: endDate,
       },
     }
   } catch (error: any) {

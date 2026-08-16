@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SessionSummaryLine, SessionTimesCell } from "./SessionTimeline";
 import { BookingStatusBadge } from "./BookingStatusBadge";
+import { AttentionBadges } from "./AttentionBadges";
 import { PaymentStatusBadge } from "./PaymentStatusBadge";
 import { Calendar, Clock, MapPin, DollarSign, Phone, User, Eye, UserCheck, LogOut, UtensilsCrossed, CreditCard, Link2 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
@@ -68,6 +69,8 @@ export function BookingsGrid({
                   {group.customerName}
                 </h3>
                 <p className="text-xs text-muted-content font-mono">{group.phone}</p>
+
+                <AttentionBadges booking={booking} compact className="mt-2" />
               </div>
 
               {/* Content */}

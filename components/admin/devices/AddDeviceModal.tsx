@@ -10,6 +10,7 @@ import { createDevice, getDeviceTypes } from "@/app/(admin)/admin/devices/action
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useRequiredFields } from "@/lib/hooks/useRequiredFields";
+import { MANUAL_DEVICE_STATUSES } from "@/lib/types/devices";
 
 interface AddModalProps {
   onFormSuccess: () => Promise<void>;
@@ -177,7 +178,7 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
             <div className="space-y-2">
               <label className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">Device Status <span className="text-red-500">*</span></label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {['available', 'maintenance', 'occupied', 'inactive'].map((status) => (
+                {MANUAL_DEVICE_STATUSES.map((status) => (
                   <label key={status} className={`flex items-center justify-center cursor-pointer rounded-lg border py-2.5 text-sm font-bold transition-all ${previewStatus === status ? 'border-primary bg-primary/10 text-primary' : 'border-[#27272a] bg-[var(--surface)] text-[#a1a1aa] hover:border-zinc-700'}`}>
                     <input type="radio" name="status" value={status} className="hidden" checked={previewStatus === status} onChange={() => setPreviewStatus(status)} />
                     <span className="capitalize tracking-wide">{status}</span>

@@ -3,7 +3,12 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { formatDbTime } from "@/lib/utils/timeSlots";
 import { requireStaff } from "@/lib/auth/require-admin";
-import { arenaToday, arenaDateOffset } from "@/lib/utils/dates";
+import { arenaToday, arenaDateOffset, arenaClockTime } from "@/lib/utils/dates";
+import {
+  MAX_LIVE_SESSION_HOURS,
+  effectiveDeviceStatus,
+  getOccupiedDeviceIds,
+} from "@/lib/devices/occupancy";
 
 export async function getDashboardStats() {
   await requireStaff();
@@ -13,8 +18,11 @@ export async function getDashboardStats() {
     const now = new Date();
 
     const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-    const currentTime = now.toTimeString().split(' ')[0];
-    const twoHoursTime = twoHoursLater.toTimeString().split(' ')[0];
+    // Arena clock, because that is what `slot_start_time` holds. `toTimeString()`
+    // reads the host's, so on Vercel this compared UTC against IST and the
+    // "next 2 hours" window pointed 5.5 hours into the arena's past.
+    const currentTime = arenaClockTime(now);
+    const twoHoursTime = arenaClockTime(twoHoursLater);
 
     // Issued together rather than one after another. None of these depends on
     // another's result, and against a remote database each await was its own
@@ -26,6 +34,7 @@ export async function getDashboardStats() {
       { data: upcomingBookings, error: upcomingError },
       { data: paymentsToday, error: paymentsError },
       { data: devices, error: devicesError },
+      occupiedDeviceIds,
     ] = await Promise.all([
       // Today's bookings
       supabaseAdmin
@@ -49,11 +58,18 @@ export async function getDashboardStats() {
         .eq("slot_date", today)
         .in("bookings.status", ["confirmed", "checked_in", "completed"]),
 
-      // Active sessions (checked in)
+      // Active sessions (checked in). Bounded the same way occupancy is: a
+      // booking left in `checked_in` for weeks is a checkout that never
+      // happened, and counting those made this tile read eighteen while the
+      // arena was empty.
       supabaseAdmin
         .from("bookings")
         .select("id", { count: "exact", head: true })
-        .eq("status", "checked_in"),
+        .eq("status", "checked_in")
+        .gte(
+          "checked_in_at",
+          new Date(Date.now() - MAX_LIVE_SESSION_HOURS * 60 * 60 * 1000).toISOString()
+        ),
 
       // Upcoming bookings (next 2 hours)
       supabaseAdmin
@@ -80,11 +96,13 @@ export async function getDashboardStats() {
         .in("payment_status", ["paid", "partial"])
         .neq("status", "cancelled"),
 
-      // Device availability
+      // Device availability. Every device, not just the ones stored as
+      // "available" - a station in use still has that stored value, so the
+      // occupied ones have to be subtracted here rather than filtered in SQL.
       supabaseAdmin
         .from("devices")
-        .select("id, status")
-        .eq("status", "available"),
+        .select("id, status"),
+      getOccupiedDeviceIds(),
     ]);
 
     if (bookingsError) throw bookingsError;
@@ -104,7 +122,10 @@ export async function getDashboardStats() {
     }
 
     const todaysBookingsCount = todaysBookings?.length || 0;
-    const availableDevices = devices?.length || 0;
+    const availableDevices = (devices || []).filter(
+      (device: { id: string; status: string | null }) =>
+        effectiveDeviceStatus(device.status, occupiedDeviceIds.has(device.id)) === "available"
+    ).length;
 
     return {
       success: true,
@@ -365,8 +386,11 @@ export async function getUpcomingBookingsDetails() {
     const today = arenaToday();
     const now = new Date();
     const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-    const currentTime = now.toTimeString().split(' ')[0];
-    const twoHoursTime = twoHoursLater.toTimeString().split(' ')[0];
+    // Arena clock, because that is what `slot_start_time` holds. `toTimeString()`
+    // reads the host's, so on Vercel this compared UTC against IST and the
+    // "next 2 hours" window pointed 5.5 hours into the arena's past.
+    const currentTime = arenaClockTime(now);
+    const twoHoursTime = arenaClockTime(twoHoursLater);
 
     const { data, error } = await supabaseAdmin
       .from("booking_device_slots")
@@ -425,11 +449,15 @@ export async function getAvailableDevicesDetails() {
 
     if (error) throw error;
 
+    // The modal splits these into available and occupied, so it needs the status
+    // the floor is actually in rather than the one stored on the row.
+    const occupied = await getOccupiedDeviceIds();
+
     // Transform the data to flatten device_type
     const devices = (data || []).map((device: any) => ({
       id: device.id,
       station_number: device.station_number,
-      status: device.status,
+      status: effectiveDeviceStatus(device.status, occupied.has(device.id)),
       hourly_rate: device.device_type?.regular_hourly_rate || 0,
       specs: device.specs,
       image_url: device.image_url,

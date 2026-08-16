@@ -4,6 +4,7 @@ import {
   perExtraPlayerCharge,
   round2,
 } from '@/lib/payments/money'
+import { arenaClockTime, arenaDate } from '@/lib/utils/dates'
 
 /**
  * Pricing for a walk-in session, from the time actually played.
@@ -22,6 +23,21 @@ import {
 
 /** The station is held for this long from check-in while play is in progress. */
 export const PROVISIONAL_SESSION_HOURS = 5
+
+/**
+ * How long after check-in a session is still believed to be live.
+ *
+ * `checked_in` alone is not enough. Production currently holds eighteen bookings
+ * left in that state, the oldest checked in fifty-one days ago - a checkout that
+ * never happened, not somebody still playing. Trusting the flag on its own pins
+ * the station to "occupied" permanently and counts a phantom active session
+ * forever.
+ *
+ * Twice the provisional block a walk-in claims at check-in: long enough that no
+ * real session is ever cut short by it, short enough that a forgotten checkout
+ * frees the station by the next day rather than never.
+ */
+export const MAX_LIVE_SESSION_HOURS = 12
 
 /** Nothing is ever billed as a zero-length session. */
 export const MIN_BILLABLE_MINUTES = 1
@@ -139,18 +155,23 @@ export function formatPlayedDuration(minutes: number): string {
 }
 
 /**
- * The clock time of a `Date`, as Postgres stores it in `slot_start_time`.
+ * The arena clock time of a `Date`, as Postgres stores it in `slot_start_time`.
  *
  * A session that runs past midnight keeps a start later than its end, which is
  * exactly the shape every availability check already unwraps.
+ *
+ * These both used `getHours()`/`getDate()`, which read the *host's* zone. That
+ * is IST on a developer's laptop and UTC on Vercel, so checkout in production
+ * rewrote the slot row 5.5 hours behind the session that had just happened -
+ * and for anyone checking out between midnight and 05:30 IST, filed it under
+ * the previous day. Check-in never had the bug: it happens in SQL, which was
+ * already converting to Asia/Kolkata. Only checkout, which runs here, undid it.
  */
 export function toClockTime(value: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}`
+  return arenaClockTime(value)
 }
 
-/** The local calendar date of a `Date`, as Postgres stores it in `slot_date`. */
+/** The arena calendar date of a `Date`, as Postgres stores it in `slot_date`. */
 export function toSlotDate(value: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`
+  return arenaDate(value)
 }
