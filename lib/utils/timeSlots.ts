@@ -27,6 +27,11 @@ export function generateStartTimes(): string[] {
 /**
  * Filter start times to only show future slots for today
  * If selected date is today, remove past time slots
+ *
+ * Reads the host clock deliberately: both callers are `"use client"` pages, so
+ * the host is the customer's own browser and "now" means their now. Calling this
+ * from a server action would compare UTC against the arena's slot times and hide
+ * the wrong half of the day - use `arenaClockTime` if that is ever needed.
  */
 export function filterPastTimeSlots(allTimes: string[], selectedDate: Date): string[] {
   const today = new Date();
@@ -39,7 +44,7 @@ export function filterPastTimeSlots(allTimes: string[], selectedDate: Date): str
 
   // Today - filter out past times
   const now = new Date();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes(); // arena-clock-ok
 
   return allTimes.filter(time12 => {
     const time24 = formatTo24Hour(time12);

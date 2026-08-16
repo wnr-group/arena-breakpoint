@@ -16,9 +16,9 @@ import { PaymentStatusBadge } from "@/components/admin/bookings/PaymentStatusBad
 import { BookingsGrid } from "@/components/admin/bookings/BookingsGrid";
 import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
 import { CheckoutModal } from "@/components/admin/bookings/CheckoutModal";
-import { getAllBookings, getBookingStats, checkInBooking, checkOutBooking, checkInWalkInSession, checkOutWalkInSession, getBookingBillingDetails, markBookingAsPaid, type BookingFilters } from "./actions";
+import { getAllBookings, getAttentionBookings, getBookingStats, checkInBooking, checkOutBooking, checkInWalkInSession, checkOutWalkInSession, getBookingBillingDetails, markBookingAsPaid, type BookingFilters } from "./actions";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
-import { Search, Filter, Calendar, CalendarDays, DollarSign, Users, CheckCircle2, Clock, Loader2, Eye, Receipt, PlusCircle, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List, AlertCircle, RefreshCw, ShieldAlert } from "lucide-react";
+import { Search, Filter, Calendar, CalendarDays, DollarSign, Users, CheckCircle2, Clock, Loader2, Eye, Receipt, PlusCircle, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List, AlertCircle, RefreshCw, ShieldAlert, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useDebounce } from "@/lib/hooks/useDebounce";
@@ -27,6 +27,8 @@ import { roundToTwo, formatCurrency } from "@/lib/currency";
 import { formatDbTime, formatDbTimeRange } from "@/lib/utils/timeSlots";
 import { SessionTimesCell } from "@/components/admin/bookings/SessionTimeline";
 import {
+  arenaDate,
+  arenaToday,
   formatLocalDate,
   parseLocalDate,
   startOfLocalDay,
@@ -41,9 +43,15 @@ export default function AdminBookingsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300); // Debounce search by 300ms
   const [activeStatusFilter, setActiveStatusFilter] = useState("all");
+  const [attentionCount, setAttentionCount] = useState(0);
+
+  /** The attention tab is a cross-status view, not one of the status filters. */
+  const isAttentionTab = activeStatusFilter === "attention";
   // The page opens on today's sessions - the slots the front desk is working.
-  const [dateFrom, setDateFrom] = useState(() => formatLocalDate(new Date()));
-  const [dateTo, setDateTo] = useState(() => formatLocalDate(new Date()));
+  // Defaults to the arena's today. `formatLocalDate` reads the browser's clock,
+  // which is the same answer in India and a different one anywhere else.
+  const [dateFrom, setDateFrom] = useState(() => arenaToday());
+  const [dateTo, setDateTo] = useState(() => arenaToday());
   const [activeQuickFilter, setActiveQuickFilter] = useState<string>("today");
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [openFoodModal, setOpenFoodModal] = useState(false);
@@ -123,7 +131,10 @@ export default function AdminBookingsPage() {
 
   const setQuickDateRange = (preset: "today" | "future" | "7days" | "30days" | "month" | "90days" | "all") => {
     const now = new Date();
-    const todayStr = formatLocalDate(now);
+    // The arena's today, not the browser's. These presets are compared against
+    // dates the server derives in Asia/Kolkata, so a staff laptop on any other
+    // clock would ask for a range that does not line up with them.
+    const todayStr = arenaToday(now);
 
     setActiveQuickFilter(preset);
 
@@ -139,35 +150,35 @@ export default function AdminBookingsPage() {
         // history. This is the view for "what is coming".
         const tomorrow = new Date(now);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        setDateFrom(formatLocalDate(tomorrow));
+        setDateFrom(arenaDate(tomorrow));
         setDateTo("");
         break;
       }
       case "7days": {
         const week = new Date(now);
         week.setDate(week.getDate() - 7);
-        setDateFrom(formatLocalDate(week));
+        setDateFrom(arenaDate(week));
         setDateTo(todayStr);
         break;
       }
       case "30days": {
         const month = new Date(now);
         month.setDate(month.getDate() - 30);
-        setDateFrom(formatLocalDate(month));
+        setDateFrom(arenaDate(month));
         setDateTo(todayStr);
         break;
       }
       case "month": {
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
         const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        setDateFrom(formatLocalDate(firstDay));
-        setDateTo(formatLocalDate(lastDay));
+        setDateFrom(arenaDate(firstDay));
+        setDateTo(arenaDate(lastDay));
         break;
       }
       case "90days": {
         const quarter = new Date(now);
         quarter.setDate(quarter.getDate() - 90);
-        setDateFrom(formatLocalDate(quarter));
+        setDateFrom(arenaDate(quarter));
         setDateTo(todayStr);
         break;
       }
@@ -192,6 +203,14 @@ export default function AdminBookingsPage() {
     loadBookings();
   }, [debouncedSearch, activeStatusFilter, dateFrom, dateTo]);
 
+  // Kept in step with the tabs so the badge is right even while another tab is
+  // open - a count that only appears once you click it is no use as a warning.
+  useEffect(() => {
+    getAttentionBookings().then((result) => {
+      if (result.success) setAttentionCount(result.bookings.length);
+    });
+  }, [bookings]);
+
   // The status counts are scoped to the date range, not to the status tab
   useEffect(() => {
     loadStats();
@@ -205,7 +224,17 @@ export default function AdminBookingsPage() {
     }
 
     setLoading(true);
-    const result = await getAllBookings(buildFilters());
+
+    /**
+     * The attention tab is not a status, so it does not go through the normal
+     * filtered query. It also ignores the date range on purpose: the sessions it
+     * exists to surface are weeks old, and scoping it to the selected days would
+     * hide exactly the bookings nobody has noticed.
+     */
+    const result = isAttentionTab
+      ? await getAttentionBookings()
+      : await getAllBookings(buildFilters());
+
     if (result.success) {
       setBookings(result.bookings);
     } else {
@@ -469,7 +498,8 @@ export default function AdminBookingsPage() {
     { id: "all", label: "All Bookings", count: stats?.total || 0 },
     { id: "confirmed", label: "Confirmed", count: stats?.confirmed || 0 },
     { id: "checked_in", label: "Checked In", count: stats?.checked_in || 0 },
-    { id: "completed", label: "Completed", count: stats?.completed || 0 }
+    { id: "completed", label: "Completed", count: stats?.completed || 0 },
+    { id: "attention", label: "Needs Attention", count: attentionCount }
   ];
 
   // When a booking happens, for ordering purposes: the slot it reserves, or for
@@ -764,24 +794,53 @@ export default function AdminBookingsPage() {
         )}
       </Card>
 
+      {/* The date pickers stay visible and keep their value - switching back to
+          any other tab should return to the range the user had set - but they do
+          not apply here, and saying so beats letting staff conclude the filter is
+          broken. */}
+      {isAttentionTab && (
+        <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3">
+          <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-amber-200/90 leading-relaxed">
+            <span className="font-bold">Showing every unfinished booking, across all dates.</span>{" "}
+            Sessions checked in but never checked out, bookings nobody arrived for,
+            and sessions that were used but never paid for. The date range above
+            does not apply to this tab.
+          </p>
+        </div>
+      )}
+
       {/* Filters and Search */}
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
         <div className="flex gap-2 overflow-x-auto scrollbar-none w-full lg:w-auto">
-          {filterTabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleFilterChange(tab.id)}
-              className={`px-4 py-2 text-min font-black uppercase border rounded-lg transition-all whitespace-nowrap ${activeStatusFilter === tab.id
-                  ? "bg-primary text-black border-transparent"
-                  : "bg-[var(--surface)] border-[#27272a] text-secondary-content hover:border-zinc-700"
-                }`}
-            >
-              {tab.label}
-              <span className={`ml-2 text-min ${activeStatusFilter === tab.id ? "text-black/70" : "text-secondary-content"}`}>
-                ({tab.count})
-              </span>
-            </button>
-          ))}
+          {filterTabs.map((tab) => {
+            const isActive = activeStatusFilter === tab.id;
+            /* The attention tab carries amber when it has anything in it, so an
+               unfinished booking is visible without opening the tab. At zero it
+               looks like every other tab - nothing to chase. */
+            const isAlerting = tab.id === "attention" && tab.count > 0;
+
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleFilterChange(tab.id)}
+                className={`px-4 py-2 text-min font-black uppercase border rounded-lg transition-all whitespace-nowrap flex items-center gap-1.5 ${isActive
+                    ? isAlerting
+                      ? "bg-amber-500 text-black border-transparent"
+                      : "bg-primary text-black border-transparent"
+                    : isAlerting
+                      ? "bg-amber-500/10 border-amber-500/40 text-amber-300 hover:border-amber-500/70"
+                      : "bg-[var(--surface)] border-[#27272a] text-secondary-content hover:border-zinc-700"
+                  }`}
+              >
+                {isAlerting && <AlertTriangle className="h-3.5 w-3.5" />}
+                {tab.label}
+                <span className={isActive ? "text-black/70" : isAlerting ? "text-amber-300/70" : "text-secondary-content"}>
+                  ({tab.count})
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="flex gap-2 w-full lg:w-auto">

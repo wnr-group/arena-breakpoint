@@ -67,9 +67,11 @@ function slotEndsAt(slot: {
 
   let date = slot.slot_date
   if (start && end < start) {
+    // UTC end to end on purpose: this is calendar arithmetic on a date-only
+    // string, never on an instant, so no zone is involved and none should be.
     const next = new Date(`${slot.slot_date}T00:00:00Z`)
     next.setUTCDate(next.getUTCDate() + 1)
-    date = next.toISOString().slice(0, 10)
+    date = next.toISOString().slice(0, 10) // arena-clock-ok
   }
 
   return `${date} ${end}`

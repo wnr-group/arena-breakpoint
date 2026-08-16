@@ -18,7 +18,8 @@ import {
   toClockTime,
   toSlotDate
 } from "@/lib/bookings/walkInSession";
-import { arenaToday, formatLocalDate } from "@/lib/utils/dates";
+import { arenaDate, arenaToday } from "@/lib/utils/dates";
+import { needsAttention } from "@/lib/bookings/attention";
 import { requireStaff } from "@/lib/auth/require-admin";
 
 /** Rupee tolerance for float comparisons on money. */
@@ -102,13 +103,17 @@ function getBookingDates(booking: any): string[] {
   /**
    * No slot: a food-only order, or a walk-in still waiting to be checked in.
    *
-   * `created_at` is a timestamptz, so slicing the ISO string took the UTC date -
-   * which is the previous day for anything created before 05:30 in IST. The arena
-   * runs around the clock, so a walk-in booked at 2am was filed under yesterday
-   * and disappeared from the Today filter the front desk works from. Slot dates
-   * do not have this problem: `slot_date` is a DATE, already in local terms.
+   * `created_at` is a timestamptz, so this has to name the zone to read it in.
+   * Slicing the ISO string took the UTC date; `formatLocalDate` then took the
+   * *host's*, which is IST on a developer's laptop and UTC on Vercel - the same
+   * wrong answer in production, arrived at less obviously. A walk-in raised at
+   * half past midnight was filed under yesterday and missing from the Today
+   * filter the front desk works from until check-in gave it a slot row.
+   *
+   * Slot dates never had this problem: `slot_date` is a DATE, already in arena
+   * terms.
    */
-  return booking?.created_at ? [formatLocalDate(new Date(booking.created_at))] : [];
+  return booking?.created_at ? [arenaDate(new Date(booking.created_at))] : [];
 }
 
 /**
@@ -127,13 +132,14 @@ function isBookingInDateRange(
   });
 }
 
-export async function getAllBookings(filters?: BookingFilters) {
-  await requireStaff();
-
-  try {
-    let query = supabaseAdmin
-      .from("bookings")
-      .select(`
+/**
+ * The columns every booking list needs.
+ *
+ * Shared so the attention list and the main list return the same shape - the
+ * badges and the detail panel read the same fields either way, and a column
+ * added for one list cannot go missing from the other.
+ */
+const BOOKING_LIST_SELECT = `
         id,
         booking_number,
         customer_name,
@@ -184,7 +190,49 @@ export async function getAllBookings(filters?: BookingFilters) {
           line_total,
           status
         )
-      `)
+      `;
+
+/**
+ * Recomputes a booking's total and balance from its parts.
+ *
+ * The stored `total_amount` is not trusted: discounts and food are written by
+ * several different paths, and a stale total shown next to a live balance is how
+ * a customer gets asked for the wrong money. Shared so every list prices a
+ * booking the same way - the attention list in particular decides whether
+ * something is unpaid from this, and it must agree with the figure on screen.
+ */
+function withComputedTotals(booking: any) {
+  const deviceSubtotal = Number(booking.device_subtotal || 0);
+  const foodSubtotal = Number(booking.food_subtotal || 0);
+  const subscriptionDiscount = Number(booking.subscription_discount || 0);
+  const promoDiscount = Number(booking.promo_discount || 0);
+  const happyHourDiscount = Number(booking.happy_hour_discount || 0);
+  const amountPaid = Number(booking.amount_paid || 0);
+
+  const correctTotal =
+    deviceSubtotal + foodSubtotal - subscriptionDiscount - promoDiscount - happyHourDiscount;
+  const balanceDue = correctTotal - amountPaid;
+
+  return {
+    ...booking,
+    total_amount: correctTotal,
+    balance_due: balanceDue,
+    payment_status: derivePaymentStatus(
+      correctTotal,
+      amountPaid,
+      booking.payment_status,
+      booking.billed_on_actual_time === true && !booking.completed_at
+    )
+  };
+}
+
+export async function getAllBookings(filters?: BookingFilters) {
+  await requireStaff();
+
+  try {
+    let query = supabaseAdmin
+      .from("bookings")
+      .select(BOOKING_LIST_SELECT)
       .order("created_at", { ascending: false });
 
     // Apply filters
@@ -216,35 +264,48 @@ export async function getAllBookings(filters?: BookingFilters) {
         )
       : (data || []);
 
-    // Calculate correct total_amount and balance_due for each booking
-    const bookingsWithBalance = inRange.map((booking: any) => {
-      const deviceSubtotal = Number(booking.device_subtotal || 0);
-      const foodSubtotal = Number(booking.food_subtotal || 0);
-      const subscriptionDiscount = Number(booking.subscription_discount || 0);
-      const promoDiscount = Number(booking.promo_discount || 0);
-      const happyHourDiscount = Number(booking.happy_hour_discount || 0);
-      const amountPaid = Number(booking.amount_paid || 0);
-
-      // Calculate correct total (don't trust stored value)
-      const correctTotal = deviceSubtotal + foodSubtotal - subscriptionDiscount - promoDiscount - happyHourDiscount;
-      const balanceDue = correctTotal - amountPaid;
-
-      return {
-        ...booking,
-        total_amount: correctTotal, // Override with calculated value
-        balance_due: balanceDue,
-        payment_status: derivePaymentStatus(
-          correctTotal,
-          amountPaid,
-          booking.payment_status,
-          booking.billed_on_actual_time === true && !booking.completed_at
-        )
-      };
-    });
+    const bookingsWithBalance = inRange.map(withComputedTotals);
 
     return { success: true, bookings: bookingsWithBalance };
   } catch (err: any) {
     console.error("Get bookings error:", err);
+    return { success: false, error: err.message, bookings: [] };
+  }
+}
+
+/**
+ * Every booking that stopped part-way through, whatever day it happened on.
+ *
+ * Deliberately ignores the page's date range. The whole reason this list exists
+ * is the bookings nobody noticed - production had eighteen sessions checked in
+ * and never checked out, the oldest fifty-one days old, and a list scoped to
+ * "today" would show none of them. Scoping this to a date range would rebuild
+ * the blind spot it is meant to remove.
+ *
+ * `cancelled` is excluded by the status filter rather than relying on
+ * `bookingAttention` to drop it: a cancelled booking is a decision somebody
+ * already made, not an loose end.
+ */
+export async function getAttentionBookings() {
+  await requireStaff();
+
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("bookings")
+      .select(BOOKING_LIST_SELECT)
+      .in("status", ["confirmed", "checked_in", "completed"])
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    // Totals first: whether a booking counts as unpaid is decided from the
+    // recomputed balance, not the stored one.
+    const priced = (data || []).map(withComputedTotals);
+    const flagged = priced.filter((booking: any) => needsAttention(booking));
+
+    return { success: true, bookings: flagged };
+  } catch (err: any) {
+    console.error("Get attention bookings error:", err);
     return { success: false, error: err.message, bookings: [] };
   }
 }

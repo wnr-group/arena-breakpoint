@@ -36,14 +36,20 @@ function overlaps(a: MinuteRange, b: MinuteRange): boolean {
   return a.start < b.end && b.start < a.end
 }
 
-/** ISO date string (YYYY-MM-DD) shifted by `days`. */
+/**
+ * ISO date string (YYYY-MM-DD) shifted by `days`.
+ *
+ * Timezone-neutral by construction: the Date is built from the string's own
+ * components and read back the same way, so whatever zone the host is in cancels
+ * out. No instant is ever involved, which is what makes the host-clock reads
+ * below safe here and nowhere else.
+ */
 export function shiftDate(dateString: string, days: number): string {
   const [year, month, day] = dateString.split('-').map(Number)
   const date = new Date(year, month - 1, day)
   date.setDate(date.getDate() + days)
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
-    date.getDate()
-  ).padStart(2, '0')}`
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` // arena-clock-ok
 }
 
 interface BookedSlotRow {
