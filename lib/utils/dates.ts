@@ -404,6 +404,59 @@ export function arenaDateOffset(days: number, now: Date = new Date()): string {
 }
 
 /**
+ * The calendar date an instant falls on *at the arena*, as `YYYY-MM-DD`.
+ *
+ * Same computation as `arenaToday`, named for the job: `arenaToday(someDate)`
+ * reads like a mistake at the call site, and a `slot_date` being written from a
+ * session that ended two hours ago is not "today" in any useful sense.
+ */
+export function arenaDate(value: Date): string {
+  return arenaToday(value);
+}
+
+/**
+ * The wall-clock time an instant falls on *at the arena*, as `HH:MM:SS`.
+ *
+ * `slot_start_time` and `slot_end_time` are `time without time zone` columns
+ * holding arena local time - that is what the slot picker offers and what every
+ * availability check compares against. Deriving them with `getHours()` reads the
+ * *host's* clock instead, which is IST on a laptop in India and UTC on Vercel,
+ * so the same session gets filed 5.5 hours apart depending on where the code ran.
+ *
+ * en-GB with hourCycle h23 because it formats as HH:MM:SS with a real midnight
+ * of 00, where en-US would hand back "24:14:50".
+ */
+export function arenaClockTime(value: Date): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: ARENA_TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).format(value);
+}
+
+/**
+ * A `YYYY-MM-DD` string moved on by whole months.
+ *
+ * Works on the string's own components, so no `Date` is ever built from an
+ * instant and no host zone gets a say in the answer.
+ *
+ * Keeps JavaScript's overflow behaviour on purpose: 31 January plus one month
+ * is 3 March, not 28 February. That is what `setMonth` was already doing to
+ * subscription end dates before this helper existed, and quietly clamping it
+ * here would move real renewal dates while claiming to be a timezone fix. Worth
+ * revisiting as a deliberate change, not as a side effect of one.
+ */
+export function addMonthsToDateString(dateString: string, months: number): string {
+  const [year, month, day] = dateString.split('-').map(Number);
+  const shifted = new Date(year, month - 1, day);
+  shifted.setMonth(shifted.getMonth() + months);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${shifted.getFullYear()}-${pad(shifted.getMonth() + 1)}-${pad(shifted.getDate())}`;
+}
+
+/**
  * Safely converts a Date object to local YYYY-MM-DD string without timezone shifting
  */
 export function formatLocalDate(date: Date): string {

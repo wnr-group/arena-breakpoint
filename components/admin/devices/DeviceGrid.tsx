@@ -26,7 +26,9 @@ export function DeviceGrid({ devices, onEdit, onDelete, isPending }: DeviceGridP
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {devices.map((device) => {
-        const statusClean = String(device.status || "").toLowerCase().trim();
+        // `effective_status` folds in the live-session check; `status` alone
+        // never reads "occupied" because no booking flow writes it.
+        const statusClean = String(device.effective_status ?? device.status ?? "").toLowerCase().trim();
 
         return (
           <Card

@@ -22,11 +22,20 @@ export interface SessionTimes {
 const timeOnly = (value: string) =>
   new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-/** Minutes of play, from check-in to checkout or to right now. */
+/**
+ * Minutes of play, from check-in to checkout or to right now.
+ *
+ * Rounds up, and never returns zero, because that is exactly what
+ * `checkout_walkin_session` does when it decides what to charge
+ * (`GREATEST(1, CEIL(...))`). This used to floor, so a session of six minutes
+ * and forty-seven seconds was billed as seven minutes and displayed as "6m" -
+ * two numbers for one session, on the same screen, with the smaller one next to
+ * the larger bill.
+ */
 export function sessionMinutes(checkedInAt: string, completedAt?: string | null): number {
   const start = new Date(checkedInAt).getTime();
   const end = completedAt ? new Date(completedAt).getTime() : Date.now();
-  return Math.max(0, Math.floor((end - start) / 60000));
+  return Math.max(1, Math.ceil((end - start) / 60000));
 }
 
 /**

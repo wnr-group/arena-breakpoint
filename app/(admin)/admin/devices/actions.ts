@@ -3,6 +3,7 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { requireStaff } from "@/lib/auth/require-admin";
+import { effectiveDeviceStatus, getOccupancyByDevice } from "@/lib/devices/occupancy";
 
 export async function getDeviceTypes() {
   await requireStaff();
@@ -24,20 +25,36 @@ export async function getDeviceTypes() {
 export async function getDevices() {
   await requireStaff();
 
-  const { data, error } = await supabaseAdmin
-    .from('devices')
-    .select(`
-      *,
-      device_type:device_types(*)
-    `)
-    .order('station_number', { ascending: true })
+  const [{ data, error }, occupied] = await Promise.all([
+    supabaseAdmin
+      .from('devices')
+      .select(`
+        *,
+        device_type:device_types(*)
+      `)
+      .order('station_number', { ascending: true }),
+    getOccupancyByDevice(),
+  ])
 
   if (error) {
     console.error('Error fetching devices:', error.message)
     return []
   }
 
-  return data || []
+  /**
+   * `status` stays exactly as stored, because the edit form writes it back and
+   * must not be handed a derived value. `effective_status` is what the floor is
+   * actually doing, and carries the live session so the card can name who is on
+   * the station.
+   */
+  return (data || []).map((device: any) => {
+    const session = occupied.get(device.id)
+    return {
+      ...device,
+      effective_status: effectiveDeviceStatus(device.status, Boolean(session)),
+      occupied_by: session ?? null,
+    }
+  })
 }
 
 /**

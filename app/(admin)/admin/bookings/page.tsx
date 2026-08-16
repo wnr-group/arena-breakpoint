@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
+import { AttentionBadges } from "@/components/admin/bookings/AttentionBadges";
 import { PaymentStatusBadge } from "@/components/admin/bookings/PaymentStatusBadge";
 import { BookingsGrid } from "@/components/admin/bookings/BookingsGrid";
 import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
@@ -1023,7 +1024,10 @@ export default function AdminBookingsPage() {
                         </td>
                         <td className="py-4 px-4">
                           {isSingleBooking ? (
-                            <BookingStatusBadge status={firstBooking.status} size="md" />
+                            <div className="space-y-1.5">
+                              <BookingStatusBadge status={firstBooking.status} size="md" />
+                              <AttentionBadges booking={firstBooking} compact />
+                            </div>
                           ) : (
                             <p className="text-sm-readable text-secondary-content italic">-</p>
                           )}
@@ -1152,7 +1156,10 @@ export default function AdminBookingsPage() {
                               />
                             </td>
                             <td className="py-3 px-4">
-                              <BookingStatusBadge status={booking.status} size="md" />
+                              <div className="space-y-1.5">
+                                <BookingStatusBadge status={booking.status} size="md" />
+                                <AttentionBadges booking={booking} compact />
+                              </div>
                             </td>
                             <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                               <div className="flex justify-end gap-2">

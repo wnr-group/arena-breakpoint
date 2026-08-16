@@ -65,7 +65,11 @@ export default function DevicesPage() {
 
       const stationNumber = String(device.station_number || "").toLowerCase().trim();
       const deviceTypeName = String(device.device_type?.display_name || "").toLowerCase().trim();
-      const deviceStatus = String(device.status || "").toLowerCase().trim();
+      // Filtering matches the counters above, so picking "Occupied" returns the
+      // stations the Busy tile is counting rather than an empty list.
+      const deviceStatus = String(device.effective_status ?? device.status ?? "")
+        .toLowerCase()
+        .trim();
       const search = searchQuery.toLowerCase().trim();
 
       const matchesSearch =
@@ -93,17 +97,20 @@ export default function DevicesPage() {
 
   const totalDevices = devicesForCounting.length;
 
-  const availableDevices = devicesForCounting
-    .filter(d => String(d?.status).toLowerCase() === 'available').length;
+  /**
+   * Counted on `effective_status`, not the stored `status`. Nothing in the
+   * booking flow ever writes `occupied` to the column, so "Busy" read zero all
+   * day however full the arena was.
+   */
+  const countByStatus = (status: string) =>
+    devicesForCounting.filter(
+      d => String(d?.effective_status ?? d?.status).toLowerCase() === status
+    ).length;
 
-  const occupiedDevices = devicesForCounting
-    .filter(d => String(d?.status).toLowerCase() === 'occupied').length;
-
-  const maintenanceDevices = devicesForCounting
-    .filter(d => String(d?.status).toLowerCase() === 'maintenance').length;
-
-  const inactiveDevices = devicesForCounting
-    .filter(d => String(d?.status).toLowerCase() === 'inactive').length;
+  const availableDevices = countByStatus('available');
+  const occupiedDevices = countByStatus('occupied');
+  const maintenanceDevices = countByStatus('maintenance');
+  const inactiveDevices = countByStatus('inactive');
 
   const handleDelete = (id: string) => {
     startTransition(async () => {

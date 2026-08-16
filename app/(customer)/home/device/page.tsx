@@ -24,6 +24,26 @@ export interface Station {
   total_count?: number
 }
 
+/**
+ * Customer-facing wording for a station's state.
+ *
+ * "Booked" covered all three not-available cases before, which told someone
+ * standing in the arena the wrong thing twice over: a table under maintenance
+ * is not booked, and one being played on right now is worth saying plainly.
+ */
+function describeAvailability(status: string): string {
+  switch (status) {
+    case 'occupied':
+      return 'In Use';
+    case 'maintenance':
+      return 'Under Maintenance';
+    case 'inactive':
+      return 'Unavailable';
+    default:
+      return 'Available';
+  }
+}
+
 export default function DevicePage() {
   const [devicesArray, setDevicesArray] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -132,7 +152,7 @@ export default function DevicePage() {
               {devicesArray.map((device, index) => {
                 const sameTypeDevices = devicesArray.filter(d => d.device_type_id === device.device_type_id || (d.device_type && device.device_type && d.device_type.id === device.device_type.id));
                 const totalCount = sameTypeDevices.length;
-                const availableCount = sameTypeDevices.filter(d => d.status === 'available').length;
+                const availableCount = sameTypeDevices.filter(d => d.effective_status === 'available').length;
 
                 const stationData: Station = {
                   id: device.id,
@@ -143,8 +163,8 @@ export default function DevicePage() {
                   included_players: device.device_type?.included_players || 1,
                   max_players: device.device_type?.max_players || 1,
                   extra_player_charge: device.device_type?.extra_player_charge || 0,
-                  isAvailable: device.status === 'available',
-                  availability: device.status === 'available' ? 'Available' : 'Booked',
+                  isAvailable: device.effective_status === 'available',
+                  availability: describeAvailability(device.effective_status),
                   description: device.specs || device.device_type?.description || '',
                   image: device.image_url || "",
                   available_count: availableCount,

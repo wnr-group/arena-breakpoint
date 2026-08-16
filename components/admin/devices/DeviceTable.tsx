@@ -73,7 +73,7 @@ export function DeviceTable({ devices, onEdit, onDelete, isPending }: DeviceTabl
                 </td>
 
                 <td className="py-4 px-6">
-                  <StatusBadge status={device.status} />
+                  <StatusBadge status={device.effective_status ?? device.status} />
                 </td>
                 <td className="py-4 px-6">
                   <div className="flex justify-end gap-2 opacity-0 -translate-x-4 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300">

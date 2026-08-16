@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BookingStatusBadge } from "./BookingStatusBadge";
+import { AttentionPanel } from "./AttentionBadges";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { SessionTimeline } from "./SessionTimeline";
 import { getBookingDetails, checkInBooking, checkOutBooking, checkInWalkInSession, checkOutWalkInSession, addFoodToBooking, removeFoodItemFromBooking, updatePlayerCount } from "@/app/(admin)/admin/bookings/actions";
@@ -334,6 +335,11 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                 </div>
               </Card>
 
+              {/* Sits directly under the booking header, above everything else:
+                  if a session was never closed or never paid for, that is the
+                  first thing whoever opened this needs to know. */}
+              <AttentionPanel booking={booking} />
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Customer Information */}
                 <Card className="bg-[var(--background)] border-[#27272a] p-5 space-y-4">
@@ -420,7 +426,17 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                       const includedPlayers = slot.included_players || 1;
                       const maxPlayers = slot.devices?.device_type?.max_players || 10;
                       const extraPlayers = Math.max(0, currentPlayerCount - includedPlayers);
-                      const extraPlayersCharge = extraPlayers * (slot.extra_player_charge || 0);
+                      /**
+                       * The charge actually billed, not the headline rate.
+                       *
+                       * This multiplied the extra-player count by the *hourly*
+                       * rate and ignored duration, so a seven-minute session with
+                       * six extra players showed 6 x 79 = 474 against a real
+                       * charge of 54. The stored column already holds what was
+                       * billed - it is written by the same helper that priced the
+                       * session - so there is nothing to recompute here.
+                       */
+                      const extraPlayersCharge = Number(slot.extra_players_total || 0);
                       const canEdit = booking.status !== "cancelled" && booking.status !== "completed";
 
                       return (
@@ -481,7 +497,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                                 <div>
                                   <p className="text-sm font-bold text-primary">Extra Players</p>
                                   <p className="text-sm text-secondary-content font-medium">
-                                    {extraPlayers} player{extraPlayers > 1 ? 's' : ''} × ₹{Number(slot.extra_player_charge || 0).toLocaleString('en-IN')}
+                                    {extraPlayers} player{extraPlayers > 1 ? 's' : ''} × ₹{Number(slot.extra_player_charge || 0).toLocaleString('en-IN')}/hr
                                   </p>
                                 </div>
                                 <div className="text-right">
@@ -558,17 +574,31 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                 </h3>
                 <div className="space-y-4 text-base">
                   {(() => {
-                    // Calculate device charges with duration
-                    const deviceSlot = booking.booking_device_slots?.[0];
+                    const slots = booking.booking_device_slots || [];
+                    const deviceSlot = slots[0];
                     const durationHours = deviceSlot?.duration_hours || 1;
                     const hourlyRate = deviceSlot?.hourly_rate || 0;
-                    const deviceCharges = hourlyRate * durationHours;
 
-                    // Calculate extra player charges
-                    const extraPlayersTotal = booking.booking_device_slots?.reduce(
+                    /**
+                     * Read the billed figures, never re-derive them.
+                     *
+                     * This used to compute `hourlyRate * durationHours` off the
+                     * first slot alone. `duration_hours` is stored rounded to two
+                     * decimals, so a 7-minute session billed at 44 was displayed
+                     * as 0.12 x 379 = 45.48 - and since the Subtotal below comes
+                     * from `device_subtotal`, the line items visibly failed to add
+                     * up to the total underneath them. Multi-slot bookings were
+                     * worse: one slot priced, all of them counted in the subtotal.
+                     */
+                    const deviceCharges = slots.reduce(
+                      (sum: number, slot: any) => sum + (Number(slot.slot_total) || 0),
+                      0
+                    );
+
+                    const extraPlayersTotal = slots.reduce(
                       (sum: number, slot: any) => sum + (Number(slot.extra_players_total) || 0),
                       0
-                    ) || 0;
+                    );
 
                     // Calculate subtotal
                     const calculatedSubtotal = Number(booking.device_subtotal) + Number(booking.food_subtotal);
@@ -583,7 +613,12 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                       <>
                         <div className="flex items-center justify-between py-3 border-b border-zinc-800">
                           <span className="text-secondary-content font-semibold text-base">
-                            Device Booking ({durationHours}h × ₹{hourlyRate}):
+                            {/* The rate breakdown only describes a single slot; with
+                                several stations on one booking it would be quoting
+                                one of them against the sum of all. */}
+                            {slots.length === 1
+                              ? `Device Booking (${durationHours}h × ₹${hourlyRate}):`
+                              : `Device Booking (${slots.length} stations):`}
                           </span>
                           <span className="text-white font-bold text-lg">₹{deviceCharges.toFixed(2)}</span>
                         </div>
