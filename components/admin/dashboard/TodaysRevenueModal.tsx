@@ -1,7 +1,7 @@
 "use client";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DollarSign, TrendingUp, Receipt, Calendar } from "lucide-react";
+import { IndianRupee, TrendingUp, ReceiptIndianRupee, Calendar } from "lucide-react";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
 import { formatDbTimeRange } from "@/lib/utils/timeSlots";
 
@@ -59,7 +59,7 @@ export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBo
       <DialogContent className="bg-[var(--background)] border-primary/30 max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-black uppercase text-white flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-green-500" />
+            <IndianRupee className="h-5 w-5 text-green-500" />
             Today's Revenue
           </DialogTitle>
         </DialogHeader>
@@ -164,7 +164,7 @@ export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBo
             })
           ) : (
             <div className="text-center py-8">
-              <Receipt className="h-12 w-12 text-zinc-700 mx-auto mb-2" />
+              <ReceiptIndianRupee className="h-12 w-12 text-zinc-700 mx-auto mb-2" />
               <p className="text-sm text-muted-content">No bookings today</p>
             </div>
           )}

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo, useTransition, useEffect } from "react";
+import { useState, useMemo, useTransition, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
-import { PlusCircle, UploadCloud, Gamepad2, ImageIcon, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { PlusCircle, UploadCloud, Gamepad2, ImageIcon, Loader2, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { createDevice, getDeviceTypes } from "@/app/(admin)/admin/devices/actions";
-import { supabase } from "@/lib/supabase/client";
+import { uploadImage } from "@/lib/storage/imageUpload";
 import { toast } from "sonner";
 import { useRequiredFields } from "@/lib/hooks/useRequiredFields";
 import { MANUAL_DEVICE_STATUSES } from "@/lib/types/devices";
@@ -27,6 +27,7 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
   const [previewStation, setPreviewStation] = useState("");
   const [previewStatus, setPreviewStatus] = useState("available");
   const [localFile, setLocalFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load device types on mount
   useEffect(() => {
@@ -51,6 +52,29 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
     return URL.createObjectURL(localFile);
   }, [localFile]);
 
+  // An object URL is held by the browser until it is revoked. Swapping or
+  // clearing the picture without this leaves the old blob alive for the life of
+  // the page, and an admin trying a few photos leaks every one they discarded.
+  useEffect(() => {
+    if (!filePreviewUrl) return;
+    return () => URL.revokeObjectURL(filePreviewUrl);
+  }, [filePreviewUrl]);
+
+  /**
+   * Puts the picker back to empty.
+   *
+   * Clearing the state alone is not enough: the input keeps the old filename,
+   * and picking the *same* file again would set an identical value and fire no
+   * change event - so the image an admin just removed would refuse to come back.
+   */
+  const clearImage = () => {
+    setLocalFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    // Writing to the input directly raises no change event, so the form's
+    // onChange never fires and `isComplete` keeps whatever it last saw. Nudge it.
+    recheck();
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const targetForm = e.currentTarget;
@@ -59,23 +83,14 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
       let bucketUrl = "";
 
       if (localFile) {
-        const fileExt = localFile.name.split('.').pop();
-        const uniqueFileName = `${crypto.randomUUID()}.${fileExt}`;
+        const uploaded = await uploadImage('device-images', localFile);
 
-        const { error: uploadError } = await supabase.storage
-          .from('device-images')
-          .upload(uniqueFileName, localFile);
-
-        if (uploadError) {
-          toast.error("Bucket upload error: " + uploadError.message);
+        if ('error' in uploaded) {
+          toast.error("Bucket upload error: " + uploaded.error);
           return;
         }
 
-        const { data: publicData } = supabase.storage
-          .from('device-images')
-          .getPublicUrl(uniqueFileName);
-
-        bucketUrl = publicData.publicUrl;
+        bucketUrl = uploaded.url;
       }
 
       const submissionFormData = new FormData(targetForm);
@@ -86,7 +101,7 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
       const result = await createDevice(submissionFormData);
       if (result.success) {
         setOpen(false);
-        setLocalFile(null);
+        clearImage();
         setPreviewStation("");
         setSelectedDeviceTypeId(deviceTypes[0]?.id || "");
 
@@ -170,8 +185,23 @@ export function AddDeviceModal({ onFormSuccess, open, setOpen }: AddModalProps) 
                     {localFile ? localFile.name : "Select or drag a hardware image cover"}
                   </p>
                 </div>
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => setLocalFile(e.target.files?.[0] || null)} />
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => setLocalFile(e.target.files?.[0] || null)} />
               </label>
+
+              {/* Outside the dropzone label on purpose — nested in it, a click
+                  here would count as a click on the label and reopen the picker. */}
+              {localFile && (
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-[#27272a] bg-[var(--surface)] px-3 py-2">
+                  <span className="text-xs text-[#a1a1aa] truncate">{localFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={clearImage}
+                    className="flex items-center gap-1 text-xs font-bold text-[#f43f5e] hover:text-[#fb7185] transition-colors flex-shrink-0"
+                  >
+                    <X className="h-3.5 w-3.5" /> Remove
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Device Status Selector Segment */}

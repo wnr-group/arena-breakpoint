@@ -18,7 +18,7 @@ import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailMod
 import { CheckoutModal } from "@/components/admin/bookings/CheckoutModal";
 import { getAllBookings, getAttentionBookings, getBookingStats, checkInBooking, checkOutBooking, checkInWalkInSession, checkOutWalkInSession, getBookingBillingDetails, markBookingAsPaid, type BookingFilters } from "./actions";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
-import { Search, Filter, Calendar, CalendarDays, DollarSign, Users, CheckCircle2, Clock, Loader2, Eye, Receipt, PlusCircle, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List, AlertCircle, RefreshCw, ShieldAlert, AlertTriangle } from "lucide-react";
+import { Search, Filter, Calendar, CalendarDays, IndianRupee, Users, CheckCircle2, Clock, Loader2, Eye, ReceiptIndianRupee, PlusCircle, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List, AlertCircle, RefreshCw, ShieldAlert, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useDebounce } from "@/lib/hooks/useDebounce";
@@ -616,7 +616,7 @@ export default function AdminBookingsPage() {
         <Card className="bg-[var(--surface)] border-[#27272a] p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-500/10 rounded-lg">
-              <Receipt className="h-5 w-5 text-blue-500" />
+              <ReceiptIndianRupee className="h-5 w-5 text-blue-500" />
             </div>
             <div>
               <p className="text-label text-muted-content">Total Bookings</p>
@@ -640,7 +640,7 @@ export default function AdminBookingsPage() {
         <Card className="bg-[var(--surface)] border-[#27272a] p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg">
-              <DollarSign className="h-5 w-5 text-primary" />
+              <IndianRupee className="h-5 w-5 text-primary" />
             </div>
             <div>
               <p className="text-label text-muted-content">Today's Revenue</p>
@@ -891,7 +891,7 @@ export default function AdminBookingsPage() {
       ) : bookings.length === 0 ? (
         <Card className="bg-[var(--surface)] border-[#27272a] p-12">
           <div className="text-center space-y-2">
-            <Receipt className="h-12 w-12 text-zinc-700 mx-auto" />
+            <ReceiptIndianRupee className="h-12 w-12 text-zinc-700 mx-auto" />
             <h3 className="text-lg font-black text-muted-content uppercase">No Bookings Found</h3>
             <p className="text-sm text-muted-content">No bookings match your current filters.</p>
           </div>

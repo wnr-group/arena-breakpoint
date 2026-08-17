@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
-import { TrendingUp, TrendingDown, DollarSign, Receipt, Percent } from 'lucide-react'
+import { TrendingUp, TrendingDown, IndianRupee, ReceiptIndianRupee, Percent } from 'lucide-react'
 import { getProfitAndLoss } from '@/app/(admin)/admin/reports/actions'
 import { toast } from 'sonner'
 import { CountUp, CurrencyCountUp } from '@/components/shared/CountUp'
@@ -57,7 +57,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
         <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/30 p-6">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
-              <DollarSign className="h-5 w-5 text-green-400" />
+              <IndianRupee className="h-5 w-5 text-green-400" />
             </div>
             <p className="text-xs font-black uppercase text-green-400">Revenue</p>
           </div>
@@ -73,7 +73,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
         <Card className="bg-gradient-to-br from-red-500/10 to-red-600/5 border-red-500/30 p-6">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center">
-              <Receipt className="h-5 w-5 text-red-400" />
+              <ReceiptIndianRupee className="h-5 w-5 text-red-400" />
             </div>
             <p className="text-xs font-black uppercase text-red-400">Expenses</p>
           </div>
@@ -112,7 +112,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
         <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/30 p-6">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center">
-              <Receipt className="h-5 w-5 text-orange-400" />
+              <ReceiptIndianRupee className="h-5 w-5 text-orange-400" />
             </div>
             <p className="text-stat-label text-orange-400">OpEx</p>
           </div>
@@ -126,7 +126,7 @@ export function ProfitTab({ dateFrom, dateTo }: ProfitTabProps) {
         <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/30 p-6">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-              <Receipt className="h-5 w-5 text-blue-400" />
+              <ReceiptIndianRupee className="h-5 w-5 text-blue-400" />
             </div>
             <p className="text-stat-label text-blue-400">CapEx</p>
           </div>

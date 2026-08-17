@@ -48,6 +48,25 @@ export default function FoodOrderPage() {
     return filtered.filter(item => item.quantity > 0);
   }, [menuItems, activeCategory]);
 
+  /**
+   * One photo used to hollow out its neighbours.
+   *
+   * The grid makes every card in a row as tall as the tallest, so a single item
+   * with an image left the imageless cards beside it as tall empty boxes with
+   * the price stranded at the top. Cards are only given an image strip when
+   * something in the list actually has a photo, and then they all get one —
+   * the ones without fall back to their category icon, so a row reads as a set
+   * of cards rather than one card and two empty frames. A menu with no photos
+   * at all stays exactly as compact as it was.
+   */
+  const showImageStrip = useMemo(
+    () => filteredItems.some(item => item.image_url),
+    [filteredItems]
+  );
+
+  const categoryIcon = (category: string) =>
+    category === 'Drinks' ? Coffee : category === 'Meals' ? Pizza : UtensilsCrossed;
+
   const addToCart = (item: any) => {
     const currentQuantity = cart[item.id]?.quantity || 0;
 
@@ -357,18 +376,26 @@ export default function FoodOrderPage() {
           {filteredItems.map((item) => {
             const inCart = cart[item.id];
             const isAvailable = item.status === 'available';
+            const PlaceholderIcon = categoryIcon(item.category);
 
             return (
-              <Card key={item.id} className={`bg-[#111] border overflow-hidden rounded-xl ${isAvailable ? 'border-zinc-900 hover:border-primary/50' : 'border-zinc-900/50 opacity-60'} transition-all glow-box-hover`}>
-                {/* Image */}
-                {item.image_url && (
-                  <div className="h-36 md:h-40 w-full bg-zinc-950 overflow-hidden">
-                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+              <Card key={item.id} className={`bg-[#111] border overflow-hidden rounded-xl flex flex-col h-full ${isAvailable ? 'border-zinc-900 hover:border-primary/50' : 'border-zinc-900/50 opacity-60'} transition-all glow-box-hover`}>
+                {/* Image — or its stand-in, so every card in the row is built the same */}
+                {showImageStrip && (
+                  <div className="h-36 md:h-40 w-full bg-zinc-950 overflow-hidden flex-shrink-0">
+                    {item.image_url ? (
+                      <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-zinc-900 to-zinc-950 flex items-center justify-center">
+                        <PlaceholderIcon className="h-9 w-9 text-zinc-700" />
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Content */}
-                <div className="p-4 md:p-5 space-y-3">
+                {/* Content — gap-3 rather than space-y-3, whose `> * ~ *` rule
+                    outranks the mt-auto that floors the price row */}
+                <div className="p-4 md:p-5 flex flex-col flex-1 gap-3">
                   <div className="space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="text-sm md:text-base font-black uppercase text-white leading-tight">{item.name}</h3>
@@ -384,7 +411,9 @@ export default function FoodOrderPage() {
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between pt-2">
+                  {/* mt-auto keeps price and BUY on the card's floor, so they
+                      line up across a row however tall the row ends up */}
+                  <div className="flex items-center justify-between pt-2 mt-auto">
                     <span className="text-xl font-black text-primary">₹{item.price}</span>
 
                     {isAvailable ? (

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
-import { UploadCloud, Utensils, ImageIcon, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { UploadCloud, Utensils, ImageIcon, Loader2, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { updateMenuItem } from "@/app/(admin)/admin/food/actions";
-import { supabase } from "@/lib/supabase/client";
+import { uploadImage } from "@/lib/storage/imageUpload";
 import { MenuItem, FoodCategory, FoodStatus } from "@/lib/types/food";
 import { toast } from "sonner";
 import { useRequiredFields } from "@/lib/hooks/useRequiredFields";
@@ -29,37 +29,68 @@ export function EditFoodModal({ item, onFormSuccess, onClose }: EditFoodModalPro
   const [status, setStatus] = useState<FoodStatus>(item.status || "available");
   const [description, setDescription] = useState(item.description || "");
   const [localFile, setLocalFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const filePreviewUrl = useMemo(() => {
-    if (localFile) return URL.createObjectURL(localFile);
-    return item.image_url || null;
-  }, [localFile, item.image_url]);
+  /**
+   * Whether the admin asked for the saved picture to go.
+   *
+   * Kept apart from `localFile` because "no new file chosen" and "delete the one
+   * on record" are different intentions that used to be indistinguishable - the
+   * submit fell back to `item.image_url` either way, so a saved image could
+   * never be taken off an item once it was on. Nothing is destroyed until the
+   * form is applied, so Cancel still leaves the original picture in place.
+   */
+  const [imageRemoved, setImageRemoved] = useState(false);
+
+  const objectUrl = useMemo(
+    () => (localFile ? URL.createObjectURL(localFile) : null),
+    [localFile]
+  );
+
+  // Only blob URLs are ours to revoke - the saved image is a plain remote URL.
+  useEffect(() => {
+    if (!objectUrl) return;
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [objectUrl]);
+
+  const filePreviewUrl = objectUrl ?? (imageRemoved ? null : item.image_url || null);
+
+  /**
+   * Drops the staged file and marks the saved one for deletion.
+   *
+   * Resetting the input matters as much as the state: it keeps the old filename
+   * otherwise, so re-picking the *same* file would set an identical value, fire
+   * no change event, and the picture would refuse to come back.
+   */
+  const clearImage = () => {
+    setLocalFile(null);
+    setImageRemoved(true);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    // Writing to the input directly raises no change event, so the form's
+    // onChange never fires and `isComplete` keeps whatever it last saw - which
+    // left Apply stuck disabled after a removal. Nudge the check by hand.
+    recheck();
+  };
+
+  const hasImage = Boolean(objectUrl) || (Boolean(item.image_url) && !imageRemoved);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const targetForm = e.currentTarget;
 
     startTransition(async () => {
-      let bucketUrl = item.image_url || "";
+      // Empty means "clear it" — the action stores that as NULL.
+      let bucketUrl = imageRemoved ? "" : item.image_url || "";
 
       if (localFile) {
-        const fileExt = localFile.name.split('.').pop();
-        const uniqueFileName = `${crypto.randomUUID()}.${fileExt}`;
+        const uploaded = await uploadImage('food-images', localFile);
 
-        const { error: uploadError } = await supabase.storage
-          .from('food-images')
-          .upload(uniqueFileName, localFile);
-
-        if (uploadError) {
-          toast.error("Bucket upload error: " + uploadError.message);
+        if ('error' in uploaded) {
+          toast.error("Bucket upload error: " + uploaded.error);
           return;
         }
 
-        const { data: publicData } = supabase.storage
-          .from('food-images')
-          .getPublicUrl(uniqueFileName);
-
-        bucketUrl = publicData.publicUrl;
+        bucketUrl = uploaded.url;
       }
 
       const submissionFormData = new FormData(targetForm);
@@ -164,8 +195,42 @@ export function EditFoodModal({ item, onFormSuccess, onClose }: EditFoodModalPro
                     {localFile ? localFile.name : "Select a file to upload custom update path"}
                   </p>
                 </div>
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => setLocalFile(e.target.files?.[0] || null)} />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const picked = e.target.files?.[0] || null;
+                    setLocalFile(picked);
+                    // Choosing a replacement supersedes an earlier removal.
+                    if (picked) setImageRemoved(false);
+                  }}
+                />
               </label>
+
+              {/* Outside the dropzone label on purpose — nested in it, a click
+                  here would count as a click on the label and reopen the picker. */}
+              {hasImage && (
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-[#27272a] bg-[var(--surface)] px-3 py-2">
+                  <span className="text-xs text-[#a1a1aa] truncate">
+                    {localFile ? localFile.name : "Current image"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearImage}
+                    className="flex items-center gap-1 text-xs font-bold text-[#f43f5e] hover:text-[#fb7185] transition-colors flex-shrink-0"
+                  >
+                    <X className="h-3.5 w-3.5" /> Remove
+                  </button>
+                </div>
+              )}
+
+              {imageRemoved && !localFile && (
+                <p className="text-xs text-[#a1a1aa]">
+                  Image will be removed when you apply. Cancel to keep it.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -187,7 +252,12 @@ export function EditFoodModal({ item, onFormSuccess, onClose }: EditFoodModalPro
           </div>
 
           {/* Right Static Preview Column — Non Scrolling */}
-          <div className="w-full md:w-[350px] bg-[var(--surface)] border-l border-[#27272a]/70 p-6 flex flex-col justify-start space-y-6 flex-shrink-0 overflow-hidden select-none h-full md:sticky md:top-0">
+          {/* gap-6 rather than space-y-6: its `> * ~ *` rule outranks the footer's
+              mt-auto, so the Cancel/Apply row was never pushed to the bottom but
+              left in flow after the preview card. Paired with overflow-hidden on
+              a column stretched to the left one's height, shortening that column
+              - by removing the image row, say - clipped the buttons out of sight. */}
+          <div className="w-full md:w-[350px] bg-[var(--surface)] border-l border-[#27272a]/70 p-6 flex flex-col justify-start gap-6 flex-shrink-0 select-none h-full md:sticky md:top-0">
             <div className="w-full text-center md:text-left flex-shrink-0">
               <p className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">Adjusted Live Preview</p>
             </div>

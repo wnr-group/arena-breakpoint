@@ -78,7 +78,7 @@ export async function createDevice(formData: FormData) {
   const station_number = formData.get('station_number') as string;
   const status = formData.get('status') as string;
   const specs = formData.get('specs') as string;
-  const image_url = formData.get('image_url') as string;
+  const image_url = (formData.get('image_url') as string) || null;
 
   const { error } = await supabaseAdmin
     .from('devices')
@@ -106,7 +106,10 @@ export async function updateDevice(formData: FormData) {
   const station_number = formData.get('station_number') as string;
   const status = formData.get('status') as string;
   const specs = formData.get('specs') as string;
-  const image_url = formData.get('image_url') as string;
+  // An admin who removes the picture sends an empty string. Store the absence as
+  // NULL rather than as "", so every `image_url ? ...` check and any IS NULL
+  // query agree on what "this station has no picture" means.
+  const image_url = (formData.get('image_url') as string) || null;
   const hourly_rate = formData.get('hourly_rate') as string;
 
   if (!id) {

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
-import { Gamepad2, ImageIcon, Loader2, CheckCircle2, AlertCircle, UploadCloud } from "lucide-react";
+import { Gamepad2, ImageIcon, Loader2, CheckCircle2, AlertCircle, UploadCloud, X } from "lucide-react";
 import { updateDevice } from "@/app/(admin)/admin/devices/actions";
-import { supabase } from "@/lib/supabase/client";
+import { uploadImage } from "@/lib/storage/imageUpload";
 import { toast } from "sonner";
 import { useRequiredFields } from "@/lib/hooks/useRequiredFields";
 import { MANUAL_DEVICE_STATUSES } from "@/lib/types/devices";
@@ -28,35 +28,72 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
   const [editStatus, setEditStatus] = useState(device.status || "available");
   const [hourlyRate, setHourlyRate] = useState(device.device_type?.regular_hourly_rate || "");
   const [localFile, setLocalFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Computes fallback path variables between historical bucket signatures or newly staged files
-  const filePreviewUrl = useMemo(() => {
-    if (localFile) return URL.createObjectURL(localFile);
-    return device.image_url || null;
-  }, [localFile, device.image_url]);
+  /**
+   * Whether the admin asked for the saved picture to go.
+   *
+   * Kept apart from `localFile` because "no new file chosen" and "delete the one
+   * on record" are different intentions that used to be indistinguishable - the
+   * submit fell back to `device.image_url` either way, so a saved image could
+   * never be taken off a station once it was on. Nothing is destroyed until the
+   * form is applied, so Cancel still leaves the original picture in place.
+   */
+  const [imageRemoved, setImageRemoved] = useState(false);
+
+  const objectUrl = useMemo(
+    () => (localFile ? URL.createObjectURL(localFile) : null),
+    [localFile]
+  );
+
+  // Only blob URLs are ours to revoke - the saved image is a plain remote URL.
+  useEffect(() => {
+    if (!objectUrl) return;
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [objectUrl]);
+
+  const filePreviewUrl = objectUrl ?? (imageRemoved ? null : device.image_url || null);
+
+  /**
+   * Drops the staged file and marks the saved one for deletion.
+   *
+   * Resetting the input matters as much as the state: it keeps the old filename
+   * otherwise, so re-picking the *same* file would set an identical value, fire
+   * no change event, and the picture would refuse to come back.
+   */
+  const clearImage = () => {
+    setLocalFile(null);
+    setImageRemoved(true);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    // Writing to the input directly raises no change event, so the form's
+    // onChange never fires and `isComplete` keeps whatever it last saw - which
+    // left Apply stuck disabled after a removal. Nudge the check by hand.
+    recheck();
+  };
+
+  const hasImage = Boolean(objectUrl) || (Boolean(device.image_url) && !imageRemoved);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const targetForm = e.currentTarget;
 
     startTransition(async () => {
-      let finalImageUrl = device.image_url || "";
+      // Empty means "clear it" — the action stores that as NULL.
+      let finalImageUrl = imageRemoved ? "" : device.image_url || "";
 
       // Check if a new file asset is uploaded to overwrite the historical one
       if (localFile) {
-        const fileExt = localFile.name.split('.').pop();
-        const uniqueFileName = `${crypto.randomUUID()}.${fileExt}`;
+        const uploaded = await uploadImage('device-images', localFile);
 
-        const { error: uploadError } = await supabase.storage
-          .from('device-images')
-          .upload(uniqueFileName, localFile);
-
-        if (!uploadError) {
-          const { data: publicData } = supabase.storage
-            .from('device-images')
-            .getPublicUrl(uniqueFileName);
-          finalImageUrl = publicData.publicUrl;
+        // A swallowed failure here reported "Configuration Updated" while
+        // quietly keeping the old picture, so the admin had no way to tell their
+        // upload had not happened.
+        if ('error' in uploaded) {
+          toast.error("Bucket upload error: " + uploaded.error);
+          return;
         }
+
+        finalImageUrl = uploaded.url;
       }
 
       const submissionFormData = new FormData(targetForm);
@@ -150,8 +187,42 @@ export function EditDeviceModal({ device, onFormSuccess, onClose }: EditModalPro
                     {localFile ? localFile.name : "Choose a file to update existing image path"}
                   </p>
                 </div>
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => setLocalFile(e.target.files?.[0] || null)} />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const picked = e.target.files?.[0] || null;
+                    setLocalFile(picked);
+                    // Choosing a replacement supersedes an earlier removal.
+                    if (picked) setImageRemoved(false);
+                  }}
+                />
               </label>
+
+              {/* Outside the dropzone label on purpose — nested in it, a click
+                  here would count as a click on the label and reopen the picker. */}
+              {hasImage && (
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-[#27272a] bg-[var(--surface)] px-3 py-2">
+                  <span className="text-xs text-[#a1a1aa] truncate">
+                    {localFile ? localFile.name : "Current image"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearImage}
+                    className="flex items-center gap-1 text-xs font-bold text-[#f43f5e] hover:text-[#fb7185] transition-colors flex-shrink-0"
+                  >
+                    <X className="h-3.5 w-3.5" /> Remove
+                  </button>
+                </div>
+              )}
+
+              {imageRemoved && !localFile && (
+                <p className="text-xs text-[#a1a1aa]">
+                  Image will be removed when you apply. Cancel to keep it.
+                </p>
+              )}
             </div>
 
             {/* Upgraded layout status into a clean grid  */}
