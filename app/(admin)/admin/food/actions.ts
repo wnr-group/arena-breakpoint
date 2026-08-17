@@ -38,7 +38,7 @@ export async function createMenuItem(formData: FormData) {
     quantity: Math.max(0, parseInt(formData.get("quantity") as string || "0", 10)),
     status: formData.get("status") as string,
     description: formData.get("description") as string,
-    image_url: formData.get("image_url") as string
+    image_url: (formData.get("image_url") as string) || null
   }]);
 
   if (error) return { success: false, error: error.message };
@@ -59,7 +59,10 @@ export async function updateMenuItem(formData: FormData) {
     quantity: Math.max(0, parseInt(formData.get("quantity") as string || "0", 10)),
     status: formData.get("status") as string,
     description: formData.get("description") as string,
-    image_url: formData.get("image_url") as string,
+    // An admin who removes the picture sends an empty string. Store the absence
+    // as NULL rather than as "", so every `image_url ? ...` check and any
+    // IS NULL query agree on what "this item has no picture" means.
+    image_url: (formData.get("image_url") as string) || null,
     updated_at: new Date().toISOString()
   }).eq("id", id);
 

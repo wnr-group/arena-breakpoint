@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  DollarSign, TrendingUp, Calendar, Users, Clock,
+  IndianRupee, TrendingUp, Calendar, Users, Clock,
   Gamepad2, UtensilsCrossed, Activity, ArrowRight,
   CheckCircle2, Loader2, AlertCircle, PlusCircle, Eye, RefreshCw
 } from "lucide-react";
@@ -229,7 +229,7 @@ export default function AdminDashboardPage() {
               </p>
             </div>
             <div className="p-2 bg-green-500/10 rounded-lg">
-              <DollarSign className="h-5 w-5 text-green-500" />
+              <IndianRupee className="h-5 w-5 text-green-500" />
             </div>
           </div>
         </Card>

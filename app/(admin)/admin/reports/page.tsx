@@ -8,8 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import {
-  DollarSign, TrendingUp, ShoppingBag, Gamepad2,
-  UtensilsCrossed, BarChart3, CalendarDays, Receipt, ShieldAlert
+  IndianRupee, TrendingUp, ShoppingBag, Gamepad2,
+  UtensilsCrossed, BarChart3, CalendarDays, ReceiptIndianRupee, ShieldAlert
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -255,8 +255,10 @@ export default function AdminReportsPage() {
     { id: "profit", label: "Profit & Loss", icon: TrendingUp },
     { id: "food", label: "Food Reports", icon: UtensilsCrossed },
     { id: "device", label: "Device Reports", icon: Gamepad2 },
-    { id: "revenue", label: "Revenue Reports", icon: DollarSign },
-    { id: "expenses", label: "Expenses", icon: Receipt }
+    { id: "revenue", label: "Revenue Reports", icon: IndianRupee },
+    // Receipt draws a dollar sign inside the receipt outline; the rupee variant
+    // is the same outline with ₹ in it.
+    { id: "expenses", label: "Expenses", icon: ReceiptIndianRupee }
   ];
 
   // Show loading while checking access
@@ -532,7 +534,7 @@ export default function AdminReportsPage() {
                       </h3>
                     </div>
                     <div className="p-2 bg-green-500/10 rounded-lg">
-                      <DollarSign className="h-5 w-5 text-green-500" />
+                      <IndianRupee className="h-5 w-5 text-green-500" />
                     </div>
                   </div>
                 </Card>
@@ -652,7 +654,7 @@ export default function AdminReportsPage() {
                       </h3>
                     </div>
                     <div className="p-2 bg-amber-500/10 rounded-lg">
-                      <DollarSign className="h-5 w-5 text-amber-500" />
+                      <IndianRupee className="h-5 w-5 text-amber-500" />
                     </div>
                   </div>
                 </Card>
@@ -682,7 +684,7 @@ export default function AdminReportsPage() {
                       </h3>
                     </div>
                     <div className="p-2 bg-blue-500/10 rounded-lg">
-                      <Receipt className="h-5 w-5 text-blue-500" />
+                      <ReceiptIndianRupee className="h-5 w-5 text-blue-500" />
                     </div>
                   </div>
                 </Card>
@@ -817,7 +819,7 @@ export default function AdminReportsPage() {
                       </h3>
                     </div>
                     <div className="p-2 bg-blue-500/10 rounded-lg">
-                      <DollarSign className="h-5 w-5 text-blue-500" />
+                      <IndianRupee className="h-5 w-5 text-blue-500" />
                     </div>
                   </div>
                 </Card>

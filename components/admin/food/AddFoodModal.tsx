@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
-import { PlusCircle, UploadCloud, Utensils, ImageIcon, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { PlusCircle, UploadCloud, Utensils, ImageIcon, Loader2, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { createMenuItem } from "@/app/(admin)/admin/food/actions";
-import { supabase } from "@/lib/supabase/client";
+import { uploadImage } from "@/lib/storage/imageUpload";
 import { FoodCategory, FoodStatus } from "@/lib/types/food";
 import { toast } from "sonner";
 import { useRequiredFields } from "@/lib/hooks/useRequiredFields";
@@ -28,11 +28,35 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("10");
   const [localFile, setLocalFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filePreviewUrl = useMemo(() => {
     if (!localFile) return null;
     return URL.createObjectURL(localFile);
   }, [localFile]);
+
+  // An object URL is held by the browser until it is revoked. Swapping or
+  // clearing the picture without this leaves the old blob alive for the life of
+  // the page, and an admin trying a few photos leaks every one they discarded.
+  useEffect(() => {
+    if (!filePreviewUrl) return;
+    return () => URL.revokeObjectURL(filePreviewUrl);
+  }, [filePreviewUrl]);
+
+  /**
+   * Puts the picker back to empty.
+   *
+   * Clearing the state alone is not enough: the input keeps the old filename,
+   * and picking the *same* file again would set an identical value and fire no
+   * change event - so the image an admin just removed would refuse to come back.
+   */
+  const clearImage = () => {
+    setLocalFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    // Writing to the input directly raises no change event, so the form's
+    // onChange never fires and `isComplete` keeps whatever it last saw. Nudge it.
+    recheck();
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -42,23 +66,14 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
       let bucketUrl = "";
 
       if (localFile) {
-        const fileExt = localFile.name.split('.').pop();
-        const uniqueFileName = `${crypto.randomUUID()}.${fileExt}`;
+        const uploaded = await uploadImage('food-images', localFile);
 
-        const { error: uploadError } = await supabase.storage
-          .from('food-images')
-          .upload(uniqueFileName, localFile);
-
-        if (uploadError) {
-          toast.error("Bucket upload error: " + uploadError.message);
+        if ('error' in uploaded) {
+          toast.error("Bucket upload error: " + uploaded.error);
           return;
         }
 
-        const { data: publicData } = supabase.storage
-          .from('food-images')
-          .getPublicUrl(uniqueFileName);
-
-        bucketUrl = publicData.publicUrl;
+        bucketUrl = uploaded.url;
       }
 
       const submissionFormData = new FormData(targetForm);
@@ -71,7 +86,7 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
       const result = await createMenuItem(submissionFormData);
       if (result.success) {
         setOpen(false);
-        setLocalFile(null);
+        clearImage();
         setPreviewName("");
         setPrice("");
         setQuantity("10");
@@ -182,8 +197,23 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
                     {localFile ? localFile.name : "Select or drag a menu food image cover"}
                   </p>
                 </div>
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => setLocalFile(e.target.files?.[0] || null)} />
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => setLocalFile(e.target.files?.[0] || null)} />
               </label>
+
+              {/* Outside the dropzone label on purpose — nested in it, a click
+                  here would count as a click on the label and reopen the picker. */}
+              {localFile && (
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-[#27272a] bg-[var(--surface)] px-3 py-2">
+                  <span className="text-xs text-[#a1a1aa] truncate">{localFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={clearImage}
+                    className="flex items-center gap-1 text-xs font-bold text-[#f43f5e] hover:text-[#fb7185] transition-colors flex-shrink-0"
+                  >
+                    <X className="h-3.5 w-3.5" /> Remove
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -205,7 +235,12 @@ export function AddFoodModal({ onFormSuccess, open, setOpen }: AddFoodModalProps
           </div>
 
           {/* Right Static Preview Column — Non Scrolling */}
-          <div className="w-full md:w-[350px] bg-[var(--surface)] border-l border-[#27272a]/70 p-6 flex flex-col justify-start space-y-6 flex-shrink-0 overflow-hidden select-none h-full md:sticky md:top-0">
+          {/* gap-6 rather than space-y-6: its `> * ~ *` rule outranks the footer's
+              mt-auto, so the Cancel/Save row was never pushed to the bottom but
+              left in flow after the preview card. Paired with overflow-hidden on
+              a column stretched to the left one's height, a short left column
+              clipped the buttons out of sight. */}
+          <div className="w-full md:w-[350px] bg-[var(--surface)] border-l border-[#27272a]/70 p-6 flex flex-col justify-start gap-6 flex-shrink-0 select-none h-full md:sticky md:top-0">
             <div className="w-full text-center md:text-left flex-shrink-0">
               <p className="text-xs font-bold text-[#a1a1aa] uppercase tracking-wider">Card Display Preview</p>
             </div>

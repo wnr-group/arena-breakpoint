@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Loader2, CreditCard, CheckCircle2, XCircle, AlertCircle, DollarSign, Receipt } from "lucide-react";
+import { Loader2, CreditCard, CheckCircle2, XCircle, AlertCircle, IndianRupee, ReceiptIndianRupee } from "lucide-react";
 import { toast } from "sonner";
 import { getBookingBillingDetails, markBookingAsPaid, closeBooking } from "@/app/(admin)/admin/bookings/actions";
 
@@ -128,7 +128,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
       <DialogContent className="bg-[var(--background)] border-2 border-zinc-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
-            <Receipt className="h-5 w-5 text-primary" />
+            <ReceiptIndianRupee className="h-5 w-5 text-primary" />
             Checkout & Billing
           </DialogTitle>
         </DialogHeader>
@@ -215,7 +215,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
             {/* Billing Breakdown - Using Line Items */}
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
               <h3 className="text-xs font-black uppercase tracking-wider text-secondary-content flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
+                <IndianRupee className="h-4 w-4" />
                 Billing Breakdown
               </h3>
 
