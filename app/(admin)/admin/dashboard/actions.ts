@@ -10,12 +10,34 @@ import {
   getOccupiedDeviceIds,
 } from "@/lib/devices/occupancy";
 
-export async function getDashboardStats() {
+/**
+ * Everything the dashboard needs on load, in one call.
+ *
+ * This was four server actions fired together from the client. They ran
+ * concurrently, so the queries were not the problem - the auth check was. Every
+ * server action is its own HTTP request, and each one calls `requireStaff()`,
+ * which is a network round trip to the Supabase auth server before a single row
+ * is read. `resolveRole` is memoised with React `cache()`, but that memo is
+ * per-request, so four requests meant four auth round trips that could not
+ * overlap with anything.
+ *
+ * Against the production database those round trips measured 270ms-1.4s each.
+ * The queries themselves are sub-millisecond - the heaviest one plans and
+ * executes in 0.17ms - so essentially all of this page's load time was spent
+ * waiting on the network, most of it re-proving the same operator was staff.
+ *
+ * One action means one auth check and one browser round trip. The queries below
+ * still go out together, and two of them are no longer duplicated: the full
+ * paid-bookings set was previously fetched once for today's revenue and again
+ * for the week's, and today's slots were fetched three separate times.
+ */
+export async function getDashboardData() {
   await requireStaff();
 
   try {
     const today = arenaToday();
     const now = new Date();
+    const sevenDaysAgo = arenaDateOffset(-7);
 
     const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000);
     // Arena clock, because that is what `slot_start_time` holds. `toTimeString()`
@@ -24,27 +46,38 @@ export async function getDashboardStats() {
     const currentTime = arenaClockTime(now);
     const twoHoursTime = arenaClockTime(twoHoursLater);
 
-    // Issued together rather than one after another. None of these depends on
-    // another's result, and against a remote database each await was its own
-    // ~100ms round trip - five of them in series was most of this page's load
-    // time for queries that could all have been in flight at once.
     const [
-      { data: todaysBookings, error: bookingsError },
+      { data: todaySlots, error: slotsError },
       { count: activeSessions, error: activeError },
-      { data: upcomingBookings, error: upcomingError },
-      { data: paymentsToday, error: paymentsError },
+      { data: paidBookings, error: paymentsError },
       { data: devices, error: devicesError },
       occupiedDeviceIds,
+      { data: recentBookings, error: recentError },
+      { data: foodOrders, error: foodError },
     ] = await Promise.all([
-      // Today's bookings
+      /**
+       * Today's slots, once, with no status filter.
+       *
+       * Serves four of the figures below. The filter is deliberately left off
+       * here and applied per-figure in JS: peak hour has always counted every
+       * slot on the day regardless of booking status, and pushing a status
+       * filter into SQL to share the query would quietly change that number.
+       */
       supabaseAdmin
         .from("booking_device_slots")
         .select(`
+          id,
           slot_total,
           slot_date,
           slot_start_time,
+          slot_end_time,
+          device_type,
+          device_station_number,
+          player_count,
           bookings!inner(
             id,
+            booking_number,
+            customer_name,
             status,
             total_amount,
             device_subtotal,
@@ -55,8 +88,7 @@ export async function getDashboardStats() {
             online_amount
           )
         `)
-        .eq("slot_date", today)
-        .in("bookings.status", ["confirmed", "checked_in", "completed"]),
+        .eq("slot_date", today),
 
       // Active sessions (checked in). Bounded the same way occupancy is: a
       // booking left in `checked_in` for weeks is a checkout that never
@@ -71,19 +103,8 @@ export async function getDashboardStats() {
           new Date(Date.now() - MAX_LIVE_SESSION_HOURS * 60 * 60 * 1000).toISOString()
         ),
 
-      // Upcoming bookings (next 2 hours)
-      supabaseAdmin
-        .from("booking_device_slots")
-        .select(`
-          id,
-          bookings!inner(status)
-        `)
-        .eq("slot_date", today)
-        .gte("slot_start_time", currentTime)
-        .lte("slot_start_time", twoHoursTime)
-        .eq("bookings.status", "confirmed"),
-
-      // Everything settled or part-settled, filtered to today below
+      // Everything settled or part-settled. Filtered to today and to the week
+      // below - the same rows answer both, so they are fetched once.
       supabaseAdmin
         .from("bookings")
         .select(`
@@ -102,112 +123,119 @@ export async function getDashboardStats() {
       supabaseAdmin
         .from("devices")
         .select("id, status"),
+
       getOccupiedDeviceIds(),
+
+      supabaseAdmin
+        .from("bookings")
+        .select(`
+          id,
+          booking_number,
+          customer_name,
+          customer_phone,
+          total_amount,
+          status,
+          payment_status,
+          created_at,
+          booking_device_slots(
+            slot_date,
+            slot_start_time,
+            device_type,
+            device_station_number
+          )
+        `)
+        .order("created_at", { ascending: false })
+        .limit(8),
+
+      supabaseAdmin
+        .from("booking_food_items")
+        .select(`
+          id,
+          created_at,
+          bookings!inner(status)
+        `)
+        .gte("created_at", `${today}T00:00:00`)
+        .lte("created_at", `${today}T23:59:59`),
     ]);
 
-    if (bookingsError) throw bookingsError;
+    if (slotsError) throw slotsError;
     if (activeError) throw activeError;
-    if (upcomingError) throw upcomingError;
     if (devicesError) throw devicesError;
+    if (recentError) throw recentError;
 
+    const slots = (todaySlots || []) as any[];
+    const bookedToday = slots.filter((slot) =>
+      ["confirmed", "checked_in", "completed"].includes(slot.bookings?.status)
+    );
+
+    const upcomingBookings = slots.filter(
+      (slot) =>
+        slot.bookings?.status === "confirmed" &&
+        slot.slot_start_time >= currentTime &&
+        slot.slot_start_time <= twoHoursTime
+    );
+
+    const schedule = slots
+      .filter((slot) => ["confirmed", "checked_in"].includes(slot.bookings?.status))
+      .sort((a, b) => String(a.slot_start_time).localeCompare(String(b.slot_start_time)));
+
+    // One pass over the paid set for both windows; `paid_at` falls back the same
+    // way it always has, so a booking with no payment group still counts.
     let todaysRevenue = 0;
+    let thisWeekRevenue = 0;
 
-    if (!paymentsError && paymentsToday) {
-      paymentsToday.forEach((booking: any) => {
-        const paidAt = booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
-        if (paidAt && paidAt.split('T')[0] === today) {
-          todaysRevenue += Number(booking.amount_paid || 0);
-        }
-      });
+    if (!paymentsError && paidBookings) {
+      for (const booking of paidBookings as any[]) {
+        const paidAt =
+          booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
+        if (!paidAt) continue;
+
+        const day = paidAt.split("T")[0];
+        const amount = Number(booking.amount_paid || 0);
+
+        if (day === today) todaysRevenue += amount;
+        if (day >= sevenDaysAgo) thisWeekRevenue += amount;
+      }
     }
 
-    const todaysBookingsCount = todaysBookings?.length || 0;
     const availableDevices = (devices || []).filter(
       (device: { id: string; status: string | null }) =>
         effectiveDeviceStatus(device.status, occupiedDeviceIds.has(device.id)) === "available"
     ).length;
 
+    // Peak hour over every slot on the day, matching the previous behaviour.
+    const hourCounts: Record<string, number> = {};
+    for (const slot of slots) {
+      if (!slot.slot_start_time) continue;
+      const hour = String(slot.slot_start_time).split(":")[0];
+      hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+    }
+    const peakHour = Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0];
+
+    // `as const` so callers narrow on `result.success` - without the literal
+    // type both branches infer `success: boolean` and every field reads as
+    // possibly-undefined at the call site.
     return {
-      success: true,
+      success: true as const,
       stats: {
         activeSessions: activeSessions || 0,
         todaysRevenue,
-        todaysBookings: todaysBookingsCount,
-        upcomingBookings: upcomingBookings?.length || 0,
-        availableDevices
-      }
+        todaysBookings: bookedToday.length,
+        upcomingBookings: upcomingBookings.length,
+        availableDevices,
+      },
+      quickStats: {
+        thisWeekRevenue,
+        todaysFoodOrders: foodError ? 0 : foodOrders?.length || 0,
+        peakHour: peakHour ? formatDbTime(`${peakHour[0]}:00`) : "N/A",
+        peakHourBookings: peakHour ? peakHour[1] : 0,
+      },
+      recentBookings: recentBookings || [],
+      schedule,
     };
   } catch (err: any) {
-    console.error("Get dashboard stats error:", err);
-    return { success: false, error: err.message };
-  }
-}
-
-export async function getRecentBookings(limit: number = 10) {
-  await requireStaff();
-
-  try {
-    const { data, error } = await supabaseAdmin
-      .from("bookings")
-      .select(`
-        id,
-        booking_number,
-        customer_name,
-        customer_phone,
-        total_amount,
-        status,
-        payment_status,
-        created_at,
-        booking_device_slots(
-          slot_date,
-          slot_start_time,
-          device_type,
-          device_station_number
-        )
-      `)
-      .order("created_at", { ascending: false })
-      .limit(limit);
-
-    if (error) throw error;
-
-    return { success: true, bookings: data || [] };
-  } catch (err: any) {
-    console.error("Get recent bookings error:", err);
-    return { success: false, error: err.message, bookings: [] };
-  }
-}
-
-export async function getTodaysSchedule() {
-  await requireStaff();
-
-  try {
-    const today = arenaToday();
-
-    const { data, error } = await supabaseAdmin
-      .from("booking_device_slots")
-      .select(`
-        id,
-        slot_start_time,
-        slot_end_time,
-        device_type,
-        device_station_number,
-        player_count,
-        bookings!inner(
-          booking_number,
-          customer_name,
-          status
-        )
-      `)
-      .eq("slot_date", today)
-      .in("bookings.status", ["confirmed", "checked_in"])
-      .order("slot_start_time", { ascending: true });
-
-    if (error) throw error;
-
-    return { success: true, schedule: data || [] };
-  } catch (err: any) {
-    console.error("Get today's schedule error:", err);
-    return { success: false, error: err.message, schedule: [] };
+    console.error("Get dashboard data error:", err);
+    return { success: false as const, error: err.message };
   }
 }
 

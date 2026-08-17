@@ -13,10 +13,7 @@ import { toast } from "sonner";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
 import { formatDbTime } from "@/lib/utils/timeSlots";
 import {
-  getDashboardStats,
-  getRecentBookings,
-  getTodaysSchedule,
-  getQuickStats,
+  getDashboardData,
   getTodaysRevenueDetails,
   getActiveSessionsDetails,
   getUpcomingBookingsDetails,
@@ -74,24 +71,21 @@ export default function AdminDashboardPage() {
   const loadDashboardData = async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const [statsResult, bookingsResult, scheduleResult, quickStatsResult] = await Promise.all([
-        getDashboardStats(),
-        getRecentBookings(8),
-        getTodaysSchedule(),
-        getQuickStats()
-      ]);
+      /**
+       * One call, not four. Each server action re-authenticates against the
+       * Supabase auth server before it can read anything, and that round trip
+       * dominated this page's load - the queries behind it run in well under a
+       * millisecond.
+       */
+      const result = await getDashboardData();
 
-      if (statsResult.success) {
-        setStats(statsResult.stats);
-      }
-      if (bookingsResult.success) {
-        setRecentBookings(bookingsResult.bookings);
-      }
-      if (scheduleResult.success) {
-        setTodaysSchedule(scheduleResult.schedule);
-      }
-      if (quickStatsResult.success) {
-        setQuickStats(quickStatsResult.stats);
+      if (result.success) {
+        setStats(result.stats);
+        setQuickStats(result.quickStats);
+        setRecentBookings(result.recentBookings);
+        setTodaysSchedule(result.schedule);
+      } else {
+        console.error("Failed to load dashboard data:", result.error);
       }
     } catch (err) {
       console.error("Failed to load dashboard data:", err);
