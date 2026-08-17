@@ -142,6 +142,19 @@ export function useAdminNotificationPolling() {
   const { addNotification } = useNotifications()
   const isFirstPollRef = useRef(true)
 
+  /**
+   * Food keeps a moving cursor where bookings need a window.
+   *
+   * The window exists because a paid booking is an *updated* hold row carrying an
+   * older `created_at`. Food rows have no such trick played on them - they are
+   * plain inserts, stamped when they happen - so re-reading them buys nothing and
+   * costs correctness: these notifications are grouped per booking and keyed on
+   * the newest row in the group, so a second helping arriving while the first was
+   * still inside the window formed a *different* group with a different key, and
+   * announced "Food Added" twice for one order.
+   */
+  const lastFoodTimeRef = useRef<string | null>(null)
+
   useEffect(() => {
     /**
      * The stretch of history each poll reads.
@@ -190,6 +203,8 @@ export function useAdminNotificationPolling() {
               message,
               bookingId: booking.id,
               bookingNumber: booking.booking_number,
+              // When the order was placed, not when this sweep found it.
+              timestamp: new Date(booking.created_at),
             })
           })
         }
@@ -199,6 +214,11 @@ export function useAdminNotificationPolling() {
     }
 
     async function checkForNewFood() {
+      // First pass reaches back over the shift, as the booking sweep does.
+      if (!lastFoodTimeRef.current) {
+        lastFoodTimeRef.current = new Date(Date.now() - BACKFILL_WINDOW_MS).toISOString()
+      }
+
       try {
         const { data: newFoodItems, error } = await supabase
           .from('booking_food_items')
@@ -215,10 +235,13 @@ export function useAdminNotificationPolling() {
               locked_by
             )
           `)
-          .gt('created_at', windowStart())
+          .gt('created_at', lastFoodTimeRef.current)
           .order('created_at', { ascending: false })
 
         if (!error && newFoodItems && newFoodItems.length > 0) {
+          // Nothing back-dates a food row, so everything up to the newest is seen.
+          lastFoodTimeRef.current = newFoodItems[0].created_at
+
           // Food that came with an order is already covered by that order's
           // single notification; only later additions belong here. This holds for
           // walk-ins as much as online orders, so origin no longer decides it.
@@ -259,6 +282,7 @@ export function useAdminNotificationPolling() {
               message: `${group.customerName} • #${group.bookingNumber} • ${group.items.length} item(s) • ₹${group.totalAmount.toLocaleString('en-IN')} pending`,
               bookingId: group.bookingId,
               bookingNumber: group.bookingNumber,
+              timestamp: new Date(group.latestAt),
             })
           })
         }

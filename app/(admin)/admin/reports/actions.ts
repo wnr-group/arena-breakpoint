@@ -268,6 +268,26 @@ export async function getDeviceReports(filters?: ReportFilters) {
       });
     }
 
+    /**
+     * Food-only orders are not device bookings.
+     *
+     * A food order carries no `booking_device_slots`, which the aggregation below
+     * read as "a device booking whose slot row is missing" and filed under
+     * "Unknown" - so this tab listed the counter's food sales as an unnamed
+     * device, and counted each one in `totalBookings`, diluting every
+     * per-booking average with orders that never used a station. Food Reports
+     * already accounts for them.
+     *
+     * The test is deliberately two-part rather than just "has slots": a booking
+     * carrying device revenue but no slot row is a real device booking with
+     * missing data, and belongs here under "Unknown" instead of being quietly
+     * dropped out of device revenue.
+     */
+    const deviceBookings = (data || []).filter((booking: any) => {
+      const hasSlots = (booking.booking_device_slots || []).length > 0;
+      return hasSlots || Number(booking.device_subtotal || 0) > 0;
+    });
+
     // Aggregate by device type
     const deviceTypeStats: Record<string, {
       deviceType: string;
@@ -284,7 +304,7 @@ export async function getDeviceReports(filters?: ReportFilters) {
     let totalPlayers = 0;
 
     // Process each booking
-    (data || []).forEach((booking: any) => {
+    deviceBookings.forEach((booking: any) => {
       const amountPaid = Number(booking.amount_paid || 0);
       const deviceSubtotal = Number(booking.device_subtotal || 0);
       const foodSubtotal = Number(booking.food_subtotal || 0);
@@ -367,7 +387,7 @@ export async function getDeviceReports(filters?: ReportFilters) {
 
     // Calculate average players per booking for each device type
     Object.keys(deviceTypeStats).forEach(deviceType => {
-      const allSlots = (data || []).flatMap((b: any) => b.booking_device_slots || []);
+      const allSlots = deviceBookings.flatMap((b: any) => b.booking_device_slots || []);
       const deviceSlots = allSlots.filter((s: any) => s.device_type === deviceType);
       const totalPlayersForDevice = deviceSlots.reduce((sum: number, s: any) => sum + (s.player_count || 0), 0);
       deviceTypeStats[deviceType].averagePlayersPerBooking = deviceSlots.length > 0 ? totalPlayersForDevice / deviceSlots.length : 0;
@@ -378,7 +398,7 @@ export async function getDeviceReports(filters?: ReportFilters) {
 
     // Daily utilization (bookings per day)
     const dailyBookings: Record<string, number> = {};
-    (data || []).forEach((booking: any) => {
+    deviceBookings.forEach((booking: any) => {
       const slots = booking.booking_device_slots || [];
       slots.forEach((slot: any) => {
         const date = slot.slot_date;
@@ -397,7 +417,10 @@ export async function getDeviceReports(filters?: ReportFilters) {
       },
       deviceBreakdown,
       dailyBookings,
-      recentBookings: data?.slice(0, 20) || []
+      // The table under the breakdown lists what this tab is about, so it is
+      // drawn from the same filtered set - a food order has no station or slot to
+      // show in it.
+      recentBookings: deviceBookings.slice(0, 20)
     };
   } catch (err: any) {
     console.error("Get device reports error:", err);
