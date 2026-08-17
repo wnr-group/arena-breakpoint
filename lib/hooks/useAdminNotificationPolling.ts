@@ -25,6 +25,7 @@ export function describeOrderNotification(booking: {
   device_subtotal?: number | string | null
   food_subtotal?: number | string | null
   total_amount?: number | string | null
+  locked_by?: string | null
 }): { type: 'booking' | 'food'; title: string; message: string } {
   const deviceSubtotal = Number(booking.device_subtotal || 0)
   const foodSubtotal = Number(booking.food_subtotal || 0)
@@ -33,12 +34,16 @@ export function describeOrderNotification(booking: {
   const rupees = (amount: number) => `₹${amount.toLocaleString('en-IN')}`
   const who = `${booking.customer_name || 'Customer'} • #${booking.booking_number || 'Unknown'}`
 
+  // Says where the order came from, because the desk handles the two differently:
+  // a walk-in is standing there, an online order is not.
+  const origin = isWalkIn(booking.locked_by) ? 'Walk-In ' : ''
+
   // Slot and food in one order: say so once, with the split, rather than
   // raising a separate notification for each half.
   if (deviceSubtotal > 0 && foodSubtotal > 0) {
     return {
       type: 'booking',
-      title: 'New Booking + Food Order',
+      title: `New ${origin}Booking + Food Order`,
       message: `${who} • ${rupees(total)} (Slot ${rupees(deviceSubtotal)} + Food ${rupees(foodSubtotal)})`,
     }
   }
@@ -46,14 +51,25 @@ export function describeOrderNotification(booking: {
   if (foodSubtotal > 0 && deviceSubtotal === 0) {
     return {
       type: 'food',
-      title: 'New Food Order',
+      title: `New ${origin}Food Order`,
       message: `${who} • ${rupees(total)}`,
+    }
+  }
+
+  // A walk-in session is billed on the time actually played, so at the moment it
+  // is created there is no figure to quote - and quoting the zero that stands in
+  // for "not yet known" reads as a free session.
+  if (total === 0 && deviceSubtotal === 0 && foodSubtotal === 0) {
+    return {
+      type: 'booking',
+      title: `New ${origin}Booking`,
+      message: `${who} • awaiting check-in`,
     }
   }
 
   return {
     type: 'booking',
-    title: 'New Booking',
+    title: `New ${origin}Booking`,
     message: `${who} • ${rupees(total)}`,
   }
 }
@@ -61,13 +77,47 @@ export function describeOrderNotification(booking: {
 /**
  * Walk-ins carry no `locked_by`; only the online flows stamp it as 'customer'.
  *
- * The poller ignores them: the walk-in screens raise their own notification the
- * moment the booking is confirmed, so polling for them again 30 seconds later
- * would report the same thing twice.
+ * This used to decide what the poller ignored, on the grounds that the walk-in
+ * screens announce their own. They only announce to the tab that created them -
+ * so a walk-in was invisible to every other admin session, vanished on reload,
+ * and the "start now" screen never announced at all. The poller now reads walk-ins
+ * too and this only affects the wording; stable ids keep the screen's immediate
+ * announcement and the poll from being listed twice.
  */
 export function isWalkIn(lockedBy: string | null | undefined): boolean {
   return lockedBy !== 'customer'
 }
+
+/**
+ * The natural key for an order's notification.
+ *
+ * Shared with the walk-in screens, which announce the same booking the instant
+ * they create it. Same booking, same id, one entry in the bell - and the same id
+ * again after a reload, so the restored list absorbs the re-poll instead of
+ * doubling it.
+ */
+export function bookingNotificationId(bookingId: string): string {
+  return `booking:${bookingId}`
+}
+
+/**
+ * How far back the first poll looks.
+ *
+ * Starting from "now" meant anything that happened while the panel was shut, or
+ * in the seconds around a reload, was never announced to anyone. Twelve hours
+ * covers a shift; older orders are history and the age cap in the store drops
+ * them anyway.
+ */
+const BACKFILL_WINDOW_MS = 12 * 60 * 60 * 1000
+
+/**
+ * How far back every later poll reads.
+ *
+ * Long enough that an order still shows up after the delay between a hold being
+ * placed and the payment that turns it into a booking, which is capped at five
+ * minutes by `HOLD_DURATION_MS`.
+ */
+const STEADY_WINDOW_MS = 15 * 60 * 1000
 
 /**
  * True when food arrived as part of the order that created its booking - which
@@ -90,40 +140,51 @@ export function arrivedWithOrder(
 
 export function useAdminNotificationPolling() {
   const { addNotification } = useNotifications()
-  const lastBookingTimeRef = useRef<string | null>(null)
-  const lastFoodTimeRef = useRef<string | null>(null)
-  const isInitializedRef = useRef(false)
+  const isFirstPollRef = useRef(true)
 
   useEffect(() => {
-    // Initialize with current timestamp on first load
-    if (!isInitializedRef.current) {
-      lastBookingTimeRef.current = new Date().toISOString()
-      lastFoodTimeRef.current = new Date().toISOString()
-      isInitializedRef.current = true
+    /**
+     * The stretch of history each poll reads.
+     *
+     * This replaces a moving "last seen" cursor, which could not be made to work
+     * for the main online flow: paying does not insert a booking, it *updates* the
+     * hold row that was already there, so a paid booking still carries the
+     * `created_at` of the hold placed minutes earlier. Once any other booking had
+     * pushed the cursor past that timestamp, the paid one was never announced to
+     * anybody. A window that simply re-reads the recent past cannot miss it, and
+     * with stable ids re-reading costs nothing: the second sighting of an order is
+     * recognised and dropped.
+     *
+     * The first pass reaches back over the shift, so a reload or a panel that was
+     * closed for an hour catches up.
+     */
+    function windowStart(): string {
+      const span = isFirstPollRef.current ? BACKFILL_WINDOW_MS : STEADY_WINDOW_MS
+      return new Date(Date.now() - span).toISOString()
     }
 
     async function checkForNewBookings() {
-      if (!lastBookingTimeRef.current) return
-
       try {
         const { data: newBookings, error } = await supabase
           .from('bookings')
           .select(
-            'id, booking_number, customer_name, total_amount, device_subtotal, food_subtotal, created_at, locked_by'
+            'id, booking_number, customer_name, total_amount, device_subtotal, food_subtotal, created_at, locked_by, status'
           )
-          .gt('created_at', lastBookingTimeRef.current)
-          .eq('locked_by', 'customer') // Walk-ins notify from their own screen
+          .gt('created_at', windowStart())
+          // A hold is a station reserved while somebody types their card in, not
+          // an order. It becomes one on payment, when status leaves 'locked'.
+          .neq('status', 'locked')
+          // Walk-ins are included: they are bookings the desk needs announced on
+          // every screen, not just the one that typed them in.
           .order('created_at', { ascending: false })
 
         if (!error && newBookings && newBookings.length > 0) {
-          // Update last seen time
-          lastBookingTimeRef.current = newBookings[0].created_at
-
           // One notification per order, describing whatever it contains
           newBookings.reverse().forEach((booking: any) => {
             const { type, title, message } = describeOrderNotification(booking)
 
             addNotification({
+              id: bookingNotificationId(booking.id),
               type,
               title,
               message,
@@ -138,8 +199,6 @@ export function useAdminNotificationPolling() {
     }
 
     async function checkForNewFood() {
-      if (!lastFoodTimeRef.current) return
-
       try {
         const { data: newFoodItems, error } = await supabase
           .from('booking_food_items')
@@ -156,20 +215,15 @@ export function useAdminNotificationPolling() {
               locked_by
             )
           `)
-          .gt('created_at', lastFoodTimeRef.current)
+          .gt('created_at', windowStart())
           .order('created_at', { ascending: false })
 
         if (!error && newFoodItems && newFoodItems.length > 0) {
-          // Update last seen time
-          lastFoodTimeRef.current = newFoodItems[0].created_at
-
-          // Food that came with a customer order is already covered by that
-          // order's single notification; only later additions belong here.
+          // Food that came with an order is already covered by that order's
+          // single notification; only later additions belong here. This holds for
+          // walk-ins as much as online orders, so origin no longer decides it.
           const addedToExistingBooking = newFoodItems.filter(
-            (item: any) =>
-              // Walk-in food is announced by the walk-in screen itself
-              !isWalkIn(item.bookings?.locked_by) &&
-              !arrivedWithOrder(item.bookings?.created_at, item.created_at)
+            (item: any) => !arrivedWithOrder(item.bookings?.created_at, item.created_at)
           )
 
           // Group by booking_id and create notifications
@@ -182,16 +236,24 @@ export function useAdminNotificationPolling() {
                 customerName: item.bookings?.customer_name || 'Customer',
                 items: [],
                 totalAmount: 0,
+                // The newest row in the group keys the notification, so re-reading
+                // the same batch after a reload lands on the same id. A genuinely
+                // later addition carries a newer stamp and is its own entry.
+                latestAt: item.created_at,
               }
             }
             acc[bookingId].items.push(item)
             acc[bookingId].totalAmount += item.quantity * item.unit_price
+            if (item.created_at > acc[bookingId].latestAt) {
+              acc[bookingId].latestAt = item.created_at
+            }
             return acc
           }, {})
 
           // Add notifications for each booking
           Object.values(bookingGroups).reverse().forEach((group: any) => {
             addNotification({
+              id: `food:${group.bookingId}:${group.latestAt}`,
               type: 'food',
               title: 'Food Added',
               message: `${group.customerName} • #${group.bookingNumber} • ${group.items.length} item(s) • ₹${group.totalAmount.toLocaleString('en-IN')} pending`,
@@ -210,6 +272,9 @@ export function useAdminNotificationPolling() {
     async function poll() {
       await checkForNewBookings()
       await checkForNewFood()
+      // Both halves have had their look over the shift; from here the shorter
+      // window is enough, and cheaper.
+      isFirstPollRef.current = false
     }
 
     // Poll every 30 seconds

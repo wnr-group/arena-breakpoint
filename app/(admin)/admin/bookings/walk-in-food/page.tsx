@@ -31,6 +31,7 @@ import { formatDateForDB, handleDobInput, isValidDob, DOB_ERROR } from "@/lib/ut
 import { allFilled, isPlausibleEmail } from "@/lib/utils/forms";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { useNotifications } from "@/lib/contexts/NotificationContext";
+import { bookingNotificationId } from "@/lib/hooks/useAdminNotificationPolling";
 
 export default function WalkInFoodOnlyPage() {
   const router = useRouter();
@@ -227,8 +228,11 @@ export default function WalkInFoodOnlyPage() {
 
       if (result.success) {
         // One notification for the confirmed order: it toasts, chimes and lands
-        // in the bell. The poller skips walk-ins so this is not repeated.
+        // in the bell straight away. The poller reads walk-ins too now, so the id
+        // is shared with it - its sweep of this booking finds this entry already
+        // there instead of announcing the order a second time.
         addNotification({
+          id: bookingNotificationId(result.bookingId || ""),
           type: "food",
           title: "Walk-In Food Order Confirmed",
           message: `${customerName.trim()} • #${result.bookingNumber} • ₹${Math.round(totalAmount).toLocaleString("en-IN")}`,

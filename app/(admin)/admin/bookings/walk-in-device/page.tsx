@@ -52,6 +52,7 @@ import {
 } from "@/lib/utils/timeSlots";
 import { useHappyHours } from "@/lib/hooks/useHappyHours";
 import { useNotifications } from "@/lib/contexts/NotificationContext";
+import { bookingNotificationId } from "@/lib/hooks/useAdminNotificationPolling";
 import { extraPlayersCharge, perExtraPlayerCharge } from "@/lib/payments/money";
 
 export default function WalkInBookingPage() {
@@ -266,6 +267,19 @@ export default function WalkInBookingPage() {
       toast.success("Walk-in created", {
         description: `${result.bookingNumber} is waiting for check-in. Check the customer in when they sit down.`
       });
+      // This path announced nothing but a toast on the desk that typed it, so a
+      // walk-in never reached the bell, never reached a second screen, and was
+      // gone on reload. The id matches the poller's, so its own sweep of the same
+      // booking lands on this entry rather than adding a second one.
+      // A session is billed on actual time, so there is no total to quote yet.
+      addNotification({
+        id: bookingNotificationId(result.bookingId || ""),
+        type: "booking",
+        title: "New Walk-In Booking",
+        message: `${customerName.trim()} • #${result.bookingNumber} • ${selectedDeviceType.display_name} • awaiting check-in`,
+        bookingId: result.bookingId || "",
+        bookingNumber: result.bookingNumber || ""
+      });
       router.push("/admin/bookings");
     } else {
       toast.error("Could not create the walk-in", { description: result.error });
@@ -357,6 +371,7 @@ export default function WalkInBookingPage() {
       // An advance booking is always for later, so it waits for check-in like any
       // other reservation - there is no "already checked in" case here.
       addNotification({
+        id: bookingNotificationId(result.bookingId || ""),
         type: "booking",
         title: "Advance Booking Confirmed",
         message: `${customerName.trim()} • #${result.bookingNumber} • ₹${Math.round(total).toLocaleString("en-IN")}`,
