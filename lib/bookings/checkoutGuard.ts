@@ -47,9 +47,23 @@ export function decideCheckout({
     };
   }
 
-  const required = hasDeviceSlots ? "checked_in" : "confirmed";
+  /**
+   * A device booking has to have been checked in; a food-only order can be
+   * settled from either state.
+   *
+   * `confirmed` alone used to be the rule for food-only, which trapped the
+   * order the moment anybody pressed Check In: nothing stops staff doing that on
+   * a food row, the status moved to `checked_in`, and from there it matched
+   * neither branch - so the order could not be checked out and could not be
+   * closed, with the message claiming a checked-in booking cannot be checked
+   * out. There is no session to have ended when there is no station, so both
+   * states are perfectly billable.
+   */
+  const acceptable: string[] = hasDeviceSlots
+    ? ["checked_in"]
+    : ["confirmed", "checked_in"];
 
-  if (status !== required) {
+  if (!acceptable.includes(status)) {
     return {
       ok: false,
       error:
@@ -59,5 +73,5 @@ export function decideCheckout({
     };
   }
 
-  return { ok: true, from: required };
+  return { ok: true, from: status as "checked_in" | "confirmed" };
 }

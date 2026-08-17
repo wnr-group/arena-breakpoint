@@ -4,60 +4,52 @@ import React, { useEffect, useState, Suspense } from 'react'
 import { Percent, Gamepad2, Ticket, Wallet, Monitor, AlertTriangle, History, AlertCircle, Phone, Loader2 } from 'lucide-react'
 import { BreakpointLoader } from '@/components/shared/BreakpointLoader'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { getMyActiveSubscriptionByPhone } from './action'
+import { useRouter } from 'next/navigation'
+import { getMySubscription } from './action'
+import { CustomerAuthGate } from '@/components/auth/CustomerAuthGate'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
-function MySubscriptionPageContent() {
+/**
+ * Rendered only once CustomerAuthGate has a verified session, so `phone` is the
+ * caller's own number rather than whatever arrived in the URL.
+ */
+function MySubscriptionPageContent({ phone }: { phone: string }) {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const phoneFromUrl = searchParams.get('phone')
 
-  const [phone, setPhone] = useState('')
   const [subscription, setSubscription] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [hasSearched, setHasSearched] = useState(false)
   const [isRenewing, setIsRenewing] = useState(false)
   const [isBooking, setIsBooking] = useState(false)
   const [isBrowsingPlans, setIsBrowsingPlans] = useState(false)
   const [isBrowsingFood, setIsBrowsingFood] = useState(false)
 
-  const fetchSubscription = async (targetPhone: string) => {
-    if (!targetPhone.trim() || targetPhone.length < 10) {
-      toast.error('Invalid Phone', { description: 'Please enter a valid 10-digit mobile number.' })
-      return
-    }
-
-    try {
-      setIsLoading(true)
-      setHasSearched(true)
-      const response = await getMyActiveSubscriptionByPhone(targetPhone)
-      if (response.success && response.data) {
-        setSubscription(response.data)
-      } else {
-        setSubscription(null)
-      }
-    } catch (error) {
-      console.error('Error fetching subscription:', error)
-      setSubscription(null)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   useEffect(() => {
-    const initialPhone = phoneFromUrl || (typeof window !== 'undefined' ? localStorage.getItem('customerPhone') : null)
-    if (initialPhone) {
-      setPhone(initialPhone)
-      fetchSubscription(initialPhone)
-    } else {
-      setIsLoading(false)
+    let cancelled = false
+
+    const fetchSubscription = async () => {
+      try {
+        setIsLoading(true)
+        // No argument: the server resolves the customer from the session.
+        const response = await getMySubscription()
+        if (cancelled) return
+        setSubscription(response.success && response.data ? response.data : null)
+      } catch (error) {
+        console.error('Error fetching subscription:', error)
+        if (!cancelled) setSubscription(null)
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
     }
-  }, [phoneFromUrl])
+
+    fetchSubscription()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   // Helper to format dates like "June 07"
   const formatDate = (dateString: string) => {
@@ -148,88 +140,29 @@ function MySubscriptionPageContent() {
           </div>
         </div>
 
-        {/* Search screen if not subscribed */}
+        {/* The gate above has already verified the caller, so there is no phone
+            search here any more - this is simply "you have no plan yet". */}
         {!subscription ? (
           <div className="space-y-6 max-w-xl mx-auto">
-            {/* Search Card */}
-            <Card className="bg-[#111] border border-zinc-900 p-6 shadow-xl rounded-2xl glow-box-hover">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="search-phone" className="text-xs font-black text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Phone className="h-3 w-3 text-zinc-600" /> MOBILE NUMBER
-                  </Label>
-                  {/* Stacked on mobile: sharing the row with the button left
-                      the monospaced field too narrow to show its placeholder at
-                      all once the +91 prefix took its left padding. */}
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <div className="relative flex-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-400 border-r border-zinc-900 pr-2">+91</span>
-                      <Input
-                        id="search-phone"
-                        type="tel"
-                        maxLength={10}
-                        placeholder="Enter 10-digit number"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                        onKeyDown={(e) => e.key === "Enter" && fetchSubscription(phone)}
-                        className="bg-zinc-950 border-zinc-900 h-12 pl-12 text-sm text-white focus-visible:ring-primary font-mono tracking-wide"
-                      />
-                    </div>
-                    <Button
-                      onClick={() => fetchSubscription(phone)}
-                      disabled={isLoading}
-                      className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-black font-black uppercase text-sm h-12 px-6 rounded-xl"
-                    >
-                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "SEARCH"}
-                    </Button>
-                  </div>
-                </div>
+            <div className="bg-[#111111] border border-neutral-800 rounded-md p-10 text-center flex flex-col items-center glow-box-hover animate-in fade-in duration-300">
+              <div className="w-16 h-16 bg-neutral-900 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle className="w-8 h-8 text-neutral-500" />
               </div>
-            </Card>
-
-            {hasSearched ? (
-              /* EMPTY STATE: If searched and user has no active subscription */
-              <div className="bg-[#111111] border border-neutral-800 rounded-md p-10 text-center flex flex-col items-center glow-box-hover animate-in fade-in duration-300">
-                <div className="w-16 h-16 bg-neutral-900 rounded-full flex items-center justify-center mb-4">
-                  <AlertCircle className="w-8 h-8 text-neutral-500" />
-                </div>
-                <h3 className="text-xl font-bold text-white mb-2">No Active Subscription</h3>
-                <p className="text-neutral-400 text-sm max-w-md mb-6">
-                  No active membership found for +91 {phone}. Subscribe to unlock elite benefits and arena discounts.
-                </p>
-                <button
-                  onClick={() => {
-                    setIsBrowsingPlans(true)
-                    router.push('/subscription')
-                  }}
-                  disabled={isBrowsingPlans}
-                  className="bg-primary hover:bg-primary-hover text-black font-black uppercase py-3 px-8 rounded-lg transition-all text-sm flex items-center justify-center gap-2"
-                >
-                  {isBrowsingPlans ? <Loader2 className="w-4 h-4 animate-spin text-black" /> : "Browse Plans"}
-                </button>
-              </div>
-            ) : (
-              /* WELCOME STATE: Before searching */
-              <div className="bg-[#111111] border border-neutral-800 rounded-md p-10 text-center flex flex-col items-center glow-box-hover animate-in fade-in duration-300">
-                <div className="w-16 h-16 bg-neutral-900 rounded-full flex items-center justify-center mb-4">
-                  <Gamepad2 className="w-8 h-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-bold text-white mb-2">View Your Benefits</h3>
-                <p className="text-neutral-400 text-sm max-w-md mb-6">
-                  Enter your mobile number above to retrieve your active membership details and access elite arena rewards.
-                </p>
-                <button
-                  onClick={() => {
-                    setIsBrowsingPlans(true)
-                    router.push('/subscription')
-                  }}
-                  disabled={isBrowsingPlans}
-                  className="bg-primary hover:bg-primary-hover text-black font-black uppercase py-3 px-8 rounded-lg transition-all text-sm flex items-center justify-center gap-2"
-                >
-                  {isBrowsingPlans ? <Loader2 className="w-4 h-4 animate-spin text-black" /> : "Browse Plans"}
-                </button>
-              </div>
-            )}
+              <h3 className="text-xl font-bold text-white mb-2">No Active Subscription</h3>
+              <p className="text-neutral-400 text-sm max-w-md mb-6">
+                No active membership found for +91 {phone}. Subscribe to unlock elite benefits and arena discounts.
+              </p>
+              <button
+                onClick={() => {
+                  setIsBrowsingPlans(true)
+                  router.push('/subscription')
+                }}
+                disabled={isBrowsingPlans}
+                className="bg-primary hover:bg-primary-hover text-black font-black uppercase py-3 px-8 rounded-lg transition-all text-sm flex items-center justify-center gap-2"
+              >
+                {isBrowsingPlans ? <Loader2 className="w-4 h-4 animate-spin text-black" /> : "Browse Plans"}
+              </button>
+            </div>
           </div>
         ) : (
           /* Centered Standalone Active Subscription Card Layout */
@@ -330,7 +263,14 @@ export default function MySubscriptionPage() {
         </div>
       }
     >
-      <MySubscriptionPageContent />
+      <main className="min-h-screen bg-[#0d0a14] py-12 px-4">
+        <CustomerAuthGate
+          title="View Your Arena Pass"
+          description="Verify your number to see your subscription."
+        >
+          {(phone) => <MySubscriptionPageContent phone={phone} />}
+        </CustomerAuthGate>
+      </main>
     </Suspense>
   );
 }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { signOutAdmin } from "@/lib/auth/admin-signout";
 import { NotificationBell } from "./NotificationBell";
 import { SoundSettings } from "./SoundSettings";
 import { getUserRole, type UserRole } from "@/lib/auth/roles";
@@ -42,7 +43,7 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
 
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
+      const { error } = await signOutAdmin();
 
       if (error) {
         toast.error('Logout Failed', {

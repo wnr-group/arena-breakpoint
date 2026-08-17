@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { annotateRemovableFoodItems } from "@/lib/bookings/foodItems";
 import { decideCheckout, type CheckoutDecision } from "@/lib/bookings/checkoutGuard";
 import { extraPlayersCharge, perExtraPlayerCharge } from "@/lib/payments/money";
+import { settlementStatus } from "@/lib/payments/paymentStatus";
 import { roundToTwo } from "@/lib/currency";
 import { resolveHappyHour } from "@/lib/payments/happyHour";
 import { formatDbTime } from "@/lib/utils/timeSlots";
@@ -21,6 +22,11 @@ import {
 import { arenaDate, arenaToday } from "@/lib/utils/dates";
 import { needsAttention } from "@/lib/bookings/attention";
 import { requireStaff } from "@/lib/auth/require-admin";
+import {
+  countAvailableDevicesForRange,
+  timeToMinutes
+} from "@/lib/payments/availability";
+import { getOccupancyByDevice } from "@/lib/devices/occupancy";
 
 /** Rupee tolerance for float comparisons on money. */
 const MONEY_EPSILON = 0.01
@@ -741,15 +747,8 @@ export async function addFoodToBooking(
 
     if (lineItemsError) throw lineItemsError;
 
-    // Determine payment status based on amount paid vs new total
-    let newPaymentStatus: 'pending' | 'partial' | 'paid';
-    if (amountPaid >= newTotal) {
-      newPaymentStatus = 'paid'; // Already fully paid
-    } else if (amountPaid > 0) {
-      newPaymentStatus = 'partial'; // Partially paid (device paid, food unpaid)
-    } else {
-      newPaymentStatus = 'pending'; // Nothing paid yet
-    }
+    // Device paid, food unpaid, is exactly what `partial` is for.
+    const newPaymentStatus = settlementStatus({ amountPaid, total: newTotal });
 
     // Only the payment status is this function's to set - the money columns belong
     // to the trigger, and writing them here is what double-counted the food.
@@ -903,14 +902,7 @@ export async function removeFoodItemFromBooking(bookingId: string, foodItemId: s
 
     // Same rule as addFoodToBooking, so removing the last unpaid item settles
     // a booking that was only "partial" because of it.
-    let newPaymentStatus: "pending" | "partial" | "paid";
-    if (amountPaid >= newTotal) {
-      newPaymentStatus = "paid";
-    } else if (amountPaid > 0) {
-      newPaymentStatus = "partial";
-    } else {
-      newPaymentStatus = "pending";
-    }
+    const newPaymentStatus = settlementStatus({ amountPaid, total: newTotal });
 
     const { error: updateError } = await supabaseAdmin
       .from("bookings")
@@ -1182,6 +1174,180 @@ export async function createWalkInBooking(payload: {
 // ================================================
 // WALK-IN SESSIONS (billed on actual playing time)
 // ================================================
+
+/**
+ * The customer behind a phone number, for the walk-in desk.
+ *
+ * The desk used to call the customer-facing `checkCustomerExists`, which now
+ * sits behind `requireVerifiedPhone` - proof that *this browser* owns the
+ * number, established by an OTP the customer types on their own phone. Staff
+ * have no such proof for somebody standing at the counter, so that call came
+ * back `exists: false` for everyone and every returning customer was greeted as
+ * new and asked to register again.
+ *
+ * The booking itself was never filed wrong: `get_or_create_customer` matches on
+ * phone, so the row landed against the existing customer regardless. That is
+ * exactly why this was easy to miss - the same customer kept accumulating
+ * bookings correctly while being told, every visit, that they were new.
+ *
+ * Staff authorisation is the right gate for a counter lookup, so this asks for
+ * that instead of for the customer's OTP.
+ */
+export async function lookupWalkInCustomer(phone: string) {
+  await requireStaff();
+
+  try {
+    // Customers are stored as the bare ten digits, so a pasted "+91 " or spaced
+    // number would otherwise miss somebody plainly standing there.
+    const normalised = String(phone || "").replace(/\D/g, "").slice(-10);
+
+    if (normalised.length !== 10) {
+      return {
+        success: false,
+        error: "Enter a valid 10-digit mobile number.",
+        exists: false,
+        customer: null,
+        subscription: null
+      };
+    }
+
+    const { data: customer, error } = await supabaseAdmin
+      .from("customers")
+      .select("id, name, phone, email, date_of_birth, active_subscription_id")
+      .eq("phone", normalised)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!customer) {
+      return { success: true, exists: false, customer: null, subscription: null };
+    }
+
+    // Same shape the walk-in screens already read off `checkCustomerExists`, so
+    // they can swap to this without changing how they render a membership.
+    let subscription = null;
+
+    if (customer.active_subscription_id) {
+      const { data: sub } = await supabaseAdmin
+        .from("subscriptions")
+        .select("id, end_date, subscription_plan:subscription_plans(id, name, discount_percentage)")
+        .eq("id", customer.active_subscription_id)
+        .eq("status", "active")
+        .gte("end_date", arenaToday())
+        .maybeSingle();
+
+      const plan = (sub as any)?.subscription_plan;
+
+      if (sub && plan) {
+        subscription = {
+          id: sub.id,
+          plan_id: plan.id,
+          plan_name: plan.name,
+          discount_percentage: Number(plan.discount_percentage || 0),
+          end_date: sub.end_date
+        };
+      }
+    }
+
+    return { success: true, exists: true, customer, subscription };
+  } catch (err: any) {
+    console.error("Walk-in customer lookup error:", err);
+    return {
+      success: false,
+      error: err.message,
+      exists: false,
+      customer: null,
+      subscription: null
+    };
+  }
+}
+
+export interface WalkInDeviceAvailability {
+  /** Stations of this type on the floor and not in maintenance. */
+  total: number;
+  /** Free for a session starting now, by the same rule check-in will apply. */
+  free: number;
+  /** Who is sitting at the busy ones, so the warning can name them. */
+  inUse: Array<{
+    stationNumber: string | null;
+    customerName: string | null;
+    bookingNumber: string | null;
+    since: string | null;
+  }>;
+}
+
+/**
+ * Whether this device type has a station free right now.
+ *
+ * Creating a walk-in deliberately does not reserve anything (see
+ * `createWalkInSession`), so this cannot and does not block the booking - a
+ * customer can perfectly well be booked in to wait for a station. What it does
+ * is let the desk say so at the counter instead of discovering it at check-in,
+ * with the customer already sitting there expecting to play.
+ *
+ * Counted by `countAvailableDevicesForRange`, which is the read-only mirror of
+ * the `assign_device_slot` claim that check-in actually runs - so the warning
+ * agrees with what will happen rather than approximating it. The window is the
+ * same provisional block check-in would ask for, which means a station booked in
+ * advance for later this evening is correctly counted as not free.
+ */
+export async function getWalkInDeviceAvailability(deviceTypeId: string): Promise<{
+  success: boolean;
+  error?: string;
+  availability: WalkInDeviceAvailability | null;
+}> {
+  await requireStaff();
+
+  try {
+    if (!deviceTypeId) {
+      return { success: false, error: "No device type given.", availability: null };
+    }
+
+    const now = new Date();
+    const slotDate = toSlotDate(now);
+    const startMinutes = timeToMinutes(toClockTime(now));
+
+    const free = await countAvailableDevicesForRange(deviceTypeId, slotDate, {
+      start: startMinutes,
+      end: startMinutes + PROVISIONAL_SESSION_HOURS * 60
+    });
+
+    const { data: devices, error: devicesError } = await supabaseAdmin
+      .from("devices")
+      .select("id, station_number")
+      .eq("device_type_id", deviceTypeId)
+      .eq("status", "available");
+
+    if (devicesError) throw devicesError;
+
+    const stations = (devices || []) as Array<{ id: string; station_number: string | null }>;
+    const occupancy = await getOccupancyByDevice();
+
+    const inUse: WalkInDeviceAvailability["inUse"] = [];
+
+    for (const station of stations) {
+      const live = occupancy.get(station.id);
+      if (!live) continue;
+
+      inUse.push({
+        stationNumber: station.station_number ?? null,
+        customerName: live.customerName,
+        bookingNumber: live.bookingNumber,
+        since: live.since
+      });
+    }
+
+    return {
+      success: true,
+      availability: { total: stations.length, free, inUse }
+    };
+  } catch (err: any) {
+    console.error("Walk-in availability error:", err);
+    // The desk should not be blocked from booking because this read failed, so
+    // the caller treats a failure as "unknown" and lets the booking through.
+    return { success: false, error: err.message, availability: null };
+  }
+}
 
 /**
  * Books a customer in at the counter without starting their clock.

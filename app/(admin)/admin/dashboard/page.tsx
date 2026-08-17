@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
 import { formatDbTime } from "@/lib/utils/timeSlots";
+import { formatClockTime12h } from "@/lib/utils/dates";
 import {
   getDashboardStats,
   getRecentBookings,
@@ -105,12 +106,7 @@ export default function AdminDashboardPage() {
     toast.success("Refreshed", { description: "Dashboard data reloaded" });
   };
 
-  const getCurrentTime = () => {
-    return new Date().toLocaleTimeString('en-IN', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const getCurrentTime = () => formatClockTime12h(new Date());
 
   const handleRevenueClick = async () => {
     const result = await getTodaysRevenueDetails();

@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { getVerifiedCustomerPhone } from "@/lib/auth/customer-session";
 
 export interface MenuItemFilters {
   category?: string;
@@ -17,7 +18,10 @@ export async function getMenuItems(filters?: MenuItemFilters) {
       .order("name", { ascending: true });
 
     if (filters?.availableOnly) {
-      query = query.eq("status", "available");
+      // Available means orderable, which is status *and* stock. The trigger on
+      // menu_items keeps the two in step; asking for both here means a database
+      // that has not had it applied still cannot offer sold-out food.
+      query = query.eq("status", "available").gt("quantity", 0);
     }
 
     if (filters?.category && filters.category !== "all") {
@@ -122,12 +126,26 @@ export async function addFoodOrderToBooking(
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from("bookings")
       .select(
-        "id, food_subtotal, device_subtotal, total_amount, amount_paid, subscription_discount, promo_discount, happy_hour_discount"
+        "id, customer_phone, food_subtotal, device_subtotal, total_amount, amount_paid, subscription_discount, promo_discount, happy_hour_discount"
       )
       .eq("id", bookingId)
       .single();
 
     if (bookingError) throw bookingError;
+
+    // The booking id arrives from client state, so it names a booking but says
+    // nothing about who is asking. This food goes on someone's tab to be paid at
+    // the counter, so an unverified caller could otherwise run up a stranger's
+    // bill using an id they happened to hold.
+    const verifiedPhone = await getVerifiedCustomerPhone();
+
+    if (!verifiedPhone || verifiedPhone !== booking.customer_phone) {
+      return {
+        success: false,
+        error: "Please verify your mobile number to add food to this booking.",
+        verificationRequired: true,
+      };
+    }
 
     // Create food order line items
     const foodItems = items.map((item) => ({

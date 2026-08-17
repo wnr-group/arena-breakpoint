@@ -29,6 +29,7 @@ import { SessionTimesCell } from "@/components/admin/bookings/SessionTimeline";
 import {
   arenaDate,
   arenaToday,
+  formatClockTime12h,
   formatLocalDate,
   parseLocalDate,
   startOfLocalDay,
@@ -326,7 +327,7 @@ export default function AdminBookingsPage() {
           toast.success("Checked in — playing now", {
             description:
               `Station ${result.stationNumber} · billing starts ` +
-              `${new Date(result.checkedInAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+              `${formatClockTime12h(result.checkedInAt!)}`
           });
           loadBookings();
           loadStats();
@@ -349,7 +350,7 @@ export default function AdminBookingsPage() {
           `⚠️ Early Check-In Warning\n\n` +
           `You are checking in ${Math.round(minutesUntilStart)} minutes before the scheduled start time.\n\n` +
           `Scheduled time: ${formatDbTime(deviceSlot.slot_start_time)}\n` +
-          `Current time: ${now.toLocaleTimeString()}\n\n` +
+          `Current time: ${formatClockTime12h(now)}\n\n` +
           `Do you want to proceed with early check-in?`
         );
         if (!confirmed) return;
@@ -401,7 +402,7 @@ export default function AdminBookingsPage() {
           `⚠️ Early Check-Out Warning\n\n` +
           `You are checking out ${Math.round(minutesUntilEnd)} minutes before the scheduled end time.\n\n` +
           `Scheduled end time: ${formatDbTime(deviceSlot.slot_end_time)}\n` +
-          `Current time: ${now.toLocaleTimeString()}\n\n` +
+          `Current time: ${formatClockTime12h(now)}\n\n` +
           `Do you want to proceed with early check-out?`
         );
         if (!confirmed) return;
@@ -1079,7 +1080,7 @@ export default function AdminBookingsPage() {
                                       is the only row that ever shows its creation time - and
                                       it says so rather than passing it off as a start time. */}
                                   {firstBooking.billed_on_actual_time ? <SessionTimesCell booking={firstBooking} /> :
-                                    new Date(firstBooking.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                                    formatClockTime12h(firstBooking.created_at)}
                                 </p>
                               </>
                             )

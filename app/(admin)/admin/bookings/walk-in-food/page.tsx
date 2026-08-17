@@ -25,8 +25,7 @@ import {
   ChevronUp
 } from "lucide-react";
 import { toast } from "sonner";
-import { checkCustomerExists } from "@/app/(customer)/booking/actions";
-import { createFoodOnlyWalkInBooking } from "../actions";
+import { createFoodOnlyWalkInBooking, lookupWalkInCustomer } from "../actions";
 import { formatDateForDB, handleDobInput, isValidDob, DOB_ERROR } from "@/lib/utils/dates";
 import { allFilled, isPlausibleEmail } from "@/lib/utils/forms";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
@@ -136,7 +135,7 @@ export default function WalkInFoodOnlyPage() {
     }
 
     setCheckingProfile(true);
-    const result = await checkCustomerExists(customerPhone);
+    const result = await lookupWalkInCustomer(customerPhone);
 
     if (result.exists && result.customer) {
       // Customer exists

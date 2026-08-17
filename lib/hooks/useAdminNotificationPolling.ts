@@ -3,6 +3,12 @@
 import { useEffect, useRef } from 'react'
 import { useNotifications } from '@/lib/contexts/NotificationContext'
 import { supabase } from '@/lib/supabase/client'
+import {
+  ENDING_SOON_MINUTES,
+  STARTING_SOON_MINUTES,
+  formatGap,
+  sessionTimeStatus,
+} from '@/lib/bookings/attention'
 
 /**
  * How close to its booking a food row has to be to have arrived with the order.
@@ -184,11 +190,25 @@ export function useAdminNotificationPolling() {
             'id, booking_number, customer_name, total_amount, device_subtotal, food_subtotal, created_at, locked_by, status'
           )
           .gt('created_at', windowStart())
-          // A hold is a station reserved while somebody types their card in, not
-          // an order. It becomes one on payment, when status leaves 'locked'.
-          .neq('status', 'locked')
-          // Walk-ins are included: they are bookings the desk needs announced on
-          // every screen, not just the one that typed them in.
+          /**
+           * Only rows that are actually an order.
+           *
+           * This used to exclude 'locked' and take everything else, on the
+           * grounds that a hold becomes an order on payment. But a hold that is
+           * *abandoned* does not stay locked either - `release_slot_hold` moves
+           * it to 'expired', and `expire_locked_bookings` sweeps the rest the
+           * same way - so a customer who opened the slot picker and backed out
+           * left a row that passed the filter with no customer, no money and no
+           * `locked_by`. `isWalkIn` reads that null as a walk-in, and the desk
+           * was told "New Walk-In Booking - awaiting check-in" for somebody who
+           * never booked anything.
+           *
+           * Naming the states that mean "this is a real order" says what is
+           * meant, and cannot be widened by a new status being added elsewhere.
+           * Walk-ins are still included: they are bookings the desk needs
+           * announced on every screen, not just the one that typed them in.
+           */
+          .in('status', ['confirmed', 'checked_in', 'completed'])
           .order('created_at', { ascending: false })
 
         if (!error && newBookings && newBookings.length > 0) {
@@ -291,11 +311,155 @@ export function useAdminNotificationPolling() {
       }
     }
 
+    /**
+     * Bookings about to start, sessions running out of time, and sessions
+     * already past it.
+     *
+     * Unlike the other two sweeps, nothing is inserted or updated when a booking
+     * crosses one of these lines - it simply becomes true, quietly, while the
+     * row sits there unchanged. So there is no `created_at` to poll on and no
+     * cursor to keep: the only way to know is to look at what is booked and do
+     * the arithmetic, which is what `sessionTimeStatus` is for.
+     *
+     * Each phase is announced once. The ids are stable per booking and per
+     * phase, so a booking sitting five minutes from its start does not raise the
+     * same warning at every sweep, and the same booking still gets its own
+     * separate notifications when it later nears its end and when it runs over.
+     */
+    async function checkForSessionTimeLimits() {
+      try {
+        const { data, error } = await supabase
+          .from('bookings')
+          .select(
+            `id, booking_number, customer_name, status, checked_in_at,
+             billed_on_actual_time,
+             booking_device_slots(slot_date, slot_start_time, slot_end_time)`
+          )
+          // `confirmed` covers the ones due to start; `checked_in` the ones
+          // being played. A walk-in session sits in `confirmed` too but has no
+          // slot until it checks in, so it falls out of the arithmetic itself.
+          .in('status', ['confirmed', 'checked_in'])
+
+        if (error || !data) return
+
+        for (const booking of data as any[]) {
+          const timing = sessionTimeStatus(booking)
+          if (!timing) continue
+
+          const who = `${booking.customer_name || 'Customer'} • #${
+            booking.booking_number || 'Unknown'
+          }`
+
+          if (timing.kind === 'starting_soon') {
+            addNotification({
+              id: `booking:${booking.id}:starting-soon`,
+              type: 'booking',
+              title: 'Session Starting Soon',
+              message: `${who} • starts ${timing.startsAtClock} • in ${formatGap(
+                timing.minutesUntilStart
+              )}`,
+              bookingId: booking.id,
+              bookingNumber: booking.booking_number,
+              // Stamped when the booking entered the warning window, so one that
+              // is halfway through it fills the bell without chiming again.
+              timestamp: new Date(
+                Date.now() - (STARTING_SOON_MINUTES - timing.minutesUntilStart) * 60_000
+              ),
+            })
+          } else if (timing.kind === 'ending_soon') {
+            addNotification({
+              id: `booking:${booking.id}:ending-soon`,
+              type: 'booking',
+              title: 'Session Ending Soon',
+              message: `${who} • ends ${timing.endsAtClock} • ${formatGap(
+                timing.minutesLeft
+              )} left`,
+              bookingId: booking.id,
+              bookingNumber: booking.booking_number,
+              /**
+               * Stamped when the session entered the warning window rather than
+               * when this sweep noticed it. A desk opening the panel partway
+               * through gets the entry in the bell without a chime for something
+               * it is already halfway through; a session that has just crossed
+               * the line still interrupts.
+               */
+              timestamp: new Date(
+                Date.now() - (ENDING_SOON_MINUTES - timing.minutesLeft) * 60_000
+              ),
+            })
+          } else if (timing.kind === 'overrunning') {
+            addNotification({
+              id: `booking:${booking.id}:overrun`,
+              type: 'booking',
+              title: 'Session Over Time',
+              message: `${who} • ended ${timing.endsAtClock} • ${formatGap(
+                timing.minutesOver
+              )} over`,
+              bookingId: booking.id,
+              bookingNumber: booking.booking_number,
+              // Likewise: the moment it ran over, so an hour-old overrun fills
+              // the bell quietly instead of chiming on every fresh page load.
+              timestamp: new Date(Date.now() - timing.minutesOver * 60_000),
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Error checking session time limits:', error)
+      }
+    }
+
+    /**
+     * Menu items that have run out.
+     *
+     * The desk finds out an item is gone when a customer asks for it and the
+     * kitchen says no. The count is sitting in the database the whole time, so
+     * this says it first - and it is the one notification here that is not about
+     * a booking at all, which is why it carries a link to the menu instead.
+     *
+     * Keyed on when the row last changed rather than on the item alone. `status`
+     * is set to out_of_stock by the trigger the moment the count reaches zero, so
+     * `updated_at` is when it ran out - which makes the id unique per emptying.
+     * An item that is restocked and sells out again the same afternoon is a
+     * second thing worth hearing about, and keying on the item alone would have
+     * swallowed it. The stamp doubles as the age the toast is judged on: one that
+     * ran out an hour ago fills the bell quietly, one that just went interrupts.
+     */
+    async function checkForOutOfStock() {
+      try {
+        const { data, error } = await supabase
+          .from('menu_items')
+          .select('id, name, quantity, status, updated_at')
+          .lte('quantity', 0)
+          // Not `hidden`: an item deliberately off the menu is not news, however
+          // little of it there is in the fridge.
+          .eq('status', 'out_of_stock')
+
+        if (error || !data) return
+
+        for (const item of data as any[]) {
+          const ranOutAt = item.updated_at ? new Date(item.updated_at) : new Date()
+
+          addNotification({
+            id: `menu:${item.id}:out-of-stock:${item.updated_at ?? ''}`,
+            type: 'stock',
+            title: 'Item Out of Stock',
+            message: `${item.name} has sold out and is off the customer menu. Restock it to put it back.`,
+            href: '/admin/food',
+            timestamp: Number.isNaN(ranOutAt.getTime()) ? new Date() : ranOutAt,
+          })
+        }
+      } catch (error) {
+        console.error('Error checking menu stock:', error)
+      }
+    }
+
     // Bookings first and awaited, so a new order is always announced before any
     // food notification that follows it
     async function poll() {
       await checkForNewBookings()
       await checkForNewFood()
+      await checkForSessionTimeLimits()
+      await checkForOutOfStock()
       // Both halves have had their look over the shift; from here the shorter
       // window is enough, and cheaper.
       isFirstPollRef.current = false

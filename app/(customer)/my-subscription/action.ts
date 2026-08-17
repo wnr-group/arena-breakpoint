@@ -1,45 +1,91 @@
 'use server'
 
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { arenaToday } from "@/lib/utils/dates";
+import { arenaToday, daysBetweenDates } from "@/lib/utils/dates";
+import { getVerifiedCustomerPhone } from '@/lib/auth/customer-session'
 
-export async function getMyActiveSubscription(customerId: string) {
+export interface ActivePlanSummary {
+  planName: string
+  /** Percent off every booking, which lives on the plan rather than the subscription. */
+  discountPercentage: number
+  /** YYYY-MM-DD, the last day the plan is good for. */
+  endDate: string
+  daysRemaining: number
+}
+
+/**
+ * A one-line summary of the caller's plan, for the header badge and the plans page.
+ *
+ * Kept separate from `getMySubscription()` deliberately. That one joins the whole
+ * subscription row to the whole plan row, which is right for a page that renders
+ * spend and renewal history; this runs on every navigation, because the header
+ * re-checks the session each time, and needs four fields.
+ *
+ * Returns null for "no plan" and for "not signed in" alike - to a badge that
+ * simply does not render, those mean the same thing.
+ */
+export async function getMyActivePlanSummary(): Promise<ActivePlanSummary | null> {
   try {
-    const { data, error } = await supabaseAdmin
+    const phone = await getVerifiedCustomerPhone()
+    if (!phone) return null
+
+    const { data: customer } = await supabaseAdmin
+      .from('customers')
+      .select('active_subscription_id')
+      .eq('phone', phone)
+      .maybeSingle()
+
+    if (!customer?.active_subscription_id) return null
+
+    // Same rules the subscription page applies: active, and not yet run out on
+    // the arena's calendar rather than the server's.
+    const today = arenaToday()
+
+    const { data } = await supabaseAdmin
       .from('subscriptions')
-      .select(
-        `*,
-            plan:subscription_plans(*)`
-      )
-      .eq('customer_id', customerId)
+      .select('end_date, plan:subscription_plans(name, discount_percentage)')
+      .eq('id', customer.active_subscription_id)
       .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
+      .gte('end_date', today)
+      .maybeSingle()
 
-    if (error && error.code === 'PGRST116') {
-      return { success: true, data: null, message: 'No active subscription found.' }
-    }
-
-    if (error) throw new Error(error.message)
+    const plan = (data as any)?.plan
+    if (!data?.end_date || !plan) return null
 
     return {
-      success: true,
-      data: data,
-      message: 'Subscription fetched successfully',
+      planName: plan.name || 'Membership',
+      discountPercentage: Number(plan.discount_percentage || 0),
+      endDate: data.end_date,
+      daysRemaining: Math.max(0, daysBetweenDates(today, data.end_date) ?? 0),
     }
   } catch (error: any) {
-    console.error('Fetch Subscription Error:', error.message)
-    return {
-      success: false,
-      data: null,
-      message: error.message || 'Failed to fetch subscription details',
-    }
+    // A badge is not worth an error screen; the pages that need to explain a
+    // failure use getMySubscription().
+    console.error('Active plan summary error:', error?.message)
+    return null
   }
 }
 
-export async function getMyActiveSubscriptionByPhone(phone: string) {
+/**
+ * The verified caller's own subscription.
+ *
+ * Replaces getMyActiveSubscriptionByPhone(phone), which took the number from a
+ * `?phone=` query parameter - so editing the URL showed anyone else's plan,
+ * spend and renewal date. The number now comes from the session instead.
+ */
+export async function getMySubscription() {
   try {
+    const phone = await getVerifiedCustomerPhone()
+
+    if (!phone) {
+      return {
+        success: false,
+        data: null,
+        verificationRequired: true,
+        message: 'Please verify your mobile number to view your subscription.',
+      }
+    }
+
     // 1. Get customer
     const { data: customer, error: customerError } = await supabaseAdmin
       .from('customers')

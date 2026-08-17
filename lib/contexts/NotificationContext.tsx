@@ -4,13 +4,27 @@ import React, { createContext, useContext, useState, useCallback, useEffect, Rea
 
 export interface Notification {
   id: string
-  type: 'booking' | 'food'
+  /** `stock` is about the menu rather than about any one order. */
+  type: 'booking' | 'food' | 'stock'
   title: string
   message: string
-  bookingId: string
-  bookingNumber: string
+  /** Absent when the event is not about a booking - a menu item running out. */
+  bookingId?: string
+  bookingNumber?: string
+  /**
+   * Where clicking it should go. Defaults to the booking named above, which is
+   * where every notification led back when they were all about bookings.
+   */
+  href?: string
   timestamp: Date
   read: boolean
+}
+
+/** Where a notification takes you when it is clicked. */
+export function notificationHref(notification: Notification): string | null {
+  if (notification.href) return notification.href
+  if (notification.bookingId) return `/admin/bookings?id=${notification.bookingId}`
+  return null
 }
 
 interface NotificationContextType {
@@ -120,13 +134,20 @@ export function mergeNotification(
   // Backstop for callers without one: same booking, same headline, moments
   // apart. A later, genuinely different event on that booking ("Food Added"
   // after "New Booking") carries a different title and still comes through.
+  //
+  // It asks "is this the same booking again?", so it has nothing to say about an
+  // event that is not about a booking at all. Applied to those, two menu items
+  // running out within two minutes of each other would match on a bookingId they
+  // both lack and a title they both share, and only the first would be heard.
   const cutoff = now - DUPLICATE_WINDOW_MS
-  const alreadyAnnounced = prev.some(
-    existing =>
-      existing.bookingId === incoming.bookingId &&
-      existing.title === incoming.title &&
-      existing.timestamp.getTime() >= cutoff
-  )
+  const alreadyAnnounced =
+    incoming.bookingId !== undefined &&
+    prev.some(
+      existing =>
+        existing.bookingId === incoming.bookingId &&
+        existing.title === incoming.title &&
+        existing.timestamp.getTime() >= cutoff
+    )
 
   if (alreadyAnnounced) return prev
 

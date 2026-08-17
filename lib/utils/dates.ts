@@ -398,6 +398,31 @@ export function arenaToday(now: Date = new Date()): string {
   }).format(now);
 }
 
+/**
+ * Whole days from one YYYY-MM-DD to another.
+ *
+ * Both arguments are plain calendar dates - `end_date`, `slot_date`, the result of
+ * `arenaToday()` - so this counts days rather than milliseconds and cannot drift
+ * with the host's zone. Parsed field by field on purpose: `new Date(str)` reads a
+ * bare date as UTC midnight, which lands on the wrong day for anyone reading it
+ * from a different offset.
+ *
+ * Returns null when either side is not a plain calendar date.
+ */
+export function daysBetweenDates(fromYmd: string, toYmd: string): number | null {
+  const parse = (value: string): number | null => {
+    const match = (value || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return null;
+    return Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  };
+
+  const from = parse(fromYmd);
+  const to = parse(toYmd);
+  if (from === null || to === null) return null;
+
+  return Math.round((to - from) / (24 * 60 * 60 * 1000));
+}
+
 /** `arenaToday` shifted by whole days - negative for the past. */
 export function arenaDateOffset(days: number, now: Date = new Date()): string {
   return arenaToday(new Date(now.getTime() + days * 24 * 60 * 60 * 1000));
@@ -434,6 +459,35 @@ export function arenaClockTime(value: Date): string {
     second: '2-digit',
     hourCycle: 'h23',
   }).format(value);
+}
+
+/**
+ * An instant as a clock reading for somebody to read: `06:05 PM`.
+ *
+ * The 24-hour output of `arenaClockTime` above is for comparing and storing -
+ * it lines up with the `time` columns and sorts correctly - and must stay that
+ * way. This is its counterpart for screens, and nothing that compares times
+ * should call it.
+ *
+ * Pinned to `en-IN` and `hour12` rather than left to the viewer's locale. The
+ * previous `toLocaleTimeString([], ...)` calls handed the decision to whatever
+ * the browser was set to, so the same arena showed "18:00" on one machine and
+ * "6:00 pm" on the next. Pinned to the arena's zone for the same reason
+ * `arenaClockTime` is: read off the host clock, this is IST on a laptop in India
+ * and UTC on Vercel.
+ */
+export function formatClockTime12h(value: Date | string | number): string {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: ARENA_TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  })
+    .format(date)
+    .toUpperCase();
 }
 
 /**

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAppSelector } from '@/lib/redux/hooks';
+import { CustomerSessionMenu } from '@/components/customer/layout/CustomerSessionMenu';
 
 const navLinks = [
   { label: "Home", path: "/" },
@@ -115,11 +116,14 @@ export default function Navbar() {
       } ${scrolled ? "bg-[#0a0a0a]/80 backdrop-blur-md py-4 shadow-xl" : "bg-transparent py-6"
       }`}>
 
-      {/* Main Bar */}
-      <div className="flex items-center justify-between px-6 md:px-12">
+      {/* Main Bar
+          Padding is part of the width budget here, not just trim: at 1024 the four
+          groups below only fit once the gutters give some back, so px-12 waits
+          until there is room for it. */}
+      <div className="flex items-center justify-between gap-4 px-6 xl:px-10 2xl:px-12">
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 cursor-pointer group">
+        <Link href="/" className="flex flex-shrink-0 items-center gap-2 xl:gap-3 cursor-pointer group">
           <motion.div
             animate={isFetching ? {
               rotate: 360,
@@ -145,11 +149,13 @@ export default function Navbar() {
               priority
             />
           </motion.div>
-          <span className="text-2xl font-bold text-white tracking-wide uppercase">Break point Arena</span>
+          {/* nowrap because the wrap to "BREAK POINT / ARENA" is what makes the
+              whole bar look broken; it shrinks a step instead. */}
+          <span className="whitespace-nowrap text-2xl lg:text-lg xl:text-xl 2xl:text-2xl font-bold text-white tracking-wide uppercase">Break point Arena</span>
         </Link>
 
         {/* Desktop Links */}
-        <div className="hidden lg:flex items-center gap-10">
+        <div className="hidden lg:flex flex-shrink-0 items-center gap-4 xl:gap-7 2xl:gap-10">
           {navLinks.map((link) => {
             const isActive = pathname === link.path; // Check if active
 
@@ -159,7 +165,7 @@ export default function Navbar() {
                 href={link.path}
                 className="group cursor-pointer relative py-2"
               >
-                <span className={`text-sm font-black transition-colors duration-300 uppercase tracking-widest ${isActive ? "text-white" : "text-gray-300 group-hover:text-white"
+                <span className={`whitespace-nowrap text-xs xl:text-sm font-black transition-colors duration-300 uppercase tracking-wider xl:tracking-widest ${isActive ? "text-white" : "text-gray-300 group-hover:text-white"
                   }`}>
                   {link.label}
                 </span>
@@ -172,10 +178,13 @@ export default function Navbar() {
         </div>
 
         {/* CTA & Mobile Toggle */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-shrink-0 items-center gap-2 xl:gap-4">
+          {/* Renders nothing unless a session is live. */}
+          <CustomerSessionMenu />
+
           <Link
             href="/booking"
-            className="hidden lg:inline-block px-6 py-2.5 border-gradient-animated cursor-pointer font-bold text-xs tracking-widest uppercase hover:bg-[var(--primary)] text-black transition-all duration-300 text-center"
+            className="hidden lg:inline-block whitespace-nowrap px-4 xl:px-6 py-2.5 border-gradient-animated cursor-pointer font-bold text-[11px] xl:text-xs tracking-wider xl:tracking-widest uppercase hover:bg-[var(--primary)] text-black transition-all duration-300 text-center"
           >
             Book Slot
           </Link>
@@ -237,6 +246,11 @@ export default function Navbar() {
               >
                 Book Slot
               </Link>
+            </motion.div>
+
+            {/* Sign-out, mobile. Self-hides when there is no session. */}
+            <motion.div variants={linkItemVariants} className="w-full max-w-xs mt-6">
+              <CustomerSessionMenu compact />
             </motion.div>
           </motion.div>
         )}

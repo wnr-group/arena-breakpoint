@@ -107,6 +107,19 @@ function FoodMenuPageContent() {
       return;
     }
 
+    /**
+     * Add is not only ever the first one.
+     *
+     * `addToCart` increments a line that is already in the cart, so on a card
+     * showing Add rather than a stepper - which is every card until the cart has
+     * been opened once - pressing it repeatedly walked straight past the stock
+     * the kitchen actually has. The last Coke could be ordered four times.
+     */
+    if (getCartItemQuantity(item.id) >= item.quantity) {
+      toast.error(`Only ${item.quantity} ${item.name} available in stock`);
+      return;
+    }
+
     dispatch(
       addToCart({
         menu_item_id: item.id,
@@ -114,21 +127,26 @@ function FoodMenuPageContent() {
         category: item.category,
         price: Number(item.price),
         image_url: item.image_url,
+        available: Number(item.quantity),
       })
     );
     toast.success(`${item.name} added to cart`);
   };
 
-  const handleIncrementQuantity = (item: any) => {
-    const currentQuantityInCart = getCartItemQuantity(item.id);
-
+  /**
+   * Takes the cap rather than the item, because the two steppers on this page are
+   * looking at different things: the one on a menu card has the live menu row,
+   * and the one in the cart summary has only the cart line and the reading it
+   * was carrying when it was added.
+   */
+  const handleIncrementQuantity = (menuItemId: string, name: string, available: number) => {
     // Check if we can add more based on available stock
-    if (currentQuantityInCart >= item.quantity) {
-      toast.error(`Only ${item.quantity} ${item.name} available in stock`);
+    if (getCartItemQuantity(menuItemId) >= available) {
+      toast.error(`Only ${available} ${name} available in stock`);
       return;
     }
 
-    dispatch(incrementQuantity(item.id));
+    dispatch(incrementQuantity(menuItemId));
   };
 
   const filteredItems = useMemo(() => {
@@ -158,7 +176,7 @@ function FoodMenuPageContent() {
   if (loading) {
     return (
       <div className="h-[60vh] w-full flex items-center justify-center bg-[#0d0a14]">
-        <Loader2 className="h-7 w-7 text-primary animate-spin" />
+        <BreakpointLoader size="md" />
       </div>
     );
   }
@@ -321,7 +339,7 @@ function FoodMenuPageContent() {
                                 </span>
                                 <button
                                   type="button"
-                                  onClick={() => handleIncrementQuantity(item)}
+                                  onClick={() => handleIncrementQuantity(item.id, item.name, item.quantity)}
                                   className="h-6 w-6 flex items-center justify-center rounded-md bg-gradient-primary text-[var(--button-text)] transition-all hover:scale-110"
                                 >
                                   <Plus className="h-3 w-3" />
@@ -375,7 +393,7 @@ function FoodMenuPageContent() {
                         <span className="text-xs font-black text-primary w-5 text-center">{item.quantity}</span>
                         <button
                           type="button"
-                          onClick={() => dispatch(incrementQuantity(item.menu_item_id))}
+                          onClick={() => handleIncrementQuantity(item.menu_item_id, item.name, item.available)}
                           className="p-1 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded"
                         >
                           <Plus className="h-3 w-3" />

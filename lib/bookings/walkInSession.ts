@@ -4,7 +4,7 @@ import {
   perExtraPlayerCharge,
   round2,
 } from '@/lib/payments/money'
-import { arenaClockTime, arenaDate } from '@/lib/utils/dates'
+import { arenaClockTime, arenaDate, formatClockTime12h } from '@/lib/utils/dates'
 
 /**
  * Pricing for a walk-in session, from the time actually played.
@@ -137,8 +137,7 @@ export function sessionTimes(booking: {
 }): SessionTimes | null {
   if (!booking.billed_on_actual_time) return null
 
-  const at = (value: string) =>
-    new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const at = (value: string) => formatClockTime12h(value)
 
   return {
     checkedInAt: booking.checked_in_at ? at(booking.checked_in_at) : null,

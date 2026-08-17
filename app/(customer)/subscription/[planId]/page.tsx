@@ -16,8 +16,15 @@ import { allFilled, isPlausibleEmail } from '@/lib/utils/forms'
 import { getSubscriptionPlanDetails } from '@/app/(admin)/admin/subscription/actions'
 import { activateSubscriptionPlan } from './action'
 import { checkCustomerExists } from '@/app/(customer)/booking/actions'
+import {
+  sendOTPAction,
+  verifyOTPAction,
+  resendOTPAction,
+  checkActiveSessionAction,
+} from '@/app/(customer)/booking/otp-actions'
+import OTPVerification from '@/components/auth/OTPVerification'
 
-type Step = 'phone' | 'details' | 'summary' | 'processing'
+type Step = 'phone' | 'otp' | 'details' | 'summary' | 'processing'
 
 export default function PlanDetailsPage() {
   const router = useRouter()
@@ -79,7 +86,26 @@ export default function PlanDetailsPage() {
 
     setIsSubmitting(true)
 
-    // Check if customer exists
+    // Verify before looking anyone up. checkCustomerExists returns name, email
+    // and date of birth, so it must sit behind proof of the number - and
+    // activating a plan changes what every future booking costs.
+    const session = await checkActiveSessionAction()
+
+    if (!session.isValid || session.phone !== mobileNumber) {
+      setStep('otp')
+      setIsSubmitting(false)
+      return
+    }
+
+    await proceedAfterVerification()
+  }
+
+  const handleOTPVerified = async () => {
+    setIsSubmitting(true)
+    await proceedAfterVerification()
+  }
+
+  const proceedAfterVerification = async () => {
     const result = await checkCustomerExists(mobileNumber)
 
     if (result.exists && result.customer) {
@@ -196,6 +222,24 @@ export default function PlanDetailsPage() {
 
   if (!plan) {
     return null
+  }
+
+  // OTP Step - proves the number before any profile is fetched or plan activated
+  if (step === 'otp') {
+    return (
+      <div className="min-h-screen bg-[#0d0a14] text-white py-12 px-4">
+        <div className="max-w-xl mx-auto">
+          <OTPVerification
+            phone={mobileNumber}
+            onVerified={handleOTPVerified}
+            onBack={() => setStep('phone')}
+            onSendOTP={sendOTPAction}
+            onVerifyOTP={verifyOTPAction}
+            onResendOTP={resendOTPAction}
+          />
+        </div>
+      </div>
+    )
   }
 
   // Phone Step
