@@ -93,21 +93,16 @@ export async function sendOTPViaSMS(
           otp_expiry: 5, // 5 minutes
           template_id: MSG91_TEMPLATE_ID, // Optional
           /**
-           * The approved template is "##OTP## is ... https://breakpointarena.com##var1##" -
-           * a second variable after the OTP, left over from DLT insisting the content
-           * carry the website URL. Supplied empty because there is nothing meaningful
-           * to append to the bare domain.
+           * Only the OTP is passed. The MSG91 template briefly carried a second
+           * variable, "##var1##", tacked on after the website URL that DLT had
+           * insisted the content contain. DLT itself approved the URL as static
+           * text, so that variable existed on MSG91's side and nowhere else - the
+           * outbound message went out with the literal characters "##var1##" in it,
+           * did not match the approved content, and was dropped.
            *
-           * MSG91's own Test DLT panel sent this template without a value for it and
-           * put the literal text "##var1##" in the outbound message, which failed
-           * delivery. Passing it here is the fix for that specific failure.
-           *
-           * UNVERIFIED for this code path. Sends from here return `type: success`
-           * with a request_id and then never arrive and never appear in
-           * SendOTP -> Logs, so there is no delivery record to confirm this against.
-           * That is an open MSG91-side issue, not something this line addresses.
+           * The template has since been corrected to end at the URL. Nothing here
+           * should supply a variable the approved content does not define.
            */
-          var1: '',
         }),
       });
 
