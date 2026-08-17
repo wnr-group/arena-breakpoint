@@ -8,8 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import {
-  DollarSign, TrendingUp, ShoppingBag, Gamepad2,
-  UtensilsCrossed, BarChart3, CalendarDays, Receipt, ShieldAlert
+  IndianRupee, TrendingUp, ShoppingBag, Gamepad2,
+  UtensilsCrossed, BarChart3, CalendarDays, ReceiptIndianRupee, ShieldAlert
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -255,8 +255,10 @@ export default function AdminReportsPage() {
     { id: "profit", label: "Profit & Loss", icon: TrendingUp },
     { id: "food", label: "Food Reports", icon: UtensilsCrossed },
     { id: "device", label: "Device Reports", icon: Gamepad2 },
-    { id: "revenue", label: "Revenue Reports", icon: DollarSign },
-    { id: "expenses", label: "Expenses", icon: Receipt }
+    { id: "revenue", label: "Revenue Reports", icon: IndianRupee },
+    // Receipt draws a dollar sign inside the receipt outline; the rupee variant
+    // is the same outline with ₹ in it.
+    { id: "expenses", label: "Expenses", icon: ReceiptIndianRupee }
   ];
 
   // Show loading while checking access
@@ -532,7 +534,7 @@ export default function AdminReportsPage() {
                       </h3>
                     </div>
                     <div className="p-2 bg-green-500/10 rounded-lg">
-                      <DollarSign className="h-5 w-5 text-green-500" />
+                      <IndianRupee className="h-5 w-5 text-green-500" />
                     </div>
                   </div>
                 </Card>
@@ -652,7 +654,7 @@ export default function AdminReportsPage() {
                       </h3>
                     </div>
                     <div className="p-2 bg-amber-500/10 rounded-lg">
-                      <DollarSign className="h-5 w-5 text-amber-500" />
+                      <IndianRupee className="h-5 w-5 text-amber-500" />
                     </div>
                   </div>
                 </Card>
@@ -682,7 +684,7 @@ export default function AdminReportsPage() {
                       </h3>
                     </div>
                     <div className="p-2 bg-blue-500/10 rounded-lg">
-                      <Receipt className="h-5 w-5 text-blue-500" />
+                      <ReceiptIndianRupee className="h-5 w-5 text-blue-500" />
                     </div>
                   </div>
                 </Card>
@@ -817,7 +819,7 @@ export default function AdminReportsPage() {
                       </h3>
                     </div>
                     <div className="p-2 bg-blue-500/10 rounded-lg">
-                      <DollarSign className="h-5 w-5 text-blue-500" />
+                      <IndianRupee className="h-5 w-5 text-blue-500" />
                     </div>
                   </div>
                 </Card>
@@ -972,39 +974,49 @@ export default function AdminReportsPage() {
                   <p className="text-xs font-black uppercase 0text-zinc-50 mb-2">
                     Payment Status
                   </p>
+                  {/* Every booking in range, not just the ones that paid - the
+                      bars are shares of the whole, so an unpaid booking has to be
+                      in the denominator or "pending" can never be more than 0%. */}
                   <div className="space-y-3">
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs text-data-placeholder">Paid</span>
-                        <span className="text-sm font-black text-green-500">
-                          <CountUp end={revenueData.summary.paidBookings} duration={800} />
+                    {([
+                      { label: "Paid", count: revenueData.summary.paidBookings, bar: "bg-green-500", text: "text-green-500" },
+                      { label: "Partial", count: revenueData.summary.partialBookings || 0, bar: "bg-blue-500", text: "text-blue-500" },
+                      { label: "Pending", count: revenueData.summary.pendingBookings, bar: "bg-amber-500", text: "text-amber-500" }
+                    ] as const)
+                      // A row that is always zero is noise; Paid always shows.
+                      .filter((row) => row.label === "Paid" || row.count > 0)
+                      .map((row) => {
+                        const total = revenueData.summary.paymentStatusTotal || 0;
+                        // Guard the divide: with nothing in range this was NaN%,
+                        // which the browser drops, leaving a bar stuck full width.
+                        const share = total > 0 ? (row.count / total) * 100 : 0;
+
+                        return (
+                          <div key={row.label}>
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-xs text-data-placeholder">{row.label}</span>
+                              <span className={`text-sm font-black ${row.text}`}>
+                                <CountUp end={row.count} duration={800} />
+                              </span>
+                            </div>
+                            <div className="w-full bg-zinc-900 rounded-full h-2">
+                              <div
+                                className={`${row.bar} h-2 rounded-full transition-all duration-[1500ms] ease-out`}
+                                style={{ width: `${share}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                    {revenueData.summary.outstandingAmount > 0 && (
+                      <div className="flex justify-between items-baseline pt-2 border-t border-[#27272a]">
+                        <span className="text-xs text-data-placeholder">Amount Due</span>
+                        <span className="text-sm font-black text-amber-500 tabular-nums">
+                          ₹{formatCurrency(revenueData.summary.outstandingAmount)}
                         </span>
                       </div>
-                      <div className="w-full bg-zinc-900 rounded-full h-2">
-                        <div
-                          className="bg-green-500 h-2 rounded-full transition-all duration-[1500ms] ease-out"
-                          style={{
-                            width: `${(revenueData.summary.paidBookings / revenueData.summary.totalBookings) * 100}%`
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs text-data-placeholder">Pending</span>
-                        <span className="text-sm font-black text-amber-500">
-                          <CountUp end={revenueData.summary.pendingBookings} duration={800} />
-                        </span>
-                      </div>
-                      <div className="w-full bg-zinc-900 rounded-full h-2">
-                        <div
-                          className="bg-amber-500 h-2 rounded-full transition-all duration-[1500ms] ease-out"
-                          style={{
-                            width: `${(revenueData.summary.pendingBookings / revenueData.summary.totalBookings) * 100}%`
-                          }}
-                        />
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </Card>
 

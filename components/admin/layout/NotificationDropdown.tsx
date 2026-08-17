@@ -1,7 +1,11 @@
 'use client'
 
-import { useNotifications } from '@/lib/contexts/NotificationContext'
-import { CheckCheck, Gamepad2, UtensilsCrossed, ExternalLink, Bell } from 'lucide-react'
+import {
+  useNotifications,
+  notificationHref,
+  type Notification,
+} from '@/lib/contexts/NotificationContext'
+import { CheckCheck, Gamepad2, PackageX, UtensilsCrossed, ExternalLink, Bell } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
 interface NotificationDropdownProps {
@@ -11,10 +15,13 @@ interface NotificationDropdownProps {
 export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
   const { notifications, markAsRead, markAllAsRead } = useNotifications()
 
-  const handleNotificationClick = (notificationId: string, bookingId: string) => {
-    markAsRead(notificationId)
-    // Open booking in new tab
-    window.open(`/admin/bookings?id=${bookingId}`, '_blank')
+  const handleNotificationClick = (notification: Notification) => {
+    markAsRead(notification.id)
+
+    // A stock alert goes to the menu, not to a booking it does not have.
+    const href = notificationHref(notification)
+    if (href) window.open(href, '_blank')
+
     onClose()
   }
 
@@ -46,13 +53,17 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
           </div>
         ) : (
           notifications.map((notification) => {
-            const icon = notification.type === 'booking' ? Gamepad2 : UtensilsCrossed
-            const Icon = icon
+            const Icon =
+              notification.type === 'booking'
+                ? Gamepad2
+                : notification.type === 'stock'
+                  ? PackageX
+                  : UtensilsCrossed
 
             return (
               <button
                 key={notification.id}
-                onClick={() => handleNotificationClick(notification.id, notification.bookingId)}
+                onClick={() => handleNotificationClick(notification)}
                 className={`w-full p-4 border-b border-zinc-800/50 hover:bg-[var(--surface-hover)] transition-colors text-left group ${
                   !notification.read ? 'bg-primary/5' : ''
                 }`}
@@ -61,7 +72,9 @@ export function NotificationDropdown({ onClose }: NotificationDropdownProps) {
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                     notification.type === 'booking'
                       ? 'bg-primary/20 text-primary'
-                      : 'bg-amber-500/20 text-amber-400'
+                      : notification.type === 'stock'
+                        ? 'bg-rose-500/20 text-rose-400'
+                        : 'bg-amber-500/20 text-amber-400'
                   }`}>
                     <Icon className="h-4 w-4" />
                   </div>

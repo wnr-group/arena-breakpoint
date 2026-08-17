@@ -18,7 +18,7 @@ import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailMod
 import { CheckoutModal } from "@/components/admin/bookings/CheckoutModal";
 import { getAllBookings, getAttentionBookings, getBookingStats, checkInBooking, checkOutBooking, checkInWalkInSession, checkOutWalkInSession, getBookingBillingDetails, markBookingAsPaid, type BookingFilters } from "./actions";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
-import { Search, Filter, Calendar, CalendarDays, DollarSign, Users, CheckCircle2, Clock, Loader2, Eye, Receipt, PlusCircle, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List, AlertCircle, RefreshCw, ShieldAlert, AlertTriangle } from "lucide-react";
+import { Search, Filter, Calendar, CalendarDays, IndianRupee, Users, CheckCircle2, Clock, Loader2, Eye, ReceiptIndianRupee, PlusCircle, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List, AlertCircle, RefreshCw, ShieldAlert, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useDebounce } from "@/lib/hooks/useDebounce";
@@ -29,6 +29,7 @@ import { SessionTimesCell } from "@/components/admin/bookings/SessionTimeline";
 import {
   arenaDate,
   arenaToday,
+  formatClockTime12h,
   formatLocalDate,
   parseLocalDate,
   startOfLocalDay,
@@ -211,10 +212,43 @@ export default function AdminBookingsPage() {
     });
   }, [bookings]);
 
-  // The status counts are scoped to the date range, not to the status tab
+  /**
+   * The status counts are scoped to the date range, not to the status tab.
+   *
+   * Tracking `bookings` as well is what keeps the tiles honest. They used to
+   * re-read only when the date range changed, so a check-in performed anywhere
+   * other than this page's own buttons - from the timeline, from a detail panel
+   * opened there, from the walk-in screen - moved the booking into `checked_in`
+   * while the Checked In tile went on showing the old number. The list already
+   * reloads on every one of those; the counts above it now follow it, the same way
+   * the attention badge does.
+   */
   useEffect(() => {
     loadStats();
-  }, [dateFrom, dateTo]);
+  }, [dateFrom, dateTo, bookings]);
+
+  /**
+   * Re-sync when the tab comes back to the front.
+   *
+   * Two people work this screen at once. Nothing tells this terminal that the
+   * other one just checked a customer in, so the tiles and the list would sit
+   * stale until somebody pressed Refresh. Coming back to the tab is the moment
+   * staff look at it, and costs two queries.
+   */
+  useEffect(() => {
+    const resync = () => {
+      if (document.visibilityState !== "visible") return;
+      loadBookings();
+      loadStats();
+    };
+
+    window.addEventListener("focus", resync);
+    document.addEventListener("visibilitychange", resync);
+    return () => {
+      window.removeEventListener("focus", resync);
+      document.removeEventListener("visibilitychange", resync);
+    };
+  }, [debouncedSearch, activeStatusFilter, dateFrom, dateTo]);
 
   const loadBookings = async () => {
     // Never query on a range the user has been told is invalid
@@ -293,7 +327,7 @@ export default function AdminBookingsPage() {
           toast.success("Checked in — playing now", {
             description:
               `Station ${result.stationNumber} · billing starts ` +
-              `${new Date(result.checkedInAt!).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+              `${formatClockTime12h(result.checkedInAt!)}`
           });
           loadBookings();
           loadStats();
@@ -316,7 +350,7 @@ export default function AdminBookingsPage() {
           `⚠️ Early Check-In Warning\n\n` +
           `You are checking in ${Math.round(minutesUntilStart)} minutes before the scheduled start time.\n\n` +
           `Scheduled time: ${formatDbTime(deviceSlot.slot_start_time)}\n` +
-          `Current time: ${now.toLocaleTimeString()}\n\n` +
+          `Current time: ${formatClockTime12h(now)}\n\n` +
           `Do you want to proceed with early check-in?`
         );
         if (!confirmed) return;
@@ -368,7 +402,7 @@ export default function AdminBookingsPage() {
           `⚠️ Early Check-Out Warning\n\n` +
           `You are checking out ${Math.round(minutesUntilEnd)} minutes before the scheduled end time.\n\n` +
           `Scheduled end time: ${formatDbTime(deviceSlot.slot_end_time)}\n` +
-          `Current time: ${now.toLocaleTimeString()}\n\n` +
+          `Current time: ${formatClockTime12h(now)}\n\n` +
           `Do you want to proceed with early check-out?`
         );
         if (!confirmed) return;
@@ -616,7 +650,7 @@ export default function AdminBookingsPage() {
         <Card className="bg-[var(--surface)] border-[#27272a] p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-500/10 rounded-lg">
-              <Receipt className="h-5 w-5 text-blue-500" />
+              <ReceiptIndianRupee className="h-5 w-5 text-blue-500" />
             </div>
             <div>
               <p className="text-label text-muted-content">Total Bookings</p>
@@ -640,7 +674,7 @@ export default function AdminBookingsPage() {
         <Card className="bg-[var(--surface)] border-[#27272a] p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg">
-              <DollarSign className="h-5 w-5 text-primary" />
+              <IndianRupee className="h-5 w-5 text-primary" />
             </div>
             <div>
               <p className="text-label text-muted-content">Today's Revenue</p>
@@ -891,7 +925,7 @@ export default function AdminBookingsPage() {
       ) : bookings.length === 0 ? (
         <Card className="bg-[var(--surface)] border-[#27272a] p-12">
           <div className="text-center space-y-2">
-            <Receipt className="h-12 w-12 text-zinc-700 mx-auto" />
+            <ReceiptIndianRupee className="h-12 w-12 text-zinc-700 mx-auto" />
             <h3 className="text-lg font-black text-muted-content uppercase">No Bookings Found</h3>
             <p className="text-sm text-muted-content">No bookings match your current filters.</p>
           </div>
@@ -1046,7 +1080,7 @@ export default function AdminBookingsPage() {
                                       is the only row that ever shows its creation time - and
                                       it says so rather than passing it off as a start time. */}
                                   {firstBooking.billed_on_actual_time ? <SessionTimesCell booking={firstBooking} /> :
-                                    new Date(firstBooking.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                                    formatClockTime12h(firstBooking.created_at)}
                                 </p>
                               </>
                             )

@@ -1,4 +1,5 @@
 import { arenaClockTime, arenaToday } from '@/lib/utils/dates'
+import { formatDbTime } from '@/lib/utils/timeSlots'
 import { MAX_LIVE_SESSION_HOURS } from '@/lib/bookings/walkInSession'
 
 /**
@@ -16,7 +17,13 @@ import { MAX_LIVE_SESSION_HOURS } from '@/lib/bookings/walkInSession'
  * those want different responses from whoever is at the counter.
  */
 
-export type BookingAttentionKind = 'never_checked_out' | 'no_show' | 'unpaid'
+export type BookingAttentionKind =
+  | 'never_checked_out'
+  | 'no_show'
+  | 'unpaid'
+  | 'starting_soon'
+  | 'ending_soon'
+  | 'overrunning'
 
 export type BookingAttention = {
   kind: BookingAttentionKind
@@ -34,6 +41,8 @@ type AttentionInput = {
   completed_at?: string | null
   total_amount?: number | string | null
   amount_paid?: number | string | null
+  /** True for a walk-in session, which is billed on what it turns out to be. */
+  billed_on_actual_time?: boolean | null
   booking_device_slots?: Array<{
     slot_date?: string | null
     slot_start_time?: string | null
@@ -77,9 +86,161 @@ function slotEndsAt(slot: {
   return `${date} ${end}`
 }
 
+/**
+ * When a slot begins, as `YYYY-MM-DD HH:MM:SS` on the arena's clock.
+ *
+ * No midnight correction is needed here and none is wanted: `slot_date` is the
+ * day the slot starts on, which is exactly what `slot_start_time` belongs to.
+ * Only the *end* can land on the following day, which is what `slotEndsAt`
+ * above is for.
+ */
+function slotStartsAt(slot: {
+  slot_date?: string | null
+  slot_start_time?: string | null
+}): string | null {
+  if (!slot.slot_date || !slot.slot_start_time) return null
+
+  return `${slot.slot_date} ${clockOnly(slot.slot_start_time)}`
+}
+
 function toAmount(value: number | string | null | undefined): number {
   const parsed = Number(value ?? 0)
   return Number.isFinite(parsed) ? parsed : 0
+}
+
+/**
+ * How long before a slot ends the desk should hear about it.
+ *
+ * Short enough that the warning still means "now" rather than "at some point" -
+ * a quarter of an hour of standing warning is something staff learn to scroll
+ * past.
+ */
+export const ENDING_SOON_MINUTES = 5
+
+/**
+ * How long before a booking is due to start the desk should hear about it.
+ *
+ * Matches the ending window, so the two halves of a session announce themselves
+ * on the same terms and staff only have one interval to hold in their head.
+ */
+export const STARTING_SOON_MINUTES = 5
+
+/**
+ * `YYYY-MM-DD HH:MM:SS` on the arena clock, as a comparable number.
+ *
+ * Read as UTC on purpose: both sides of every comparison here are arena
+ * wall-clock readings, so the zone cancels out and no instant is ever implied.
+ * Building a real `Date` from one of these would invite the host's offset in.
+ */
+function stampToMinutes(stamp: string): number | null {
+  const parts = stamp.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/)
+  if (!parts) return null
+
+  return (
+    Date.UTC(+parts[1], +parts[2] - 1, +parts[3], +parts[4], +parts[5], +parts[6]) / 60000
+  )
+}
+
+/** "45m", "1h 05m" - short enough to sit in a badge. */
+export function formatGap(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`
+  return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`
+}
+
+export type SessionTimeStatus =
+  | { kind: 'starting_soon'; minutesUntilStart: number; startsAtClock: string }
+  | { kind: 'ending_soon'; minutesLeft: number; endsAtClock: string }
+  | { kind: 'overrunning'; minutesOver: number; endsAtClock: string }
+  | null
+
+/**
+ * Where a booking sits against the times it sold: about to start, about to
+ * finish, or already past its end.
+ *
+ * Split out from the flags below because two callers need the same judgement for
+ * different reasons: the badges want something to render, and the notification
+ * poller wants to know *when* the booking crossed each line, so it can tell a
+ * customer who has just run over from one who ran over an hour ago.
+ *
+ * A walk-in session is deliberately never flagged. It has no time to run out of
+ * - it is billed on whatever it turns out to be, and the provisional block it
+ * claims at check-in reserves the station rather than promising an end. Marking
+ * those would put a red badge on every long and perfectly ordinary session.
+ * A walk-in left open far too long is already caught by `never_checked_out`.
+ * It has no start to announce either: a walk-in has no slot at all until the
+ * customer sits down, so it falls out of both halves below on its own.
+ */
+export function sessionTimeStatus(
+  booking: AttentionInput,
+  now: Date = new Date()
+): SessionTimeStatus {
+  const status = String(booking.status ?? '').toLowerCase()
+  if (status !== 'checked_in' && status !== 'confirmed') return null
+  if (booking.billed_on_actual_time) return null
+
+  const nowMinutes = stampToMinutes(`${arenaToday(now)} ${arenaClockTime(now)}`)
+  if (nowMinutes === null) return null
+
+  /**
+   * Booked, due shortly, and nobody has arrived yet.
+   *
+   * The *first* slot is when the customer is expected, in the same way the last
+   * one is when they are finished. Only announced while the start is still
+   * ahead: once it has passed, the booking is either checked in - and answered
+   * by the ending rules below - or it is late, which is `no_show`'s business.
+   */
+  if (status === 'confirmed') {
+    const firstStart = (booking.booking_device_slots || [])
+      .map(slotStartsAt)
+      .filter((value): value is string => value !== null)
+      .sort()
+      .at(0)
+
+    if (!firstStart) return null
+
+    const startMinutes = stampToMinutes(firstStart)
+    if (startMinutes === null) return null
+
+    const minutesUntilStart = Math.round(startMinutes - nowMinutes)
+
+    if (minutesUntilStart > 0 && minutesUntilStart <= STARTING_SOON_MINUTES) {
+      return {
+        kind: 'starting_soon',
+        minutesUntilStart,
+        startsAtClock: formatDbTime(firstStart.slice(11)),
+      }
+    }
+
+    return null
+  }
+
+  // The last slot to finish is when the booking is actually over; an earlier one
+  // ending is not the customer's time running out.
+  const lastEnd = (booking.booking_device_slots || [])
+    .map(slotEndsAt)
+    .filter((value): value is string => value !== null)
+    .sort()
+    .at(-1)
+
+  if (!lastEnd) return null
+
+  const endMinutes = stampToMinutes(lastEnd)
+  if (endMinutes === null) return null
+
+  const minutesLeft = Math.round(endMinutes - nowMinutes)
+  // The comparison above runs on the 24-hour stamp; only what staff read is
+  // turned into a clock reading.
+  const endsAtClock = formatDbTime(lastEnd.slice(11))
+
+  if (minutesLeft <= 0) {
+    return { kind: 'overrunning', minutesOver: -minutesLeft, endsAtClock }
+  }
+
+  if (minutesLeft <= ENDING_SOON_MINUTES) {
+    return { kind: 'ending_soon', minutesLeft, endsAtClock }
+  }
+
+  return null
 }
 
 /**
@@ -102,11 +263,14 @@ export function bookingAttention(
   const balance = total - paid
 
   // 1. Checked in and never checked out.
+  let neverCheckedOut = false
+
   if (status === 'checked_in' && booking.checked_in_at) {
     const openFor = now.getTime() - new Date(booking.checked_in_at).getTime()
     if (openFor > MAX_LIVE_SESSION_HOURS * HOURS) {
       const days = Math.floor(openFor / (24 * HOURS))
       const hours = Math.floor(openFor / HOURS)
+      neverCheckedOut = true
       flags.push({
         kind: 'never_checked_out',
         label: 'Never checked out',
@@ -115,6 +279,43 @@ export function bookingAttention(
             ? `Checked in ${days} day${days > 1 ? 's' : ''} ago and still open. The station reads as free; close the session to bill it.`
             : `Checked in ${hours} hours ago and still open. Close the session to bill it.`,
         severity: 'high',
+      })
+    }
+  }
+
+  // 1b. Due to start shortly, or being played right now against the clock it
+  // was sold.
+  //
+  // Skipped once `never_checked_out` has fired: a session left open since
+  // Tuesday is also, trivially, past its end time, and saying both only buries
+  // the one that means something.
+  if (!neverCheckedOut) {
+    const timing = sessionTimeStatus(booking, now)
+
+    if (timing?.kind === 'starting_soon') {
+      flags.push({
+        kind: 'starting_soon',
+        label: `Starts ${timing.startsAtClock}`,
+        detail: `This booking starts at ${timing.startsAtClock}, in ${timing.minutesUntilStart} minute${
+          timing.minutesUntilStart === 1 ? '' : 's'
+        }. Check the customer in when they arrive.`,
+        severity: 'medium',
+      })
+    } else if (timing?.kind === 'overrunning') {
+      flags.push({
+        kind: 'overrunning',
+        label: `Over by ${formatGap(timing.minutesOver)}`,
+        detail: `The slot ended at ${timing.endsAtClock} and the customer is still on the station. Check them out, or extend the booking if they are staying on.`,
+        severity: 'high',
+      })
+    } else if (timing?.kind === 'ending_soon') {
+      flags.push({
+        kind: 'ending_soon',
+        label: `Ends ${timing.endsAtClock}`,
+        detail: `This session ends at ${timing.endsAtClock}, in ${timing.minutesLeft} minute${
+          timing.minutesLeft === 1 ? '' : 's'
+        }.`,
+        severity: 'medium',
       })
     }
   }

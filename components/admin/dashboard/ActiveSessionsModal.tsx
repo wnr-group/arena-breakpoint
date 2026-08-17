@@ -12,6 +12,11 @@ interface ActiveSessionsModalProps {
 }
 
 export function ActiveSessionsModal({ open, onClose, sessions, onBookingClick }: ActiveSessionsModalProps) {
+  // One card per station, but the headline counts customers - a booking holding
+  // two stations is one group playing, and this number has to be the one on the
+  // tile that opened the modal.
+  const sessionCount = new Set(sessions.map((session) => session.bookings?.id)).size;
+
   const calculateTimeRemaining = (endTime: string) => {
     const now = new Date();
     const [hours, minutes] = endTime.split(':').map(Number);
@@ -42,7 +47,9 @@ export function ActiveSessionsModal({ open, onClose, sessions, onBookingClick }:
         {/* Summary */}
         <div className="p-4 bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-lg mb-4">
           <p className="text-xs text-blue-400 mb-1">Currently Playing</p>
-          <p className="text-2xl font-black text-white">{sessions.length} Active Sessions</p>
+          <p className="text-2xl font-black text-white">
+            {sessionCount} Active Session{sessionCount === 1 ? "" : "s"}
+          </p>
         </div>
 
         {/* Sessions List */}

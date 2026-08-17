@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  DollarSign, TrendingUp, Calendar, Users, Clock,
+  IndianRupee, TrendingUp, Calendar, Users, Clock,
   Gamepad2, UtensilsCrossed, Activity, ArrowRight,
   CheckCircle2, Loader2, AlertCircle, PlusCircle, Eye, RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
 import { formatDbTime } from "@/lib/utils/timeSlots";
+import { formatClockTime12h } from "@/lib/utils/dates";
 import {
   getDashboardData,
   getTodaysRevenueDetails,
@@ -120,10 +121,9 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
   const [currentTime, setCurrentTime] = useState<string | null>(null);
 
   useEffect(() => {
-    const readClock = () =>
-      setCurrentTime(
-        new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
-      );
+    // `formatClockTime12h` pins Asia/Kolkata, so this reads the arena's clock
+    // rather than whatever zone the operator's laptop is set to.
+    const readClock = () => setCurrentTime(formatClockTime12h(new Date()));
 
     readClock();
     // Ticks so the header does not sit showing the minute the page was opened.
@@ -248,7 +248,7 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
               </p>
             </div>
             <div className="p-2 bg-green-500/10 rounded-lg">
-              <DollarSign className="h-5 w-5 text-green-500" />
+              <IndianRupee className="h-5 w-5 text-green-500" />
             </div>
           </div>
         </Card>

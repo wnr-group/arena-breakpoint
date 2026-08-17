@@ -38,7 +38,18 @@ export function FoodGrid({ devices, onEdit, onDelete, isPending, onRefreshData }
   const handleToggleStatus = (item: MenuItem) => {
     startToggleTransition(async () => {
       const targetNewStatus = item.status === "available" ? "out_of_stock" : "available";
-      
+
+      // Nothing on the shelf is not a status anyone can override. The database
+      // holds status and quantity to the same story, so this save would be
+      // accepted and then quietly turned back into out_of_stock - saying so is
+      // better than a success toast for a change that did not happen.
+      if (targetNewStatus === "available" && item.quantity <= 0) {
+        toast.error(`'${item.name}' has no stock left`, {
+          description: "Add stock in Edit to put it back on the menu.",
+        });
+        return;
+      }
+
       const updatePayload = new FormData();
       updatePayload.set("id", item.id);
       updatePayload.set("name", item.name);

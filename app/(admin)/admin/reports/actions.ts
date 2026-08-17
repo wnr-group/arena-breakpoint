@@ -2,6 +2,24 @@
 
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import {
+  isBillableBooking,
+  outstandingAmount,
+  settlementStatus,
+} from "@/lib/payments/paymentStatus";
+import { foodPaymentRatio, revenueSplit, type BookingMoney } from "@/lib/payments/revenueSplit";
+
+/** The money columns, named as `revenueSplit` wants them. */
+function moneyOf(booking: any): BookingMoney {
+  return {
+    deviceSubtotal: booking.device_subtotal,
+    foodSubtotal: booking.food_subtotal,
+    subscriptionDiscount: booking.subscription_discount,
+    promoDiscount: booking.promo_discount,
+    happyHourDiscount: booking.happy_hour_discount,
+    amountPaid: booking.amount_paid,
+  };
+}
 
 export interface ReportFilters {
   dateFrom?: string;
@@ -89,51 +107,28 @@ export async function getFoodReports(filters?: ReportFilters) {
     const uniqueBookings = new Set<string>();
 
     (data || []).forEach((booking: any) => {
-      const amountPaid = Number(booking.amount_paid || 0);
-      const deviceSubtotal = Number(booking.device_subtotal || 0);
-      const foodSubtotal = Number(booking.food_subtotal || 0);
-      const subscriptionDiscount = Number(booking.subscription_discount || 0);
-      const promoDiscount = Number(booking.promo_discount || 0);
-      const happyHourDiscount = Number(booking.happy_hour_discount || 0);
-      const totalDiscount = subscriptionDiscount + promoDiscount + happyHourDiscount;
+      const split = revenueSplit(moneyOf(booking));
 
-      // Calculate how much of the payment went to food
-      // Discounts apply only to device revenue, not food
-      const deviceAfterDiscount = Math.max(0, deviceSubtotal - totalDiscount);
-
-      let foodRevenuePaid = 0;
-      if (booking.payment_status === 'partial') {
-        // For partial: amount_paid usually covers device first, then food
-        foodRevenuePaid = Math.max(0, amountPaid - deviceAfterDiscount);
-      } else {
-        // Fully paid - split based on actual amount paid proportionally
-        const expectedTotal = deviceAfterDiscount + foodSubtotal;
-        if (expectedTotal > 0) {
-          foodRevenuePaid = (foodSubtotal / expectedTotal) * amountPaid;
-        } else {
-          foodRevenuePaid = 0;
-        }
-      }
-
-      // If no food revenue was actually paid, skip this booking
-      if (foodRevenuePaid <= 0) {
+      // This report is about food that has earned money. An order still to be
+      // settled at the desk is not revenue and does not belong here.
+      if (split.foodCollected <= 0) {
         return;
       }
 
+      const ratio = foodPaymentRatio(split);
+
       // Track unique booking for totalOrders count
       uniqueBookings.add(booking.booking_number);
-
-      // Calculate the proportion of food payment to food subtotal
-      // This tells us what percentage of food items were actually paid for
-      const foodPaymentRatio = foodSubtotal > 0 ? Math.min(1, foodRevenuePaid / foodSubtotal) : 0;
 
       // Process each food item in the booking
       (booking.booking_food_items || []).forEach((item: any) => {
         const itemName = item.item_name;
         const category = item.item_category || "Uncategorized";
 
-        // Proportional revenue for this item based on what was actually paid
-        const itemRevenue = Number(item.line_total) * foodPaymentRatio;
+        // What this item has earned so far. A booking is settled as a whole, so
+        // a part-paid order is shared across its items rather than pretending
+        // one of them was singled out.
+        const itemRevenue = Number(item.line_total) * ratio;
 
         // Item stats
         if (!itemStats[itemName]) {
@@ -268,6 +263,26 @@ export async function getDeviceReports(filters?: ReportFilters) {
       });
     }
 
+    /**
+     * Food-only orders are not device bookings.
+     *
+     * A food order carries no `booking_device_slots`, which the aggregation below
+     * read as "a device booking whose slot row is missing" and filed under
+     * "Unknown" - so this tab listed the counter's food sales as an unnamed
+     * device, and counted each one in `totalBookings`, diluting every
+     * per-booking average with orders that never used a station. Food Reports
+     * already accounts for them.
+     *
+     * The test is deliberately two-part rather than just "has slots": a booking
+     * carrying device revenue but no slot row is a real device booking with
+     * missing data, and belongs here under "Unknown" instead of being quietly
+     * dropped out of device revenue.
+     */
+    const deviceBookings = (data || []).filter((booking: any) => {
+      const hasSlots = (booking.booking_device_slots || []).length > 0;
+      return hasSlots || Number(booking.device_subtotal || 0) > 0;
+    });
+
     // Aggregate by device type
     const deviceTypeStats: Record<string, {
       deviceType: string;
@@ -284,32 +299,17 @@ export async function getDeviceReports(filters?: ReportFilters) {
     let totalPlayers = 0;
 
     // Process each booking
-    (data || []).forEach((booking: any) => {
-      const amountPaid = Number(booking.amount_paid || 0);
+    deviceBookings.forEach((booking: any) => {
+      const split = revenueSplit(moneyOf(booking));
+
+      // What the slots on this booking have actually earned.
+      const bookingDeviceRevenue = split.deviceCollected;
       const deviceSubtotal = Number(booking.device_subtotal || 0);
-      const foodSubtotal = Number(booking.food_subtotal || 0);
-      const subscriptionDiscount = Number(booking.subscription_discount || 0);
-      const promoDiscount = Number(booking.promo_discount || 0);
-      const happyHourDiscount = Number(booking.happy_hour_discount || 0);
-      const totalDiscount = subscriptionDiscount + promoDiscount + happyHourDiscount;
 
-      // Calculate how much of the payment went to device revenue
-      // Discounts apply only to device revenue, not food
-      const deviceAfterDiscount = Math.max(0, deviceSubtotal - totalDiscount);
-
-      let bookingDeviceRevenue = 0;
-      if (booking.payment_status === 'partial') {
-        // For partial: amount_paid usually covers device first
-        bookingDeviceRevenue = Math.min(amountPaid, deviceAfterDiscount);
-      } else {
-        // Fully paid - split based on actual amount paid proportionally
-        const expectedTotal = deviceAfterDiscount + foodSubtotal;
-        if (expectedTotal > 0) {
-          bookingDeviceRevenue = (deviceAfterDiscount / expectedTotal) * amountPaid;
-        } else {
-          bookingDeviceRevenue = amountPaid;
-        }
-      }
+      // How much of the device charge has been settled, for the parts of a slot
+      // that are reported separately from its revenue.
+      const collectedFraction =
+        split.deviceCharged > 0 ? split.deviceCollected / split.deviceCharged : 0;
 
       // Get slots for detailed breakdown by device type
       const slots = booking.booking_device_slots || [];
@@ -338,7 +338,16 @@ export async function getDeviceReports(filters?: ReportFilters) {
           deviceTypeStats[deviceType].totalBookings += 1;
           deviceTypeStats[deviceType].totalRevenue += slotRevenue;
           deviceTypeStats[deviceType].totalHours += slot.duration_hours;
-          deviceTypeStats[deviceType].extraPlayerRevenue += Number(slot.extra_players_total || 0);
+          /**
+           * Earned, not charged.
+           *
+           * This used to add the whole `extra_players_total` however much of the
+           * booking had been paid for, so a column of collected revenue carried
+           * one figure of money that was merely owed - and an unpaid booking
+           * could show more extra-player revenue than total revenue.
+           */
+          deviceTypeStats[deviceType].extraPlayerRevenue +=
+            Number(slot.extra_players_total || 0) * collectedFraction;
 
           totalHours += slot.duration_hours;
           totalPlayers += slot.player_count || 0;
@@ -367,7 +376,7 @@ export async function getDeviceReports(filters?: ReportFilters) {
 
     // Calculate average players per booking for each device type
     Object.keys(deviceTypeStats).forEach(deviceType => {
-      const allSlots = (data || []).flatMap((b: any) => b.booking_device_slots || []);
+      const allSlots = deviceBookings.flatMap((b: any) => b.booking_device_slots || []);
       const deviceSlots = allSlots.filter((s: any) => s.device_type === deviceType);
       const totalPlayersForDevice = deviceSlots.reduce((sum: number, s: any) => sum + (s.player_count || 0), 0);
       deviceTypeStats[deviceType].averagePlayersPerBooking = deviceSlots.length > 0 ? totalPlayersForDevice / deviceSlots.length : 0;
@@ -378,7 +387,7 @@ export async function getDeviceReports(filters?: ReportFilters) {
 
     // Daily utilization (bookings per day)
     const dailyBookings: Record<string, number> = {};
-    (data || []).forEach((booking: any) => {
+    deviceBookings.forEach((booking: any) => {
       const slots = booking.booking_device_slots || [];
       slots.forEach((slot: any) => {
         const date = slot.slot_date;
@@ -397,7 +406,10 @@ export async function getDeviceReports(filters?: ReportFilters) {
       },
       deviceBreakdown,
       dailyBookings,
-      recentBookings: data?.slice(0, 20) || []
+      // The table under the breakdown lists what this tab is about, so it is
+      // drawn from the same filtered set - a food order has no station or slot to
+      // show in it.
+      recentBookings: deviceBookings.slice(0, 20)
     };
   } catch (err: any) {
     console.error("Get device reports error:", err);
@@ -435,38 +447,116 @@ export async function getRevenueReports(filters?: ReportFilters) {
         booking_device_slots(slot_date),
         payment_groups(paid_at)
       `)
-      .in("payment_status", ["paid", "partial"])
+      // Unpaid bookings are fetched too. They add nothing to revenue - their
+      // amount_paid is zero - but the Payment Status panel cannot report what it
+      // was never given, and filtering them out here is what made it read "0
+      // pending" while money was outstanding.
       .neq("status", "cancelled");
-
-    if (filters?.dateFrom || filters?.dateTo) {
-      // We need to filter by slot_date, so we'll do this after fetching
-    }
 
     const { data, error } = await query.order("created_at", { ascending: false });
 
     if (error) throw error;
 
-    // Filter by payment date (use paid_at if available, otherwise use updated_at as fallback)
+    /**
+     * The date a booking belongs to in this report.
+     *
+     * Paid bookings are placed on the day the money arrived, which is what a
+     * revenue report is about. An unpaid one has no such day, so it is placed on
+     * the day it was raised - the alternative, `updated_at`, moves every time
+     * anybody edits the booking.
+     */
+    const reportDate = (booking: any): string | null => {
+      const paidAt =
+        booking.payment_status === 'pending'
+          ? booking.created_at
+          : booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
+
+      return paidAt ? paidAt.split('T')[0] : null;
+    };
+
     let filteredData = data || [];
     if (filters?.dateFrom || filters?.dateTo) {
       filteredData = (data || []).filter((booking: any) => {
-        // Use paid_at from payment_groups, fallback to booking updated_at
-        const paidAt = booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
-        if (!paidAt) return false;
+        const date = reportDate(booking);
+        if (!date) return false;
 
-        const paidDate = paidAt.split('T')[0];
-        if (filters.dateFrom && paidDate < filters.dateFrom) return false;
-        if (filters.dateTo && paidDate > filters.dateTo) return false;
+        if (filters.dateFrom && date < filters.dateFrom) return false;
+        if (filters.dateTo && date > filters.dateTo) return false;
 
         return true;
       });
     }
 
+    /**
+     * Money actually received. Every revenue figure is measured over these, so
+     * including unpaid bookings above changes no revenue number and no average -
+     * it only lets them be counted.
+     *
+     * Selected on the money rather than on `payment_status`: a booking carrying a
+     * payment belongs in the revenue whatever word is stored beside it.
+     */
+    const revenueBookings = filteredData.filter(
+      (booking: any) => Number(booking.amount_paid || 0) > 0
+    );
+
+    /**
+     * Bookings that are actually somebody's bill.
+     *
+     * Two kinds of row are not, and both were being counted as "pending":
+     *
+     * - An abandoned slot hold. A customer who opens the picker and backs out
+     *   leaves a row that `release_slot_hold` moves to `expired` with no
+     *   customer and no money. Ten of those sat in a database with three
+     *   genuinely unpaid bookings, and the panel read fourteen pending.
+     * - A walk-in still on the floor, which is priced at checkout and carries a
+     *   total of zero until then. Nothing is owed on it yet.
+     */
+    const billed = filteredData.filter((booking: any) =>
+      isBillableBooking({ status: booking.status, total: booking.total_amount })
+    );
+
+    /**
+     * Counted from the amounts, not from the stored word.
+     *
+     * `payment_status` is what drifts - a booking that had food added to it after
+     * being paid for went on saying `paid` - and it drifts in exactly the
+     * direction that empties this panel: the partial count was permanently zero
+     * while the arena was owed for the food on it.
+     */
+    let paidBookingCount = 0;
+    let partialBookingCount = 0;
+    let pendingBookingCount = 0;
+
+    for (const booking of billed) {
+      const settled = settlementStatus({
+        amountPaid: booking.amount_paid,
+        total: booking.total_amount,
+      });
+
+      if (settled === 'paid') paidBookingCount++;
+      else if (settled === 'partial') partialBookingCount++;
+      else pendingBookingCount++;
+    }
+
+    /**
+     * What the arena is still owed, across partial and unpaid alike.
+     *
+     * Measured over the same bookings the panel counts, and from the amounts
+     * rather than from `payment_status`: skipping anything stored as `paid` left
+     * out the ₹150 of food ordered against an already-paid slot, which is the
+     * booking that is precisely being owed for.
+     */
+    const outstanding = billed.reduce(
+      (sum: number, b: any) =>
+        sum + outstandingAmount({ amountPaid: b.amount_paid, total: b.total_amount }),
+      0
+    );
+
     let totalRevenue = 0;
     let deviceRevenue = 0;
     let foodRevenue = 0;
-    let paidCount = 0;
-    let pendingCount = 0;
+    /** Received beyond anything charged, so it belongs to neither half above. */
+    let unallocatedRevenue = 0;
 
     // Payment method totals
     let totalCash = 0;
@@ -489,45 +579,29 @@ export async function getRevenueReports(filters?: ReportFilters) {
       totalRevenue: number;
     }> = {};
 
-    filteredData.forEach((booking: any) => {
-      const amountPaid = Number(booking.amount_paid || 0);
-      const deviceSubtotal = Number(booking.device_subtotal || 0);
-      const foodSubtotal = Number(booking.food_subtotal || 0);
-      const subscriptionDiscount = Number(booking.subscription_discount || 0);
-      const promoDiscount = Number(booking.promo_discount || 0);
-      const happyHourDiscount = Number(booking.happy_hour_discount || 0);
-      const totalDiscount = subscriptionDiscount + promoDiscount + happyHourDiscount;
+    revenueBookings.forEach((booking: any) => {
       const source = booking.booking_source || "online";
 
-      // Track revenue by payment date (use paid_at if available, otherwise use updated_at)
-      const paidAt = booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
-      const revenueDate = paidAt.split('T')[0];
+      // Track revenue by payment date, on the same rule the range filter used
+      const revenueDate = reportDate(booking) as string;
 
       // Calculate actual revenue based on what was actually paid (amount_paid)
       // Revenue = what customer actually paid, not the calculated total_amount
-      const revenue = amountPaid;
+      const revenue = Number(booking.amount_paid || 0);
 
-      // Break down device vs food revenue
-      // Discounts apply to device booking, not food
-      const deviceAfterDiscount = Math.max(0, deviceSubtotal - totalDiscount);
+      /**
+       * Device against food, from the amounts rather than from `payment_status`.
+       *
+       * `deviceRev + foodRev` is what was received, to the paise, so this panel
+       * and the payment-method totals beside it cannot drift apart. Anything
+       * taken beyond what was ever charged stays out of both halves rather than
+       * being quietly attributed to one - see `unallocatedRevenue` below.
+       */
+      const split = revenueSplit(moneyOf(booking));
+      const deviceRev = split.deviceCollected;
+      const foodRev = split.foodCollected;
 
-      let deviceRev, foodRev;
-      if (booking.payment_status === 'partial') {
-        // For partial: amount_paid usually covers device first
-        deviceRev = Math.min(amountPaid, deviceAfterDiscount);
-        foodRev = Math.max(0, amountPaid - deviceAfterDiscount);
-      } else {
-        // Fully paid - split based on actual breakdown
-        const expectedTotal = deviceAfterDiscount + foodSubtotal;
-        if (expectedTotal > 0) {
-          // Proportional split
-          deviceRev = (deviceAfterDiscount / expectedTotal) * amountPaid;
-          foodRev = (foodSubtotal / expectedTotal) * amountPaid;
-        } else {
-          deviceRev = amountPaid;
-          foodRev = 0;
-        }
-      }
+      unallocatedRevenue += split.overpaid;
 
       totalRevenue += revenue;
       deviceRevenue += deviceRev;
@@ -538,13 +612,6 @@ export async function getRevenueReports(filters?: ReportFilters) {
       totalCard += Number(booking.card_amount || 0);
       totalUpi += Number(booking.upi_amount || 0);
       totalOnline += Number(booking.online_amount || 0);
-
-      // Count paid and partial bookings
-      if (booking.payment_status === 'paid') {
-        paidCount += 1;
-      } else {
-        pendingCount += 1; // partial counts as pending
-      }
 
       // Source breakdown
       if (!sourceBreakdown[source]) {
@@ -583,10 +650,31 @@ export async function getRevenueReports(filters?: ReportFilters) {
         totalRevenue,
         deviceRevenue,
         foodRevenue,
-        totalBookings: filteredData.length,
-        paidBookings: paidCount,
-        pendingBookings: pendingCount,
-        averageRevenuePerBooking: filteredData.length ? totalRevenue / filteredData.length : 0,
+        // Bookings that produced revenue. Left as it was, on purpose: the
+        // Overview tab reads this through getDashboardSummary, and revenue per
+        // booking must not be divided by bookings that paid nothing.
+        totalBookings: revenueBookings.length,
+        paidBookings: paidBookingCount,
+        partialBookings: partialBookingCount,
+        pendingBookings: pendingBookingCount,
+        /**
+         * Denominator for the Payment Status bars.
+         *
+         * The three counts above and nothing else, so the bars always fill to a
+         * whole. It used to be every non-cancelled row in range, which included
+         * ten abandoned slot holds - so three bars covering fifteen real
+         * bookings were drawn as fractions of twenty-six.
+         */
+        paymentStatusTotal: billed.length,
+        /** Still owed across partial and unpaid bookings. */
+        outstandingAmount: outstanding,
+        /**
+         * Money received beyond what any booking was charged. Normally zero;
+         * anything here means device + food revenue will not add up to the total,
+         * and the booking behind it wants looking at.
+         */
+        unallocatedRevenue,
+        averageRevenuePerBooking: revenueBookings.length ? totalRevenue / revenueBookings.length : 0,
         deviceRevenuePercentage: totalRevenue ? (deviceRevenue / totalRevenue) * 100 : 0,
         // Payment method breakdown
         totalCash,

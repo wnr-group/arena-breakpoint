@@ -21,21 +21,28 @@ import {
   ShieldCheck,
   RefreshCw,
   Cake,
-  Clock
+  Clock,
+  AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   getDeviceTypesWithAvailability,
-  checkFlexibleAvailability,
-  checkCustomerExists
+  checkFlexibleAvailability
 } from "@/app/(customer)/booking/actions";
-import { createWalkInBooking, createWalkInSession } from "../actions";
+import {
+  createWalkInBooking,
+  createWalkInSession,
+  getWalkInDeviceAvailability,
+  lookupWalkInCustomer,
+  type WalkInDeviceAvailability
+} from "../actions";
 import {
   formatDateForDB,
   formatDateForDisplay,
   handleDobInput,
   isValidDob,
   DOB_ERROR,
+  formatClockTime12h,
   formatLocalDate,
   isDateWithinBookingWindow,
   BOOKING_WINDOW_ERROR
@@ -52,6 +59,7 @@ import {
 } from "@/lib/utils/timeSlots";
 import { useHappyHours } from "@/lib/hooks/useHappyHours";
 import { useNotifications } from "@/lib/contexts/NotificationContext";
+import { bookingNotificationId } from "@/lib/hooks/useAdminNotificationPolling";
 import { extraPlayersCharge, perExtraPlayerCharge } from "@/lib/payments/money";
 
 export default function WalkInBookingPage() {
@@ -82,6 +90,19 @@ export default function WalkInBookingPage() {
   const [availableStartTimes, setAvailableStartTimes] = useState<Set<string>>(new Set());
   const [loadingSlots, setLoadingSlots] = useState(false);
 
+  /**
+   * How busy this device type is right now.
+   *
+   * Only meaningful for a session, which checks in immediately; an advance
+   * booking is for a window later on and has the slot picker to answer this.
+   * Null means not looked up yet, or the look-up failed - either way the booking
+   * is allowed through rather than blocked on a read.
+   */
+  const [deviceAvailability, setDeviceAvailability] = useState<WalkInDeviceAvailability | null>(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+  /** The "everything is in use" prompt, held open until staff decide. */
+  const [busyPrompt, setBusyPrompt] = useState<WalkInDeviceAvailability | null>(null);
+
   // Player count
   const [playerCount, setPlayerCount] = useState(1);
 
@@ -90,6 +111,8 @@ export default function WalkInBookingPage() {
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerDob, setCustomerDob] = useState("");
+  /** Set once Continue has been pressed, so empty required fields can speak up too. */
+  const [showDetailErrors, setShowDetailErrors] = useState(false);
   const [showFullRegistrationFields, setShowFullRegistrationFields] = useState(false);
   const [checkingProfile, setCheckingProfile] = useState(false);
   const [activeSubscription, setActiveSubscription] = useState<any>(null);
@@ -142,6 +165,36 @@ export default function WalkInBookingPage() {
       setSelectedStartTime(null);
     }
   }, [availableStartTimes, selectedStartTime]);
+
+  /**
+   * Re-read the floor whenever the desk lands on the confirm screen.
+   *
+   * Read here rather than once at device selection because the two can be
+   * minutes apart while staff take the customer's details, and the last station
+   * can go in that time. Submitting re-checks again for the same reason - this
+   * is the warning, not the guard.
+   */
+  useEffect(() => {
+    if (mode !== "session" || step !== 4 || !selectedDeviceType?.id) return;
+
+    let cancelled = false;
+    setCheckingAvailability(true);
+
+    getWalkInDeviceAvailability(selectedDeviceType.id)
+      .then((result) => {
+        if (!cancelled) setDeviceAvailability(result.availability);
+      })
+      .catch(() => {
+        if (!cancelled) setDeviceAvailability(null);
+      })
+      .finally(() => {
+        if (!cancelled) setCheckingAvailability(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, step, selectedDeviceType?.id]);
 
   const loadDeviceTypes = async () => {
     setLoadingDevices(true);
@@ -196,7 +249,7 @@ export default function WalkInBookingPage() {
     }
 
     setCheckingProfile(true);
-    const result = await checkCustomerExists(customerPhone.trim());
+    const result = await lookupWalkInCustomer(customerPhone.trim());
 
     if (result.exists && result.customer) {
       setCustomerName(result.customer.name);
@@ -226,10 +279,20 @@ export default function WalkInBookingPage() {
 
   const handleManualRegistrationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customerName.trim()) {
-      toast.error("Validation Error", { description: "Full customer name field specification is required." });
+    /**
+     * A dead button explains nothing.
+     *
+     * This used to be gated by `disabled`, so an impossible date left staff
+     * pressing a button that did nothing and no indication of which field was at
+     * fault. It stays clickable; pressing it reveals the message under every
+     * offending field and holds the step.
+     */
+    if (!customerDetailsComplete) {
+      setShowDetailErrors(true);
       return;
     }
+
+    setShowDetailErrors(false);
     setStep(4);
   };
 
@@ -240,7 +303,7 @@ export default function WalkInBookingPage() {
    * All of that follows from check-in and checkout, which is why this posts so
    * much less than the fixed-slot path below it.
    */
-  const handleSubmitSession = async () => {
+  const handleSubmitSession = async (options?: { ignoreBusyFloor?: boolean }) => {
     if (!customerName.trim() || !customerPhone.trim()) {
       toast.error("Please fill in customer name and phone number");
       return;
@@ -251,6 +314,28 @@ export default function WalkInBookingPage() {
     }
 
     setSubmitting(true);
+
+    /**
+     * One last look at the floor before the row is written.
+     *
+     * The booking is still allowed - a walk-in reserves nothing and waiting for
+     * a station is a perfectly ordinary thing to book someone in for. The point
+     * is that the desk finds out here, with the customer in front of them, and
+     * not at check-in when they have already been told to sit down.
+     *
+     * A failed read leaves `availability` null and the booking goes through:
+     * losing this warning is a nuisance, refusing to book is a broken counter.
+     */
+    if (!options?.ignoreBusyFloor) {
+      const check = await getWalkInDeviceAvailability(selectedDeviceType.id);
+      setDeviceAvailability(check.availability);
+
+      if (check.availability && check.availability.free === 0) {
+        setBusyPrompt(check.availability);
+        setSubmitting(false);
+        return;
+      }
+    }
 
     const result = await createWalkInSession({
       customerName: customerName.trim(),
@@ -263,8 +348,19 @@ export default function WalkInBookingPage() {
     });
 
     if (result.success) {
-      toast.success("Walk-in created", {
-        description: `${result.bookingNumber} is waiting for check-in. Check the customer in when they sit down.`
+      // One notification for the confirmed walk-in: it toasts, chimes and lands
+      // in the bell straight away, so a plain success toast alongside it only
+      // said the same thing twice to the desk that typed it. The id matches the
+      // poller's, so its own sweep of the same booking lands on this entry
+      // rather than adding a second one.
+      // A session is billed on actual time, so there is no total to quote yet.
+      addNotification({
+        id: bookingNotificationId(result.bookingId || ""),
+        type: "booking",
+        title: "New Walk-In Booking",
+        message: `${customerName.trim()} • #${result.bookingNumber} • ${selectedDeviceType.display_name} • awaiting check-in`,
+        bookingId: result.bookingId || "",
+        bookingNumber: result.bookingNumber || ""
       });
       router.push("/admin/bookings");
     } else {
@@ -357,6 +453,7 @@ export default function WalkInBookingPage() {
       // An advance booking is always for later, so it waits for check-in like any
       // other reservation - there is no "already checked in" case here.
       addNotification({
+        id: bookingNotificationId(result.bookingId || ""),
         type: "booking",
         title: "Advance Booking Confirmed",
         message: `${customerName.trim()} • #${result.bookingNumber} • ₹${Math.round(total).toLocaleString("en-IN")}`,
@@ -418,10 +515,71 @@ export default function WalkInBookingPage() {
 
   const totalAmount = subtotal - subscriptionDiscount - happyHourInfo.discountAmount;
 
-  // Gates the customer-details submit: every starred field must be filled.
+  /**
+   * Field-level problems, shown under the input that caused them.
+   *
+   * These used to be discovered only on the final submit, two screens later: the
+   * gate below accepted any ten characters, so "31-02-2000" passed, the summary
+   * opened, and the booking was refused at the last step with a toast the staff
+   * member then had to walk back from. A date is checked where it is typed.
+   *
+   * Each message waits until the field has enough in it to be judged, so nothing
+   * turns red while somebody is still part-way through typing.
+   */
+  /**
+   * The problem with the date, if there is one.
+   *
+   * Says nothing while the date is still being typed - only once it is complete,
+   * or once Continue has been pressed - so the field does not go red at the first
+   * digit. `DOB_ERROR` is the one place the wording lives.
+   */
+  const describeDobProblem = (value: string): string | null => {
+    if (!value.trim()) return "Date of birth is required.";
+    if (value.length < 10 && !showDetailErrors) return null;
+    return isValidDob(value) ? null : DOB_ERROR;
+  };
+
+  // Shown as soon as the field has something in it, or once Continue is pressed.
+  const dobError =
+    customerDob.trim() || showDetailErrors ? describeDobProblem(customerDob) : null;
+
+  const emailError =
+    (customerEmail.trim().length > 0 || showDetailErrors) && !isPlausibleEmail(customerEmail)
+      ? customerEmail.trim()
+        ? "Enter a complete email address, like customer@domain.com."
+        : "Email is required."
+      : null;
+
+  const nameError =
+    showDetailErrors && !customerName.trim() ? "Customer name is required." : null;
+
+  /**
+   * Whether every required field has something in it.
+   *
+   * This is what greys the button out: with a field still blank there is nothing
+   * to correct and no message to show, so a disabled button is honest. Presence
+   * only - a filled-in but impossible date leaves the button live, because that
+   * is a mistake the form has to be able to tell staff about, and a dead button
+   * cannot.
+   */
+  const requiredDetailsFilled = Boolean(
+    customerName.trim() && customerDob.trim() && customerEmail.trim()
+  );
+
+  /**
+   * Whether the mobile number is a complete one.
+   *
+   * The input strips anything that is not a digit and stops at ten, so a short
+   * value is a half-typed number rather than a wrong one - there is nothing to
+   * explain, and the placeholder already asks for ten digits. Matches the gate the
+   * food walk-in screen already had on the same button.
+   */
+  const phoneComplete = customerPhone.trim().length === 10;
+
+  // Whether the step may actually advance: filled *and* valid.
   const customerDetailsComplete =
     allFilled(customerName, customerDob) &&
-    customerDob.length === 10 &&
+    isValidDob(customerDob) &&
     isPlausibleEmail(customerEmail);
 
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -745,7 +903,7 @@ export default function WalkInBookingPage() {
                     </div>
                   </div>
 
-                  <Button type="submit" disabled={checkingProfile} className="w-full bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 shadow-xl">
+                  <Button type="submit" disabled={checkingProfile || !phoneComplete} className="w-full bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 shadow-xl disabled:opacity-50 disabled:pointer-events-none">
                     {checkingProfile ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "VERIFY CUSTOMER PROFILE"} <ChevronRight className="h-4 w-4 stroke-[3]" />
                   </Button>
                 </form>
@@ -779,7 +937,10 @@ export default function WalkInBookingPage() {
                   </button>
                 </div>
 
-                <form onSubmit={handleManualRegistrationSubmit} className="space-y-4">
+                {/* noValidate so these messages are the only ones staff see - the
+                    browser's own bubbles would fire first on the required fields
+                    and say less. */}
+                <form onSubmit={handleManualRegistrationSubmit} className="space-y-4" noValidate>
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-xs font-black text-muted-content uppercase tracking-wider flex items-center gap-1.5">
                       <User className="h-3.5 w-3.5 text-muted-content" /> Customer Name *
@@ -791,8 +952,13 @@ export default function WalkInBookingPage() {
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="Enter customer's full name"
-                      className="bg-[var(--background)] border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl"
+                      aria-invalid={!!nameError}
+                      aria-describedby={nameError ? "name-error" : undefined}
+                      className={`bg-[var(--background)] h-12 text-sm text-white focus-visible:ring-primary rounded-xl ${nameError ? "border-red-500/70" : "border-zinc-900"}`}
                     />
+                    {nameError && (
+                      <p id="name-error" className="text-xs font-bold text-red-400">{nameError}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -807,8 +973,13 @@ export default function WalkInBookingPage() {
                       maxLength={10}
                       value={customerDob}
                       onChange={handleDobChange}
-                      className="bg-[var(--background)] border-zinc-900 h-12 text-sm text-white font-mono tracking-wider focus-visible:ring-primary rounded-xl placeholder:text-zinc-700"
+                      aria-invalid={!!dobError}
+                      aria-describedby={dobError ? "dob-error" : undefined}
+                      className={`bg-[var(--background)] h-12 text-sm text-white font-mono tracking-wider focus-visible:ring-primary rounded-xl placeholder:text-zinc-700 ${dobError ? "border-red-500/70" : "border-zinc-900"}`}
                     />
+                    {dobError && (
+                      <p id="dob-error" className="text-xs font-bold text-red-400">{dobError}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -822,12 +993,20 @@ export default function WalkInBookingPage() {
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
                       placeholder="customer@domain.com"
-                      className="bg-[var(--background)] border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl"
+                      aria-invalid={!!emailError}
+                      aria-describedby={emailError ? "email-error" : undefined}
+                      className={`bg-[var(--background)] h-12 text-sm text-white focus-visible:ring-primary rounded-xl ${emailError ? "border-red-500/70" : "border-zinc-900"}`}
                     />
+                    {emailError && (
+                      <p id="email-error" className="text-xs font-bold text-red-400">{emailError}</p>
+                    )}
                   </div>
 
                   <div className="pt-4 space-y-2">
-                    <Button type="submit" disabled={!customerDetailsComplete} className="w-full bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1 shadow-lg disabled:opacity-50 disabled:pointer-events-none">
+                    {/* Disabled only while something is still blank. Once every
+                        field has content the button goes live, so pressing it can
+                        report what is actually wrong with it. */}
+                    <Button type="submit" disabled={!requiredDetailsFilled} className="w-full bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1 shadow-lg disabled:opacity-50 disabled:pointer-events-none">
                       PROCEED TO ORDER SUMMARY <ChevronRight className="h-4 w-4 stroke-[3]" />
                     </Button>
                   </div>
@@ -902,6 +1081,58 @@ export default function WalkInBookingPage() {
                     <li>A station is assigned when the customer checks in, so this booking does not reserve one.</li>
                     <li>The bill is calculated at checkout from the time actually played.</li>
                   </ul>
+                </div>
+              )}
+
+              {/* Because no station is held, the floor being full is something
+                  the desk can only find out by asking. Stated here so it is read
+                  before the booking is taken, rather than at check-in with the
+                  customer already waiting. */}
+              {mode === "session" && (checkingAvailability || deviceAvailability) && (
+                <div
+                  className={`rounded-xl border p-4 ${
+                    deviceAvailability && deviceAvailability.free === 0
+                      ? "border-red-900/50 bg-red-950/30"
+                      : "border-emerald-900/40 bg-emerald-950/20"
+                  }`}
+                >
+                  {checkingAvailability ? (
+                    <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-400">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Checking {selectedDeviceType.display_name} availability…
+                    </p>
+                  ) : deviceAvailability && deviceAvailability.free === 0 ? (
+                    <div className="space-y-2">
+                      <p className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-red-300">
+                        <AlertCircle className="h-4 w-4" />
+                        Every {selectedDeviceType.display_name} is in use
+                      </p>
+                      <p className="text-xs leading-relaxed text-red-200/80">
+                        All {deviceAvailability.total} stations are occupied right now. You can
+                        still book this customer in, but they will not be able to check in until
+                        one frees up.
+                      </p>
+                      {deviceAvailability.inUse.length > 0 && (
+                        <ul className="space-y-1 pl-4 text-xs text-red-200/70 list-disc">
+                          {deviceAvailability.inUse.map((station) => (
+                            <li key={`${station.stationNumber}-${station.bookingNumber}`}>
+                              Station {station.stationNumber || "?"}
+                              {station.customerName ? ` · ${station.customerName}` : ""}
+                              {station.since
+                                ? ` · since ${formatClockTime12h(station.since)}`
+                                : ""}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ) : deviceAvailability ? (
+                    <p className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-emerald-300">
+                      <ShieldCheck className="h-4 w-4" />
+                      {deviceAvailability.free} of {deviceAvailability.total}{" "}
+                      {selectedDeviceType.display_name} free now
+                    </p>
+                  ) : null}
                 </div>
               )}
 
@@ -1019,6 +1250,73 @@ export default function WalkInBookingPage() {
           </div>
         )}
       </div>
+
+      {/* Asked rather than enforced. Booking somebody in to wait is legitimate -
+          they may be happy to sit for ten minutes - so the desk decides. What it
+          must not do is create the booking silently and let check-in be the
+          first anyone hears of it. */}
+      {busyPrompt && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="busy-floor-title"
+        >
+          <Card className="w-full max-w-md space-y-4 rounded-2xl border border-red-900/50 bg-[var(--surface)] p-6">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-red-900/50 bg-red-950/40">
+                <AlertCircle className="h-5 w-5 text-red-400" />
+              </div>
+              <div className="min-w-0">
+                <h3 id="busy-floor-title" className="text-sm font-black uppercase tracking-wider text-white">
+                  Every {selectedDeviceType?.display_name} is in use
+                </h3>
+                <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+                  All {busyPrompt.total} stations are occupied right now. This booking does not
+                  hold a station, so {customerName.trim() || "the customer"} will have to wait
+                  until one frees up before they can check in.
+                </p>
+              </div>
+            </div>
+
+            {busyPrompt.inUse.length > 0 && (
+              <ul className="space-y-1 rounded-xl border border-zinc-900 bg-[var(--background)]/40 p-3 text-xs text-zinc-400">
+                {busyPrompt.inUse.map((station) => (
+                  <li key={`${station.stationNumber}-${station.bookingNumber}`} className="flex justify-between gap-3">
+                    <span className="font-bold text-zinc-300">
+                      Station {station.stationNumber || "?"}
+                    </span>
+                    <span className="truncate">
+                      {station.customerName || "In use"}
+                      {station.since
+                        ? ` · since ${formatClockTime12h(station.since)}`
+                        : ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                onClick={() => setBusyPrompt(null)}
+                className="flex-1 h-11 rounded-xl border border-zinc-800 bg-transparent text-xs font-black uppercase text-zinc-300 hover:bg-zinc-900"
+              >
+                Go back
+              </Button>
+              <Button
+                onClick={() => {
+                  setBusyPrompt(null);
+                  handleSubmitSession({ ignoreBusyFloor: true });
+                }}
+                className="flex-1 h-11 rounded-xl bg-gradient-primary text-xs font-black uppercase text-[var(--button-text)] hover:bg-gradient-primary-hover"
+              >
+                Book to wait
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

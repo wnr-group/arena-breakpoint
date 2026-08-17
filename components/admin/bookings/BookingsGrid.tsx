@@ -6,8 +6,9 @@ import { SessionSummaryLine, SessionTimesCell } from "./SessionTimeline";
 import { BookingStatusBadge } from "./BookingStatusBadge";
 import { AttentionBadges } from "./AttentionBadges";
 import { PaymentStatusBadge } from "./PaymentStatusBadge";
-import { Calendar, Clock, MapPin, DollarSign, Phone, User, Eye, UserCheck, LogOut, UtensilsCrossed, CreditCard, Link2 } from "lucide-react";
+import { Calendar, Clock, MapPin, IndianRupee, Phone, User, Eye, UserCheck, LogOut, UtensilsCrossed, CreditCard, Link2 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
+import { formatClockTime12h } from "@/lib/utils/dates";
 import { formatDbTimeRange } from "@/lib/utils/timeSlots";
 
 interface BookingsGridProps {
@@ -125,7 +126,7 @@ export function BookingsGrid({
                         </p>
                         <p className="text-xs text-muted-content flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          {new Date(booking.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                          {formatClockTime12h(booking.created_at)}
                         </p>
                       </div>
                     </div>
@@ -175,7 +176,7 @@ export function BookingsGrid({
                 {/* Payment Details */}
                 <div className="flex items-center gap-2 p-2 bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg border border-primary/20">
                   <div className="p-1.5 bg-primary/20 rounded">
-                    <DollarSign className="h-4 w-4 text-primary" />
+                    <IndianRupee className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1">
                     <p className="text-xs text-primary/70">Total Amount</p>

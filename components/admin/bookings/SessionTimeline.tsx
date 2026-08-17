@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock, LogIn, LogOut, PlayCircle, Receipt } from "lucide-react";
+import { Clock, LogIn, LogOut, PlayCircle, ReceiptIndianRupee } from "lucide-react";
 import { formatPlayedDuration, sessionTimes } from "@/lib/bookings/walkInSession";
+import { formatClockTime12h } from "@/lib/utils/dates";
 
 /**
  * The three times a walk-in has, told apart.
@@ -19,8 +20,7 @@ export interface SessionTimes {
   completedAt: string | null;
 }
 
-const timeOnly = (value: string) =>
-  new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+const timeOnly = (value: string) => formatClockTime12h(value);
 
 /**
  * Minutes of play, from check-in to checkout or to right now.
@@ -149,7 +149,7 @@ export function SessionTimeline({
 
   if (createdAt) {
     steps.push({
-      icon: <Receipt className="h-3.5 w-3.5" />,
+      icon: <ReceiptIndianRupee className="h-3.5 w-3.5" />,
       label: "Walk-in created",
       value: timeOnly(createdAt),
       note: "Not billable",

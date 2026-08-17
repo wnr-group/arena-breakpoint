@@ -61,22 +61,69 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
     return hours * 60 + minutes;
   };
 
-  // Calculate position and width for booking block
-  const getBookingPosition = (startTime: string, endTime: string) => {
+  // The minutes a booking covers, as a flat span. Overnight bookings run past
+  // midnight rather than backwards, so the end can sit beyond 24:00.
+  const bookingSpan = (startTime: string, endTime: string) => {
     const startMinutes = timeToMinutes(startTime);
     const endMinutes = timeToMinutes(endTime);
-
-    // Handle overnight bookings
     const duration = endMinutes < startMinutes
       ? (24 * 60 - startMinutes) + endMinutes
       : endMinutes - startMinutes;
 
+    return { start: startMinutes, end: startMinutes + duration, duration };
+  };
+
+  // Calculate position and width for booking block
+  const getBookingPosition = (startTime: string, endTime: string) => {
+    const { start, duration } = bookingSpan(startTime, endTime);
+
     // Each slot is 30 minutes, timeline is 48 slots wide
     const slotWidth = 100 / 48; // percentage
-    const left = (startMinutes / 30) * slotWidth;
+    const left = (start / 30) * slotWidth;
     const width = (duration / 30) * slotWidth;
 
     return { left: `${left}%`, width: `${width}%` };
+  };
+
+  /**
+   * Stack a device's overlapping bookings instead of piling them up.
+   *
+   * Every block on a row is absolutely positioned by its start time, so two
+   * bookings that share a station and a stretch of clock landed on the exact
+   * same pixels and the later one painted straight over the earlier one -
+   * a booking staff could neither see nor click. That happens routinely here:
+   * a walk-in checked in on a station that already has a slot booked, or an
+   * overnight booking still running when the next morning's starts.
+   *
+   * Each booking now gets the first lane free at its start time, and the row
+   * grows tall enough to show every lane, so an overlap reads as two blocks
+   * one above the other.
+   */
+  const LANE_HEIGHT = 64;
+  const LANE_GAP = 4;
+  const ROW_PADDING = 8; // the old top-2/bottom-2, now applied per lane
+
+  const layoutRow = (rowBookings: TimelineBooking[]) => {
+    const laneEnds: number[] = [];
+
+    const placed = [...rowBookings]
+      .sort((a, b) =>
+        bookingSpan(a.slot_start_time, a.slot_end_time).start -
+        bookingSpan(b.slot_start_time, b.slot_end_time).start
+      )
+      .map((booking) => {
+        const { start, end } = bookingSpan(booking.slot_start_time, booking.slot_end_time);
+        let lane = laneEnds.findIndex((laneEnd) => laneEnd <= start);
+        if (lane === -1) lane = laneEnds.length;
+        laneEnds[lane] = end;
+        return { booking, lane };
+      });
+
+    const laneCount = Math.max(1, laneEnds.length);
+    return {
+      placed,
+      height: ROW_PADDING * 2 + laneCount * LANE_HEIGHT + (laneCount - 1) * LANE_GAP
+    };
   };
 
   // Group bookings by device
@@ -138,8 +185,10 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
         >
           <div className="min-w-max">
             {/* Hour labels */}
-            <div className="sticky top-0 z-10 bg-gradient-to-b from-[var(--background)] to-[var(--surface)] border-b border-primary/20 flex">
-              <div className="w-40 flex-shrink-0 border-r border-primary/20 p-3">
+            <div className="sticky top-0 z-30 bg-gradient-to-b from-[var(--background)] to-[var(--surface)] border-b border-primary/20 flex">
+              {/* Frozen with the device column below it, and above it in the
+                  stack, so the hour labels scroll underneath rather than through. */}
+              <div className="w-40 flex-shrink-0 border-r border-primary/20 p-3 sticky left-0 z-40 bg-gradient-to-b from-[var(--background)] to-[var(--surface)]">
                 <span className="text-xs font-black text-primary uppercase">Device</span>
               </div>
               <div className="flex flex-1" style={{ minWidth: '2400px' }}>
@@ -168,71 +217,80 @@ export function BookingsTimeline({ bookings, selectedDate, onDateChange, onBooki
                 <p className="text-xs text-zinc-700 mt-1">Try selecting a different date</p>
               </div>
             ) : (
-              deviceKeys.map((deviceKey) => (
-                <div key={deviceKey} className="flex border-b border-zinc-800/50 hover:bg-primary/5 transition-colors relative group">
-                  {/* Device label */}
-                  <div className="w-40 flex-shrink-0 border-r border-zinc-800/50 p-3 flex items-center sticky left-0 bg-gradient-to-r from-[var(--background)] to-[var(--surface)] z-10 group-hover:from-primary/10 group-hover:to-primary/5">
-                    <div>
-                      <p className="text-xs font-black text-white">{deviceKey.split(' #')[0]}</p>
-                      <p className="text-label">Station #{deviceKey.split('#')[1]}</p>
-                    </div>
-                  </div>
+              deviceKeys.map((deviceKey) => {
+                const { placed, height } = layoutRow(deviceGroups[deviceKey]);
 
-                  {/* Timeline grid */}
-                  <div className="flex-1 relative" style={{ minWidth: '2400px', height: '80px' }}>
-                    {/* Grid lines */}
-                    <div className="absolute inset-0 flex">
-                      {timeSlots.map((time) => (
-                        <div key={time} className="flex-1 border-r border-[#27272a]/30" />
-                      ))}
-                    </div>
-
-                    {/* Current time indicator */}
-                    {currentTimePosition && (
-                      <div
-                        className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20"
-                        style={{ left: currentTimePosition }}
-                      >
-                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rounded-full" />
+                return (
+                  <div key={deviceKey} className="flex border-b border-zinc-800/50 hover:bg-primary/5 transition-colors relative group">
+                    {/* Device label — sits above the blocks so a booking sliding
+                        past on horizontal scroll cannot cover the station name. */}
+                    <div className="w-40 flex-shrink-0 border-r border-zinc-800/50 p-3 flex items-center sticky left-0 bg-gradient-to-r from-[var(--background)] to-[var(--surface)] z-20 group-hover:from-primary/10 group-hover:to-primary/5">
+                      <div>
+                        <p className="text-xs font-black text-white">{deviceKey.split(' #')[0]}</p>
+                        <p className="text-label">Station #{deviceKey.split('#')[1]}</p>
                       </div>
-                    )}
+                    </div>
 
-                    {/* Bookings */}
-                    {deviceGroups[deviceKey].map((booking) => {
-                      const position = getBookingPosition(booking.slot_start_time, booking.slot_end_time);
-                      const statusColors = {
-                        confirmed: 'bg-blue-500/20 border-blue-500/50 text-blue-300',
-                        checked_in: 'bg-green-500/20 border-green-500/50 text-green-300',
-                        completed: 'bg-zinc-700/20 border-zinc-600/50 text-muted-content',
-                        locked: 'bg-amber-500/20 border-amber-500/50 text-amber-300'
-                      };
-                      const colorClass = statusColors[booking.status as keyof typeof statusColors] || statusColors.confirmed;
+                    {/* Timeline grid */}
+                    <div className="flex-1 relative" style={{ minWidth: '2400px', height: `${height}px` }}>
+                      {/* Grid lines */}
+                      <div className="absolute inset-0 flex">
+                        {timeSlots.map((time) => (
+                          <div key={time} className="flex-1 border-r border-[#27272a]/30" />
+                        ))}
+                      </div>
 
-                      return (
+                      {/* Current time indicator */}
+                      {currentTimePosition && (
                         <div
-                          key={booking.id}
-                          className={`absolute top-2 bottom-2 ${colorClass} border rounded-lg p-2 cursor-pointer hover:scale-[1.02] transition-all z-10 overflow-hidden shadow-lg`}
-                          style={position}
-                          onClick={() => onBookingClick(booking)}
+                          className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-[15]"
+                          style={{ left: currentTimePosition }}
                         >
-                          <div className="flex flex-col h-full justify-between">
-                            <div>
-                              <p className="text-xs font-black uppercase truncate">{booking.customer_name}</p>
-                              <p className="text-[11px] opacity-80 truncate">{booking.device_type} #{booking.device_station_number}</p>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-[11px] font-bold">
-                                {formatTime12h(booking.slot_start_time.substring(0, 5))}
-                              </span>
-                              <span className="text-[11px] opacity-60">₹{booking.total_amount}</span>
+                          <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rounded-full" />
+                        </div>
+                      )}
+
+                      {/* Bookings */}
+                      {placed.map(({ booking, lane }) => {
+                        const position = getBookingPosition(booking.slot_start_time, booking.slot_end_time);
+                        const statusColors = {
+                          confirmed: 'bg-blue-500/20 border-blue-500/50 text-blue-300',
+                          checked_in: 'bg-green-500/20 border-green-500/50 text-green-300',
+                          completed: 'bg-zinc-700/20 border-zinc-600/50 text-muted-content',
+                          locked: 'bg-amber-500/20 border-amber-500/50 text-amber-300'
+                        };
+                        const colorClass = statusColors[booking.status as keyof typeof statusColors] || statusColors.confirmed;
+
+                        return (
+                          <div
+                            key={booking.id}
+                            className={`absolute ${colorClass} border rounded-lg p-2 cursor-pointer hover:scale-[1.02] transition-all z-10 overflow-hidden shadow-lg`}
+                            style={{
+                              ...position,
+                              top: ROW_PADDING + lane * (LANE_HEIGHT + LANE_GAP),
+                              height: LANE_HEIGHT
+                            }}
+                            onClick={() => onBookingClick(booking)}
+                          >
+                            <div className="flex flex-col h-full justify-between">
+                              <div>
+                                <p className="text-xs font-black uppercase truncate">{booking.customer_name}</p>
+                                <p className="text-[11px] opacity-80 truncate">{booking.device_type} #{booking.device_station_number}</p>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-bold">
+                                  {formatTime12h(booking.slot_start_time.substring(0, 5))}
+                                </span>
+                                <span className="text-[11px] opacity-60">₹{booking.total_amount}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { TimeOfDayField } from '@/components/ui/time-of-day-field'
+import { formatDbTimeRange } from '@/lib/utils/timeSlots'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRequiredFields } from '@/lib/hooks/useRequiredFields'
@@ -18,14 +20,6 @@ interface AddModalProps {
 
 const DAYS_ABBR = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 const DAYS_FULL = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-
-// Convert 24-hour time (18:00) to 12-hour format (06:00 PM)
-function convertTo12Hour(time24: string): string {
-  const [hours, minutes] = time24.split(':').map(Number)
-  const period = hours >= 12 ? 'PM' : 'AM'
-  const hours12 = hours % 12 || 12
-  return `${hours12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${period}`
-}
 
 export function AddHappyHourModal({ open, setOpen, onFormSuccess }: AddModalProps) {
   const [selectedDays, setSelectedDays] = useState<number[]>([4]) // Default to Friday
@@ -83,10 +77,11 @@ export function AddHappyHourModal({ open, setOpen, onFormSuccess }: AddModalProp
         .map(idx => DAYS_FULL[idx])
         .join(', ')
 
-      // Convert 24-hour time to 12-hour format with AM/PM
-      const startTime12 = convertTo12Hour(startTime)
-      const endTime12 = convertTo12Hour(endTime)
-      const timeRangeString = `${startTime12} - ${endTime12}`
+      // Stored as the display range the pricing rules read back:
+      // "06:00 PM - 09:00 PM". The field submits 24-hour, as time inputs always
+      // did, so this conversion is unchanged - it is only the entry that is now
+      // unambiguously AM/PM.
+      const timeRangeString = formatDbTimeRange(startTime, endTime)
 
       const selectedDeviceObj = devices.find(d => d.id === deviceId)
       const deviceLabel = selectedDeviceObj
@@ -206,20 +201,10 @@ export function AddHappyHourModal({ open, setOpen, onFormSuccess }: AddModalProp
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2">
                 <label className="text-xs font-black tracking-widest uppercase text-zinc-300">Time Range <span className="text-red-500">*</span></label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="time"
-                    name="startTime"
-                    className="h-10 bg-[var(--surface)] border-[#27272a] text-sm text-white focus-visible:ring-primary focus-visible:border-primary transition-colors [&::-webkit-calendar-picker-indicator]:invert"
-                    required
-                  />
+                <div className="flex flex-wrap items-center gap-2">
+                  <TimeOfDayField name="startTime" label="Start time" required />
                   <span className="text-muted-content text-sm">to</span>
-                  <Input
-                    type="time"
-                    name="endTime"
-                    className="h-10 bg-[var(--surface)] border-[#27272a] text-sm text-white focus-visible:ring-primary focus-visible:border-primary transition-colors [&::-webkit-calendar-picker-indicator]:invert"
-                    required
-                  />
+                  <TimeOfDayField name="endTime" label="End time" required />
                 </div>
               </div>
 

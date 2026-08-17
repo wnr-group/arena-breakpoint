@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { TimeOfDayField } from '@/components/ui/time-of-day-field'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRequiredFields } from '@/lib/hooks/useRequiredFields'
+import { formatDbTimeRange, formatTo24Hour } from '@/lib/utils/timeSlots'
 
 // Update this path to match your actual actions file
 import { getDevices, updateHappyHour } from './action'
@@ -21,27 +23,6 @@ interface EditModalProps {
 const DAYS_ABBR = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 const DAYS_FULL = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-// Convert 24-hour time (18:00) to 12-hour format (06:00 PM)
-function convertTo12Hour(time24: string): string {
-  const [hours, minutes] = time24.split(':').map(Number)
-  const period = hours >= 12 ? 'PM' : 'AM'
-  const hours12 = hours % 12 || 12
-  return `${hours12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${period}`
-}
-
-// Convert 12-hour time (06:00 PM) to 24-hour format (18:00) for input field
-function convertTo24Hour(time12: string): string {
-  const match = time12.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i)
-  if (!match) return '00:00'
-
-  let [, hours, minutes, period] = match
-  let hour = parseInt(hours)
-
-  if (period.toUpperCase() === 'PM' && hour !== 12) hour += 12
-  if (period.toUpperCase() === 'AM' && hour === 12) hour = 0
-
-  return `${hour.toString().padStart(2, '0')}:${minutes}`
-}
 
 export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditModalProps) {
   const [selectedDays, setSelectedDays] = useState<number[]>([])
@@ -107,10 +88,10 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
         .map(idx => DAYS_FULL[idx])
         .join(', ')
 
-      // Convert 24-hour time to 12-hour format with AM/PM
-      const startTime12 = convertTo12Hour(startTime)
-      const endTime12 = convertTo12Hour(endTime)
-      const timeRangeString = `${startTime12} - ${endTime12}`
+      // Stored as the display range the pricing rules read back:
+      // "06:00 PM - 09:00 PM". The field submits 24-hour, as the time inputs
+      // always did, so only the entry has changed.
+      const timeRangeString = formatDbTimeRange(startTime, endTime)
 
       // Get the selected device name/label
       const selectedDeviceObj = devices.find(d => d.id === deviceId)
@@ -151,14 +132,14 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
 
   // --- Parsing Default Values for the Form ---
 
-  // Extract start and end times from "HH:MM AM/PM - HH:MM AM/PM" format
-  // Convert to 24-hour format for the time input fields
+  // Stored as "HH:MM AM/PM - HH:MM AM/PM"; the field takes 24-hour, and turns it
+  // back into hour, minute and AM/PM for the three selects.
   let defaultStart = "00:00"
   let defaultEnd = "00:00"
   if (rule?.time_range && rule.time_range.includes(' - ')) {
     const parts = rule.time_range.split(' - ')
-    defaultStart = convertTo24Hour(parts[0].trim())
-    defaultEnd = convertTo24Hour(parts[1].trim())
+    defaultStart = formatTo24Hour(parts[0].trim())
+    defaultEnd = formatTo24Hour(parts[1].trim())
   }
 
   // Find the matching device ID based on the saved string label to set the dropdown default value
@@ -257,20 +238,18 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2">
                 <label className="text-xs font-black tracking-widest uppercase text-zinc-300">Time Range <span className="text-red-500">*</span></label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="time"
+                <div className="flex flex-wrap items-center gap-2">
+                  <TimeOfDayField
                     name="startTime"
+                    label="Start time"
                     defaultValue={defaultStart}
-                    className="h-10 bg-[var(--surface)] border-[#27272a] text-sm text-white focus-visible:ring-primary focus-visible:border-primary transition-colors [&::-webkit-calendar-picker-indicator]:invert"
                     required
                   />
                   <span className="text-muted-content text-sm">to</span>
-                  <Input
-                    type="time"
+                  <TimeOfDayField
                     name="endTime"
+                    label="End time"
                     defaultValue={defaultEnd}
-                    className="h-10 bg-[var(--surface)] border-[#27272a] text-sm text-white focus-visible:ring-primary focus-visible:border-primary transition-colors [&::-webkit-calendar-picker-indicator]:invert"
                     required
                   />
                 </div>

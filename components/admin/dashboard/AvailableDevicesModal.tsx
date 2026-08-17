@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Gamepad2, MapPin, CheckCircle2, XCircle, Eye, Wrench, DollarSign, Info, ArrowLeft, ChevronRight } from "lucide-react";
+import { Gamepad2, MapPin, CheckCircle2, XCircle, Eye, Wrench, Info, ArrowLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface AvailableDevicesModalProps {

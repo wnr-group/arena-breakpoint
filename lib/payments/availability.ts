@@ -90,7 +90,13 @@ async function fetchOccupiedRanges(
     `
     )
     .in('device_id', deviceIds)
-    .in('slot_date', [shiftDate(slotDate, -1), slotDate])
+    // Both neighbours, matching `assign_device_slot`'s own
+    // `BETWEEN p_slot_date - 1 AND p_slot_date + 1`. The previous day covers a
+    // booking that ran past midnight into this one; the next day covers the
+    // mirror case, a window on this date that reaches past midnight itself - a
+    // walk-in checking in at 22:00 claims five provisional hours, so it runs to
+    // 03:00 tomorrow and a booking held there is a genuine conflict.
+    .in('slot_date', [shiftDate(slotDate, -1), slotDate, shiftDate(slotDate, 1)])
     .in('bookings.status', ACTIVE_STATUSES)
 
   if (error) throw error
@@ -120,11 +126,16 @@ async function fetchOccupiedRanges(
     // Stored end times wrap at midnight; unwrap so the range stays contiguous.
     if (end <= start) end += MINUTES_PER_DAY
 
-    // Rebase the previous day's rows onto this date's timeline.
-    if (row.slot_date !== slotDate) {
+    // Rebase a neighbouring day's rows onto this date's timeline. YYYY-MM-DD
+    // compares chronologically as a string, so which side it falls on is just
+    // the comparison.
+    if (row.slot_date < slotDate) {
       start -= MINUTES_PER_DAY
       end -= MINUTES_PER_DAY
       if (end <= 0) continue
+    } else if (row.slot_date > slotDate) {
+      start += MINUTES_PER_DAY
+      end += MINUTES_PER_DAY
     }
 
     const existing = byDevice.get(row.device_id)

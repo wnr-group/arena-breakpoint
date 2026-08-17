@@ -19,7 +19,7 @@ import { getMenuItems } from "@/app/(admin)/admin/food/actions";
 import { Label } from "@/components/ui/label";
 import { QRCodeSVG } from "qrcode.react";
 import {
-  User, Phone, Mail, Calendar, Clock, DollarSign,
+  User, Phone, Mail, Calendar, Clock, IndianRupee,
   Loader2, CheckCircle2, LogIn, LogOut,
   UtensilsCrossed, QrCode, MapPin, Gamepad2, Plus, Minus, Search, Filter, Trash2
 } from "lucide-react";
@@ -569,7 +569,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
               {/* Payment Summary - Detailed Breakdown */}
               <Card className="bg-gradient-to-br from-[#0a0a0a] via-zinc-950 to-[#0a0a0a] border-2 border-primary/30 p-6 shadow-[0_0_30px_rgba(184,134,11,0.2)]">
                 <h3 className="text-section-header text-primary mb-5 flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
+                  <IndianRupee className="h-5 w-5" />
                   Payment Summary
                 </h3>
                 <div className="space-y-4 text-base">
