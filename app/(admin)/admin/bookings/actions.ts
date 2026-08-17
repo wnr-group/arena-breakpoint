@@ -2080,11 +2080,24 @@ export async function createFoodOnlyWalkInBooking(payload: {
         promo_discount: 0,
         happy_hour_discount: 0,
         total_amount: payload.totalAmount,
-        amount_paid: payload.totalAmount, // Walk-in pays immediately
-        cash_amount: payload.totalAmount, // Default to cash, can be updated later
+        /**
+         * Raised unpaid, like every other order.
+         *
+         * This used to assume a walk-in "pays immediately" and stamp the whole
+         * total as cash received the instant the order was typed in. Nothing had
+         * been collected at that point - the counter takes the money when the
+         * food is handed over - so the order showed as settled before anyone paid,
+         * the desk had no outstanding balance to work from, and the revenue
+         * report's cash figure counted takings the till had never seen.
+         *
+         * Staff settle it through the same payment flow as any booking, which is
+         * also what records how it was actually paid rather than guessing cash.
+         */
+        amount_paid: 0,
+        cash_amount: 0,
         card_amount: 0,
         upi_amount: 0,
-        payment_status: "paid",
+        payment_status: "pending",
         status: "confirmed"
       })
       .select()

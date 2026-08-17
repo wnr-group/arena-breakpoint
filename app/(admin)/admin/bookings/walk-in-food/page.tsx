@@ -43,6 +43,8 @@ export default function WalkInFoodOnlyPage() {
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerDob, setCustomerDob] = useState("");
+  /** Set once Continue has been pressed, so empty required fields can speak up too. */
+  const [showDetailErrors, setShowDetailErrors] = useState(false);
   const [showFullRegistrationFields, setShowFullRegistrationFields] = useState(false);
   const [checkingProfile, setCheckingProfile] = useState(false);
   const [activeSubscription, setActiveSubscription] = useState<any>(null);
@@ -81,10 +83,50 @@ export default function WalkInFoodOnlyPage() {
     setLoadingMenu(false);
   };
 
-  // Gates "Continue to Food Selection": every starred field must be filled.
+  /**
+   * The problem with the date, if there is one.
+   *
+   * Says nothing while the date is still being typed - only once it is complete,
+   * or once Continue has been pressed - so the field does not go red at the first
+   * digit. `DOB_ERROR` is the one place the wording lives.
+   */
+  const describeDobProblem = (value: string): string | null => {
+    if (!value.trim()) return "Date of birth is required.";
+    if (value.length < 10 && !showDetailErrors) return null;
+    return isValidDob(value) ? null : DOB_ERROR;
+  };
+
+  // Shown as soon as the field has something in it, or once Continue is pressed.
+  const dobError =
+    customerDob.trim() || showDetailErrors ? describeDobProblem(customerDob) : null;
+
+  const emailError =
+    (customerEmail.trim().length > 0 || showDetailErrors) && !isPlausibleEmail(customerEmail)
+      ? customerEmail.trim()
+        ? "Enter a complete email address, like customer@domain.com."
+        : "Email is required."
+      : null;
+
+  const nameError =
+    showDetailErrors && !customerName.trim() ? "Customer name is required." : null;
+
+  /**
+   * Whether every required field has something in it.
+   *
+   * This is what greys the button out: with a field still blank there is nothing
+   * to correct and no message to show, so a disabled button is honest. Presence
+   * only - a filled-in but impossible date leaves the button live, because that
+   * is a mistake the form has to be able to tell staff about, and a dead button
+   * cannot.
+   */
+  const requiredDetailsFilled = Boolean(
+    customerName.trim() && customerDob.trim() && customerEmail.trim()
+  );
+
+  // Whether the step may actually advance: filled *and* valid.
   const registrationComplete =
     allFilled(customerName, customerDob) &&
-    customerDob.length === 10 &&
+    isValidDob(customerDob) &&
     isPlausibleEmail(customerEmail);
 
   const handlePhoneLookup = async () => {
@@ -122,23 +164,19 @@ export default function WalkInFoodOnlyPage() {
   };
 
   const handleRegisterAndProceed = () => {
-    // Validate all fields
-    if (!customerName.trim()) {
-      toast.error("Please enter customer name");
+    /**
+     * A dead button explains nothing.
+     *
+     * The three toasts this replaces fired one at a time and named no field, and
+     * the email test was `includes("@")`, which passes "a@b". The messages now sit
+     * under the offending inputs, all at once; this only holds the step.
+     */
+    if (!registrationComplete) {
+      setShowDetailErrors(true);
       return;
     }
 
-    if (!customerEmail.trim() || !customerEmail.includes("@")) {
-      toast.error("Please enter a valid email");
-      return;
-    }
-
-    // isValidDob covers both the DD-MM-YYYY shape and the accepted year range.
-    if (!customerDob || !isValidDob(customerDob)) {
-      toast.error(DOB_ERROR);
-      return;
-    }
-
+    setShowDetailErrors(false);
     setStep(2);
     toast.success("Customer details saved. Select food items.");
   };
@@ -328,7 +366,7 @@ export default function WalkInFoodOnlyPage() {
                     onClick={handlePhoneLookup}
                     disabled={checkingProfile || customerPhone.length < 10}
                     variant="default"
-                    className="bg-primary text-black hover:bg-primary/90"
+                    className="bg-primary text-black hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none"
                   >
                     {checkingProfile ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                     Lookup
@@ -338,41 +376,59 @@ export default function WalkInFoodOnlyPage() {
 
               {showFullRegistrationFields && (
                 <>
-                  <div>
+                  <div className="space-y-1.5">
                     <Label className="text-zinc-400">Full Name <span className="text-red-500">*</span></Label>
                     <Input
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="Customer name"
-                      className="bg-zinc-950 border-zinc-800 text-white"
+                      aria-invalid={!!nameError}
+                      aria-describedby={nameError ? "food-name-error" : undefined}
+                      className={`bg-zinc-950 text-white ${nameError ? "border-red-500/70" : "border-zinc-800"}`}
                     />
+                    {nameError && (
+                      <p id="food-name-error" className="text-xs font-bold text-red-400">{nameError}</p>
+                    )}
                   </div>
 
-                  <div>
+                  <div className="space-y-1.5">
                     <Label className="text-zinc-400">Email <span className="text-red-500">*</span></Label>
                     <Input
                       type="email"
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
                       placeholder="email@example.com"
-                      className="bg-zinc-950 border-zinc-800 text-white"
+                      aria-invalid={!!emailError}
+                      aria-describedby={emailError ? "food-email-error" : undefined}
+                      className={`bg-zinc-950 text-white ${emailError ? "border-red-500/70" : "border-zinc-800"}`}
                     />
+                    {emailError && (
+                      <p id="food-email-error" className="text-xs font-bold text-red-400">{emailError}</p>
+                    )}
                   </div>
 
-                  <div>
+                  <div className="space-y-1.5">
                     <Label className="text-zinc-400">Date of Birth (DD-MM-YYYY) <span className="text-red-500">*</span></Label>
                     <Input
                       value={customerDob}
                       onChange={(e) => setCustomerDob(handleDobInput(e.target.value))}
                       placeholder="DD-MM-YYYY"
-                      className="bg-zinc-950 border-zinc-800 text-white"
                       maxLength={10}
+                      aria-invalid={!!dobError}
+                      aria-describedby={dobError ? "food-dob-error" : undefined}
+                      className={`bg-zinc-950 text-white ${dobError ? "border-red-500/70" : "border-zinc-800"}`}
                     />
+                    {dobError && (
+                      <p id="food-dob-error" className="text-xs font-bold text-red-400">{dobError}</p>
+                    )}
                   </div>
 
+                  {/* Disabled only while something is still blank. Once every
+                      field has content the button goes live, so pressing it can
+                      report what is actually wrong with it. */}
                   <Button
                     onClick={handleRegisterAndProceed}
-                    disabled={!registrationComplete}
+                    disabled={!requiredDetailsFilled}
                     variant="gradient"
                     className="w-full disabled:opacity-50 disabled:pointer-events-none"
                   >
