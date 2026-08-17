@@ -26,7 +26,9 @@
     "test:midnight": "tsx scripts/verify-midnight-booking.ts",
     "check:guards": "tsx scripts/check-admin-guards.ts",
     "check:clock": "tsx scripts/check-arena-clock.ts",
-    "otp:reset": "tsx scripts/reset-otp-limit.ts"
+    "otp:reset": "tsx scripts/reset-otp-limit.ts",
+    "check:env": "tsx scripts/check-env.ts",
+    "test:phone": "tsx scripts/verify-phone-normalisation.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "3.3.4",

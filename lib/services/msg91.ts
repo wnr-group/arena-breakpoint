@@ -263,8 +263,24 @@ export function validatePhoneNumber(phone: string): {
   // Remove spaces, dashes, and other characters
   let cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
 
-  // Remove +91 or 91 prefix if present
-  cleanPhone = cleanPhone.replace(/^\+?91/, '');
+  /**
+   * Strip the country code, but only where it really is one.
+   *
+   * `replace(/^\+?91/, '')` took the leading 91 off any number that happened to
+   * start with it, and 91 is a live Indian mobile prefix - 9123456789 became
+   * 23456789 and was rejected as "must be 10 digits". Every customer on a
+   * 91xxxxxxxx number was locked out of logging in.
+   *
+   * An explicit `+` is unambiguous. Without one, 91 is only a country code when
+   * what follows it is a full 10-digit number.
+   */
+  if (cleanPhone.startsWith('+91')) {
+    cleanPhone = cleanPhone.slice(3);
+  } else if (/^91\d{10}$/.test(cleanPhone)) {
+    cleanPhone = cleanPhone.slice(2);
+  } else if (cleanPhone.startsWith('+')) {
+    cleanPhone = cleanPhone.slice(1);
+  }
 
   // Check if it's exactly 10 digits
   if (!/^\d{10}$/.test(cleanPhone)) {

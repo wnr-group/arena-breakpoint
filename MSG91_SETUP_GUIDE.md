@@ -1,55 +1,63 @@
 # MSG91 OTP Setup Guide for Breakpoint Arena
 
-## 🚀 Quick Start (Test Mode - No MSG91 Needed)
+## Quick Start — test mode, no MSG91 account needed
 
-You can start testing OTP flow immediately without MSG91 credentials:
-
-### 1. Enable Test Mode
-
-Add to your `.env.local`:
-
-```env
-# Enable test mode - OTP will be logged to console instead of SMS
-MSG91_TEST_MODE=true
-SESSION_SECRET=your-random-32-character-secret-key-here
-```
-
-Generate a session secret:
-```bash
-# Generate random 32-character secret
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-### 2. Run Database Migration
+The whole OTP login flow runs locally with no MSG91 credentials and no credits
+spent. The code is printed to the terminal running `npm run dev` instead of
+being sent by SMS.
 
 ```bash
-# If using Supabase CLI
-supabase db push
-
-# Or apply the migration manually in Supabase dashboard:
-# Go to SQL Editor and run: supabase/migrations/20260630000000_create_otp_sessions.sql
+cp .env.local.starter .env.local   # already filled in for local work
+npx supabase start                 # local database in Docker
+npx supabase db reset              # applies every migration, incl. otp_sessions
+npm run check:env                  # says what is missing, if anything
+npm run dev
 ```
 
-### 3. Test the Flow
+`npm run check:env` is the one to run first when something looks broken. It
+reports missing configuration in plain language instead of letting it surface
+as a stack trace from inside the OTP service.
 
-1. Start your dev server: `npm run dev`
-2. Go to booking or food order flow
-3. Enter phone number
-4. **Check your terminal/console** - you'll see the OTP printed there!
-5. Enter the OTP from console
-6. Flow continues normally
+> **Use `npx supabase db reset`, not `supabase db push`.**
+> `db push` applies migrations to the **remote** project — that is production.
+> `db reset` rebuilds your local database from the migration files, which is
+> what you want while developing.
 
-**In test mode, OTP will look like this in your console:**
+### Testing the flow
+
+1. Go to `/booking`, pick a station and a slot, and continue to the details step.
+2. Enter any valid Indian mobile number. Nothing is sent to it.
+3. **Read the OTP from the terminal running `npm run dev`**, not from a phone:
+
 ```
 ============================================================
 📱 MSG91 TEST MODE - OTP NOT SENT TO REAL PHONE
 ============================================================
 Phone: +91 9876543210
-OTP: 123456
-============================================================
-⚠️  In production, set MSG91_TEST_MODE=false and configure MSG91
+OTP:   413573
 ============================================================
 ```
+
+4. Type that code into the browser. You are signed in for 12 hours, and the
+   same session carries across booking, food ordering, subscriptions and
+   Retrieve Booking — there is a sign-out button in the header.
+
+### Things that will look like bugs and are not
+
+| What you see | Why |
+|---|---|
+| `Please wait 58 seconds before requesting a new OTP` | One OTP per number per 60 seconds. Run `npm run otp:reset` instead of waiting. |
+| `Invalid OTP. 2 attempts remaining.` | Three attempts per code, then that code is dead. Request a new one. |
+| Checkout refuses to take payment | Razorpay keys are blank in the starter. Deliberate — the app refuses payment rather than booking for free. Ask for the shared `rzp_test_...` keys if you need to test checkout. |
+| OTP never appears in the terminal | `MSG91_TEST_MODE` is not `true`. Check with `npm run check:env`. |
+
+### Test mode vs. a real SMS
+
+`MSG91_TEST_MODE=true` skips MSG91 entirely. If you need to test real delivery,
+set it to `false`, add `MSG91_AUTH_KEY`, and **set `MSG91_LIVE_SMS_NUMBERS` to
+your own number** — only listed numbers then receive an SMS, and every other
+number falls back to the terminal. Each real send costs a credit, so leaving
+that list empty means every typo in the form is a paid message.
 
 ---
 
