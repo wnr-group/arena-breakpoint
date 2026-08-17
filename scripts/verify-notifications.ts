@@ -60,7 +60,9 @@ function notification(over: Partial<Notification> = {}): Notification {
 }
 
 async function main() {
-  const { mergeNotification } = await import('../lib/contexts/NotificationContext')
+  const { mergeNotification, notificationHref } = await import(
+    '../lib/contexts/NotificationContext'
+  )
   const { shouldAnnounce } = await import('../components/admin/layout/NotificationToast')
   const {
     describeOrderNotification,
@@ -123,6 +125,60 @@ check('callers without an id are still deduplicated within the window', () => {
   const b = notification({ id: 'generated-2' })
   const list = mergeNotification(mergeNotification([], a, NOW), b, NOW + 1_000)
   assert.equal(list.length, 1, 'same booking and title moments apart is one event')
+})
+
+console.log('\nAlerts that are not about a booking')
+
+/** A menu item having run out - no booking, and a link to the menu instead. */
+function stockAlert(over: Partial<Notification> = {}): Notification {
+  return {
+    id: 'menu:coke:out-of-stock:2026-08-17T12:00:00Z',
+    type: 'stock',
+    title: 'Item Out of Stock',
+    message: 'Coke has sold out and is off the customer menu.',
+    href: '/admin/food',
+    timestamp: new Date(NOW),
+    read: false,
+    ...over,
+  }
+}
+
+check('two items running out together are both announced', () => {
+  // The same-booking backstop asks "is this the same booking again?", and these
+  // are not about a booking at all. Left to match on a bookingId they both lack
+  // and a title they both share, the second would never have been heard.
+  const coke = stockAlert()
+  const fries = stockAlert({ id: 'menu:fries:out-of-stock:2026-08-17T12:00:00Z' })
+  const list = mergeNotification(mergeNotification([], coke, NOW), fries, NOW + 1_000)
+  assert.equal(list.length, 2)
+})
+
+check('the same item running out is still announced once', () => {
+  const list = mergeNotification(mergeNotification([], stockAlert(), NOW), stockAlert(), NOW + 30_000)
+  assert.equal(list.length, 1)
+})
+
+check('an item restocked and sold out again is a second event', () => {
+  // Keyed on when it ran out, so this afternoon's is not swallowed by this
+  // morning's. Keying on the item alone would have lost it.
+  const morning = stockAlert()
+  const afternoon = stockAlert({ id: 'menu:coke:out-of-stock:2026-08-17T16:30:00Z' })
+  const list = mergeNotification(mergeNotification([], morning, NOW), afternoon, NOW + 4 * 3600_000)
+  assert.equal(list.length, 2)
+})
+
+check('a stock alert opens the menu, not a booking', () => {
+  assert.equal(notificationHref(stockAlert()), '/admin/food')
+})
+
+check('a booking notification still opens its booking', () => {
+  assert.equal(notificationHref(notification()), '/admin/bookings?id=abc')
+})
+
+check('one with nowhere to go navigates nowhere', () => {
+  // Rather than opening /admin/bookings?id=undefined, which is what a missing
+  // booking id used to produce.
+  assert.equal(notificationHref(stockAlert({ href: undefined })), null)
 })
 
 console.log('\nHistory is silent, arrivals are not')

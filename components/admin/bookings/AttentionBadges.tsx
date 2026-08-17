@@ -1,12 +1,15 @@
 "use client";
 
-import { AlertTriangle, Clock, IndianRupee, UserX } from "lucide-react";
+import { AlertTriangle, CalendarClock, Clock, IndianRupee, Timer, TimerOff, UserX } from "lucide-react";
 import { bookingAttention, type BookingAttention } from "@/lib/bookings/attention";
 
 const ICONS = {
   never_checked_out: Clock,
   no_show: UserX,
   unpaid: IndianRupee,
+  starting_soon: CalendarClock,
+  ending_soon: Timer,
+  overrunning: TimerOff,
 } as const;
 
 /**

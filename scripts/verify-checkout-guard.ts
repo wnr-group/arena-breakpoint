@@ -65,6 +65,16 @@ check('confirmed - settles without a check-in', () => {
   })
 })
 
+check('checked in by mistake - still settles, rather than trapping the order', () => {
+  // Nothing stops staff pressing Check In on a food row. When only 'confirmed'
+  // was accepted here, doing so left the order impossible to check out and
+  // impossible to close.
+  assert.deepEqual(decideCheckout({ status: 'checked_in', hasDeviceSlots: false }), {
+    ok: true,
+    from: 'checked_in'
+  })
+})
+
 check('cancelled - still cannot be checked out', () => {
   assert.equal(decideCheckout({ status: 'cancelled', hasDeviceSlots: false }).ok, false)
 })

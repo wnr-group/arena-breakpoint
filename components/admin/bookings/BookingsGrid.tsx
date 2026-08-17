@@ -8,6 +8,7 @@ import { AttentionBadges } from "./AttentionBadges";
 import { PaymentStatusBadge } from "./PaymentStatusBadge";
 import { Calendar, Clock, MapPin, IndianRupee, Phone, User, Eye, UserCheck, LogOut, UtensilsCrossed, CreditCard, Link2 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
+import { formatClockTime12h } from "@/lib/utils/dates";
 import { formatDbTimeRange } from "@/lib/utils/timeSlots";
 
 interface BookingsGridProps {
@@ -125,7 +126,7 @@ export function BookingsGrid({
                         </p>
                         <p className="text-xs text-muted-content flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          {new Date(booking.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                          {formatClockTime12h(booking.created_at)}
                         </p>
                       </div>
                     </div>

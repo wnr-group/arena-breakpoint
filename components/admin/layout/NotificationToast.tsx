@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { useNotifications, Notification } from '@/lib/contexts/NotificationContext'
-import { Gamepad2, UtensilsCrossed, X } from 'lucide-react'
+import { useNotifications, notificationHref, Notification } from '@/lib/contexts/NotificationContext'
+import { Gamepad2, PackageX, UtensilsCrossed, X } from 'lucide-react'
 import { toast as sonnerToast } from 'sonner'
 import { playNotificationSound, preloadNotificationSound } from '@/lib/utils/notificationSound'
 
@@ -86,14 +86,22 @@ export function NotificationToastManager() {
 }
 
 function showNotificationToast(notification: Notification) {
-  const Icon = notification.type === 'booking' ? Gamepad2 : UtensilsCrossed
+  const Icon =
+    notification.type === 'booking'
+      ? Gamepad2
+      : notification.type === 'stock'
+        ? PackageX
+        : UtensilsCrossed
+
+  const href = notificationHref(notification)
 
   sonnerToast.custom(
     (t) => (
       <div
         className="relative w-full bg-gradient-to-br from-[#111] via-zinc-950 to-[#111] border-2 border-primary/40 rounded-xl p-4 shadow-[0_0_40px_rgba(184,134,11,0.3)] cursor-pointer hover:border-primary/60 transition-all"
         onClick={() => {
-          window.open(`/admin/bookings?id=${notification.bookingId}`, '_blank')
+          // A stock alert goes to the menu, not to a booking it does not have.
+          if (href) window.open(href, '_blank')
           sonnerToast.dismiss(t)
         }}
       >
@@ -115,7 +123,9 @@ function showNotificationToast(notification: Notification) {
             className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
               notification.type === 'booking'
                 ? 'bg-primary/20 text-primary'
-                : 'bg-amber-500/20 text-amber-400'
+                : notification.type === 'stock'
+                  ? 'bg-rose-500/20 text-rose-400'
+                  : 'bg-amber-500/20 text-amber-400'
             }`}
           >
             <Icon className="h-5 w-5" />

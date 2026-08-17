@@ -27,7 +27,15 @@
     "test:notifications": "tsx scripts/verify-notifications.ts",
     "check:guards": "tsx scripts/check-admin-guards.ts",
     "check:clock": "tsx scripts/check-arena-clock.ts",
-    "test:dashboard": "tsx scripts/verify-dashboard-derivations.ts"
+    "test:dashboard": "tsx scripts/verify-dashboard-derivations.ts",
+    "test:time-limits": "tsx scripts/verify-session-time-limits.ts",
+    "test:stock": "tsx scripts/verify-menu-stock-status.ts",
+    "test:cart": "tsx scripts/verify-food-cart-stock.ts",
+    "test:timefield": "tsx scripts/verify-time-of-day-field.ts",
+    "test:payments": "tsx scripts/verify-payment-status.ts",
+    "test:revenue": "tsx scripts/verify-revenue-split.ts",
+    "check:stock": "tsx scripts/check-menu-stock-status.ts",
+    "check:amounts": "tsx scripts/check-booking-amounts.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "3.3.4",

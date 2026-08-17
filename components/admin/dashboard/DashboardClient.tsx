@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
 import { formatDbTime } from "@/lib/utils/timeSlots";
+import { formatClockTime12h } from "@/lib/utils/dates";
 import {
   getDashboardData,
   getTodaysRevenueDetails,
@@ -120,10 +121,9 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
   const [currentTime, setCurrentTime] = useState<string | null>(null);
 
   useEffect(() => {
-    const readClock = () =>
-      setCurrentTime(
-        new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
-      );
+    // `formatClockTime12h` pins Asia/Kolkata, so this reads the arena's clock
+    // rather than whatever zone the operator's laptop is set to.
+    const readClock = () => setCurrentTime(formatClockTime12h(new Date()));
 
     readClock();
     // Ticks so the header does not sit showing the minute the page was opened.

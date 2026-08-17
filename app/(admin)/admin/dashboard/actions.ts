@@ -7,6 +7,7 @@ import { arenaToday, arenaDateOffset, arenaClockTime } from "@/lib/utils/dates";
 import {
   MAX_LIVE_SESSION_HOURS,
   effectiveDeviceStatus,
+  getOccupancyByDevice,
   getOccupiedDeviceIds,
 } from "@/lib/devices/occupancy";
 
@@ -39,6 +40,13 @@ export async function getDashboardData() {
     const now = new Date();
     const sevenDaysAgo = arenaDateOffset(-7);
 
+    // How far back a session can have started and still be somebody who is
+    // really here. Past this a `checked_in` row is a checkout that never
+    // happened, which is what `never_checked_out` is for - not a person playing.
+    const liveSince = new Date(
+      now.getTime() - MAX_LIVE_SESSION_HOURS * 60 * 60 * 1000
+    ).toISOString();
+
     const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000);
     // Arena clock, because that is what `slot_start_time` holds. `toTimeString()`
     // reads the host's, so on Vercel this compared UTC against IST and the
@@ -48,10 +56,9 @@ export async function getDashboardData() {
 
     const [
       { data: todaySlots, error: slotsError },
-      { count: activeSessions, error: activeError },
       { data: paidBookings, error: paymentsError },
       { data: devices, error: devicesError },
-      occupiedDeviceIds,
+      occupancy,
       { data: recentBookings, error: recentError },
       { data: foodOrders, error: foodError },
     ] = await Promise.all([
@@ -90,18 +97,7 @@ export async function getDashboardData() {
         `)
         .eq("slot_date", today),
 
-      // Active sessions (checked in). Bounded the same way occupancy is: a
-      // booking left in `checked_in` for weeks is a checkout that never
-      // happened, and counting those made this tile read eighteen while the
-      // arena was empty.
-      supabaseAdmin
-        .from("bookings")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "checked_in")
-        .gte(
-          "checked_in_at",
-          new Date(Date.now() - MAX_LIVE_SESSION_HOURS * 60 * 60 * 1000).toISOString()
-        ),
+
 
       // Everything settled or part-settled. Filtered to today and to the week
       // below - the same rows answer both, so they are fetched once.
@@ -124,7 +120,7 @@ export async function getDashboardData() {
         .from("devices")
         .select("id, status"),
 
-      getOccupiedDeviceIds(),
+      getOccupancyByDevice(),
 
       supabaseAdmin
         .from("bookings")
@@ -159,7 +155,6 @@ export async function getDashboardData() {
     ]);
 
     if (slotsError) throw slotsError;
-    if (activeError) throw activeError;
     if (devicesError) throw devicesError;
     if (recentError) throw recentError;
 
@@ -198,6 +193,25 @@ export async function getDashboardData() {
       }
     }
 
+    /**
+     * Active sessions - people at stations, playing.
+     *
+     * Derived from the occupancy map rather than counted off `bookings`, because
+     * a station is what makes this a session. A food-only order has no slot, and
+     * nothing stops staff pressing Check In on one: production is currently
+     * holding two such rows, and counted off `bookings` alone a takeaway Coke
+     * read as somebody playing on an empty floor.
+     *
+     * Distinct booking, not distinct device - one group on two stations is one
+     * session. The Available Devices tile beside it is what counts stations, and
+     * both now come from the same query, so the two halves of the same floor
+     * cannot disagree.
+     */
+    const occupiedDeviceIds = new Set(occupancy.keys());
+    const activeSessions = new Set(
+      Array.from((occupancy as Map<string, { bookingId: string }>).values()).map((s) => s.bookingId)
+    ).size;
+
     const availableDevices = (devices || []).filter(
       (device: { id: string; status: string | null }) =>
         effectiveDeviceStatus(device.status, occupiedDeviceIds.has(device.id)) === "available"
@@ -218,7 +232,7 @@ export async function getDashboardData() {
     return {
       success: true as const,
       stats: {
-        activeSessions: activeSessions || 0,
+        activeSessions,
         todaysRevenue,
         todaysBookings: bookedToday.length,
         upcomingBookings: upcomingBookings.length,
@@ -375,7 +389,12 @@ export async function getActiveSessionsDetails() {
   await requireStaff();
 
   try {
-    const today = arenaToday();
+    // The same window the tile counts. Without it this list reached back over
+    // every forgotten checkout ever recorded, so the tile could read 1 while the
+    // modal it opens listed nine.
+    const liveSince = new Date(
+      Date.now() - MAX_LIVE_SESSION_HOURS * 60 * 60 * 1000
+    ).toISOString();
 
     const { data, error } = await supabaseAdmin
       .from("booking_device_slots")
@@ -392,10 +411,12 @@ export async function getActiveSessionsDetails() {
           booking_number,
           customer_name,
           customer_phone,
-          status
+          status,
+          checked_in_at
         )
       `)
       .eq("bookings.status", "checked_in")
+      .gte("bookings.checked_in_at", liveSince)
       .order("slot_start_time", { ascending: true });
 
     if (error) throw error;

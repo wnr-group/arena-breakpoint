@@ -7,7 +7,21 @@ export interface FoodCartItem {
   price: number;
   quantity: number;
   image_url?: string;
+  /**
+   * How many of these the kitchen had when this line was last touched.
+   *
+   * Carried on the line so the cap travels with it. The checkout page has a
+   * stepper on every row and no menu to consult - it knows the cart and nothing
+   * else - so a limit it has to look up is a limit it will not apply. This is a
+   * reading taken at a moment, not a reservation; the server re-checks stock
+   * when the order is priced, which is what actually stops an oversell.
+   */
+  available: number;
 }
+
+/** Missing on a line from before this field existed; let the server rule on it. */
+const capOf = (item: FoodCartItem) =>
+  typeof item.available === "number" ? item.available : Infinity;
 
 interface FoodCartState {
   items: FoodCartItem[];
@@ -31,14 +45,26 @@ const foodCartSlice = createSlice({
   name: "foodCart",
   initialState,
   reducers: {
+    /**
+     * The cap is enforced here rather than only at the button.
+     *
+     * Three call sites reach this cart - the menu's Add, the stepper beside each
+     * menu card, and the stepper on the checkout page - and two of them dispatched
+     * straight through with no check at all. A rule that lives in the reducer
+     * cannot be walked around by the next button somebody adds.
+     */
     addToCart: (state, action: PayloadAction<Omit<FoodCartItem, "quantity">>) => {
       const existingItem = state.items.find(
         (item) => item.menu_item_id === action.payload.menu_item_id
       );
 
       if (existingItem) {
-        existingItem.quantity += 1;
-      } else {
+        // Whatever the menu says now is fresher than what this line was carrying.
+        existingItem.available = action.payload.available;
+        if (existingItem.quantity < capOf(existingItem)) {
+          existingItem.quantity += 1;
+        }
+      } else if (action.payload.available > 0) {
         state.items.push({ ...action.payload, quantity: 1 });
       }
     },
@@ -63,7 +89,7 @@ const foodCartSlice = createSlice({
             (item) => item.menu_item_id !== action.payload.menu_item_id
           );
         } else {
-          item.quantity = action.payload.quantity;
+          item.quantity = Math.min(action.payload.quantity, capOf(item));
         }
       }
     },
@@ -72,7 +98,7 @@ const foodCartSlice = createSlice({
       const item = state.items.find(
         (item) => item.menu_item_id === action.payload
       );
-      if (item) {
+      if (item && item.quantity < capOf(item)) {
         item.quantity += 1;
       }
     },

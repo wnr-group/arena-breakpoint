@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { signOutAdmin } from "@/lib/auth/admin-signout";
 import { supabase } from "@/lib/supabase/client";
 import { getUserRole, type UserRole } from "@/lib/auth/roles";
 
@@ -65,7 +66,7 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
     setLoggingOut(true);
 
     try {
-      const { error } = await supabase.auth.signOut();
+      const { error } = await signOutAdmin();
 
       if (error) {
         toast.error('Logout Failed', {
