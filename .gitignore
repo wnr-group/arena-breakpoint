@@ -33,6 +33,10 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
+# Committed on purpose: local-development defaults only. Every value in it is
+# either a published Supabase demo key or a placeholder that `npm run check:env`
+# refuses to run outside local development. Real keys never go in here.
+!.env.local.starter
 
 # vercel
 .vercel
