@@ -7,8 +7,9 @@ import { toast as sonnerToast } from 'sonner'
 import { playNotificationSound, preloadNotificationSound } from '@/lib/utils/notificationSound'
 
 export function NotificationToastManager() {
-  const { notifications } = useNotifications()
+  const { notifications, hydrated } = useNotifications()
   const shownNotificationsRef = useRef<Set<string>>(new Set())
+  const seededRef = useRef(false)
 
   useEffect(() => {
     // Preload notification sound on mount
@@ -16,6 +17,24 @@ export function NotificationToastManager() {
   }, [])
 
   useEffect(() => {
+    // Nothing is new until the stored list has been read back.
+    if (!hydrated) return
+
+    /**
+     * Whatever was restored from the last session is not news.
+     *
+     * This ref is per mount, so once notifications survive a reload every unread
+     * one looked new again - a page refresh fired a stack of toasts and a chime
+     * for each, for orders staff had already seen. Recording them as shown
+     * without announcing them leaves the bell holding its history while only
+     * genuine arrivals interrupt anyone.
+     */
+    if (!seededRef.current) {
+      seededRef.current = true
+      notifications.forEach((notification) => shownNotificationsRef.current.add(notification.id))
+      return
+    }
+
     // Show toast for new unread notifications
     notifications.forEach((notification) => {
       if (!notification.read && !shownNotificationsRef.current.has(notification.id)) {
@@ -25,7 +44,7 @@ export function NotificationToastManager() {
         playNotificationSound()
       }
     })
-  }, [notifications])
+  }, [notifications, hydrated])
 
   return null // This component doesn't render anything
 }
