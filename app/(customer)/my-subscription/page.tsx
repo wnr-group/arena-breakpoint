@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, Suspense } from 'react'
 import { Percent, Gamepad2, Ticket, Wallet, Monitor, AlertTriangle, History, AlertCircle, Phone, Loader2 } from 'lucide-react'
+import { BreakpointLoader } from '@/components/shared/BreakpointLoader'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getMyActiveSubscriptionByPhone } from './action'
@@ -70,9 +71,8 @@ function MySubscriptionPageContent() {
   // Loading State
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-[#0d0a14] flex flex-col items-center justify-center text-amber-500">
-        <Loader2 className="w-12 h-12 animate-spin mb-4" />
-        <p className="text-neutral-400 font-medium">Loading your arena pass...</p>
+      <main className="min-h-screen bg-[#0d0a14] flex flex-col items-center justify-center">
+        <BreakpointLoader size="lg" text="Loading your arena pass..." />
       </main>
     )
   }
@@ -323,7 +323,13 @@ function MySubscriptionPageContent() {
 
 export default function MySubscriptionPage() {
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>}>
+    <Suspense
+      fallback={
+        <div className="h-screen flex items-center justify-center">
+          <BreakpointLoader size="lg" />
+        </div>
+      }
+    >
       <MySubscriptionPageContent />
     </Suspense>
   );

@@ -14,6 +14,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
+import { BreakpointLoader } from '@/components/shared/BreakpointLoader'
 
 // Import your existing server action
 import { getSubscriptionPlanDetails } from '@/app/(admin)/admin/subscription/actions'
@@ -68,9 +69,8 @@ export default function SubscriptionActivatedPage() {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-[var(--background)] flex flex-col items-center justify-center text-[var(--primary)]">
-        <Loader2 className="w-12 h-12 animate-spin mb-4" />
-        <p className="text-neutral-400 font-medium">Finalizing your activation...</p>
+      <main className="min-h-screen bg-[var(--background)] flex flex-col items-center justify-center">
+        <BreakpointLoader size="lg" text="Finalizing your activation..." />
       </main>
     )
   }

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Loader2, CreditCard, CheckCircle2, XCircle, AlertCircle, IndianRupee, ReceiptIndianRupee } from "lucide-react";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { toast } from "sonner";
 import { getBookingBillingDetails, markBookingAsPaid, closeBooking } from "@/app/(admin)/admin/bookings/actions";
 
@@ -135,7 +136,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
 
         {isLoading ? (
           <div className="flex justify-center items-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <BreakpointLoader size="md" text="Loading bill..." />
           </div>
         ) : billing ? (
           <div className="space-y-6 py-4">
