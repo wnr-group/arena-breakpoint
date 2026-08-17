@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Search, Phone, Calendar, Clock, QrCode, UtensilsCrossed, User, CheckCircle2, Sparkles, Zap, CreditCard , Loader2 } from 'lucide-react';
+import { BreakpointLoader } from '@/components/shared/BreakpointLoader';
 import { toast } from "sonner";
 import { getBookingsByPhone } from "./actions";
 import { formatDbTime, formatDbTimeRange } from "@/lib/utils/timeSlots";
@@ -172,12 +173,8 @@ export default function RetrieveBookingPage() {
 
         {/* Loading State with Animation */}
         {isLoading && (
-          <div className="flex flex-col justify-center items-center py-16 space-y-4 animate-in fade-in zoom-in duration-500">
-            <div className="relative">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <div className="absolute inset-0 blur-xl bg-primary/30 animate-pulse" />
-            </div>
-            <p className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Searching bookings...</p>
+          <div className="flex flex-col justify-center items-center py-16 animate-in fade-in zoom-in duration-500">
+            <BreakpointLoader size="lg" text="Searching bookings..." />
           </div>
         )}
 

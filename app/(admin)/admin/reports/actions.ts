@@ -458,38 +458,70 @@ export async function getRevenueReports(filters?: ReportFilters) {
         booking_device_slots(slot_date),
         payment_groups(paid_at)
       `)
-      .in("payment_status", ["paid", "partial"])
+      // Unpaid bookings are fetched too. They add nothing to revenue - their
+      // amount_paid is zero - but the Payment Status panel cannot report what it
+      // was never given, and filtering them out here is what made it read "0
+      // pending" while money was outstanding.
       .neq("status", "cancelled");
-
-    if (filters?.dateFrom || filters?.dateTo) {
-      // We need to filter by slot_date, so we'll do this after fetching
-    }
 
     const { data, error } = await query.order("created_at", { ascending: false });
 
     if (error) throw error;
 
-    // Filter by payment date (use paid_at if available, otherwise use updated_at as fallback)
+    /**
+     * The date a booking belongs to in this report.
+     *
+     * Paid bookings are placed on the day the money arrived, which is what a
+     * revenue report is about. An unpaid one has no such day, so it is placed on
+     * the day it was raised - the alternative, `updated_at`, moves every time
+     * anybody edits the booking.
+     */
+    const reportDate = (booking: any): string | null => {
+      const paidAt =
+        booking.payment_status === 'pending'
+          ? booking.created_at
+          : booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
+
+      return paidAt ? paidAt.split('T')[0] : null;
+    };
+
     let filteredData = data || [];
     if (filters?.dateFrom || filters?.dateTo) {
       filteredData = (data || []).filter((booking: any) => {
-        // Use paid_at from payment_groups, fallback to booking updated_at
-        const paidAt = booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
-        if (!paidAt) return false;
+        const date = reportDate(booking);
+        if (!date) return false;
 
-        const paidDate = paidAt.split('T')[0];
-        if (filters.dateFrom && paidDate < filters.dateFrom) return false;
-        if (filters.dateTo && paidDate > filters.dateTo) return false;
+        if (filters.dateFrom && date < filters.dateFrom) return false;
+        if (filters.dateTo && date > filters.dateTo) return false;
 
         return true;
       });
     }
 
+    /**
+     * Money actually received. Every revenue figure is measured over these, so
+     * including unpaid bookings above changes no revenue number and no average -
+     * it only lets them be counted.
+     */
+    const revenueBookings = filteredData.filter((booking: any) =>
+      ['paid', 'partial'].includes(booking.payment_status)
+    );
+
+    // Payment status, counted across everything in range rather than inferred
+    // from what was left after a filter.
+    const paidBookingCount = filteredData.filter((b: any) => b.payment_status === 'paid').length;
+    const partialBookingCount = filteredData.filter((b: any) => b.payment_status === 'partial').length;
+    const pendingBookingCount = filteredData.filter((b: any) => b.payment_status === 'pending').length;
+
+    // What the arena is still owed, across partial and unpaid alike.
+    const outstandingAmount = filteredData.reduce((sum: number, b: any) => {
+      if (b.payment_status === 'paid') return sum;
+      return sum + Math.max(0, Number(b.total_amount || 0) - Number(b.amount_paid || 0));
+    }, 0);
+
     let totalRevenue = 0;
     let deviceRevenue = 0;
     let foodRevenue = 0;
-    let paidCount = 0;
-    let pendingCount = 0;
 
     // Payment method totals
     let totalCash = 0;
@@ -512,7 +544,7 @@ export async function getRevenueReports(filters?: ReportFilters) {
       totalRevenue: number;
     }> = {};
 
-    filteredData.forEach((booking: any) => {
+    revenueBookings.forEach((booking: any) => {
       const amountPaid = Number(booking.amount_paid || 0);
       const deviceSubtotal = Number(booking.device_subtotal || 0);
       const foodSubtotal = Number(booking.food_subtotal || 0);
@@ -522,9 +554,8 @@ export async function getRevenueReports(filters?: ReportFilters) {
       const totalDiscount = subscriptionDiscount + promoDiscount + happyHourDiscount;
       const source = booking.booking_source || "online";
 
-      // Track revenue by payment date (use paid_at if available, otherwise use updated_at)
-      const paidAt = booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
-      const revenueDate = paidAt.split('T')[0];
+      // Track revenue by payment date, on the same rule the range filter used
+      const revenueDate = reportDate(booking) as string;
 
       // Calculate actual revenue based on what was actually paid (amount_paid)
       // Revenue = what customer actually paid, not the calculated total_amount
@@ -561,13 +592,6 @@ export async function getRevenueReports(filters?: ReportFilters) {
       totalCard += Number(booking.card_amount || 0);
       totalUpi += Number(booking.upi_amount || 0);
       totalOnline += Number(booking.online_amount || 0);
-
-      // Count paid and partial bookings
-      if (booking.payment_status === 'paid') {
-        paidCount += 1;
-      } else {
-        pendingCount += 1; // partial counts as pending
-      }
 
       // Source breakdown
       if (!sourceBreakdown[source]) {
@@ -606,10 +630,18 @@ export async function getRevenueReports(filters?: ReportFilters) {
         totalRevenue,
         deviceRevenue,
         foodRevenue,
-        totalBookings: filteredData.length,
-        paidBookings: paidCount,
-        pendingBookings: pendingCount,
-        averageRevenuePerBooking: filteredData.length ? totalRevenue / filteredData.length : 0,
+        // Bookings that produced revenue. Left as it was, on purpose: the
+        // Overview tab reads this through getDashboardSummary, and revenue per
+        // booking must not be divided by bookings that paid nothing.
+        totalBookings: revenueBookings.length,
+        paidBookings: paidBookingCount,
+        partialBookings: partialBookingCount,
+        pendingBookings: pendingBookingCount,
+        /** Denominator for the Payment Status bars - every booking in range. */
+        paymentStatusTotal: filteredData.length,
+        /** Still owed across partial and unpaid bookings. */
+        outstandingAmount,
+        averageRevenuePerBooking: revenueBookings.length ? totalRevenue / revenueBookings.length : 0,
         deviceRevenuePercentage: totalRevenue ? (deviceRevenue / totalRevenue) * 100 : 0,
         // Payment method breakdown
         totalCash,
