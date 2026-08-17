@@ -211,10 +211,43 @@ export default function AdminBookingsPage() {
     });
   }, [bookings]);
 
-  // The status counts are scoped to the date range, not to the status tab
+  /**
+   * The status counts are scoped to the date range, not to the status tab.
+   *
+   * Tracking `bookings` as well is what keeps the tiles honest. They used to
+   * re-read only when the date range changed, so a check-in performed anywhere
+   * other than this page's own buttons - from the timeline, from a detail panel
+   * opened there, from the walk-in screen - moved the booking into `checked_in`
+   * while the Checked In tile went on showing the old number. The list already
+   * reloads on every one of those; the counts above it now follow it, the same way
+   * the attention badge does.
+   */
   useEffect(() => {
     loadStats();
-  }, [dateFrom, dateTo]);
+  }, [dateFrom, dateTo, bookings]);
+
+  /**
+   * Re-sync when the tab comes back to the front.
+   *
+   * Two people work this screen at once. Nothing tells this terminal that the
+   * other one just checked a customer in, so the tiles and the list would sit
+   * stale until somebody pressed Refresh. Coming back to the tab is the moment
+   * staff look at it, and costs two queries.
+   */
+  useEffect(() => {
+    const resync = () => {
+      if (document.visibilityState !== "visible") return;
+      loadBookings();
+      loadStats();
+    };
+
+    window.addEventListener("focus", resync);
+    document.addEventListener("visibilitychange", resync);
+    return () => {
+      window.removeEventListener("focus", resync);
+      document.removeEventListener("visibilitychange", resync);
+    };
+  }, [debouncedSearch, activeStatusFilter, dateFrom, dateTo]);
 
   const loadBookings = async () => {
     // Never query on a range the user has been told is invalid

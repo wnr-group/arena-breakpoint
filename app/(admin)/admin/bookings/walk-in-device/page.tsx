@@ -91,6 +91,8 @@ export default function WalkInBookingPage() {
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerDob, setCustomerDob] = useState("");
+  /** Set once Continue has been pressed, so empty required fields can speak up too. */
+  const [showDetailErrors, setShowDetailErrors] = useState(false);
   const [showFullRegistrationFields, setShowFullRegistrationFields] = useState(false);
   const [checkingProfile, setCheckingProfile] = useState(false);
   const [activeSubscription, setActiveSubscription] = useState<any>(null);
@@ -227,10 +229,20 @@ export default function WalkInBookingPage() {
 
   const handleManualRegistrationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customerName.trim()) {
-      toast.error("Validation Error", { description: "Full customer name field specification is required." });
+    /**
+     * A dead button explains nothing.
+     *
+     * This used to be gated by `disabled`, so an impossible date left staff
+     * pressing a button that did nothing and no indication of which field was at
+     * fault. It stays clickable; pressing it reveals the message under every
+     * offending field and holds the step.
+     */
+    if (!customerDetailsComplete) {
+      setShowDetailErrors(true);
       return;
     }
+
+    setShowDetailErrors(false);
     setStep(4);
   };
 
@@ -433,10 +445,71 @@ export default function WalkInBookingPage() {
 
   const totalAmount = subtotal - subscriptionDiscount - happyHourInfo.discountAmount;
 
-  // Gates the customer-details submit: every starred field must be filled.
+  /**
+   * Field-level problems, shown under the input that caused them.
+   *
+   * These used to be discovered only on the final submit, two screens later: the
+   * gate below accepted any ten characters, so "31-02-2000" passed, the summary
+   * opened, and the booking was refused at the last step with a toast the staff
+   * member then had to walk back from. A date is checked where it is typed.
+   *
+   * Each message waits until the field has enough in it to be judged, so nothing
+   * turns red while somebody is still part-way through typing.
+   */
+  /**
+   * The problem with the date, if there is one.
+   *
+   * Says nothing while the date is still being typed - only once it is complete,
+   * or once Continue has been pressed - so the field does not go red at the first
+   * digit. `DOB_ERROR` is the one place the wording lives.
+   */
+  const describeDobProblem = (value: string): string | null => {
+    if (!value.trim()) return "Date of birth is required.";
+    if (value.length < 10 && !showDetailErrors) return null;
+    return isValidDob(value) ? null : DOB_ERROR;
+  };
+
+  // Shown as soon as the field has something in it, or once Continue is pressed.
+  const dobError =
+    customerDob.trim() || showDetailErrors ? describeDobProblem(customerDob) : null;
+
+  const emailError =
+    (customerEmail.trim().length > 0 || showDetailErrors) && !isPlausibleEmail(customerEmail)
+      ? customerEmail.trim()
+        ? "Enter a complete email address, like customer@domain.com."
+        : "Email is required."
+      : null;
+
+  const nameError =
+    showDetailErrors && !customerName.trim() ? "Customer name is required." : null;
+
+  /**
+   * Whether every required field has something in it.
+   *
+   * This is what greys the button out: with a field still blank there is nothing
+   * to correct and no message to show, so a disabled button is honest. Presence
+   * only - a filled-in but impossible date leaves the button live, because that
+   * is a mistake the form has to be able to tell staff about, and a dead button
+   * cannot.
+   */
+  const requiredDetailsFilled = Boolean(
+    customerName.trim() && customerDob.trim() && customerEmail.trim()
+  );
+
+  /**
+   * Whether the mobile number is a complete one.
+   *
+   * The input strips anything that is not a digit and stops at ten, so a short
+   * value is a half-typed number rather than a wrong one - there is nothing to
+   * explain, and the placeholder already asks for ten digits. Matches the gate the
+   * food walk-in screen already had on the same button.
+   */
+  const phoneComplete = customerPhone.trim().length === 10;
+
+  // Whether the step may actually advance: filled *and* valid.
   const customerDetailsComplete =
     allFilled(customerName, customerDob) &&
-    customerDob.length === 10 &&
+    isValidDob(customerDob) &&
     isPlausibleEmail(customerEmail);
 
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -760,7 +833,7 @@ export default function WalkInBookingPage() {
                     </div>
                   </div>
 
-                  <Button type="submit" disabled={checkingProfile} className="w-full bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 shadow-xl">
+                  <Button type="submit" disabled={checkingProfile || !phoneComplete} className="w-full bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1.5 shadow-xl disabled:opacity-50 disabled:pointer-events-none">
                     {checkingProfile ? <Loader2 className="h-4 w-4 animate-spin text-black" /> : "VERIFY CUSTOMER PROFILE"} <ChevronRight className="h-4 w-4 stroke-[3]" />
                   </Button>
                 </form>
@@ -794,7 +867,10 @@ export default function WalkInBookingPage() {
                   </button>
                 </div>
 
-                <form onSubmit={handleManualRegistrationSubmit} className="space-y-4">
+                {/* noValidate so these messages are the only ones staff see - the
+                    browser's own bubbles would fire first on the required fields
+                    and say less. */}
+                <form onSubmit={handleManualRegistrationSubmit} className="space-y-4" noValidate>
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-xs font-black text-muted-content uppercase tracking-wider flex items-center gap-1.5">
                       <User className="h-3.5 w-3.5 text-muted-content" /> Customer Name *
@@ -806,8 +882,13 @@ export default function WalkInBookingPage() {
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
                       placeholder="Enter customer's full name"
-                      className="bg-[var(--background)] border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl"
+                      aria-invalid={!!nameError}
+                      aria-describedby={nameError ? "name-error" : undefined}
+                      className={`bg-[var(--background)] h-12 text-sm text-white focus-visible:ring-primary rounded-xl ${nameError ? "border-red-500/70" : "border-zinc-900"}`}
                     />
+                    {nameError && (
+                      <p id="name-error" className="text-xs font-bold text-red-400">{nameError}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -822,8 +903,13 @@ export default function WalkInBookingPage() {
                       maxLength={10}
                       value={customerDob}
                       onChange={handleDobChange}
-                      className="bg-[var(--background)] border-zinc-900 h-12 text-sm text-white font-mono tracking-wider focus-visible:ring-primary rounded-xl placeholder:text-zinc-700"
+                      aria-invalid={!!dobError}
+                      aria-describedby={dobError ? "dob-error" : undefined}
+                      className={`bg-[var(--background)] h-12 text-sm text-white font-mono tracking-wider focus-visible:ring-primary rounded-xl placeholder:text-zinc-700 ${dobError ? "border-red-500/70" : "border-zinc-900"}`}
                     />
+                    {dobError && (
+                      <p id="dob-error" className="text-xs font-bold text-red-400">{dobError}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -837,12 +923,20 @@ export default function WalkInBookingPage() {
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
                       placeholder="customer@domain.com"
-                      className="bg-[var(--background)] border-zinc-900 h-12 text-sm text-white focus-visible:ring-primary rounded-xl"
+                      aria-invalid={!!emailError}
+                      aria-describedby={emailError ? "email-error" : undefined}
+                      className={`bg-[var(--background)] h-12 text-sm text-white focus-visible:ring-primary rounded-xl ${emailError ? "border-red-500/70" : "border-zinc-900"}`}
                     />
+                    {emailError && (
+                      <p id="email-error" className="text-xs font-bold text-red-400">{emailError}</p>
+                    )}
                   </div>
 
                   <div className="pt-4 space-y-2">
-                    <Button type="submit" disabled={!customerDetailsComplete} className="w-full bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1 shadow-lg disabled:opacity-50 disabled:pointer-events-none">
+                    {/* Disabled only while something is still blank. Once every
+                        field has content the button goes live, so pressing it can
+                        report what is actually wrong with it. */}
+                    <Button type="submit" disabled={!requiredDetailsFilled} className="w-full bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase text-xs h-12 rounded-xl flex items-center justify-center gap-1 shadow-lg disabled:opacity-50 disabled:pointer-events-none">
                       PROCEED TO ORDER SUMMARY <ChevronRight className="h-4 w-4 stroke-[3]" />
                     </Button>
                   </div>
