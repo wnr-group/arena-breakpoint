@@ -6,6 +6,30 @@ import { Gamepad2, UtensilsCrossed, X } from 'lucide-react'
 import { toast as sonnerToast } from 'sonner'
 import { playNotificationSound, preloadNotificationSound } from '@/lib/utils/notificationSound'
 
+/**
+ * How recent an event has to be to be worth a toast and a chime.
+ *
+ * Comfortably longer than the 30-second poll, so a genuine arrival is never
+ * missed, and far shorter than the poller's backfill window.
+ */
+const ANNOUNCE_MAX_AGE_MS = 3 * 60 * 1000
+
+/**
+ * Whether an event is recent enough to interrupt someone.
+ *
+ * Pure and exported so the rule can be asserted rather than clicked at: the
+ * poller reaches back over the shift, and history must fill the bell in silence
+ * while a live order still chimes. Judged on when the order was placed, not on
+ * when this tab first heard about it.
+ */
+export function shouldAnnounce(
+  notification: { read: boolean; timestamp: Date },
+  now: number = Date.now()
+): boolean {
+  if (notification.read) return false
+  return now - notification.timestamp.getTime() <= ANNOUNCE_MAX_AGE_MS
+}
+
 export function NotificationToastManager() {
   const { notifications, hydrated } = useNotifications()
   const shownNotificationsRef = useRef<Set<string>>(new Set())
@@ -37,12 +61,24 @@ export function NotificationToastManager() {
 
     // Show toast for new unread notifications
     notifications.forEach((notification) => {
-      if (!notification.read && !shownNotificationsRef.current.has(notification.id)) {
-        shownNotificationsRef.current.add(notification.id)
-        showNotificationToast(notification)
-        // Play notification sound
-        playNotificationSound()
-      }
+      if (notification.read || shownNotificationsRef.current.has(notification.id)) return
+
+      /**
+       * History goes in the bell quietly; only what just happened interrupts.
+       *
+       * The poller reaches back over the shift so nothing goes unannounced, which
+       * on a browser with no stored list means a dozen orders arrive at once. Each
+       * would have raised its own toast and chime for something that happened
+       * hours ago. Freshness is judged on when the order was placed, not when
+       * this tab first heard about it.
+       */
+      shownNotificationsRef.current.add(notification.id)
+
+      if (!shouldAnnounce(notification)) return
+
+      showNotificationToast(notification)
+      // Play notification sound
+      playNotificationSound()
     })
   }, [notifications, hydrated])
 

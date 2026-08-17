@@ -24,7 +24,17 @@ interface NotificationContextType {
    * listed three times.
    */
   addNotification: (
-    notification: Omit<Notification, 'id' | 'timestamp' | 'read'> & { id?: string }
+    notification: Omit<Notification, 'id' | 'timestamp' | 'read'> & {
+      id?: string
+      /**
+       * When the thing being announced actually happened. Defaults to now, which
+       * is right for a screen reporting what it just did and wrong for the poller
+       * sweeping up the shift - without it a booking from this morning was listed
+       * as "less than a minute ago", and the toast manager could not tell history
+       * from a live arrival.
+       */
+      timestamp?: Date
+    }
   ) => void
   markAsRead: (notificationId: string) => void
   markAllAsRead: () => void
@@ -88,6 +98,41 @@ function loadStored(): Notification[] {
   }
 }
 
+/**
+ * Decides what the list becomes when one more notification arrives.
+ *
+ * Pure and exported so the rules that matter - one event announced once, across
+ * two sources and across a reload - can be asserted directly rather than only
+ * observed by clicking around the admin panel. See `npm run test:notifications`.
+ *
+ * Returns `prev` unchanged when the event is already known, which also spares
+ * React a re-render and the store a needless write.
+ */
+export function mergeNotification(
+  prev: Notification[],
+  incoming: Notification,
+  now: number = Date.now()
+): Notification[] {
+  // An explicit id is an exact answer to "have we already said this?" and holds
+  // across reloads, where a time window cannot.
+  if (prev.some(existing => existing.id === incoming.id)) return prev
+
+  // Backstop for callers without one: same booking, same headline, moments
+  // apart. A later, genuinely different event on that booking ("Food Added"
+  // after "New Booking") carries a different title and still comes through.
+  const cutoff = now - DUPLICATE_WINDOW_MS
+  const alreadyAnnounced = prev.some(
+    existing =>
+      existing.bookingId === incoming.bookingId &&
+      existing.title === incoming.title &&
+      existing.timestamp.getTime() >= cutoff
+  )
+
+  if (alreadyAnnounced) return prev
+
+  return [incoming, ...prev].slice(0, MAX_STORED)
+}
+
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [hydrated, setHydrated] = useState(false)
@@ -114,34 +159,25 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, [notifications, hydrated])
 
   const addNotification = useCallback(
-    (notification: Omit<Notification, 'id' | 'timestamp' | 'read'> & { id?: string }) => {
+    (
+      notification: Omit<Notification, 'id' | 'timestamp' | 'read'> & {
+        id?: string
+        timestamp?: Date
+      }
+    ) => {
+      const stamp =
+        notification.timestamp && !Number.isNaN(notification.timestamp.getTime())
+          ? notification.timestamp
+          : new Date()
+
       const newNotification: Notification = {
         ...notification,
         id: notification.id || `notif-${Date.now()}-${Math.random()}`,
-        timestamp: new Date(),
+        timestamp: stamp,
         read: false,
       }
 
-      setNotifications(prev => {
-        // An explicit id is an exact answer to "have we already said this?" and
-        // holds across reloads, where a time window cannot.
-        if (prev.some(existing => existing.id === newNotification.id)) return prev
-
-        // Backstop for callers without one: same booking, same headline, moments
-        // apart. A later, genuinely different event on that booking ("Food Added"
-        // after "New Booking") carries a different title and still comes through.
-        const cutoff = Date.now() - DUPLICATE_WINDOW_MS
-        const alreadyAnnounced = prev.some(
-          existing =>
-            existing.bookingId === newNotification.bookingId &&
-            existing.title === newNotification.title &&
-            existing.timestamp.getTime() >= cutoff
-        )
-
-        if (alreadyAnnounced) return prev
-
-        return [newNotification, ...prev].slice(0, MAX_STORED)
-      })
+      setNotifications(prev => mergeNotification(prev, newNotification))
     },
     []
   )
