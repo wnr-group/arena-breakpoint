@@ -95,7 +95,14 @@ export function SessionTimesCell({
   );
 }
 
-/** "Playing · 2h 15m · since 9:00 AM" for the booking list. */
+/**
+ * Where a session has got to, for the booking list and the grid card.
+ *
+ * Two lines while it runs - how long, then when it started - and three once it
+ * has stopped. The duration carries its own colour and the clock times carry
+ * theirs (green in, blue out), so a glance separates "2h 15m of play" from
+ * "9:00 PM" without either being read as the other.
+ */
 export function SessionSummaryLine({
   status,
   createdAt,
@@ -113,18 +120,27 @@ export function SessionSummaryLine({
 
   if (status === "checked_in" && checkedInAt) {
     return (
-      <span className="flex items-center gap-1.5 text-green-400">
-        <PlayCircle className="h-3 w-3" />
-        Playing <SessionTimer checkedInAt={checkedInAt} /> · since {timeOnly(checkedInAt)}
+      <span className="flex flex-col gap-0.5">
+        <span className="flex items-center gap-1.5 text-white font-semibold">
+          {/* The icon keeps the live green; the duration does not, so it cannot
+              be misread as another clock time. */}
+          <PlayCircle className="h-3 w-3 text-green-400" />
+          Playing <SessionTimer checkedInAt={checkedInAt} />
+        </span>
+        <span className="text-green-400 font-semibold">In: {timeOnly(checkedInAt)}</span>
       </span>
     );
   }
 
   if (checkedInAt && completedAt) {
     return (
-      <span className="flex items-center gap-1.5 text-secondary-content">
-        <LogOut className="h-3 w-3" />
-        Played {formatPlayedDuration(sessionMinutes(checkedInAt, completedAt))} · {timeOnly(checkedInAt)}–{timeOnly(completedAt)}
+      <span className="flex flex-col gap-0.5">
+        <span className="flex items-center gap-1.5 text-secondary-content">
+          <LogOut className="h-3 w-3" />
+          Played {formatPlayedDuration(sessionMinutes(checkedInAt, completedAt))}
+        </span>
+        <span className="text-green-400 font-semibold">In: {timeOnly(checkedInAt)}</span>
+        <span className="text-blue-400 font-semibold">Out: {timeOnly(completedAt)}</span>
       </span>
     );
   }

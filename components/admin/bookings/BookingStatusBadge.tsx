@@ -48,6 +48,18 @@ export function BookingStatusBadge({ status, size = "md" }: BookingStatusBadgePr
     );
   }
 
+  // Red rather than the grey "unknown" chip: a cancelled booking is a decision
+  // somebody made, and staff scanning the list need to see it as different from
+  // a booking that simply finished.
+  if (statusClean === "cancelled") {
+    return (
+      <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-bold text-red-300 bg-red-500/10 border border-red-500/30 rounded-full whitespace-nowrap uppercase tracking-wide transition-all duration-300`}>
+        <span className="w-1 h-1 rounded-full bg-red-400" />
+        CANCELLED
+      </span>
+    );
+  }
+
   // Default/Unknown status
   return (
     <span className={`inline-flex items-center gap-1 ${sizeClasses[size]} font-black text-muted-content bg-black/60 border border-zinc-700 rounded-full backdrop-blur-md whitespace-nowrap uppercase tracking-wide`}>

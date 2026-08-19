@@ -34,6 +34,7 @@
     "test:timefield": "tsx scripts/verify-time-of-day-field.ts",
     "test:payments": "tsx scripts/verify-payment-status.ts",
     "test:revenue": "tsx scripts/verify-revenue-split.ts",
+    "test:cancel": "tsx scripts/verify-cancellation-restock.ts",
     "check:stock": "tsx scripts/check-menu-stock-status.ts",
     "check:amounts": "tsx scripts/check-booking-amounts.ts",
     "otp:reset": "tsx scripts/reset-otp-limit.ts",

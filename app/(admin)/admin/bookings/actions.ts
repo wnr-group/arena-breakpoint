@@ -2,6 +2,11 @@
 
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { annotateRemovableFoodItems } from "@/lib/bookings/foodItems";
+import {
+  foodItemsToCancel,
+  stockToRestore,
+  type CancellableFoodItem
+} from "@/lib/bookings/cancellation";
 import { decideCheckout, type CheckoutDecision } from "@/lib/bookings/checkoutGuard";
 import { extraPlayersCharge, perExtraPlayerCharge } from "@/lib/payments/money";
 import { settlementStatus } from "@/lib/payments/paymentStatus";
@@ -499,6 +504,151 @@ export async function checkInBooking(bookingId: string) {
   }
 }
 
+/**
+ * Call off a booking nobody has turned up for.
+ *
+ * Deliberately the narrowest of the status changes: only a `confirmed` booking
+ * with an empty `checked_in_at` can be cancelled. Once somebody is at a station
+ * the session is a thing that happened - it has a start time, it may have food
+ * on it, and it is owed for - so the way out of it is checkout, not cancellation.
+ * A `completed` booking is the same story with the ending already written.
+ *
+ * The slot row is left where it is. Availability only counts
+ * `locked`/`confirmed`/`checked_in` bookings, so the station is free the moment
+ * the status flips, and `assign_device_slot` clears the leftover row itself
+ * when the next booking claims that exact station and time.
+ *
+ * Food is the part that does not look after itself. Every path that adds food
+ * to a booking takes the stock as it does so, so a booking called off before
+ * anybody sat down is holding items nothing will be made from: the rows are
+ * marked `cancelled` and the counts go back on the shelf.
+ */
+export async function cancelBooking(bookingId: string, reason?: string) {
+  await requireStaff();
+
+  try {
+    const now = new Date().toISOString();
+
+    const { data: subject, error: subjectError } = await supabaseAdmin
+      .from("bookings")
+      .select("status, checked_in_at, completed_at, booking_number, amount_paid, notes")
+      .eq("id", bookingId)
+      .maybeSingle();
+
+    if (subjectError) throw subjectError;
+    if (!subject) return { success: false, error: "Booking not found." };
+
+    if (subject.status === "cancelled") {
+      return { success: false, error: "This booking is already cancelled." };
+    }
+    // Checked in is tested on the timestamp as well as the status: a session
+    // checked out into `completed` still carries the time somebody played.
+    if (subject.status === "checked_in" || subject.checked_in_at) {
+      return {
+        success: false,
+        error: "This customer has already checked in. Check them out instead of cancelling."
+      };
+    }
+    if (subject.status === "completed" || subject.completed_at) {
+      return { success: false, error: "A completed booking cannot be cancelled." };
+    }
+    if (subject.status !== "confirmed") {
+      return {
+        success: false,
+        error: `A ${String(subject.status).replace(/_/g, " ")} booking cannot be cancelled.`
+      };
+    }
+
+    // Why it was called off is the one thing the row cannot be asked later, so
+    // it goes on the booking rather than nowhere.
+    const trimmedReason = reason?.trim();
+    const notes = trimmedReason
+      ? [subject.notes, `Cancelled: ${trimmedReason}`].filter(Boolean).join("\n")
+      : subject.notes;
+
+    // The status is re-tested in the update so two people cancelling and
+    // checking in at the same moment cannot both win.
+    const { data, error } = await supabaseAdmin
+      .from("bookings")
+      .update({
+        status: "cancelled",
+        notes,
+        updated_at: now
+      })
+      .eq("id", bookingId)
+      .eq("status", "confirmed")
+      .is("checked_in_at", null)
+      .is("completed_at", null)
+      .select("id, booking_number, amount_paid")
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) {
+      return {
+        success: false,
+        error: "This booking changed while you were working on it. Refresh and try again."
+      };
+    }
+
+    // Food comes back after the status has flipped, not before: if this fails
+    // the booking is still cancelled and the stock is merely wrong, which is a
+    // count somebody can correct - the other order round would leave a booking
+    // live with its food already credited back.
+    const { data: foodRows, error: foodError } = await supabaseAdmin
+      .from("booking_food_items")
+      .select("id, menu_item_id, quantity, status")
+      .eq("booking_id", bookingId);
+
+    if (foodError) {
+      console.error("Could not read food items while cancelling:", foodError);
+    }
+
+    const foodItems = (foodRows || []) as CancellableFoodItem[];
+    const idsToCancel = foodItemsToCancel(foodItems);
+    let restoredItems = 0;
+
+    if (idsToCancel.length > 0) {
+      const { error: markError } = await supabaseAdmin
+        .from("booking_food_items")
+        .update({ status: "cancelled" })
+        .in("id", idsToCancel);
+
+      if (markError) {
+        console.error("Could not mark food items cancelled:", markError);
+      }
+
+      for (const { menuItemId, quantity } of stockToRestore(foodItems)) {
+        const { error: stockError } = await supabaseAdmin.rpc("increment_menu_item_quantity", {
+          item_id: menuItemId,
+          increment_by: quantity
+        });
+
+        // Logged rather than thrown, the same way removeFoodItemFromBooking
+        // treats it: the cancellation has happened and cannot be undone here.
+        if (stockError) {
+          console.error("Failed to restore menu item stock on cancellation:", stockError);
+        } else {
+          restoredItems += quantity;
+        }
+      }
+    }
+
+    return {
+      success: true,
+      booking: data,
+      bookingNumber: data.booking_number as string,
+      // Cancelled bookings are excluded from every revenue report, so anything
+      // already collected has to be refunded by hand - the caller says so.
+      amountPaid: Number(data.amount_paid || 0),
+      /** Food portions put back on the shelf, for the message staff read. */
+      restoredItems
+    };
+  } catch (err: any) {
+    console.error("Cancel booking error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
 /** Look up what `decideCheckout` needs, then apply it. */
 async function resolveCheckoutStatus(bookingId: string): Promise<CheckoutDecision> {
   const { data, error } = await supabaseAdmin
@@ -627,6 +777,24 @@ export async function addFoodToBooking(
   await requireStaff();
 
   try {
+    // The booking has to be one food can still be served against. Hiding the
+    // button is not the same as refusing the call: the grid went on offering
+    // Add Food on a cancelled food-only order, and nothing here said no.
+    const { data: subject, error: subjectError } = await supabaseAdmin
+      .from("bookings")
+      .select("status")
+      .eq("id", bookingId)
+      .maybeSingle();
+
+    if (subjectError) throw subjectError;
+    if (!subject) return { success: false, error: "Booking not found." };
+    if (subject.status === "cancelled" || subject.status === "completed") {
+      return {
+        success: false,
+        error: `This booking is ${subject.status}. Food can no longer be added.`
+      };
+    }
+
     // VALIDATION: Check stock availability before adding
     const itemIds = items.map(item => item.menuItemId);
     const { data: menuItems, error: menuError } = await supabaseAdmin

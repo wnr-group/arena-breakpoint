@@ -17,15 +17,15 @@ import { BookingsGrid } from "@/components/admin/bookings/BookingsGrid";
 import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
 import { RevealAmount } from "@/components/admin/dashboard/RevealAmount";
 import { CheckoutModal } from "@/components/admin/bookings/CheckoutModal";
-import { getAllBookings, getAttentionBookings, getBookingStats, checkInBooking, checkOutBooking, checkInWalkInSession, checkOutWalkInSession, getBookingBillingDetails, markBookingAsPaid, type BookingFilters } from "./actions";
+import { getAllBookings, getAttentionBookings, getBookingStats, checkInBooking, checkOutBooking, checkInWalkInSession, checkOutWalkInSession, getBookingBillingDetails, markBookingAsPaid, cancelBooking, type BookingFilters } from "./actions";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
-import { Search, Filter, Calendar, CalendarDays, IndianRupee, Users, CheckCircle2, Clock, Loader2, Eye, ReceiptIndianRupee, PlusCircle, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List, AlertCircle, RefreshCw, ShieldAlert, AlertTriangle } from "lucide-react";
+import { Search, Filter, Calendar, CalendarDays, IndianRupee, Users, CheckCircle2, Clock, Loader2, Eye, ReceiptIndianRupee, PlusCircle, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List, AlertCircle, RefreshCw, ShieldAlert, AlertTriangle, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { CountUp } from "@/components/shared/CountUp";
 import { roundToTwo, formatCurrency } from "@/lib/currency";
-import { formatDbTime } from "@/lib/utils/timeSlots";
+import { formatDbTime, formatDbTimeRange } from "@/lib/utils/timeSlots";
 import { BookingTimingCell } from "@/components/admin/bookings/SessionTimeline";
 import {
   arenaDate,
@@ -57,6 +57,8 @@ export default function AdminBookingsPage() {
   const [activeQuickFilter, setActiveQuickFilter] = useState<string>("today");
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [openFoodModal, setOpenFoodModal] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<any>(null);
+  const [cancelReason, setCancelReason] = useState("");
   const [checkoutBookingId, setCheckoutBookingId] = useState<string | null>(null);
   const [openCheckoutModal, setOpenCheckoutModal] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -316,6 +318,47 @@ export default function AdminBookingsPage() {
     // Reload data when closing booking detail modal
     loadBookings();
     loadStats();
+  };
+
+  /**
+   * Cancelling is offered for a booking that has not started, and nothing else.
+   *
+   * Once the customer is at a station the booking is a session that happened -
+   * it has a start time, it may have food on it, and it is owed for - so the way
+   * out of it is checkout. The server re-checks all of this; this only decides
+   * whether the button is worth showing.
+   */
+  const canCancelBooking = (booking: any) =>
+    booking?.status === "confirmed" && !booking?.checked_in_at && !booking?.completed_at;
+
+  const handleCancelBooking = () => {
+    if (!cancelTarget) return;
+    const { id, booking_number } = cancelTarget;
+    const reason = cancelReason.trim();
+
+    startTransition(async () => {
+      const result = await cancelBooking(id, reason || undefined);
+      if (result.success) {
+        // Three different things staff may need to know, in the order they
+        // matter: money that has to be handed back, then stock that came back
+        // by itself, then the plain fact that the station is free.
+        const restored = Number(result.restoredItems || 0);
+        const paid = Number(result.amountPaid || 0);
+        toast.success(`Booking ${booking_number} cancelled`, {
+          description: paid > 0
+            ? `₹${formatCurrency(paid)} was already collected - refund it separately.`
+            : restored > 0
+              ? `Station free again. ${restored} food item${restored === 1 ? "" : "s"} put back in stock.`
+              : "The slot is free again."
+        });
+        setCancelTarget(null);
+        setCancelReason("");
+        loadBookings();
+        loadStats();
+      } else {
+        toast.error("Cancellation failed", { description: result.error });
+      }
+    });
   };
 
   const handleCheckIn = async (bookingId: string, bookingNumber: string, booking: any) => {
@@ -937,6 +980,11 @@ export default function AdminBookingsPage() {
           onBookingClick={(booking) => setSelectedBooking(booking)}
           onCheckIn={handleCheckIn}
           onCheckOut={handleCheckOut}
+          onCancel={(booking) => {
+            setCancelReason("");
+            setCancelTarget(booking);
+          }}
+          canCancel={canCancelBooking}
           onAddFood={(booking) => {
             setSelectedBooking(booking);
             setOpenFoodModal(true);
@@ -1042,6 +1090,15 @@ export default function AdminBookingsPage() {
                                 </p>
                                 <p className="text-sm-readable text-secondary-content">
                                   Station #{firstSlot.device_station_number}
+                                </p>
+                              </>
+                            ) : firstBooking.walk_in_device_type_name ? (
+                              <>
+                                <p className="text-sm font-bold text-data-visible">
+                                  {firstBooking.walk_in_device_type_name}
+                                </p>
+                                <p className="text-sm-readable text-secondary-content">
+                                  Station on check-in
                                 </p>
                               </>
                             ) : (
@@ -1151,6 +1208,21 @@ export default function AdminBookingsPage() {
                                   <LogOut className="h-4 w-4" />
                                 </Button>
                               )}
+                              {canCancelBooking(firstBooking) && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setCancelReason("");
+                                    setCancelTarget(firstBooking);
+                                  }}
+                                  disabled={isPending}
+                                  className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                  title="Cancel Booking"
+                                >
+                                  <Ban className="h-4 w-4" />
+                                </Button>
+                              )}
                               {(firstBooking.status === "confirmed" || firstBooking.status === "checked_in") && (
                                 <Button
                                   size="sm"
@@ -1209,10 +1281,14 @@ export default function AdminBookingsPage() {
                             </td>
                             <td className="py-3 px-4">
                               <p className="text-sm font-bold text-date-visible">
-                                {deviceSlot?.device_type || "N/A"}
+                                {deviceSlot?.device_type || booking.walk_in_device_type_name || "N/A"}
                               </p>
                               <p className="text-sm-readable text-secondary-content">
-                                Station #{deviceSlot?.device_station_number || "N/A"}
+                                {deviceSlot?.device_station_number
+                                  ? `Station #${deviceSlot.device_station_number}`
+                                  : booking.walk_in_device_type_name
+                                    ? "Station on check-in"
+                                    : "Station #N/A"}
                               </p>
                             </td>
                             <td className="py-3 px-4">
@@ -1264,6 +1340,21 @@ export default function AdminBookingsPage() {
                                     title="Check In"
                                   >
                                     <UserCheck className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {canCancelBooking(booking) && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setCancelReason("");
+                                      setCancelTarget(booking);
+                                    }}
+                                    disabled={isPending}
+                                    className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                    title="Cancel Booking"
+                                  >
+                                    <Ban className="h-4 w-4" />
                                   </Button>
                                 )}
                                 {booking.status === "checked_in" && (
@@ -1516,6 +1607,91 @@ export default function AdminBookingsPage() {
                 <CheckCircle2 className="h-4 w-4 mr-2" />
               )}
               Mark as Paid
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Booking Confirmation */}
+      <Dialog
+        open={!!cancelTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCancelTarget(null);
+            setCancelReason("");
+          }
+        }}
+      >
+        <DialogContent className="bg-[var(--background)] border-red-500/30 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase text-white flex items-center gap-2">
+              <Ban className="h-5 w-5 text-red-400" />
+              Cancel Booking
+            </DialogTitle>
+            <DialogDescription className="text-sm text-secondary-content">
+              This cannot be undone. The station is released for someone else.
+            </DialogDescription>
+          </DialogHeader>
+
+          {cancelTarget && (
+            <div className="space-y-4">
+              <div className="bg-[var(--surface)] border border-[#27272a] rounded-lg p-4 space-y-1">
+                <p className="text-sm font-black text-primary font-mono">{cancelTarget.booking_number}</p>
+                <p className="text-sm text-white">{cancelTarget.customer_name}</p>
+                <p className="text-label">
+                  {cancelTarget.booking_device_slots?.[0]
+                    ? `${cancelTarget.booking_device_slots[0].device_type} · ${formatDbTimeRange(
+                        cancelTarget.booking_device_slots[0].slot_start_time,
+                        cancelTarget.booking_device_slots[0].slot_end_time
+                      )}`
+                    : cancelTarget.walk_in_device_type_name || "No station assigned yet"}
+                </p>
+              </div>
+
+              {/* Cancelled bookings are left out of every revenue report, so money
+                  already taken would simply vanish from the figures if nobody was
+                  told to refund it. */}
+              {Number(cancelTarget.amount_paid || 0) > 0 && (
+                <div className="bg-amber-950/50 border border-amber-900/50 rounded-lg p-3 flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-200">
+                    ₹{formatCurrency(cancelTarget.amount_paid)} has already been collected on this
+                    booking. Cancelling leaves it out of the revenue reports - refund it separately.
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label className="text-label text-muted-content">Reason (optional)</Label>
+                <Input
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  placeholder="Customer called to cancel"
+                  maxLength={200}
+                  className="bg-[var(--surface)] border-[#27272a] text-white h-10 text-sm"
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex gap-2">
+            <Button
+              onClick={() => {
+                setCancelTarget(null);
+                setCancelReason("");
+              }}
+              variant="ghost"
+              className="flex-1 border border-zinc-800 text-muted-content hover:text-white font-bold uppercase text-xs h-10 rounded-lg"
+            >
+              Keep Booking
+            </Button>
+            <Button
+              onClick={handleCancelBooking}
+              disabled={isPending}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white font-black uppercase text-xs h-10 rounded-lg"
+            >
+              {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Ban className="h-4 w-4 mr-2" />}
+              Cancel Booking
             </Button>
           </DialogFooter>
         </DialogContent>
