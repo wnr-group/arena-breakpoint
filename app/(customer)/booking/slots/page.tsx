@@ -8,8 +8,9 @@ import { checkAvailabilityByDeviceType, initializeSoftLockReservation as createS
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DateSelector } from "@/components/booking/DateSelector";
-import { Clock, ChevronRight, X, Users, Plus, Minus , Loader2 } from 'lucide-react';
+import { Clock, ChevronRight, X, Users, Plus, Minus } from 'lucide-react';
 import { toast } from "sonner";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   formatLocalDate,
   isDateWithinBookingWindow,
@@ -185,7 +186,7 @@ export default function SlotBookingPage() {
             </div>
             <div className="space-y-4">
               <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest pl-1">🕒 Select Time Slot</h3>
-              {queryingDb ? <div className="h-32 flex items-center justify-center"><Loader2 className="h-5 w-5 text-primary animate-spin" /></div> : (
+              {queryingDb ? <div className="h-32 flex items-center justify-center"><BreakpointLoader size="sm" /></div> : (
                 ["Morning Slots", "Afternoon Slots", "Evening R Night"].map((g) => (
                   <div key={g} className="space-y-1.5">
                     <p className="text-xs font-black uppercase text-zinc-400 tracking-wider flex items-center gap-1"><span className="w-1 h-1 bg-zinc-800 rounded-full"/> {g}</p>

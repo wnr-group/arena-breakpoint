@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { Eye, EyeOff, Lock, Mail, Gamepad2 } from 'lucide-react'
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 
 function LoginForm() {
   const router = useRouter()
@@ -207,7 +208,7 @@ function LoginForm() {
 
 export default function AdminLoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-black"><div className="text-white">Loading...</div></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-black"><BreakpointLoader size="lg" /></div>}>
       <LoginForm />
     </Suspense>
   )

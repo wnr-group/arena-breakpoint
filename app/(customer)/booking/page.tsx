@@ -7,7 +7,7 @@ import { useAppDispatch } from "@/lib/redux/hooks";
 import { setDeviceType, setPricing, resetBooking } from "@/lib/redux/slices/bookingSlice";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Users, Sparkles, Loader2 } from 'lucide-react';
+import { Users, Sparkles } from 'lucide-react';
 import { getDeviceTypesWithAvailability } from "./actions";
 import Link from "next/link";
 
@@ -55,7 +55,7 @@ export default function GamingStationPage() {
   if (loading) {
     return (
       <div className="h-[50vh] flex items-center justify-center">
-        <Loader2 className="h-5 w-5 text-primary animate-spin" />
+        <BreakpointLoader size="md" text="Loading devices..." />
       </div>
     );
   }

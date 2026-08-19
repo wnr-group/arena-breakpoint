@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { DateSelector } from "@/components/booking/DateSelector";
 import { Clock, ChevronRight, X, Plus, Minus, AlertCircle, Loader2, Sparkles } from 'lucide-react';
 import { toast } from "sonner";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import {
   formatLocalDate,
   isDateWithinBookingWindow,
@@ -618,9 +619,8 @@ export default function FlexibleSlotBookingPage() {
             <div className="space-y-3">
               <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest pl-1">🕒 Start Time</h3>
               {queryingDb ? (
-                <div className="h-96 flex flex-col items-center justify-center gap-2">
-                  <Loader2 className="h-5 w-5 text-primary animate-spin" />
-                  <p className="text-xs text-zinc-400">Checking availability...</p>
+                <div className="h-96 flex flex-col items-center justify-center">
+                  <BreakpointLoader size="md" text="Checking availability..." />
                 </div>
               ) : availableStartTimesForDate.length === 0 ? (
                 <div className="h-96 flex flex-col items-center justify-center gap-2 text-center px-4">
