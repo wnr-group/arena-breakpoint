@@ -173,6 +173,12 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
     }
   };
 
+  /** Opens one booking from a list on the dashboard itself. */
+  const openBooking = (bookingId?: string | null) => {
+    if (!bookingId) return;
+    router.push(`/admin/bookings/${bookingId}`);
+  };
+
   /**
    * Opens a booking from one of the stat modals (Today's Revenue, Active
    * Sessions, Upcoming Bookings) in a new tab rather than a second dialog on top
@@ -423,7 +429,8 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
               todaysSchedule.map((slot: any) => (
                 <div
                   key={slot.id}
-                  className="flex items-center justify-between p-3 bg-[var(--background)] border border-[#27272a] rounded-lg"
+                  className="flex items-center justify-between p-3 bg-[var(--background)] border border-[#27272a] rounded-lg hover:border-primary/50 transition-colors cursor-pointer"
+                  onClick={() => openBooking(slot.bookings?.id)}
                 >
                   <div className="flex items-center gap-3 flex-1">
                     <div className="flex flex-col items-center justify-center w-16 h-16 bg-zinc-900 rounded-lg">
@@ -484,8 +491,8 @@ export default function DashboardClient({ initialData }: { initialData: Dashboar
                 return (
                   <div
                     key={booking.id}
-                    className="flex items-center justify-between p-3 bg-[var(--background)] border border-[#27272a] rounded-lg hover:border-zinc-700 transition-colors cursor-pointer"
-                    onClick={() => router.push("/admin/bookings")}
+                    className="flex items-center justify-between p-3 bg-[var(--background)] border border-[#27272a] rounded-lg hover:border-primary/50 transition-colors cursor-pointer"
+                    onClick={() => openBooking(booking.id)}
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
