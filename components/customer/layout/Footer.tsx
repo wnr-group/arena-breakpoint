@@ -97,6 +97,17 @@ export default function Footer() {
           <p>
             &copy; {currentYear} <span className="text-[#FFC107] hover:underline cursor-pointer">Break Point Arena</span>. All rights reserved by <span className="text-[#FFC107] hover:underline cursor-pointer">Break Point Arena</span>
           </p>
+          <p>
+            Powered By{' '}
+            <a
+              href="https://www.wnradvisory.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#FFC107] hover:underline transition-colors duration-300"
+            >
+              WnR Groups
+            </a>
+          </p>
           <div className="flex flex-wrap justify-center gap-6">
             <a href="#" className="hover:text-white transition-colors duration-300">Terms & Conditions</a>
             <a href="#" className="hover:text-white transition-colors duration-300">Privacy Policy</a>
