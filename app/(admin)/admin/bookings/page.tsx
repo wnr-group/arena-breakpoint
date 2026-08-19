@@ -15,6 +15,7 @@ import { AttentionBadges } from "@/components/admin/bookings/AttentionBadges";
 import { PaymentStatusBadge } from "@/components/admin/bookings/PaymentStatusBadge";
 import { BookingsGrid } from "@/components/admin/bookings/BookingsGrid";
 import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
+import { RevealAmount } from "@/components/admin/dashboard/RevealAmount";
 import { CheckoutModal } from "@/components/admin/bookings/CheckoutModal";
 import { getAllBookings, getAttentionBookings, getBookingStats, checkInBooking, checkOutBooking, checkInWalkInSession, checkOutWalkInSession, getBookingBillingDetails, markBookingAsPaid, type BookingFilters } from "./actions";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
@@ -22,7 +23,7 @@ import { Search, Filter, Calendar, CalendarDays, IndianRupee, Users, CheckCircle
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useDebounce } from "@/lib/hooks/useDebounce";
-import { CountUp, CurrencyCountUp } from "@/components/shared/CountUp";
+import { CountUp } from "@/components/shared/CountUp";
 import { roundToTwo, formatCurrency } from "@/lib/currency";
 import { formatDbTime, formatDbTimeRange } from "@/lib/utils/timeSlots";
 import { SessionTimesCell } from "@/components/admin/bookings/SessionTimeline";
@@ -678,7 +679,7 @@ export default function AdminBookingsPage() {
             </div>
             <div>
               <p className="text-label text-muted-content">Today's Revenue</p>
-              <p className="text-xl font-black text-primary"><CurrencyCountUp amount={stats?.todayRevenue || 0} duration={1200} /></p>
+              <p className="text-xl font-black text-primary"><RevealAmount amount={stats?.todayRevenue || 0} label="today's revenue" /></p>
             </div>
           </div>
         </Card>
