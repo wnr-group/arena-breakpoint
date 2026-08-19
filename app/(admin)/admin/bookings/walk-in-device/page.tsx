@@ -60,7 +60,7 @@ import {
 import { useHappyHours } from "@/lib/hooks/useHappyHours";
 import { useNotifications } from "@/lib/contexts/NotificationContext";
 import { bookingNotificationId } from "@/lib/hooks/useAdminNotificationPolling";
-import { extraPlayersCharge, perExtraPlayerCharge } from "@/lib/payments/money";
+import { extraPlayersCharge, perExtraPlayerCharge, round2 } from "@/lib/payments/money";
 
 export default function WalkInBookingPage() {
   const router = useRouter();
@@ -390,7 +390,7 @@ export default function WalkInBookingPage() {
     const baseRate = calculatePrice(Number(selectedDeviceType?.regular_hourly_rate) || 0, selectedDuration);
     const subtotal = baseRate + extraPlayerCharge;
     const subscriptionDiscount = activeSubscription
-      ? (subtotal * activeSubscription.discount_percentage) / 100
+      ? round2((subtotal * activeSubscription.discount_percentage) / 100)
       : 0;
 
     // Calculate happy hour discount
@@ -472,7 +472,7 @@ export default function WalkInBookingPage() {
   const baseRate = calculatePrice(Number(selectedDeviceType?.regular_hourly_rate) || 0, selectedDuration);
   const subtotal = baseRate + extraPlayerCharge;
   const subscriptionDiscount = activeSubscription
-    ? (subtotal * activeSubscription.discount_percentage) / 100
+    ? round2((subtotal * activeSubscription.discount_percentage) / 100)
     : 0;
 
   // Calculate Happy Hour discount

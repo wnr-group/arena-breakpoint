@@ -220,9 +220,10 @@ function withComputedTotals(booking: any) {
   const happyHourDiscount = Number(booking.happy_hour_discount || 0);
   const amountPaid = Number(booking.amount_paid || 0);
 
-  const correctTotal =
-    deviceSubtotal + foodSubtotal - subscriptionDiscount - promoDiscount - happyHourDiscount;
-  const balanceDue = correctTotal - amountPaid;
+  const correctTotal = roundToTwo(
+    deviceSubtotal + foodSubtotal - subscriptionDiscount - promoDiscount - happyHourDiscount
+  );
+  const balanceDue = roundToTwo(correctTotal - amountPaid);
 
   return {
     ...booking,
@@ -396,8 +397,10 @@ export async function getBookingDetails(bookingId: string) {
     const happyHourDiscount = Number(data.happy_hour_discount || 0);
     const amountPaid = Number(data.amount_paid || 0);
 
-    const correctTotal = deviceSubtotal + foodSubtotal - subscriptionDiscount - promoDiscount - happyHourDiscount;
-    const balanceDue = correctTotal - amountPaid;
+    const correctTotal = roundToTwo(
+      deviceSubtotal + foodSubtotal - subscriptionDiscount - promoDiscount - happyHourDiscount
+    );
+    const balanceDue = roundToTwo(correctTotal - amountPaid);
 
     return {
       success: true,
@@ -2226,8 +2229,10 @@ export async function getBookingBillingDetails(bookingId: string) {
 
     // Calculate unpaid amount
     const unpaidItems = lineItems?.filter((item: any) => !item.is_paid) || [];
-    const unpaidAmount = unpaidItems.reduce((sum: number, item: any) => sum + Number(item.line_total), 0);
-    const balanceDue = correctTotal - amountPaid;
+    const unpaidAmount = roundToTwo(
+      unpaidItems.reduce((sum: number, item: any) => sum + Number(item.line_total), 0)
+    );
+    const balanceDue = roundToTwo(correctTotal - amountPaid);
 
     return {
       success: true,
@@ -2291,7 +2296,7 @@ export async function markBookingAsPaid(
 
     // Calculate balance due
     const currentAmountPaid = Number(booking.amount_paid || 0);
-    const balanceDue = Number(booking.total_amount) - currentAmountPaid;
+    const balanceDue = roundToTwo(Number(booking.total_amount) - currentAmountPaid);
 
     // Validate that split amounts equal balance due (not total, since there might be partial payment)
     const totalSplit = paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount;

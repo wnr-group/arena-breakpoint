@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { IndianRupee, TrendingUp, ReceiptIndianRupee, Calendar } from "lucide-react";
 import { BookingStatusBadge } from "@/components/admin/bookings/BookingStatusBadge";
 import { formatDbTimeRange } from "@/lib/utils/timeSlots";
+import { formatCurrency } from "@/lib/currency";
 
 interface TodaysRevenueModalProps {
   open: boolean;
@@ -83,12 +84,12 @@ export function TodaysRevenueModal({ open, onClose, bookings, totalRevenue, onBo
 
           <div className="p-4 bg-[var(--surface)] border border-[#27272a] rounded-lg">
             <p className="text-xs text-muted-content mb-1">Device Revenue</p>
-            <p className="text-lg font-black text-white">₹{deviceRevenue.toLocaleString('en-IN')}</p>
+            <p className="text-lg font-black text-white">₹{formatCurrency(deviceRevenue)}</p>
           </div>
 
           <div className="p-4 bg-[var(--surface)] border border-[#27272a] rounded-lg">
             <p className="text-xs text-muted-content mb-1">Food Revenue</p>
-            <p className="text-lg font-black text-white">₹{foodRevenue.toLocaleString('en-IN')}</p>
+            <p className="text-lg font-black text-white">₹{formatCurrency(foodRevenue)}</p>
           </div>
         </div>
 
