@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Clock, LogIn, LogOut, PlayCircle, ReceiptIndianRupee } from "lucide-react";
 import { formatPlayedDuration, sessionTimes } from "@/lib/bookings/walkInSession";
 import { formatClockTime12h } from "@/lib/utils/dates";
+import { formatDbTimeRange } from "@/lib/utils/timeSlots";
 
 /**
  * The three times a walk-in has, told apart.
@@ -128,7 +129,75 @@ export function SessionSummaryLine({
     );
   }
 
+  // Checked in but in some other state - cancelled, no-show, anything the
+  // three cases above do not name. The time is still the useful fact, so it
+  // is shown labelled rather than dropped.
+  if (checkedInAt) {
+    return (
+      <span className="flex items-center gap-1.5 text-green-400">
+        <LogIn className="h-3 w-3" />
+        In: {timeOnly(checkedInAt)}
+      </span>
+    );
+  }
+
   return null;
+}
+
+/**
+ * What the bookings list shows in its date/time column.
+ *
+ * A walk-in has two different times and staff need the one that actually
+ * happened: the grid has shown "Playing 2h 15m · since 9:00 AM" since walk-in
+ * sessions were added, while the list showed only the slot the booking was
+ * filed against - so the same session read differently depending on which view
+ * was open. Both views now answer with the same line.
+ *
+ * For a fixed booking the agreed slot is still the headline, because that is
+ * what was sold; the actual check-in and checkout go underneath it, labelled,
+ * once they exist.
+ */
+export function BookingTimingCell({
+  booking,
+  slot,
+}: {
+  booking: {
+    billed_on_actual_time?: boolean | null;
+    status?: string | null;
+    created_at?: string | null;
+    checked_in_at?: string | null;
+    completed_at?: string | null;
+  };
+  slot?: { slot_start_time?: string | null; slot_end_time?: string | null } | null;
+}) {
+  if (booking.billed_on_actual_time) {
+    return (
+      <SessionSummaryLine
+        status={booking.status || ""}
+        createdAt={booking.created_at || null}
+        checkedInAt={booking.checked_in_at || null}
+        completedAt={booking.completed_at || null}
+      />
+    );
+  }
+
+  return (
+    <span className="flex flex-col gap-0.5">
+      <span>
+        {slot
+          ? formatDbTimeRange(slot.slot_start_time, slot.slot_end_time)
+          : booking.created_at
+            ? timeOnly(booking.created_at)
+            : "N/A"}
+      </span>
+      {booking.checked_in_at && (
+        <span className="text-green-400 font-semibold">In: {timeOnly(booking.checked_in_at)}</span>
+      )}
+      {booking.completed_at && (
+        <span className="text-blue-400 font-semibold">Out: {timeOnly(booking.completed_at)}</span>
+      )}
+    </span>
+  );
 }
 
 /** The full timeline, for the booking details screen. */

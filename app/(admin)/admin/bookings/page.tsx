@@ -25,8 +25,8 @@ import { format } from "date-fns";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { CountUp } from "@/components/shared/CountUp";
 import { roundToTwo, formatCurrency } from "@/lib/currency";
-import { formatDbTime, formatDbTimeRange } from "@/lib/utils/timeSlots";
-import { SessionTimesCell } from "@/components/admin/bookings/SessionTimeline";
+import { formatDbTime } from "@/lib/utils/timeSlots";
+import { BookingTimingCell } from "@/components/admin/bookings/SessionTimeline";
 import {
   arenaDate,
   arenaToday,
@@ -1067,8 +1067,7 @@ export default function AdminBookingsPage() {
                                   {new Date(firstSlot.slot_date).toLocaleDateString()}
                                 </p>
                                 <p className="text-sm-readable text-secondary-content">
-                                  {firstBooking.billed_on_actual_time ? <SessionTimesCell booking={firstBooking} /> :
-                                    formatDbTimeRange(firstSlot.slot_start_time, firstSlot.slot_end_time)}
+                                  <BookingTimingCell booking={firstBooking} slot={firstSlot} />
                                 </p>
                               </>
                             ) : (
@@ -1080,8 +1079,7 @@ export default function AdminBookingsPage() {
                                   {/* A walk-in waiting for check-in has no slot yet, so this
                                       is the only row that ever shows its creation time - and
                                       it says so rather than passing it off as a start time. */}
-                                  {firstBooking.billed_on_actual_time ? <SessionTimesCell booking={firstBooking} /> :
-                                    formatClockTime12h(firstBooking.created_at)}
+                                  <BookingTimingCell booking={firstBooking} slot={null} />
                                 </p>
                               </>
                             )
@@ -1224,8 +1222,7 @@ export default function AdminBookingsPage() {
                                   : new Date(booking.created_at).toLocaleDateString()}
                               </p>
                               <p className="text-sm-readable text-secondary-content">
-                                {booking.billed_on_actual_time ? <SessionTimesCell booking={booking} /> :
-                                  formatDbTimeRange(deviceSlot?.slot_start_time, deviceSlot?.slot_end_time)}
+                                <BookingTimingCell booking={booking} slot={deviceSlot} />
                               </p>
                             </td>
                             <td className="py-3 px-4">
