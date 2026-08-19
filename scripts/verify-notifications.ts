@@ -60,7 +60,7 @@ function notification(over: Partial<Notification> = {}): Notification {
 }
 
 async function main() {
-  const { mergeNotification, notificationHref } = await import(
+  const { mergeNotification, notificationHref, rememberRead } = await import(
     '../lib/contexts/NotificationContext'
   )
   const { shouldAnnounce } = await import('../components/admin/layout/NotificationToast')
@@ -118,6 +118,70 @@ check('the list is capped, keeping the newest', () => {
   }
   assert.equal(list.length, 30)
   assert.equal(list[0].id, 'booking:39', 'newest first')
+})
+
+check('a sweep replayed newest-first keeps the newest, not the oldest', () => {
+  // The poller reads bookings `created_at` descending and announces them in
+  // that order. Prepending each blindly kept this morning's thirty and threw
+  // away the ones that just came in - and every reload evicted a different
+  // thirty, which is how dismissed notifications kept coming back.
+  let list: Notification[] = []
+  for (let i = 0; i < 40; i++) {
+    list = mergeNotification(
+      list,
+      notification({
+        id: `booking:${i}`,
+        bookingId: `b${i}`,
+        bookingNumber: `BP-${i}`,
+        timestamp: new Date(NOW - i * 60_000),
+      }),
+      NOW
+    )
+  }
+
+  assert.equal(list.length, 30)
+  assert.equal(list[0].id, 'booking:0', 'the newest is first')
+  assert.ok(
+    list.every(entry => Number(entry.id.split(':')[1]) < 30),
+    'the thirty newest are the ones kept'
+  )
+})
+
+console.log('\nRead once, read for good')
+
+check('a receipt outlives the notification that carried it', () => {
+  const receipts = rememberRead([], ['booking:abc'], NOW)
+  assert.deepEqual(receipts, [{ id: 'booking:abc', at: NOW }])
+})
+
+check('marking the same id twice does not stack up receipts', () => {
+  const once = rememberRead([], ['booking:abc'], NOW)
+  const twice = rememberRead(once, ['booking:abc'], NOW + 1000)
+  assert.equal(twice.length, 1)
+  assert.equal(twice[0].at, NOW + 1000, 'the later reading wins')
+})
+
+check('marking all read records every id on screen', () => {
+  const receipts = rememberRead([], ['booking:a', 'food:b:t1', 'menu:c:x'], NOW)
+  assert.deepEqual(receipts.map(r => r.id), ['booking:a', 'food:b:t1', 'menu:c:x'])
+})
+
+check('nothing to mark leaves the set untouched', () => {
+  const before = rememberRead([], ['booking:abc'], NOW)
+  assert.equal(rememberRead(before, [], NOW), before)
+})
+
+check('a receipt older than the day it belongs to is dropped', () => {
+  const stale = rememberRead([], ['booking:old'], NOW - 25 * 60 * 60 * 1000)
+  const fresh = rememberRead(stale, ['booking:new'], NOW)
+  assert.deepEqual(fresh.map(r => r.id), ['booking:new'])
+})
+
+check('the receipt set is capped', () => {
+  let receipts = rememberRead([], [], NOW)
+  for (let i = 0; i < 400; i++) receipts = rememberRead(receipts, [`booking:${i}`], NOW)
+  assert.equal(receipts.length, 300)
+  assert.equal(receipts[0].id, 'booking:399', 'the most recently read are kept')
 })
 
 check('callers without an id are still deduplicated within the window', () => {

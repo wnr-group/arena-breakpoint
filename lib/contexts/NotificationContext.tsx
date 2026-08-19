@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react'
 
 export interface Notification {
   id: string
@@ -71,6 +71,50 @@ const DUPLICATE_WINDOW_MS = 2 * 60 * 1000
 const STORAGE_KEY = 'bp-admin-notifications'
 
 /**
+ * Where "I have seen this" survives a reload, separately from the list itself.
+ *
+ * Keeping the flag only on the stored notification was not enough: the list is
+ * capped, and anything pushed off the end came back as a brand new arrival the
+ * next time the poller swept it up - marked unread, because nothing remembered
+ * otherwise. An id that has been read stays read even when the notification
+ * carrying it has been and gone.
+ */
+const READ_STORAGE_KEY = 'bp-admin-notifications-read'
+
+/** Room for far more receipts than notifications, since they are only ids. */
+const MAX_READ_IDS = 300
+
+/** One id somebody has already read, and when they read it. */
+export interface ReadReceipt {
+  id: string
+  at: number
+}
+
+/**
+ * Adds ids to the read set, newest first, pruned the same way the list is.
+ *
+ * Pure, so the rule that matters - a notification read once stays read across a
+ * reload, an eviction and a re-announcement - can be asserted directly.
+ */
+export function rememberRead(
+  prev: ReadReceipt[],
+  ids: string[],
+  now: number = Date.now()
+): ReadReceipt[] {
+  if (ids.length === 0) return prev
+
+  const incoming = new Set(ids)
+  const cutoff = now - MAX_AGE_MS
+
+  return [
+    ...ids.map(id => ({ id, at: now })),
+    ...prev.filter(receipt => !incoming.has(receipt.id)),
+  ]
+    .filter(receipt => receipt.at >= cutoff)
+    .slice(0, MAX_READ_IDS)
+}
+
+/**
  * How many to keep. The old cap of ten was fine for a list that started empty on
  * every reload; one that persists needs enough room to still hold this morning's
  * orders by the afternoon.
@@ -108,6 +152,33 @@ function loadStored(): Notification[] {
       .slice(0, MAX_STORED)
   } catch {
     // A corrupt or unreadable store must not take the admin panel down with it.
+    return []
+  }
+}
+
+/** Reads the read set back, discarding anything malformed or expired. */
+function loadReadReceipts(): ReadReceipt[] {
+  if (typeof window === 'undefined') return []
+
+  try {
+    const raw = window.localStorage.getItem(READ_STORAGE_KEY)
+    if (!raw) return []
+
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+
+    const cutoff = Date.now() - MAX_AGE_MS
+
+    return (parsed as ReadReceipt[])
+      .filter(
+        entry =>
+          entry &&
+          typeof entry.id === 'string' &&
+          typeof entry.at === 'number' &&
+          entry.at >= cutoff
+      )
+      .slice(0, MAX_READ_IDS)
+  } catch {
     return []
   }
 }
@@ -151,19 +222,62 @@ export function mergeNotification(
 
   if (alreadyAnnounced) return prev
 
-  return [incoming, ...prev].slice(0, MAX_STORED)
+  /**
+   * Sorted before the cap is applied, because arrival order is not age order.
+   *
+   * The poller reads bookings newest-first and announces them in that order, so
+   * prepending each one blindly left the list oldest-first - and the cap then
+   * threw away the newest thirty and kept this morning's. Every reload replayed
+   * the sweep and evicted a different thirty, which is what kept dragging
+   * already-dismissed notifications back onto the screen.
+   */
+  return [incoming, ...prev]
+    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    .slice(0, MAX_STORED)
 }
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [hydrated, setHydrated] = useState(false)
 
+  /**
+   * A ref rather than state: `addNotification` is memoised with no dependencies
+   * so every caller keeps the same function identity, and it has to read the
+   * current receipts rather than the ones captured when it was created.
+   */
+  const readReceiptsRef = useRef<ReadReceipt[]>([])
+  const readIdsRef = useRef<Set<string>>(new Set())
+
+  const persistReceipts = useCallback((receipts: ReadReceipt[]) => {
+    readReceiptsRef.current = receipts
+    readIdsRef.current = new Set(receipts.map(receipt => receipt.id))
+
+    if (typeof window === 'undefined') return
+    try {
+      window.localStorage.setItem(READ_STORAGE_KEY, JSON.stringify(receipts))
+    } catch {
+      // A full or blocked store is not worth interrupting anyone over.
+    }
+  }, [])
+
   // Read back after mount rather than in a lazy initialiser: the server renders
   // this with an empty list, so seeding from localStorage during the first render
   // would make the client's markup disagree with it.
   useEffect(() => {
+    const receipts = loadReadReceipts()
+    readReceiptsRef.current = receipts
+    readIdsRef.current = new Set(receipts.map(receipt => receipt.id))
+
     const stored = loadStored()
-    if (stored.length > 0) setNotifications(stored)
+    if (stored.length > 0) {
+      // The receipt is the authority: a notification restored as unread that
+      // somebody has already dismissed stays dismissed.
+      setNotifications(
+        stored.map(entry =>
+          entry.read || readIdsRef.current.has(entry.id) ? { ...entry, read: true } : entry
+        )
+      )
+    }
     setHydrated(true)
   }, [])
 
@@ -191,11 +305,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           ? notification.timestamp
           : new Date()
 
+      const id = notification.id || `notif-${Date.now()}-${Math.random()}`
+
       const newNotification: Notification = {
         ...notification,
-        id: notification.id || `notif-${Date.now()}-${Math.random()}`,
+        id,
         timestamp: stamp,
-        read: false,
+        // Announced again after being evicted from a full list, or after a
+        // reload replayed the sweep that found it: whoever dismissed it did
+        // not need telling twice.
+        read: readIdsRef.current.has(id),
       }
 
       setNotifications(prev => mergeNotification(prev, newNotification))
@@ -203,19 +322,34 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     []
   )
 
-  const markAsRead = useCallback((notificationId: string) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === notificationId ? { ...n, read: true } : n))
-    )
-  }, [])
+  const markAsRead = useCallback(
+    (notificationId: string) => {
+      persistReceipts(rememberRead(readReceiptsRef.current, [notificationId]))
+      setNotifications(prev =>
+        prev.map(n => (n.id === notificationId ? { ...n, read: true } : n))
+      )
+    },
+    [persistReceipts]
+  )
 
   const markAllAsRead = useCallback(() => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
-  }, [])
+    setNotifications(prev => {
+      persistReceipts(rememberRead(readReceiptsRef.current, prev.map(n => n.id)))
+      return prev.map(n => ({ ...n, read: true }))
+    })
+  }, [persistReceipts])
 
+  /**
+   * Clearing empties the list but keeps the receipts: the sweep that found
+   * these orders runs again in thirty seconds, and they must not come back
+   * demanding attention that has already been paid.
+   */
   const clearNotifications = useCallback(() => {
-    setNotifications([])
-  }, [])
+    setNotifications(prev => {
+      persistReceipts(rememberRead(readReceiptsRef.current, prev.map(n => n.id)))
+      return []
+    })
+  }, [persistReceipts])
 
   const unreadCount = notifications.filter(n => !n.read).length
 
