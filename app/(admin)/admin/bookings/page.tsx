@@ -16,10 +16,11 @@ import { PaymentStatusBadge } from "@/components/admin/bookings/PaymentStatusBad
 import { BookingsGrid } from "@/components/admin/bookings/BookingsGrid";
 import { BookingDetailModal } from "@/components/admin/bookings/BookingDetailModal";
 import { RevealAmount } from "@/components/admin/dashboard/RevealAmount";
+import { useNotifications } from "@/lib/contexts/NotificationContext";
 import { CheckoutModal } from "@/components/admin/bookings/CheckoutModal";
-import { getAllBookings, getAttentionBookings, getBookingStats, checkInBooking, checkOutBooking, checkInWalkInSession, checkOutWalkInSession, getBookingBillingDetails, markBookingAsPaid, cancelBooking, type BookingFilters } from "./actions";
+import { getAllBookings, getAttentionBookings, getBookingStats, checkInBooking, checkOutBooking, checkInWalkInSession, checkOutWalkInSession, getBookingBillingDetails, markBookingAsPaid, cancelBooking, markBookingRefunded, type BookingFilters } from "./actions";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
-import { Search, Filter, Calendar, CalendarDays, IndianRupee, Users, CheckCircle2, Clock, Loader2, Eye, ReceiptIndianRupee, PlusCircle, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List, AlertCircle, RefreshCw, ShieldAlert, AlertTriangle, Ban } from "lucide-react";
+import { Search, Filter, Calendar, CalendarDays, IndianRupee, Users, CheckCircle2, Clock, Loader2, Eye, ReceiptIndianRupee, PlusCircle, UserCheck, LogOut, UtensilsCrossed, ChevronDown, ChevronRight, Link2, CreditCard, Grid3x3, List, AlertCircle, RefreshCw, ShieldAlert, AlertTriangle, Ban, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useDebounce } from "@/lib/hooks/useDebounce";
@@ -39,6 +40,7 @@ import {
 
 export default function AdminBookingsPage() {
   const router = useRouter();
+  const { addNotification } = useNotifications();
   const [bookings, setBookings] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -339,24 +341,76 @@ export default function AdminBookingsPage() {
     startTransition(async () => {
       const result = await cancelBooking(id, reason || undefined);
       if (result.success) {
-        // Three different things staff may need to know, in the order they
-        // matter: money that has to be handed back, then stock that came back
-        // by itself, then the plain fact that the station is free.
+        // Announced once, through the bell. A toast as well said the same thing
+        // twice to the person who pressed the button and nothing at all to
+        // anyone else - and the notification reaches both.
         const restored = Number(result.restoredItems || 0);
         const paid = Number(result.amountPaid || 0);
-        toast.success(`Booking ${booking_number} cancelled`, {
-          description: paid > 0
-            ? `₹${formatCurrency(paid)} was already collected - refund it separately.`
-            : restored > 0
-              ? `Station free again. ${restored} food item${restored === 1 ? "" : "s"} put back in stock.`
-              : "The slot is free again."
+        /**
+         * Everyone on the floor sees this, not just whoever pressed the button.
+         * A cancellation frees a station and may leave money to hand back, and
+         * the person who needs to know either of those things is often at the
+         * other screen.
+         */
+        addNotification({
+          id: `booking:${id}:cancelled`,
+          type: "booking",
+          title: "Booking Cancelled",
+          message:
+            paid > 0
+              ? `${cancelTarget.customer_name || "Customer"} • #${booking_number} • ₹${formatCurrency(paid)} to refund`
+              : restored > 0
+                ? `${cancelTarget.customer_name || "Customer"} • #${booking_number} • station free, ${restored} food item${restored === 1 ? "" : "s"} back in stock`
+                : `${cancelTarget.customer_name || "Customer"} • #${booking_number} • station free again`,
+          bookingId: id,
+          bookingNumber: booking_number,
         });
+
         setCancelTarget(null);
         setCancelReason("");
         loadBookings();
         loadStats();
       } else {
         toast.error("Cancellation failed", { description: result.error });
+      }
+    });
+  };
+
+  /**
+   * Records that the money on a cancelled booking has been handed back.
+   *
+   * The refund itself happens at the till or through the payment provider; this
+   * is the note that says it was done, which is what clears the flag from the
+   * row so the next person does not do it twice.
+   */
+  /**
+   * A cancelled booking with money still on it. The badge on the row says the
+   * same thing; this decides whether the button that clears it is offered.
+   */
+  const needsRefund = (booking: any) =>
+    booking?.status === "cancelled" &&
+    Number(booking?.amount_paid || 0) > 0 &&
+    booking?.payment_status !== "refunded";
+  const handleMarkRefunded = (booking: any) => {
+    const collected = Number(booking.amount_paid || 0);
+    const confirmed = window.confirm(
+      `Mark ₹${formatCurrency(collected)} as refunded for booking ${booking.booking_number}?
+
+` +
+        `Do this once the money has actually gone back to the customer.`
+    );
+    if (!confirmed) return;
+
+    startTransition(async () => {
+      const result = await markBookingRefunded(booking.id);
+      if (result.success) {
+        toast.success(`Refund recorded for ${booking.booking_number}`, {
+          description: `₹${formatCurrency(Number(result.refundedAmount || 0))} marked as returned.`
+        });
+        loadBookings();
+        loadStats();
+      } else {
+        toast.error("Could not record the refund", { description: result.error });
       }
     });
   };
@@ -577,6 +631,7 @@ export default function AdminBookingsPage() {
     { id: "confirmed", label: "Confirmed", count: stats?.confirmed || 0 },
     { id: "checked_in", label: "Checked In", count: stats?.checked_in || 0 },
     { id: "completed", label: "Completed", count: stats?.completed || 0 },
+    { id: "cancelled", label: "Cancelled", count: stats?.cancelled || 0 },
     { id: "attention", label: "Needs Attention", count: attentionCount }
   ];
 
@@ -888,9 +943,48 @@ export default function AdminBookingsPage() {
         </div>
       )}
 
-      {/* Filters and Search */}
-      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-        <div className="flex gap-2 overflow-x-auto scrollbar-none w-full lg:w-auto">
+      {/* Search and view, then the categories they apply to */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-content" />
+            <Input
+              placeholder="Search by name, phone, or booking number... (auto-search)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-[var(--surface)] border-[#27272a] text-white h-10 text-sm"
+            />
+            {loading && (
+              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary animate-spin" />
+            )}
+          </div>
+
+          {/* View Mode Toggle */}
+          <div className="flex bg-[var(--surface)] border border-[#27272a] rounded-lg overflow-hidden self-start sm:self-auto">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-2 transition-colors ${viewMode === "list"
+                  ? "bg-primary text-black"
+                  : "text-secondary-content hover:text-white"
+                }`}
+              title="List View"
+            >
+              <List className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`p-2 transition-colors ${viewMode === "grid"
+                  ? "bg-primary text-black"
+                  : "text-secondary-content hover:text-white"
+                }`}
+              title="Grid View"
+            >
+              <Grid3x3 className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto scrollbar-none w-full">
           {filterTabs.map((tab) => {
             const isActive = activeStatusFilter === tab.id;
             /* The attention tab carries amber when it has anything in it, so an
@@ -920,45 +1014,6 @@ export default function AdminBookingsPage() {
             );
           })}
         </div>
-
-        <div className="flex gap-2 w-full lg:w-auto">
-          {/* View Mode Toggle */}
-          <div className="flex bg-[var(--surface)] border border-[#27272a] rounded-lg overflow-hidden">
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-2 transition-colors ${viewMode === "list"
-                  ? "bg-primary text-black"
-                  : "text-secondary-content hover:text-white"
-                }`}
-              title="List View"
-            >
-              <List className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-2 transition-colors ${viewMode === "grid"
-                  ? "bg-primary text-black"
-                  : "text-secondary-content hover:text-white"
-                }`}
-              title="Grid View"
-            >
-              <Grid3x3 className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="relative flex-1 lg:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-content" />
-            <Input
-              placeholder="Search by name, phone, or booking number... (auto-search)"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-[var(--surface)] border-[#27272a] text-white h-10 text-sm"
-            />
-            {loading && (
-              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary animate-spin" />
-            )}
-          </div>
-        </div>
       </div>
 
       {/* Bookings List/Grid */}
@@ -985,6 +1040,8 @@ export default function AdminBookingsPage() {
             setCancelTarget(booking);
           }}
           canCancel={canCancelBooking}
+          onMarkRefunded={handleMarkRefunded}
+          needsRefund={needsRefund}
           onAddFood={(booking) => {
             setSelectedBooking(booking);
             setOpenFoodModal(true);
@@ -1163,6 +1220,7 @@ export default function AdminBookingsPage() {
                           {isSingleBooking ? (
                             <PaymentStatusBadge
                               status={firstBooking.payment_status || 'pending'}
+                              bookingStatus={firstBooking.status}
                               size="md"
                               amountPaid={firstBooking.amount_paid}
                               balanceDue={firstBooking.balance_due}
@@ -1251,6 +1309,18 @@ export default function AdminBookingsPage() {
                                   <CreditCard className="h-4 w-4" />
                                 </Button>
                               )}
+                              {needsRefund(firstBooking) && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleMarkRefunded(firstBooking)}
+                                  disabled={isPending}
+                                  className="h-8 w-8 p-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
+                                  title="Mark as refunded"
+                                >
+                                  <Undo2 className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -1317,6 +1387,7 @@ export default function AdminBookingsPage() {
                             <td className="py-3 px-4">
                               <PaymentStatusBadge
                                 status={booking.payment_status || 'pending'}
+                                bookingStatus={booking.status}
                                 size="md"
                                 amountPaid={booking.amount_paid}
                                 balanceDue={booking.balance_due}
@@ -1395,6 +1466,18 @@ export default function AdminBookingsPage() {
                                     title="Checkout & Billing"
                                   >
                                     <CreditCard className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {needsRefund(booking) && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleMarkRefunded(booking)}
+                                    disabled={isPending}
+                                    className="h-8 w-8 p-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
+                                    title="Mark as refunded"
+                                  >
+                                    <Undo2 className="h-4 w-4" />
                                   </Button>
                                 )}
                                 <Button

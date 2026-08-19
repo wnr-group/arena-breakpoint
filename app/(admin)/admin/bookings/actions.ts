@@ -652,6 +652,81 @@ export async function cancelBooking(bookingId: string, reason?: string) {
   }
 }
 
+/**
+ * Record that the money taken on a cancelled booking has been handed back.
+ *
+ * The refund itself happens off-screen - cash out of the till, or a reversal
+ * through the payment provider - so this does not move any money. It records
+ * that somebody did, which is what clears the "Refund due" flag from the row
+ * and stops the next person doing it again.
+ *
+ * `amount_paid` is deliberately left where it is. It is the record of what was
+ * collected, and zeroing it would erase the only evidence that a refund was
+ * ever owed.
+ */
+export async function markBookingRefunded(bookingId: string) {
+  await requireStaff();
+
+  try {
+    const { data: subject, error: subjectError } = await supabaseAdmin
+      .from("bookings")
+      .select("status, payment_status, amount_paid, booking_number")
+      .eq("id", bookingId)
+      .maybeSingle();
+
+    if (subjectError) throw subjectError;
+    if (!subject) return { success: false, error: "Booking not found." };
+
+    // Only a cancelled booking can be owed a refund here. Money back on a
+    // booking that went ahead is a different thing entirely - a discount, or a
+    // billing correction - and marking it refunded would take it out of the
+    // takings while the session it paid for still stands.
+    if (String(subject.status).toLowerCase() !== "cancelled") {
+      return {
+        success: false,
+        error: "Only a cancelled booking can be marked refunded."
+      };
+    }
+
+    if (subject.payment_status === "refunded") {
+      return { success: false, error: "This booking is already marked refunded." };
+    }
+
+    const collected = Number(subject.amount_paid || 0);
+    if (collected <= 0) {
+      return { success: false, error: "Nothing was collected on this booking." };
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("bookings")
+      .update({
+        payment_status: "refunded",
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", bookingId)
+      .eq("status", "cancelled")
+      .select("id, booking_number, amount_paid")
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) {
+      return {
+        success: false,
+        error: "This booking changed while you were working on it. Refresh and try again."
+      };
+    }
+
+    return {
+      success: true,
+      bookingNumber: data.booking_number as string,
+      refundedAmount: Number(data.amount_paid || 0)
+    };
+  } catch (err: any) {
+    console.error("Mark booking refunded error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
 /** Look up what `decideCheckout` needs, then apply it. */
 async function resolveCheckoutStatus(bookingId: string): Promise<CheckoutDecision> {
   const { data, error } = await supabaseAdmin
@@ -757,6 +832,7 @@ export async function getBookingStats(
         confirmed: grouped.confirmed || 0,
         checked_in: grouped.checked_in || 0,
         completed: grouped.completed || 0,
+        cancelled: grouped.cancelled || 0,
         locked: grouped.locked || 0,
         todayRevenue
       }

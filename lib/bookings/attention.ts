@@ -24,6 +24,8 @@ export type BookingAttentionKind =
   | 'starting_soon'
   | 'ending_soon'
   | 'overrunning'
+  | 'refund_due'
+  | 'refunded'
 
 export type BookingAttention = {
   kind: BookingAttentionKind
@@ -31,7 +33,11 @@ export type BookingAttention = {
   label: string
   /** One line explaining what happened, for a tooltip or the detail view. */
   detail: string
-  severity: 'high' | 'medium'
+  /**
+   * `info` is not a warning at all - it is a job somebody has already done,
+   * shown so nobody does it twice.
+   */
+  severity: 'high' | 'medium' | 'info'
 }
 
 type AttentionInput = {
@@ -51,6 +57,15 @@ type AttentionInput = {
 }
 
 const HOURS = 60 * 60 * 1000
+
+/** Whole rupees where it is whole, paise where it is not. */
+function formatMoney(amount: number): string {
+  const rounded = Math.round(amount * 100) / 100
+  return `₹${rounded.toLocaleString('en-IN', {
+    minimumFractionDigits: Number.isInteger(rounded) ? 0 : 2,
+    maximumFractionDigits: 2,
+  })}`
+}
 
 /** `HH:MM:SS`, dropping any fractional seconds Postgres hands back. */
 function clockOnly(time: string): string {
@@ -256,7 +271,37 @@ export function bookingAttention(
   const flags: BookingAttention[] = []
   const status = String(booking.status ?? '').toLowerCase()
 
-  if (status === 'cancelled') return flags
+  /**
+   * A cancelled booking has no session left to go wrong, so none of the
+   * warnings below apply to it. One thing can still be outstanding: money taken
+   * for a session that will not happen. Until it is handed back, that is a job
+   * on somebody's desk, and it says so on the row rather than living in a
+   * spreadsheet nobody opens.
+   */
+  if (status === 'cancelled') {
+    const collected = toAmount(booking.amount_paid)
+    if (collected <= 0) return flags
+
+    if (String(booking.payment_status ?? '').toLowerCase() === 'refunded') {
+      flags.push({
+        kind: 'refunded',
+        label: 'Refunded',
+        // No detail: the badge is the whole message, and a tooltip repeating
+        // it only gets between staff and the row.
+        detail: '',
+        severity: 'info',
+      })
+      return flags
+    }
+
+    flags.push({
+      kind: 'refund_due',
+      label: `Refund ${formatMoney(collected)}`,
+      detail: '',
+      severity: 'high',
+    })
+    return flags
+  }
 
   const total = toAmount(booking.total_amount)
   const paid = toAmount(booking.amount_paid)

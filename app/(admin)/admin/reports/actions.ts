@@ -8,6 +8,7 @@ import {
   settlementStatus,
 } from "@/lib/payments/paymentStatus";
 import { foodPaymentRatio, revenueSplit, type BookingMoney } from "@/lib/payments/revenueSplit";
+import { partitionCancelled, refundPosition } from "@/lib/reports/cancellations";
 
 /** The money columns, named as `revenueSplit` wants them. */
 function moneyOf(booking: any): BookingMoney {
@@ -117,11 +118,18 @@ export async function getFoodReports(filters?: ReportFilters) {
 
       const ratio = foodPaymentRatio(split);
 
+      const soldItems = (booking.booking_food_items || []).filter(
+        (item: any) => String(item.status ?? '').toLowerCase() !== 'cancelled'
+      );
+
+      // Every line on this order was called off, so there is no sale to report
+      // even though the booking itself went ahead.
+      if (soldItems.length === 0) return;
+
       // Track unique booking for totalOrders count
       uniqueBookings.add(booking.booking_number);
 
-      // Process each food item in the booking
-      (booking.booking_food_items || []).forEach((item: any) => {
+      soldItems.forEach((item: any) => {
         const itemName = item.item_name;
         const category = item.item_category || "Uncategorized";
 
@@ -451,7 +459,12 @@ export async function getRevenueReports(filters?: ReportFilters) {
       // amount_paid is zero - but the Payment Status panel cannot report what it
       // was never given, and filtering them out here is what made it read "0
       // pending" while money was outstanding.
-      .neq("status", "cancelled");
+      //
+      // Cancelled ones are fetched for the same reason and separated below. A
+      // booking that was paid for and then called off used to be dropped by the
+      // database, so the money simply left the report with nothing saying it had
+      // gone - and a refund nobody had made looked exactly like one they had.
+      ;
 
     const { data, error } = await query.order("created_at", { ascending: false });
 
@@ -488,6 +501,18 @@ export async function getRevenueReports(filters?: ReportFilters) {
     }
 
     /**
+     * Called off, and therefore not trade.
+     *
+     * Kept out of every revenue figure and every count below - a cancelled
+     * booking earns nothing and is owed nothing - but reported on its own, with
+     * whatever was collected before it was cancelled. That figure is the arena's
+     * refund exposure: money taken for a session nobody played.
+     */
+    const { active: activeData, cancelled: cancelledData } =
+      partitionCancelled(filteredData as any[]);
+    const refunds = refundPosition(cancelledData);
+
+    /**
      * Money actually received. Every revenue figure is measured over these, so
      * including unpaid bookings above changes no revenue number and no average -
      * it only lets them be counted.
@@ -495,7 +520,7 @@ export async function getRevenueReports(filters?: ReportFilters) {
      * Selected on the money rather than on `payment_status`: a booking carrying a
      * payment belongs in the revenue whatever word is stored beside it.
      */
-    const revenueBookings = filteredData.filter(
+    const revenueBookings = activeData.filter(
       (booking: any) => Number(booking.amount_paid || 0) > 0
     );
 
@@ -511,7 +536,7 @@ export async function getRevenueReports(filters?: ReportFilters) {
      * - A walk-in still on the floor, which is priced at checkout and carries a
      *   total of zero until then. Nothing is owed on it yet.
      */
-    const billed = filteredData.filter((booking: any) =>
+    const billed = activeData.filter((booking: any) =>
       isBillableBooking({ status: booking.status, total: booking.total_amount })
     );
 
@@ -669,6 +694,17 @@ export async function getRevenueReports(filters?: ReportFilters) {
         /** Still owed across partial and unpaid bookings. */
         outstandingAmount: outstanding,
         /**
+         * Bookings called off in this period, and what had been collected on
+         * them before they were. Neither figure is part of the revenue above:
+         * they say what left it.
+         */
+        cancelledBookings: cancelledData.length,
+        cancelledCollected: refunds.collected,
+        /** Already handed back, and therefore closed. */
+        cancelledRefunded: refunds.refunded,
+        /** Still held for a session nobody played - the figure to act on. */
+        cancelledAwaitingRefund: refunds.awaitingRefund,
+        /**
          * Money received beyond what any booking was charged. Normally zero;
          * anything here means device + food revenue will not add up to the total,
          * and the booking behind it wants looking at.
@@ -689,7 +725,7 @@ export async function getRevenueReports(filters?: ReportFilters) {
       },
       sourceBreakdown: sourceBreakdownArray,
       dailyRevenue: dailyRevenueArray,
-      recentTransactions: filteredData.slice(0, 20)
+      recentTransactions: activeData.slice(0, 20)
     };
   } catch (err: any) {
     console.error("Get revenue reports error:", err);
@@ -721,7 +757,12 @@ export async function getDashboardSummary(filters?: ReportFilters) {
         totalBookings: revenueResult.summary?.totalBookings || 0,
         totalFoodOrders: foodResult.summary?.totalOrders || 0,
         totalItemsSold: foodResult.summary?.totalItemsSold || 0,
-        totalHoursBooked: deviceResult.summary?.totalHours || 0
+        totalHoursBooked: deviceResult.summary?.totalHours || 0,
+        // What was called off, so the overview says why the takings are what
+        // they are rather than leaving a gap nobody can account for.
+        cancelledBookings: revenueResult.summary?.cancelledBookings || 0,
+        cancelledCollected: revenueResult.summary?.cancelledCollected || 0,
+        cancelledAwaitingRefund: revenueResult.summary?.cancelledAwaitingRefund || 0
       }
     };
   } catch (err: any) {

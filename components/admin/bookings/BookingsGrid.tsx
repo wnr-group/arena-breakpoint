@@ -6,7 +6,7 @@ import { BookingTimingCell, SessionSummaryLine } from "./SessionTimeline";
 import { BookingStatusBadge } from "./BookingStatusBadge";
 import { AttentionBadges } from "./AttentionBadges";
 import { PaymentStatusBadge } from "./PaymentStatusBadge";
-import { Calendar, Clock, MapPin, IndianRupee, Phone, User, Eye, UserCheck, LogOut, UtensilsCrossed, CreditCard, Link2, Ban } from "lucide-react";
+import { Calendar, Clock, MapPin, IndianRupee, Phone, User, Eye, UserCheck, LogOut, UtensilsCrossed, CreditCard, Link2, Ban, Undo2 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { formatClockTime12h } from "@/lib/utils/dates";
 
@@ -30,6 +30,9 @@ interface BookingsGridProps {
   /** Opens the cancel confirmation. Omitted where cancelling is not offered. */
   onCancel?: (booking: any) => void;
   canCancel?: (booking: any) => boolean;
+  /** Records that a cancelled booking's money has been handed back. */
+  onMarkRefunded?: (booking: any) => void;
+  needsRefund?: (booking: any) => boolean;
   isPending: boolean;
 }
 
@@ -42,6 +45,8 @@ export function BookingsGrid({
   onCheckoutBilling,
   onCancel,
   canCancel,
+  onMarkRefunded,
+  needsRefund,
   isPending
 }: BookingsGridProps) {
   return (
@@ -195,6 +200,7 @@ export function BookingsGrid({
                   </div>
                   <PaymentStatusBadge
                     status={booking.payment_status || 'pending'}
+                    bookingStatus={booking.status}
                     size="sm"
                     amountPaid={booking.amount_paid}
                     balanceDue={booking.balance_due}
@@ -216,6 +222,18 @@ export function BookingsGrid({
                       title="Check In"
                     >
                       <UserCheck className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {onMarkRefunded && needsRefund?.(booking) && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onMarkRefunded(booking)}
+                      disabled={isPending}
+                      className="h-8 w-8 p-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 rounded-lg"
+                      title="Mark as refunded"
+                    >
+                      <Undo2 className="h-4 w-4" />
                     </Button>
                   )}
                   {onCancel && canCancel?.(booking) && (
