@@ -13,7 +13,7 @@ import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMY
 import { allFilled, isPlausibleEmail } from '@/lib/utils/forms'
 
 // Import server actions
-import { getSubscriptionPlanDetails } from '@/app/(admin)/admin/subscription/actions'
+import { getPublicSubscriptionPlan } from '@/app/(customer)/subscription/actions'
 import { activateSubscriptionPlan } from './action'
 import { checkCustomerExists } from '@/app/(customer)/booking/actions'
 import {
@@ -54,7 +54,7 @@ export default function PlanDetailsPage() {
         const planId = Array.isArray(params.planId) ? params.planId[0] : params.planId
 
         if (planId) {
-          const response = await getSubscriptionPlanDetails(planId)
+          const response = await getPublicSubscriptionPlan(planId)
           if (response.success && response.data) {
             setPlan(response.data)
           } else {

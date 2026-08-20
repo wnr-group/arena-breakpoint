@@ -10,7 +10,8 @@ import { checkCustomerExists } from '@/app/(customer)/booking/actions'
 
 // The DB Interface
 interface SubscriptionPlanDB {
-  id: number
+  /** UUID. Was typed `number` while this data arrived as `any`. */
+  id: string
   name: string
   description: string | null
   duration_days?: number
@@ -28,7 +29,8 @@ interface SubscriptionPricingCardProps {
 
 const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initialPlans }) => {
   const router = useRouter()
-  const [loadingPlanId, setLoadingPlanId] = useState<number | null>(null)
+  // Plan ids are UUIDs, so this tracks a string.
+  const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null)
   const cardRef = useRef<HTMLDivElement>(null)
   const [singleSetWidth, setSingleSetWidth] = useState(0)
   const [isHovered, setIsHovered] = useState(false)

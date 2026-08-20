@@ -2,7 +2,8 @@
 
 import React from 'react'
 export interface SubscriptionPlanDB {
-  id: number
+  /** UUID. Was typed `number` while this data arrived as `any`. */
+  id: string
   name: string
   description: string | null
   duration_days?: number

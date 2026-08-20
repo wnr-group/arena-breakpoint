@@ -2,10 +2,10 @@ import React from 'react'
 import { Award } from 'lucide-react'
 import { ComparisonTable } from '@/components/customer/subscription/ComparisonTable'
 import SubscriptionPricingCard from '@/components/customer/subscription/SubscriptionPricingCard'
-import { getSubscriptionPlans } from '@/app/(admin)/admin/subscription/actions'
+import { getPublicSubscriptionPlans } from './actions'
 
 export default async function SubscriptionPage() {
-  const response = await getSubscriptionPlans()
+  const response = await getPublicSubscriptionPlans()
   const plansData = response.success && response.data ? response.data : []
 
   return (

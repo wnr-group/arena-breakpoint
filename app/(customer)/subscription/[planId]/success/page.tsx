@@ -17,7 +17,7 @@ import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { BreakpointLoader } from '@/components/shared/BreakpointLoader'
 
 // Import your existing server action
-import { getSubscriptionPlanDetails } from '@/app/(admin)/admin/subscription/actions'
+import { getPublicSubscriptionPlan } from '@/app/(customer)/subscription/actions'
 import Link from 'next/link'
 
 export default function SubscriptionActivatedPage() {
@@ -38,7 +38,7 @@ export default function SubscriptionActivatedPage() {
         const planId = Array.isArray(params.planId) ? params.planId[0] : params.planId
 
         if (planId) {
-          const response = await getSubscriptionPlanDetails(planId)
+          const response = await getPublicSubscriptionPlan(planId)
           if (response.success && response.data) {
             setPlan(response.data)
           }
