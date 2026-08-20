@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { createRazorpayOrder } from '@/lib/razorpay/client'
-import type { DeviceBookingQuote, FoodOrderQuote } from './quote'
+import type { DeviceBookingQuote, FoodOrderQuote, SubscriptionQuote } from './quote'
 
 /**
  * The `payment_orders` table is the bridge between "customer clicked Pay" and
@@ -8,8 +8,8 @@ import type { DeviceBookingQuote, FoodOrderQuote } from './quote'
  * amount back from the database rather than trusting whatever the browser posts.
  */
 
-export type PaymentPurpose = 'device_booking' | 'food_order'
-export type StoredQuote = DeviceBookingQuote | FoodOrderQuote
+export type PaymentPurpose = 'device_booking' | 'food_order' | 'subscription'
+export type StoredQuote = DeviceBookingQuote | FoodOrderQuote | SubscriptionQuote
 
 export interface PaymentOrderRow {
   id: string
@@ -35,7 +35,7 @@ export const FULFILMENT_LEASE_MS = 3 * 60 * 1000
 
 /** Razorpay caps receipts at 40 chars, so keep the random suffix short. */
 function buildReceipt(purpose: PaymentPurpose): string {
-  const prefix = purpose === 'device_booking' ? 'bk' : 'fd'
+  const prefix = purpose === 'device_booking' ? 'bk' : purpose === 'subscription' ? 'sb' : 'fd'
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
 }
 
@@ -178,13 +178,17 @@ export async function claimStrandedOrder(
 
 export async function markOrderFulfilled(
   razorpayOrderId: string,
-  bookingId: string
+  produced: { bookingId?: string; subscriptionId?: string }
 ): Promise<void> {
+  // Whichever of the two the purpose produced. Written separately rather than
+  // into one column, so "which membership did this order pay for" stays a
+  // question the row can answer without knowing what kind of order it was.
   const { error } = await supabaseAdmin
     .from('payment_orders')
     .update({
       status: 'fulfilled',
-      booking_id: bookingId,
+      ...(produced.bookingId ? { booking_id: produced.bookingId } : {}),
+      ...(produced.subscriptionId ? { subscription_id: produced.subscriptionId } : {}),
       fulfilled_at: new Date().toISOString(),
     })
     .eq('razorpay_order_id', razorpayOrderId)

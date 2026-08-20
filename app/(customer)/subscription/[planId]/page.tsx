@@ -14,7 +14,16 @@ import { allFilled, isPlausibleEmail } from '@/lib/utils/forms'
 
 // Import server actions
 import { getPublicSubscriptionPlan } from '@/app/(customer)/subscription/actions'
-import { activateSubscriptionPlan } from './action'
+import {
+  createSubscriptionPaymentOrder,
+  confirmSubscriptionPayment,
+} from './payment-actions'
+import {
+  openRazorpayCheckout,
+  RazorpayDismissedError,
+  RazorpayFailedError,
+} from '@/lib/razorpay/checkout'
+import { ConfirmingPaymentOverlay } from '@/components/customer/booking/ConfirmingPaymentOverlay'
 import { checkCustomerExists } from '@/app/(customer)/booking/actions'
 import {
   sendOTPAction,
@@ -45,6 +54,8 @@ export default function PlanDetailsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isActivating, setIsActivating] = useState(false)
+  /** True only between Razorpay returning and the membership being written. */
+  const [isConfirming, setIsConfirming] = useState(false)
 
   // Fetch the plan data on mount
   useEffect(() => {
@@ -74,6 +85,49 @@ export default function PlanDetailsPage() {
 
     fetchPlan()
   }, [params.planId, router])
+
+  /**
+   * Resume a session the customer already has, rather than asking again.
+   *
+   * Somebody who signed in to book a slot an hour ago is still signed in; making
+   * them retype their number and wait for another SMS is both an irritation and a
+   * wasted credit. The phone step still exists for everyone else, and the OTP
+   * step still guards the purchase itself - `createSubscriptionPaymentOrder`
+   * re-checks the session server-side, so skipping the form here grants nothing.
+   */
+  useEffect(() => {
+    let cancelled = false
+
+    const resume = async () => {
+      const session = await checkActiveSessionAction()
+      if (cancelled || !session.isValid || !session.phone) return
+
+      setMobileNumber(session.phone)
+
+      const result = await checkCustomerExists(session.phone)
+      if (cancelled) return
+
+      if (result.success && result.exists && result.customer) {
+        setCustomerName(result.customer.name || '')
+        setCustomerEmail(result.customer.email || '')
+        setCustomerDob(
+          result.customer.date_of_birth ? formatDateForDisplay(result.customer.date_of_birth) : ''
+        )
+        setCustomerId(result.customer.id)
+        setCustomerExists(true)
+        // Straight to review: everything the summary needs is already known.
+        setStep('summary')
+      } else {
+        // Verified, but we have never met them - collect the details, not the OTP.
+        setStep('details')
+      }
+    }
+
+    resume()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   // Handle phone submission
   const handlePhoneSubmit = async (e: React.FormEvent) => {
@@ -163,40 +217,87 @@ export default function PlanDetailsPage() {
     setStep('summary')
   }
 
-  // Handle plan activation
+  /**
+   * Pay for the membership, then let the server grant it.
+   *
+   * This used to invent a payment id in the browser and call
+   * `activateSubscriptionPlan` directly, so a membership appeared whether or not
+   * any money moved - every membership in production was created that way. Now
+   * the price comes from the plan row on the server, Razorpay takes the money,
+   * and the membership is only written once the signature has been verified.
+   */
   const handleActivatePlan = async () => {
     try {
       setIsActivating(true)
-      const mockPaymentId = `pay_mock_${Math.floor(Math.random() * 10000)}`
 
-      const result = await activateSubscriptionPlan({
+      const order = await createSubscriptionPaymentOrder({
         phone: mobileNumber,
         name: customerName,
         email: customerEmail,
-        date_of_birth: customerDob ? formatDateForDB(customerDob) : undefined,
+        dateOfBirth: customerDob ? formatDateForDB(customerDob) : undefined,
         planId: plan.id,
-        paymentId: mockPaymentId,
       })
 
-      if (result.success) {
-        toast.success('Plan Activated!', {
-          description: 'Your subscription has been activated successfully.'
+      if (!order.success) {
+        // A lapsed session sends them back to the OTP step rather than to an
+        // error they cannot act on.
+        if (order.verificationRequired) {
+          toast.error('Please verify your number', { description: order.error })
+          setStep('otp')
+        } else {
+          toast.error(order.alreadySubscribed ? 'Already a member' : 'Could not start payment', {
+            description: order.error,
+          })
+        }
+        setIsActivating(false)
+        return
+      }
+
+      const response = await openRazorpayCheckout({
+        keyId: order.keyId!,
+        orderId: order.orderId!,
+        amount: order.amount!,
+        name: 'Break Point Arena',
+        description: `${order.summary?.planName || 'Membership'} · ${order.summary?.durationMonths || 1} month(s)`,
+        prefill: {
+          name: customerName,
+          email: customerEmail,
+          contact: mobileNumber,
+        },
+      })
+
+      // Between here and the reply the money has moved but the membership does
+      // not exist yet, which is the one moment the customer must not close the tab.
+      setIsConfirming(true)
+
+      const confirmed = await confirmSubscriptionPayment(response)
+
+      if (confirmed.success) {
+        toast.success('Membership active', {
+          description: `${confirmed.planName || plan.name} is now on your account.`,
         })
         if (typeof window !== 'undefined') {
           localStorage.setItem('customerPhone', mobileNumber)
         }
         router.push(`/subscription/${params.planId}/success`)
-      } else {
-        toast.error('Activation Failed', {
-          description: result.message || 'Failed to activate plan'
-        })
-        setIsActivating(false)
+        return
       }
-    } catch (error) {
-      console.error('Activation error:', error)
-      toast.error('Activation Error', {
-        description: 'Something went wrong during activation.'
+
+      toast.error('Payment taken, membership not activated', {
+        description: confirmed.error || 'Please contact the arena with your payment id.',
       })
+      setIsConfirming(false)
+      setIsActivating(false)
+    } catch (error) {
+      if (error instanceof RazorpayDismissedError) {
+        toast.info('Payment cancelled', { description: 'Your membership has not been purchased.' })
+      } else if (error instanceof RazorpayFailedError) {
+        toast.error('Payment failed', { description: error.message })
+      } else {
+        console.error('Subscription purchase error:', error)
+        toast.error('Something went wrong', { description: 'Please try again.' })
+      }
+      setIsConfirming(false)
       setIsActivating(false)
     }
   }
@@ -392,6 +493,10 @@ export default function PlanDetailsPage() {
   // Summary Step
   if (step === 'summary') {
     return (
+      <>
+      {/* Only this step takes money, so this is the only step that can be
+          caught between Razorpay returning and the membership being written. */}
+      <ConfirmingPaymentOverlay show={isConfirming} />
       <div className="min-h-screen bg-[#0d0a14] text-white py-12 px-4">
         <div className="max-w-xl mx-auto">
           <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6 glow-box-hover">
@@ -455,6 +560,7 @@ export default function PlanDetailsPage() {
           </Card>
         </div>
       </div>
+      </>
     )
   }
 

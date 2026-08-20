@@ -3,10 +3,26 @@ import { Award } from 'lucide-react'
 import { ComparisonTable } from '@/components/customer/subscription/ComparisonTable'
 import SubscriptionPricingCard from '@/components/customer/subscription/SubscriptionPricingCard'
 import { getPublicSubscriptionPlans } from './actions'
+import { getMyActivePlanSummary } from '@/app/(customer)/my-subscription/action'
+import { ActivePlanBanner } from '@/components/customer/subscription/ActivePlanBanner'
+
+/**
+ * Reads the session cookie to decide whether to show the customer's own plan, so
+ * it cannot be prerendered. Without this Next tries to build it statically, the
+ * cookie read throws, and the banner silently never appears for anyone.
+ */
+export const dynamic = 'force-dynamic'
 
 export default async function SubscriptionPage() {
   const response = await getPublicSubscriptionPlans()
   const plansData = response.success && response.data ? response.data : []
+
+  /**
+   * Resolved from the session on the server, so a signed-in customer is told
+   * what they already hold before being sold anything else. Null covers both
+   * "no membership" and "not signed in", and the banner does not render.
+   */
+  const activePlan = await getMyActivePlanSummary()
 
   return (
     <main className="min-h-screen bg-[#0d0a14] text-white font-sans pt-12 pb-8 px-0 sm:px-6 lg:px-8 mt-5 relative overflow-hidden">
@@ -36,6 +52,13 @@ export default async function SubscriptionPage() {
             {' '}and arena-wide benefits.
           </p>
         </div>
+
+        {/* What this customer already has, above what they could buy. */}
+        {activePlan && (
+          <div className="px-4 mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
+            <ActivePlanBanner plan={activePlan} />
+          </div>
+        )}
 
         {/* Pricing card */}
         <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">

@@ -102,6 +102,16 @@ export interface FoodOrderQuote {
   totalAmount: number
 }
 
+export interface SubscriptionQuote {
+  kind: 'subscription'
+  customer: CustomerDetails
+  planId: string
+  planName: string
+  durationMonths: number
+  discountPercentage: number
+  totalAmount: number
+}
+
 export type QuoteResult<T> =
   | { success: true; quote: T }
   | { success: false; error: string }
@@ -565,5 +575,84 @@ export async function quoteFoodOrder(
   } catch (err: any) {
     console.error('quoteFoodOrder error:', err)
     return { success: false, error: 'Could not price your order. Please try again.' }
+  }
+}
+
+// ================================================
+// Subscription quote
+// ================================================
+
+export interface SubscriptionInput {
+  phone: string
+  name: string
+  email?: string | null
+  dateOfBirth?: string | null
+  planId: string
+}
+
+/**
+ * What a membership costs, decided here rather than by the page asking for it.
+ *
+ * The purchase flow used to call `activateSubscriptionPlan` directly with a
+ * payment id the browser invented, so the price was never checked against
+ * anything and no money was taken. Everything below comes from the plan row:
+ * the amount, the name shown on the receipt, and the length of the membership.
+ *
+ * An inactive plan is refused. A plan can be retired between a customer opening
+ * the page and pressing pay, and a stale price in a browser tab must not be
+ * honoured just because it was true this morning.
+ */
+export async function quoteSubscription(
+  input: SubscriptionInput
+): Promise<QuoteResult<SubscriptionQuote>> {
+  try {
+    const customer = normaliseCustomer(input)
+    if (!customer) {
+      return { success: false, error: 'Please provide a valid 10-digit phone number and name.' }
+    }
+
+    const dobError = dobRejectionReason(customer.dateOfBirth)
+    if (dobError) {
+      return { success: false, error: dobError }
+    }
+
+    if (!input.planId) {
+      return { success: false, error: 'Please choose a membership plan.' }
+    }
+
+    const { data: plan, error } = await supabaseAdmin
+      .from('subscription_plans')
+      .select('id, name, price, duration_months, discount_percentage, is_active')
+      .eq('id', input.planId)
+      .maybeSingle()
+
+    if (error) throw error
+    if (!plan) {
+      return { success: false, error: 'That membership plan no longer exists.' }
+    }
+    if (plan.is_active === false) {
+      return { success: false, error: 'That membership plan is no longer on sale.' }
+    }
+
+    const price = Number(plan.price)
+    if (!Number.isFinite(price) || price <= 0) {
+      return { success: false, error: 'That membership plan is not priced correctly. Please contact the arena.' }
+    }
+
+    return {
+      success: true,
+      quote: {
+        kind: 'subscription',
+        customer,
+        planId: plan.id,
+        planName: plan.name || 'Membership',
+        durationMonths: Number(plan.duration_months || 1),
+        discountPercentage: Number(plan.discount_percentage || 0),
+        totalAmount: round2(price),
+      },
+    }
+  } catch (err: any) {
+    console.error('quoteSubscription error:', err)
+    return { success: false, error: 'Could not price that membership. Please try again.' }
   }
 }
