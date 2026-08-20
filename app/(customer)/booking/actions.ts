@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { requireVerifiedPhone } from "@/lib/auth/customer-session";
 import { BOOKING_WINDOW_ERROR, arenaToday, isBookingDateStringWithinWindow } from "@/lib/utils/dates";
 import { shiftDate, timeToMinutes } from "@/lib/payments/availability";
 import { createSlotHold, releaseSlotHoldRow } from "@/lib/bookings/slotHold";
@@ -419,6 +420,21 @@ export async function releaseSlotHold(bookingId: string, holdToken: string) {
 
 export async function checkCustomerExists(phone: string) {
   try {
+    // Returns name, email and date of birth, so it is a profile read, not a
+    // existence check - it has to sit behind proof of the number. All three
+    // callers (booking, food checkout, subscription) now verify first.
+    const auth = await requireVerifiedPhone(phone);
+    if (!auth.ok) {
+      return {
+        success: false,
+        error: auth.error,
+        verificationRequired: true,
+        exists: false,
+        customer: null,
+        subscription: null,
+      };
+    }
+
     const { data, error } = await supabaseAdmin
       .from("customers")
       .select("id, name, phone, email, date_of_birth, active_subscription_id")

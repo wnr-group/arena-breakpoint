@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,48 +9,51 @@ import { Label } from "@/components/ui/label";
 import { Search, Phone, Calendar, Clock, QrCode, UtensilsCrossed, User, CheckCircle2, Sparkles, Zap, CreditCard , Loader2 } from 'lucide-react';
 import { BreakpointLoader } from '@/components/shared/BreakpointLoader';
 import { toast } from "sonner";
-import { getBookingsByPhone } from "./actions";
+import { getMyBookings } from "./actions";
+import { CustomerAuthGate } from "@/components/auth/CustomerAuthGate";
 import { formatDbTime, formatDbTimeRange } from "@/lib/utils/timeSlots";
 import { QRCodeSVG } from "qrcode.react";
 
-export default function RetrieveBookingPage() {
+/**
+ * Rendered only behind CustomerAuthGate, so the customer is already known.
+ * There is no phone field: which bookings to show is decided by the session,
+ * not by anything typed on the page.
+ */
+function RetrieveBookingContent({ phone }: { phone: string }) {
   const router = useRouter();
 
-  const [phone, setPhone] = useState("");
   const [bookings, setBookings] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [sessionLapsed, setSessionLapsed] = useState(false);
 
-  const handleSearch = async (e?: React.FormEvent) => {
-    e?.preventDefault();
+  useEffect(() => {
+    let cancelled = false;
 
-    if (!phone.trim() || phone.length < 10) {
-      toast.error("Invalid Phone", { description: "Please enter a valid 10-digit mobile number." });
-      return;
-    }
+    const load = async () => {
+      setIsLoading(true);
+      const result = await getMyBookings();
+      if (cancelled) return;
 
-    setIsLoading(true);
-    setHasSearched(true);
-    setBookings([]);
-    setSelectedBooking(null);
-
-    const result = await getBookingsByPhone(phone);
-
-    if (result.success) {
-      setBookings(result.bookings || []);
-      if (result.bookings.length === 0) {
-        toast.info("No Bookings Found", { description: "No bookings found for this phone number." });
+      if (result.success) {
+        setBookings(result.bookings || []);
+      } else if (result.verificationRequired) {
+        // Session expired between the gate letting us through and this call.
+        setSessionLapsed(true);
+        setBookings([]);
       } else {
-        toast.success("Bookings Found!", { description: `Found ${result.bookings.length} booking(s).` });
+        toast.error("Error", { description: result.error || "Failed to fetch bookings." });
+        setBookings([]);
       }
-    } else {
-      toast.error("Error", { description: result.error || "Failed to fetch bookings." });
-      setBookings([]);
-    }
 
-    setIsLoading(false);
-  };
+      setIsLoading(false);
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const getStatusBadge = (status: string) => {
     const statusConfig: any = {
@@ -89,8 +92,20 @@ export default function RetrieveBookingPage() {
     );
   };
 
+  if (sessionLapsed) {
+    return (
+      <Card className="bg-[#111] border-2 border-amber-500/30 p-10 text-center max-w-md mx-auto rounded-2xl">
+        <h3 className="text-lg font-black text-white mb-2 uppercase">Session Expired</h3>
+        <p className="text-sm text-zinc-400 mb-6">Please log in again to view your bookings.</p>
+        <Button onClick={() => window.location.reload()} variant="gradient" className="h-11 px-8 rounded-xl">
+          Log In
+        </Button>
+      </Card>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#0d0a14] text-white py-12 px-4">
+    <div>
       <div className="max-w-5xl mx-auto space-y-8">
 
         {/* Header with Animation */}
@@ -109,67 +124,9 @@ export default function RetrieveBookingPage() {
               </p>
             </div>
           </div>
-          <p className="text-sm text-zinc-400 pl-15">Enter your phone number to view all your bookings and access QR codes</p>
+          <p className="text-sm text-zinc-400 pl-15">All bookings for +91 {phone}, with QR codes ready to scan at the counter</p>
         </div>
 
-        {/* Search Card with Enhanced Styling */}
-        <Card className="bg-gradient-to-br from-[#111] via-[#0f0f0f] to-[#111] border-2 border-primary/30 p-8 shadow-[0_0_40px_rgba(255,193,7,0.2)] rounded-2xl relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-          {/* Animated gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-amber-400/5 to-primary/5 opacity-0 hover:opacity-100 transition-opacity duration-500" />
-
-          {/* Scan line */}
-          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse" />
-
-          <form onSubmit={handleSearch} className="space-y-6 relative z-10">
-            <div className="space-y-3">
-              <Label htmlFor="phone-search" className="text-xs font-black text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Phone className="h-3.5 w-3.5 text-primary" />
-                </div>
-                MOBILE NUMBER <span className="text-red-500">*</span>
-              </Label>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-zinc-400 border-r border-zinc-800 pr-3">+91</span>
-                  {/* The field is monospaced and starts behind the +91 prefix,
-                      so on a narrow phone the placeholder ran past the right
-                      edge and showed nothing at all. Mobile reclaims that room
-                      from the left padding and the letter spacing rather than
-                      the font size - dropping below 16px makes Safari zoom the
-                      page when the field takes focus. */}
-                  <Input
-                    id="phone-search"
-                    type="tel"
-                    maxLength={10}
-                    placeholder="Enter 10-digit number"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    className="bg-zinc-950/50 border-2 border-zinc-800 hover:border-primary/50 focus:border-primary h-14 pl-[60px] sm:pl-16 text-base text-white focus-visible:ring-primary font-mono tracking-normal sm:tracking-wide rounded-xl transition-all shadow-[0_0_15px_rgba(255,193,7,0.1)]"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  disabled={isLoading || phone.trim().length < 10}
-                  variant="gradient"
-                  className="h-14 px-10 rounded-xl text-sm font-black uppercase tracking-wider shadow-[0_0_25px_rgba(255,193,7,0.4)] hover:shadow-[0_0_40px_rgba(255,193,7,0.6)] transition-all"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                      SEARCHING...
-                    </>
-                  ) : (
-                    <>
-                      <Search className="h-5 w-5 mr-2" />
-                      SEARCH
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </form>
-        </Card>
 
         {/* Loading State with Animation */}
         {isLoading && (
@@ -179,13 +136,13 @@ export default function RetrieveBookingPage() {
         )}
 
         {/* No Results with Better Design */}
-        {hasSearched && !isLoading && bookings.length === 0 && (
+        {!isLoading && !sessionLapsed && bookings.length === 0 && (
           <Card className="bg-gradient-to-br from-[#111] to-zinc-950 border-2 border-zinc-800 p-12 text-center animate-in fade-in zoom-in duration-500 rounded-2xl">
             <div className="w-20 h-20 rounded-full bg-zinc-900 border-2 border-zinc-800 flex items-center justify-center mx-auto mb-6">
               <Search className="h-10 w-10 text-zinc-700" />
             </div>
             <h3 className="text-xl font-black text-zinc-400 mb-3 uppercase">No Bookings Found</h3>
-            <p className="text-sm text-zinc-400 max-w-md mx-auto">No bookings were found for this phone number. Try a different number or create a new booking.</p>
+            <p className="text-sm text-zinc-400 max-w-md mx-auto">You don't have any bookings yet. Reserve a slot and it will show up here.</p>
             <Button
               onClick={() => router.push("/booking")}
               variant="gradient"
@@ -767,6 +724,19 @@ export default function RetrieveBookingPage() {
           </Button>
         )}
       </div>
+    </div>
+  );
+}
+
+export default function RetrieveBookingPage() {
+  return (
+    <div className="min-h-screen bg-[#0d0a14] text-white py-12 px-4">
+      <CustomerAuthGate
+        title="Log In To View Bookings"
+        description="Verify your mobile number to see your bookings and QR codes."
+      >
+        {(phone) => <RetrieveBookingContent phone={phone} />}
+      </CustomerAuthGate>
     </div>
   );
 }

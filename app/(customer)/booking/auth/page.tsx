@@ -20,13 +20,15 @@ import {
   RazorpayFailedError,
 } from "@/lib/razorpay/checkout";
 import { validatePromoCode, calculatePromoDiscount } from "../promo-actions";
+import { sendOTPAction, verifyOTPAction, resendOTPAction, checkActiveSessionAction } from "../otp-actions";
 import { QRCodeSVG } from "qrcode.react";
 import { generateDurationOptions, crossesMidnight, bookingEndDate } from "@/lib/utils/timeSlots";
 import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDob, DOB_ERROR } from "@/lib/utils/dates";
 import { allFilled, isPlausibleEmail } from "@/lib/utils/forms";
 import { deviceCharge, extraPlayersCharge, perExtraPlayerCharge } from "@/lib/payments/money";
+import OTPVerification from "@/components/auth/OTPVerification";
 
-type Step = "phone" | "details" | "summary" | "success";
+type Step = "phone" | "otp" | "details" | "summary" | "success";
 
 export default function CustomerDetailsPage() {
   const router = useRouter();
@@ -43,6 +45,7 @@ export default function CustomerDetailsPage() {
   const [customerExists, setCustomerExists] = useState(false);
   const [existingCustomerData, setExistingCustomerData] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
+  const [resumingSession, setResumingSession] = useState(true);
   const [bookingNumber, setBookingNumber] = useState<string>("");
   const [bookingId, setBookingId] = useState<string>("");
   const [amountPaid, setAmountPaid] = useState<number>(0);
@@ -63,6 +66,63 @@ export default function CustomerDetailsPage() {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  /**
+   * Resume an existing login instead of asking for the number again.
+   *
+   * The session check used to run only after the customer typed their number
+   * and pressed continue, so someone already signed in was still made to enter
+   * it - the session spared them the OTP but not the typing. Checking on mount
+   * takes a signed-in customer straight to their booking summary.
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    checkActiveSessionAction()
+      .then(async (session) => {
+        if (cancelled || !session.isValid || !session.phone) return;
+        setMobileNumber(session.phone);
+        await proceedAfterPhoneVerification(session.phone);
+      })
+      .finally(() => {
+        if (!cancelled) setResumingSession(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // Mount-only: resuming once is the whole point.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /**
+   * Resume an existing login instead of asking for the number again.
+   *
+   * The session check used to run only after the customer typed their number
+   * and pressed continue, so someone already signed in was still made to enter
+   * it - the session saved them the OTP but not the typing. Checking on mount
+   * means a signed-in customer goes straight to the booking summary.
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    checkActiveSessionAction().then(async (session) => {
+      if (cancelled || !session.isValid || !session.phone) {
+        if (!cancelled) setResumingSession(false);
+        return;
+      }
+
+      setMobileNumber(session.phone);
+      await proceedAfterPhoneVerification(session.phone);
+      if (!cancelled) setResumingSession(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+    // Runs once on mount; proceedAfterPhoneVerification is stable enough here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Force scroll to top on mount and step changes to prevent landing at the bottom/footer
@@ -222,8 +282,24 @@ export default function CustomerDetailsPage() {
 
     setIsSubmitting(true);
 
+    // Does THIS browser already hold a verified session?
+    const sessionCheck = await checkActiveSessionAction();
+
+    // Skip OTP only when the live session belongs to the number being entered.
+    // A session for one number must never wave through a booking for another.
+    if (sessionCheck.isValid && sessionCheck.phone === mobileNumber) {
+      toast.success("Session Active", { description: "Welcome back! Your session is still active." });
+      await proceedAfterPhoneVerification(mobileNumber);
+    } else {
+      setStep("otp");
+    }
+
+    setIsSubmitting(false);
+  };
+
+  const proceedAfterPhoneVerification = async (phone: string) => {
     // Check if customer exists
-    const result = await checkCustomerExists(mobileNumber);
+    const result = await checkCustomerExists(phone);
 
     if (result.exists && result.customer) {
       // Customer exists, skip to summary
@@ -237,7 +313,7 @@ export default function CustomerDetailsPage() {
       }
 
       dispatch(setCustomerDetails({
-        phone: mobileNumber,
+        phone: phone,
         name: result.customer.name,
         email: result.customer.email || "",
         date_of_birth: result.customer.date_of_birth
@@ -283,8 +359,10 @@ export default function CustomerDetailsPage() {
       toast.info("New Customer", { description: "Please provide your name and email." });
       setStep("details");
     }
+  };
 
-    setIsSubmitting(false);
+  const handleOTPVerified = async (verifiedPhone: string) => {
+    await proceedAfterPhoneVerification(verifiedPhone);
   };
 
   const handleDetailsSubmit = (e: React.FormEvent) => {
@@ -468,6 +546,13 @@ export default function CustomerDetailsPage() {
       });
 
       if (!order.success) {
+        // Session lapsed mid-checkout - send them back to verify rather than
+        // leaving a dead error on a screen they cannot advance from.
+        if (order.verificationRequired) {
+          toast.error("Verification Needed", { description: order.error });
+          setStep("otp");
+          return;
+        }
         toast.error("Booking Failed", {
           description: order.error || "Something went wrong. Please try again.",
         });
@@ -569,6 +654,19 @@ export default function CustomerDetailsPage() {
 
   if (!mounted) return null;
 
+  // Held until the session check settles, so an already-signed-in customer
+  // never sees the phone form flash up before being moved past it.
+  if (resumingSession) {
+    return (
+      <div className="w-full max-w-md mx-auto flex flex-col items-center justify-center py-24 space-y-4">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="text-sm font-bold text-zinc-400 uppercase tracking-wider">
+          Checking your session...
+        </p>
+      </div>
+    );
+  }
+
   // Phone Step UI
   if (step === "phone") {
     return (
@@ -637,9 +735,46 @@ export default function CustomerDetailsPage() {
           {/* Security Shield Disclaimer Notice Footer */}
           <div className="pt-2 flex gap-2 items-center text-xs text-zinc-400 justify-center select-none border-t border-zinc-950">
             <ShieldCheck className="h-3.5 w-3.5 text-zinc-700" />
-            <span>Your data is stored securely. No OTP required.</span>
+            <span>Your data is stored securely. OTP verification required.</span>
           </div>
         </Card>
+      </div>
+    );
+  }
+
+  // OTP Verification Step
+  if (step === "otp") {
+    return (
+      <div className="w-full max-w-xl mx-auto py-4 px-2">
+        {/* Timeline Step Indicator */}
+        <div className="w-full max-w-xs mx-auto flex items-center justify-between pb-8 select-none">
+          <div className="flex flex-col items-center gap-1">
+            <div className="w-5 h-5 rounded-full bg-green-500 text-black font-black text-[9px] flex items-center justify-center">
+              <CheckCircle2 className="h-3 w-3" />
+            </div>
+            <span className="text-[8px] font-black uppercase text-green-500 tracking-wider">Phone</span>
+          </div>
+          <div className="h-0.5 bg-primary flex-1 mx-2" />
+          <div className="flex flex-col items-center gap-1">
+            <div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">2</div>
+            <span className="text-[8px] font-black uppercase text-primary tracking-wider">Verify</span>
+          </div>
+          <div className="h-0.5 bg-zinc-800 flex-1 mx-2" />
+          <div className="flex flex-col items-center gap-1">
+            <div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-bold text-[9px] flex items-center justify-center border border-zinc-800">3</div>
+            <span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Details</span>
+          </div>
+        </div>
+
+        <OTPVerification
+          phone={mobileNumber}
+          onVerified={handleOTPVerified}
+          onBack={() => setStep("phone")}
+          onSendOTP={sendOTPAction}
+          onVerifyOTP={verifyOTPAction}
+          onResendOTP={resendOTPAction}
+          autoSendOnMount={true}
+        />
       </div>
     );
   }

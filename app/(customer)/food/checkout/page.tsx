@@ -29,6 +29,8 @@ import {
   RazorpayFailedError,
 } from "@/lib/razorpay/checkout";
 import { checkCustomerExists } from "../../booking/actions";
+import { sendOTPAction, verifyOTPAction, resendOTPAction, checkActiveSessionAction } from "../../booking/otp-actions";
+import OTPVerification from "@/components/auth/OTPVerification";
 import {
   Loader2,
   Trash2,
@@ -56,11 +58,13 @@ import Link from "next/link";
 import { formatCurrency } from "@/lib/currency";
 
 /**
+ * "otp" proves the customer owns the number before anything is priced.
+ *
  * "summary" sits between identifying the customer and opening Razorpay. Without
  * it the phone lookup dropped a returning customer straight into the payment
  * sheet with no chance to check what they were about to be charged for.
  */
-type Step = "cart" | "phone" | "details" | "summary" | "success";
+type Step = "cart" | "phone" | "otp" | "details" | "summary" | "success";
 
 export default function FoodCheckoutPage() {
   const router = useRouter();
@@ -98,6 +102,7 @@ export default function FoodCheckoutPage() {
     if (bookingContext.customerName) setName(bookingContext.customerName);
     if (bookingContext.customerDob) setCustomerDob(bookingContext.customerDob);
   }, [bookingContext.customerPhone, bookingContext.customerName]);
+
 
 
   // Warm up the Razorpay SDK once the customer starts checking out, so tapping
@@ -145,11 +150,29 @@ export default function FoodCheckoutPage() {
   const summaryName = bookingContext.customerName || name;
   const summaryPhone = bookingContext.customerPhone || phone;
 
-  const handleProceedToCheckout = () => {
+  const handleProceedToCheckout = async () => {
     // On-tab orders already know who the customer is from the session, so they
     // skip identification - but they still get the review screen before the
     // items are committed to the tab.
-    setStep(isOnTab ? "summary" : "phone");
+    if (isOnTab) {
+      setStep("summary");
+      return;
+    }
+
+    // Already signed in? Go straight to the summary. Asking a logged-in
+    // customer to retype the number they just verified is friction with no
+    // security value - the session already proves it.
+    setIsSubmitting(true);
+    const session = await checkActiveSessionAction();
+
+    if (session.isValid && session.phone) {
+      setPhone(session.phone);
+      await proceedAfterPhoneVerification(session.phone);
+    } else {
+      setStep("phone");
+    }
+
+    setIsSubmitting(false);
   };
 
   const handlePhoneLookupSubmit = async (e: React.FormEvent) => {
@@ -161,7 +184,24 @@ export default function FoodCheckoutPage() {
     }
 
     setIsSubmitting(true);
-    const result = await checkCustomerExists(phone);
+
+    // Does THIS browser already hold a verified session (15 min window)?
+    const sessionCheck = await checkActiveSessionAction();
+
+    // Skip OTP only when the live session belongs to the number being entered.
+    // A session for one number must never wave through an order for another.
+    if (sessionCheck.isValid && sessionCheck.phone === phone) {
+      toast.success("Session Active", { description: "Welcome back! Your session is still active." });
+      await proceedAfterPhoneVerification(phone);
+    } else {
+      setStep("otp");
+    }
+
+    setIsSubmitting(false);
+  };
+
+  const proceedAfterPhoneVerification = async (phoneNumber: string) => {
+    const result = await checkCustomerExists(phoneNumber);
 
     if (result.exists && result.customer) {
       setName(result.customer.name);
@@ -181,7 +221,10 @@ export default function FoodCheckoutPage() {
       toast.info("New Profile", { description: "Please complete registration to place your order." });
       setStep("details");
     }
-    setIsSubmitting(false);
+  };
+
+  const handleOTPVerified = async (phoneNumber: string) => {
+    await proceedAfterPhoneVerification(phoneNumber);
   };
 
   const handleNewCustomerSubmit = async (e: React.FormEvent) => {
@@ -301,6 +344,12 @@ export default function FoodCheckoutPage() {
       });
 
       if (!order.success) {
+        // Session lapsed mid-checkout - send them back to verify.
+        if (order.verificationRequired) {
+          toast.error("Verification Needed", { description: order.error });
+          setStep("otp");
+          return;
+        }
         toast.error("Order Failed", { description: order.error });
         return;
       }
@@ -376,6 +425,7 @@ export default function FoodCheckoutPage() {
   };
 
   if (!mounted) return null;
+
 
   if (cartItems.length === 0 && step !== "success") {
     return (
@@ -577,9 +627,45 @@ export default function FoodCheckoutPage() {
           </form>
 
           <div className="pt-2 flex gap-2 items-center text-xs text-zinc-400 justify-center select-none border-t border-zinc-950">
-            <ShieldCheck className="h-4 w-4 text-zinc-700" /><span>Your account is tracked safely inside active operational clusters.</span>
+            <ShieldCheck className="h-4 w-4 text-zinc-700" /><span>OTP verification required for secure ordering.</span>
           </div>
         </Card>
+      </div>
+    );
+  }
+
+  if (step === "otp") {
+    return (
+      <div className="w-full max-w-xl mx-auto py-4 px-2">
+        {/* Timeline Step Indicator */}
+        <div className="w-full max-w-xs mx-auto flex items-center justify-between pb-8 select-none">
+          <div className="flex flex-col items-center gap-1">
+            <div className="w-5 h-5 rounded-full bg-green-500 text-black font-black text-[9px] flex items-center justify-center">
+              <CheckCircle2 className="h-3 w-3" />
+            </div>
+            <span className="text-[8px] font-black uppercase text-green-500 tracking-wider">Phone</span>
+          </div>
+          <div className="h-0.5 bg-primary flex-1 mx-2" />
+          <div className="flex flex-col items-center gap-1">
+            <div className="w-5 h-5 rounded-full bg-primary text-black font-black text-[9px] flex items-center justify-center">2</div>
+            <span className="text-[8px] font-black uppercase text-primary tracking-wider">Verify</span>
+          </div>
+          <div className="h-0.5 bg-zinc-800 flex-1 mx-2" />
+          <div className="flex flex-col items-center gap-1">
+            <div className="w-5 h-5 rounded-full bg-zinc-900 text-zinc-500 font-bold text-[9px] flex items-center justify-center border border-zinc-800">3</div>
+            <span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider">Details</span>
+          </div>
+        </div>
+
+        <OTPVerification
+          phone={phone}
+          onVerified={handleOTPVerified}
+          onBack={() => setStep("phone")}
+          onSendOTP={sendOTPAction}
+          onVerifyOTP={verifyOTPAction}
+          onResendOTP={resendOTPAction}
+          autoSendOnMount={true}
+        />
       </div>
     );
   }
