@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import {
   IndianRupee, TrendingUp, ShoppingBag, Gamepad2,
   UtensilsCrossed, BarChart3, CalendarDays, ReceiptIndianRupee, ShieldAlert
-} from "lucide-react";
+, Ban } from "lucide-react";
 import { toast } from "sonner";
 import {
   getDashboardSummary,
@@ -589,7 +589,7 @@ export default function AdminReportsPage() {
               </div>
 
               {/* Additional Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card className="bg-[var(--surface)] hover:border-primary border-1 p-5 hover:-translate-y-1">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-label text-muted-content">
@@ -632,6 +632,34 @@ export default function AdminReportsPage() {
                   </h4>
                   <p className="text-xs text-data-placeholder mt-1">
                     Per booking
+                  </p>
+                </Card>
+
+                {/* None of the takings above include these. The amount is what was
+                    collected before the booking was called off - money the arena is
+                    holding for a session nobody played. */}
+                <Card className="bg-[var(--surface)] hover:border-red-500/50 border-1 p-5 hover:-translate-y-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-label text-muted-content">
+                      Cancelled
+                    </p>
+                    <Ban className="h-4 w-4 text-muted-content" />
+                  </div>
+                  <h4 className="text-xl font-black text-red-400">
+                    <CountUp end={overviewData.cancelledBookings || 0} duration={900} />
+                  </h4>
+                  <p className="text-xs text-data-placeholder mt-1">
+                    {Number(overviewData.cancelledAwaitingRefund || 0) > 0 ? (
+                      <>
+                        ₹{formatCurrency(overviewData.cancelledAwaitingRefund)} still to refund
+                      </>
+                    ) : Number(overviewData.cancelledCollected || 0) > 0 ? (
+                      <>
+                        ₹{formatCurrency(overviewData.cancelledCollected)} refunded in full
+                      </>
+                    ) : (
+                      'Bookings called off, nothing collected'
+                    )}
                   </p>
                 </Card>
               </div>
@@ -1014,6 +1042,34 @@ export default function AdminReportsPage() {
                         <span className="text-xs text-data-placeholder">Amount Due</span>
                         <span className="text-sm font-black text-amber-500 tabular-nums">
                           ₹{formatCurrency(revenueData.summary.outstandingAmount)}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Cancelled bookings are in none of the figures above - they
+                        are not trade and nothing is owed on them. What can still be
+                        outstanding is a refund, so that is what is shown. */}
+                    <div className="flex justify-between items-baseline pt-2 border-t border-[#27272a]">
+                      <span className="text-xs text-data-placeholder">Cancelled</span>
+                      <span className="text-sm font-black text-red-400 tabular-nums">
+                        <CountUp end={revenueData.summary.cancelledBookings || 0} duration={800} />
+                      </span>
+                    </div>
+
+                    {Number(revenueData.summary.cancelledAwaitingRefund || 0) > 0 && (
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-xs text-data-placeholder">Refund Due</span>
+                        <span className="text-sm font-black text-red-400 tabular-nums">
+                          ₹{formatCurrency(revenueData.summary.cancelledAwaitingRefund)}
+                        </span>
+                      </div>
+                    )}
+
+                    {Number(revenueData.summary.cancelledRefunded || 0) > 0 && (
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-xs text-data-placeholder">Refunded</span>
+                        <span className="text-sm font-black text-green-400 tabular-nums">
+                          ₹{formatCurrency(revenueData.summary.cancelledRefunded)}
                         </span>
                       </div>
                     )}

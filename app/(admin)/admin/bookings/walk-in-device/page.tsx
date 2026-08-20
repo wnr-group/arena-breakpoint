@@ -60,7 +60,7 @@ import {
 import { useHappyHours } from "@/lib/hooks/useHappyHours";
 import { useNotifications } from "@/lib/contexts/NotificationContext";
 import { bookingNotificationId } from "@/lib/hooks/useAdminNotificationPolling";
-import { extraPlayersCharge, perExtraPlayerCharge } from "@/lib/payments/money";
+import { extraPlayersCharge, perExtraPlayerCharge, round2 } from "@/lib/payments/money";
 
 export default function WalkInBookingPage() {
   const router = useRouter();
@@ -390,7 +390,7 @@ export default function WalkInBookingPage() {
     const baseRate = calculatePrice(Number(selectedDeviceType?.regular_hourly_rate) || 0, selectedDuration);
     const subtotal = baseRate + extraPlayerCharge;
     const subscriptionDiscount = activeSubscription
-      ? (subtotal * activeSubscription.discount_percentage) / 100
+      ? round2((subtotal * activeSubscription.discount_percentage) / 100)
       : 0;
 
     // Calculate happy hour discount
@@ -472,7 +472,7 @@ export default function WalkInBookingPage() {
   const baseRate = calculatePrice(Number(selectedDeviceType?.regular_hourly_rate) || 0, selectedDuration);
   const subtotal = baseRate + extraPlayerCharge;
   const subscriptionDiscount = activeSubscription
-    ? (subtotal * activeSubscription.discount_percentage) / 100
+    ? round2((subtotal * activeSubscription.discount_percentage) / 100)
     : 0;
 
   // Calculate Happy Hour discount
@@ -796,9 +796,8 @@ export default function WalkInBookingPage() {
               <div className="space-y-3">
                 <h3 className="text-xs font-black text-secondary-content uppercase tracking-widest pl-1">🕒 Start Time</h3>
                 {loadingSlots ? (
-                  <div className="h-96 flex flex-col items-center justify-center gap-2">
-                    <Loader2 className="h-5 w-5 text-primary animate-spin" />
-                    <p className="text-xs text-secondary-content">Checking availability...</p>
+                  <div className="h-96 flex flex-col items-center justify-center">
+                    <BreakpointLoader size="md" text="Checking availability..." />
                   </div>
                 ) : availableStartTimesForDate.length === 0 ? (
                   <div className="h-96 flex flex-col items-center justify-center gap-2 text-center px-4">

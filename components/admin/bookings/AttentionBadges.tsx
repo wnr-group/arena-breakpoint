@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CalendarClock, Clock, IndianRupee, Timer, TimerOff, UserX } from "lucide-react";
+import { AlertTriangle, BadgeCheck, CalendarClock, Clock, IndianRupee, Timer, TimerOff, Undo2, UserX } from "lucide-react";
 import { bookingAttention, type BookingAttention } from "@/lib/bookings/attention";
 
 const ICONS = {
@@ -10,16 +10,21 @@ const ICONS = {
   starting_soon: CalendarClock,
   ending_soon: Timer,
   overrunning: TimerOff,
+  refund_due: Undo2,
+  refunded: BadgeCheck,
 } as const;
 
 /**
  * Red for money already lost or a station silently tied up, amber for something
- * that only needs tidying. Staff scan this list all day; two levels they can tell
- * apart at a glance beat five they have to read.
+ * that only needs tidying, green for a job already done. Staff scan this list all
+ * day; three levels they can tell apart at a glance beat five they have to read.
  */
 const TONE = {
   high: "border-red-500/40 bg-red-500/10 text-red-300",
   medium: "border-amber-500/40 bg-amber-500/10 text-amber-300",
+  // Settled, not urgent: green so a refunded booking reads as finished rather
+  // than as one more thing on the pile.
+  info: "border-green-500/40 bg-green-500/10 text-green-300",
 } as const;
 
 export function AttentionBadge({ flag, compact = false }: { flag: BookingAttention; compact?: boolean }) {
@@ -27,7 +32,7 @@ export function AttentionBadge({ flag, compact = false }: { flag: BookingAttenti
 
   return (
     <span
-      title={flag.detail}
+      title={flag.detail || undefined}
       className={`inline-flex items-center gap-1.5 rounded-md border font-bold uppercase tracking-wide ${
         TONE[flag.severity]
       } ${compact ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-1 text-[11px]"}`}
@@ -82,7 +87,9 @@ export function AttentionPanel({ booking }: { booking: Parameters<typeof booking
       {flags.map((flag) => (
         <div key={flag.kind} className="space-y-1">
           <AttentionBadge flag={flag} />
-          <p className="text-sm text-secondary-content leading-relaxed">{flag.detail}</p>
+          {flag.detail && (
+            <p className="text-sm text-secondary-content leading-relaxed">{flag.detail}</p>
+          )}
         </div>
       ))}
     </div>

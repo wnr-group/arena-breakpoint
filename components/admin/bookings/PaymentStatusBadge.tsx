@@ -11,6 +11,11 @@ interface PaymentStatusBadgeProps {
    */
   amountPaid?: number | null;
   balanceDue?: number | null;
+  /**
+   * The booking's own status, so a cancelled one can stop claiming money is
+   * owed on it. Optional: everywhere else the payment status says it all.
+   */
+  bookingStatus?: string | null;
 }
 
 export function PaymentStatusBadge({
@@ -18,6 +23,7 @@ export function PaymentStatusBadge({
   size = "md",
   amountPaid,
   balanceDue,
+  bookingStatus,
 }: PaymentStatusBadgeProps) {
   const sizeClasses = {
     sm: "text-[11px] px-2 py-0.5",
@@ -48,10 +54,27 @@ export function PaymentStatusBadge({
     },
   };
 
-  const config = statusConfig[status as keyof typeof statusConfig] || {
-    label: status,
-    bgClass: "bg-zinc-500/10 border-zinc-500/30 text-muted-content",
-  };
+  /**
+   * A cancelled booking nobody paid for owes nothing, so "Pending" was a bill
+   * that will never be collected sitting in amber next to a cancelled row -
+   * staff chasing money that was never due. Grey, and says so.
+   *
+   * Cancelled bookings that *were* paid keep their real status: the money is a
+   * fact, and the refund flag beside it is what says the job is unfinished.
+   */
+  const nothingToCollect =
+    String(bookingStatus ?? "").toLowerCase() === "cancelled" &&
+    (status === "pending" || !status);
+
+  const config = nothingToCollect
+    ? {
+        label: "No charge",
+        bgClass: "bg-zinc-500/10 border-zinc-500/30 text-muted-content",
+      }
+    : statusConfig[status as keyof typeof statusConfig] || {
+        label: status,
+        bgClass: "bg-zinc-500/10 border-zinc-500/30 text-muted-content",
+      };
 
   const badge = (
     <span

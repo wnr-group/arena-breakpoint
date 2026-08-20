@@ -2,14 +2,13 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { SessionSummaryLine, SessionTimesCell } from "./SessionTimeline";
+import { BookingTimingCell, SessionSummaryLine } from "./SessionTimeline";
 import { BookingStatusBadge } from "./BookingStatusBadge";
 import { AttentionBadges } from "./AttentionBadges";
 import { PaymentStatusBadge } from "./PaymentStatusBadge";
-import { Calendar, Clock, MapPin, IndianRupee, Phone, User, Eye, UserCheck, LogOut, UtensilsCrossed, CreditCard, Link2 } from "lucide-react";
+import { Calendar, Clock, MapPin, IndianRupee, Phone, User, Eye, UserCheck, LogOut, UtensilsCrossed, CreditCard, Link2, Ban, Undo2 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { formatClockTime12h } from "@/lib/utils/dates";
-import { formatDbTimeRange } from "@/lib/utils/timeSlots";
 
 interface BookingsGridProps {
   customerGroups: Array<{
@@ -28,6 +27,12 @@ interface BookingsGridProps {
   onCheckOut: (bookingId: string, bookingNumber: string, booking: any) => void;
   onAddFood: (booking: any) => void;
   onCheckoutBilling: (bookingId: string) => void;
+  /** Opens the cancel confirmation. Omitted where cancelling is not offered. */
+  onCancel?: (booking: any) => void;
+  canCancel?: (booking: any) => boolean;
+  /** Records that a cancelled booking's money has been handed back. */
+  onMarkRefunded?: (booking: any) => void;
+  needsRefund?: (booking: any) => boolean;
   isPending: boolean;
 }
 
@@ -38,6 +43,10 @@ export function BookingsGrid({
   onCheckOut,
   onAddFood,
   onCheckoutBilling,
+  onCancel,
+  canCancel,
+  onMarkRefunded,
+  needsRefund,
   isPending
 }: BookingsGridProps) {
   return (
@@ -145,6 +154,11 @@ export function BookingsGrid({
                         <p className="text-sm font-bold text-white">
                           {deviceSlot?.device_type || booking.walk_in_device_type_name || "N/A"}
                         </p>
+                        {deviceSlot?.device_station_number && (
+                          <p className="text-xs text-muted-content">
+                            Station #{deviceSlot.device_station_number}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -160,14 +174,14 @@ export function BookingsGrid({
                             ? new Date(deviceSlot.slot_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })
                             : new Date(booking.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
                         </p>
-                        <p className="text-xs text-muted-content flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {/* While a session is being played its slot row holds the
-                              provisional block, not an agreed end time - so only the
-                              start is shown until checkout fixes the other end. */}
-                          {booking.billed_on_actual_time ? <SessionTimesCell booking={booking} /> :
-                            formatDbTimeRange(deviceSlot?.slot_start_time, deviceSlot?.slot_end_time)}
-                        </p>
+                        {/* The session banner at the top of the card already carries
+                            the play times, so only a fixed booking needs this. */}
+                        {!isSession && (
+                          <p className="text-xs text-muted-content flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            <BookingTimingCell booking={booking} slot={deviceSlot} />
+                          </p>
+                        )}
                       </div>
                     </div>
                   </>
@@ -186,6 +200,7 @@ export function BookingsGrid({
                   </div>
                   <PaymentStatusBadge
                     status={booking.payment_status || 'pending'}
+                    bookingStatus={booking.status}
                     size="sm"
                     amountPaid={booking.amount_paid}
                     balanceDue={booking.balance_due}
@@ -209,6 +224,30 @@ export function BookingsGrid({
                       <UserCheck className="h-4 w-4" />
                     </Button>
                   )}
+                  {onMarkRefunded && needsRefund?.(booking) && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onMarkRefunded(booking)}
+                      disabled={isPending}
+                      className="h-8 w-8 p-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 rounded-lg"
+                      title="Mark as refunded"
+                    >
+                      <Undo2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {onCancel && canCancel?.(booking) && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onCancel(booking)}
+                      disabled={isPending}
+                      className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg"
+                      title="Cancel Booking"
+                    >
+                      <Ban className="h-4 w-4" />
+                    </Button>
+                  )}
                   {(isPlaying || (!isFoodOnly && !isSession && booking.status === "checked_in")) && (
                     <Button
                       size="sm"
@@ -221,8 +260,13 @@ export function BookingsGrid({
                       <LogOut className="h-4 w-4" />
                     </Button>
                   )}
-                  {/* Food can only be added while the booking is live. */}
-                  {(isFoodOnly || booking.status === "confirmed" || booking.status === "checked_in") && (
+                  {/* Food can only be added while the booking is live. A food-only
+                      order has no session to be live for, so it stays open on its
+                      own - but not once it has been called off or closed, which is
+                      how a cancelled food order kept offering this button. */}
+                  {booking.status !== "cancelled" &&
+                    booking.status !== "completed" &&
+                    (isFoodOnly || booking.status === "confirmed" || booking.status === "checked_in") && (
                     <Button
                       size="sm"
                       variant="ghost"

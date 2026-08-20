@@ -25,7 +25,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { generateDurationOptions, crossesMidnight, bookingEndDate } from "@/lib/utils/timeSlots";
 import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDob, DOB_ERROR } from "@/lib/utils/dates";
 import { allFilled, isPlausibleEmail } from "@/lib/utils/forms";
-import { deviceCharge, extraPlayersCharge, perExtraPlayerCharge } from "@/lib/payments/money";
+import { deviceCharge, extraPlayersCharge, perExtraPlayerCharge, round2 } from "@/lib/payments/money";
 import OTPVerification from "@/components/auth/OTPVerification";
 
 type Step = "phone" | "otp" | "details" | "summary" | "success";
@@ -334,8 +334,10 @@ export default function CustomerDetailsPage() {
         const extraPlayerCharges = extraPlayersCharge(playerCount - includedPlayers, extraPlayerCharge, durationInHours);
         const discountableAmount = deviceCharges + extraPlayerCharges;
 
-        const discountAmount = (discountableAmount * result.subscription.discount_percentage) / 100;
-        const newTotal = subtotal - discountAmount - bookingState.happyHourDiscount;
+        const discountAmount = round2(
+          (discountableAmount * result.subscription.discount_percentage) / 100
+        );
+        const newTotal = round2(subtotal - discountAmount - bookingState.happyHourDiscount);
 
         dispatch(setPricing({
           subtotal,
@@ -443,7 +445,9 @@ export default function CustomerDetailsPage() {
 
       const addonsTotal = addons.reduce((sum, addon) => sum + (addon.price * addon.quantity), 0);
       const calculatedSubtotal = deviceCharges + extraPlayerCharges + addonsTotal;
-      const calculatedTotal = calculatedSubtotal - bookingState.subscriptionDiscount - discount - bookingState.happyHourDiscount;
+      const calculatedTotal = round2(
+        calculatedSubtotal - bookingState.subscriptionDiscount - discount - bookingState.happyHourDiscount
+      );
 
       dispatch(setPricing({
         subtotal: calculatedSubtotal,

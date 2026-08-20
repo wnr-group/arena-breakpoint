@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { formatCurrency } from "@/lib/currency"
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -140,17 +141,17 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-[var(--surface)] border-[#27272a] p-6">
           <p className="text-label-enhanced text-muted-content mb-2">Total Expenses</p>
-          <p className="text-3xl font-black text-red-400">₹{totalExpenses.toLocaleString('en-IN')}</p>
+          <p className="text-3xl font-black text-red-400">₹{formatCurrency(totalExpenses)}</p>
           <p className="text-sm-enhanced text-secondary-content mt-1">{expenses.length} expense(s)</p>
         </Card>
         <Card className="bg-[var(--surface)] border-[#27272a] p-6">
           <p className="text-label-enhanced text-muted-content mb-2">OpEx (Operational)</p>
-          <p className="text-3xl font-black text-orange-400">₹{opexTotal.toLocaleString('en-IN')}</p>
+          <p className="text-3xl font-black text-orange-400">₹{formatCurrency(opexTotal)}</p>
           <p className="text-sm-enhanced text-secondary-content mt-1">Day-to-day expenses</p>
         </Card>
         <Card className="bg-[var(--surface)] border-[#27272a] p-6">
           <p className="text-label-enhanced text-muted-content mb-2">CapEx (Capital)</p>
-          <p className="text-3xl font-black text-blue-400">₹{capexTotal.toLocaleString('en-IN')}</p>
+          <p className="text-3xl font-black text-blue-400">₹{formatCurrency(capexTotal)}</p>
           <p className="text-sm-enhanced text-secondary-content mt-1">Long-term investments</p>
         </Card>
       </div>
@@ -366,7 +367,7 @@ export function ExpensesTab({ dateFrom, dateTo }: ExpensesTabProps) {
                         </td>
                         <td className="py-3 px-4 text-base text-white font-semibold">{expense.description}</td>
                         <td className="py-3 px-4 text-base text-right font-black text-red-400">
-                          ₹{Number(expense.amount).toLocaleString('en-IN')}
+                          ₹{formatCurrency(expense.amount)}
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex justify-end gap-2">

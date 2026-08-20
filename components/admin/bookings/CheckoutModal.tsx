@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Loader2, CreditCard, CheckCircle2, XCircle, AlertCircle, IndianRupee, ReceiptIndianRupee } from "lucide-react";
 import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
+import { roundToTwo } from "@/lib/currency";
 import { toast } from "sonner";
 import { getBookingBillingDetails, markBookingAsPaid, closeBooking } from "@/app/(admin)/admin/bookings/actions";
 
@@ -56,7 +57,7 @@ export function CheckoutModal({ bookingId, isOpen, onClose, onSuccess }: Checkou
     setIsProcessing(true);
 
     // Create payment split based on selected method (full amount in selected method)
-    const balanceDue = billing.total_amount - (billing.amount_paid || 0);
+    const balanceDue = roundToTwo(billing.total_amount - (billing.amount_paid || 0));
     const paymentSplit = {
       cashAmount: paymentMethod === 'cash' ? balanceDue : 0,
       cardAmount: paymentMethod === 'card' ? balanceDue : 0,

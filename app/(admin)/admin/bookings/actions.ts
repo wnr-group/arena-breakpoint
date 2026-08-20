@@ -2,6 +2,11 @@
 
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { annotateRemovableFoodItems } from "@/lib/bookings/foodItems";
+import {
+  foodItemsToCancel,
+  stockToRestore,
+  type CancellableFoodItem
+} from "@/lib/bookings/cancellation";
 import { decideCheckout, type CheckoutDecision } from "@/lib/bookings/checkoutGuard";
 import { extraPlayersCharge, perExtraPlayerCharge } from "@/lib/payments/money";
 import { settlementStatus } from "@/lib/payments/paymentStatus";
@@ -215,9 +220,10 @@ function withComputedTotals(booking: any) {
   const happyHourDiscount = Number(booking.happy_hour_discount || 0);
   const amountPaid = Number(booking.amount_paid || 0);
 
-  const correctTotal =
-    deviceSubtotal + foodSubtotal - subscriptionDiscount - promoDiscount - happyHourDiscount;
-  const balanceDue = correctTotal - amountPaid;
+  const correctTotal = roundToTwo(
+    deviceSubtotal + foodSubtotal - subscriptionDiscount - promoDiscount - happyHourDiscount
+  );
+  const balanceDue = roundToTwo(correctTotal - amountPaid);
 
   return {
     ...booking,
@@ -391,8 +397,10 @@ export async function getBookingDetails(bookingId: string) {
     const happyHourDiscount = Number(data.happy_hour_discount || 0);
     const amountPaid = Number(data.amount_paid || 0);
 
-    const correctTotal = deviceSubtotal + foodSubtotal - subscriptionDiscount - promoDiscount - happyHourDiscount;
-    const balanceDue = correctTotal - amountPaid;
+    const correctTotal = roundToTwo(
+      deviceSubtotal + foodSubtotal - subscriptionDiscount - promoDiscount - happyHourDiscount
+    );
+    const balanceDue = roundToTwo(correctTotal - amountPaid);
 
     return {
       success: true,
@@ -495,6 +503,226 @@ export async function checkInBooking(bookingId: string) {
     return { success: true, booking: data };
   } catch (err: any) {
     console.error("Check-in booking error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Call off a booking nobody has turned up for.
+ *
+ * Deliberately the narrowest of the status changes: only a `confirmed` booking
+ * with an empty `checked_in_at` can be cancelled. Once somebody is at a station
+ * the session is a thing that happened - it has a start time, it may have food
+ * on it, and it is owed for - so the way out of it is checkout, not cancellation.
+ * A `completed` booking is the same story with the ending already written.
+ *
+ * The slot row is left where it is. Availability only counts
+ * `locked`/`confirmed`/`checked_in` bookings, so the station is free the moment
+ * the status flips, and `assign_device_slot` clears the leftover row itself
+ * when the next booking claims that exact station and time.
+ *
+ * Food is the part that does not look after itself. Every path that adds food
+ * to a booking takes the stock as it does so, so a booking called off before
+ * anybody sat down is holding items nothing will be made from: the rows are
+ * marked `cancelled` and the counts go back on the shelf.
+ */
+export async function cancelBooking(bookingId: string, reason?: string) {
+  await requireStaff();
+
+  try {
+    const now = new Date().toISOString();
+
+    const { data: subject, error: subjectError } = await supabaseAdmin
+      .from("bookings")
+      .select("status, checked_in_at, completed_at, booking_number, amount_paid, notes")
+      .eq("id", bookingId)
+      .maybeSingle();
+
+    if (subjectError) throw subjectError;
+    if (!subject) return { success: false, error: "Booking not found." };
+
+    if (subject.status === "cancelled") {
+      return { success: false, error: "This booking is already cancelled." };
+    }
+    // Checked in is tested on the timestamp as well as the status: a session
+    // checked out into `completed` still carries the time somebody played.
+    if (subject.status === "checked_in" || subject.checked_in_at) {
+      return {
+        success: false,
+        error: "This customer has already checked in. Check them out instead of cancelling."
+      };
+    }
+    if (subject.status === "completed" || subject.completed_at) {
+      return { success: false, error: "A completed booking cannot be cancelled." };
+    }
+    if (subject.status !== "confirmed") {
+      return {
+        success: false,
+        error: `A ${String(subject.status).replace(/_/g, " ")} booking cannot be cancelled.`
+      };
+    }
+
+    // Why it was called off is the one thing the row cannot be asked later, so
+    // it goes on the booking rather than nowhere.
+    const trimmedReason = reason?.trim();
+    const notes = trimmedReason
+      ? [subject.notes, `Cancelled: ${trimmedReason}`].filter(Boolean).join("\n")
+      : subject.notes;
+
+    // The status is re-tested in the update so two people cancelling and
+    // checking in at the same moment cannot both win.
+    const { data, error } = await supabaseAdmin
+      .from("bookings")
+      .update({
+        status: "cancelled",
+        notes,
+        updated_at: now
+      })
+      .eq("id", bookingId)
+      .eq("status", "confirmed")
+      .is("checked_in_at", null)
+      .is("completed_at", null)
+      .select("id, booking_number, amount_paid")
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) {
+      return {
+        success: false,
+        error: "This booking changed while you were working on it. Refresh and try again."
+      };
+    }
+
+    // Food comes back after the status has flipped, not before: if this fails
+    // the booking is still cancelled and the stock is merely wrong, which is a
+    // count somebody can correct - the other order round would leave a booking
+    // live with its food already credited back.
+    const { data: foodRows, error: foodError } = await supabaseAdmin
+      .from("booking_food_items")
+      .select("id, menu_item_id, quantity, status")
+      .eq("booking_id", bookingId);
+
+    if (foodError) {
+      console.error("Could not read food items while cancelling:", foodError);
+    }
+
+    const foodItems = (foodRows || []) as CancellableFoodItem[];
+    const idsToCancel = foodItemsToCancel(foodItems);
+    let restoredItems = 0;
+
+    if (idsToCancel.length > 0) {
+      const { error: markError } = await supabaseAdmin
+        .from("booking_food_items")
+        .update({ status: "cancelled" })
+        .in("id", idsToCancel);
+
+      if (markError) {
+        console.error("Could not mark food items cancelled:", markError);
+      }
+
+      for (const { menuItemId, quantity } of stockToRestore(foodItems)) {
+        const { error: stockError } = await supabaseAdmin.rpc("increment_menu_item_quantity", {
+          item_id: menuItemId,
+          increment_by: quantity
+        });
+
+        // Logged rather than thrown, the same way removeFoodItemFromBooking
+        // treats it: the cancellation has happened and cannot be undone here.
+        if (stockError) {
+          console.error("Failed to restore menu item stock on cancellation:", stockError);
+        } else {
+          restoredItems += quantity;
+        }
+      }
+    }
+
+    return {
+      success: true,
+      booking: data,
+      bookingNumber: data.booking_number as string,
+      // Cancelled bookings are excluded from every revenue report, so anything
+      // already collected has to be refunded by hand - the caller says so.
+      amountPaid: Number(data.amount_paid || 0),
+      /** Food portions put back on the shelf, for the message staff read. */
+      restoredItems
+    };
+  } catch (err: any) {
+    console.error("Cancel booking error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Record that the money taken on a cancelled booking has been handed back.
+ *
+ * The refund itself happens off-screen - cash out of the till, or a reversal
+ * through the payment provider - so this does not move any money. It records
+ * that somebody did, which is what clears the "Refund due" flag from the row
+ * and stops the next person doing it again.
+ *
+ * `amount_paid` is deliberately left where it is. It is the record of what was
+ * collected, and zeroing it would erase the only evidence that a refund was
+ * ever owed.
+ */
+export async function markBookingRefunded(bookingId: string) {
+  await requireStaff();
+
+  try {
+    const { data: subject, error: subjectError } = await supabaseAdmin
+      .from("bookings")
+      .select("status, payment_status, amount_paid, booking_number")
+      .eq("id", bookingId)
+      .maybeSingle();
+
+    if (subjectError) throw subjectError;
+    if (!subject) return { success: false, error: "Booking not found." };
+
+    // Only a cancelled booking can be owed a refund here. Money back on a
+    // booking that went ahead is a different thing entirely - a discount, or a
+    // billing correction - and marking it refunded would take it out of the
+    // takings while the session it paid for still stands.
+    if (String(subject.status).toLowerCase() !== "cancelled") {
+      return {
+        success: false,
+        error: "Only a cancelled booking can be marked refunded."
+      };
+    }
+
+    if (subject.payment_status === "refunded") {
+      return { success: false, error: "This booking is already marked refunded." };
+    }
+
+    const collected = Number(subject.amount_paid || 0);
+    if (collected <= 0) {
+      return { success: false, error: "Nothing was collected on this booking." };
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("bookings")
+      .update({
+        payment_status: "refunded",
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", bookingId)
+      .eq("status", "cancelled")
+      .select("id, booking_number, amount_paid")
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) {
+      return {
+        success: false,
+        error: "This booking changed while you were working on it. Refresh and try again."
+      };
+    }
+
+    return {
+      success: true,
+      bookingNumber: data.booking_number as string,
+      refundedAmount: Number(data.amount_paid || 0)
+    };
+  } catch (err: any) {
+    console.error("Mark booking refunded error:", err);
     return { success: false, error: err.message };
   }
 }
@@ -604,6 +832,7 @@ export async function getBookingStats(
         confirmed: grouped.confirmed || 0,
         checked_in: grouped.checked_in || 0,
         completed: grouped.completed || 0,
+        cancelled: grouped.cancelled || 0,
         locked: grouped.locked || 0,
         todayRevenue
       }
@@ -627,6 +856,24 @@ export async function addFoodToBooking(
   await requireStaff();
 
   try {
+    // The booking has to be one food can still be served against. Hiding the
+    // button is not the same as refusing the call: the grid went on offering
+    // Add Food on a cancelled food-only order, and nothing here said no.
+    const { data: subject, error: subjectError } = await supabaseAdmin
+      .from("bookings")
+      .select("status")
+      .eq("id", bookingId)
+      .maybeSingle();
+
+    if (subjectError) throw subjectError;
+    if (!subject) return { success: false, error: "Booking not found." };
+    if (subject.status === "cancelled" || subject.status === "completed") {
+      return {
+        success: false,
+        error: `This booking is ${subject.status}. Food can no longer be added.`
+      };
+    }
+
     // VALIDATION: Check stock availability before adding
     const itemIds = items.map(item => item.menuItemId);
     const { data: menuItems, error: menuError } = await supabaseAdmin
@@ -2058,8 +2305,10 @@ export async function getBookingBillingDetails(bookingId: string) {
 
     // Calculate unpaid amount
     const unpaidItems = lineItems?.filter((item: any) => !item.is_paid) || [];
-    const unpaidAmount = unpaidItems.reduce((sum: number, item: any) => sum + Number(item.line_total), 0);
-    const balanceDue = correctTotal - amountPaid;
+    const unpaidAmount = roundToTwo(
+      unpaidItems.reduce((sum: number, item: any) => sum + Number(item.line_total), 0)
+    );
+    const balanceDue = roundToTwo(correctTotal - amountPaid);
 
     return {
       success: true,
@@ -2123,7 +2372,7 @@ export async function markBookingAsPaid(
 
     // Calculate balance due
     const currentAmountPaid = Number(booking.amount_paid || 0);
-    const balanceDue = Number(booking.total_amount) - currentAmountPaid;
+    const balanceDue = roundToTwo(Number(booking.total_amount) - currentAmountPaid);
 
     // Validate that split amounts equal balance due (not total, since there might be partial payment)
     const totalSplit = paymentSplit.cashAmount + paymentSplit.cardAmount + paymentSplit.upiAmount;
