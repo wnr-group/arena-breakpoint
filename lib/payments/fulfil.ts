@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
-import type { DeviceBookingQuote, FoodOrderQuote } from './quote'
+import type { DeviceBookingQuote, FoodOrderQuote, SubscriptionQuote } from './quote'
+import { addMonthsToDateString, arenaToday } from '@/lib/utils/dates'
 import { perExtraPlayerCharge } from './money'
 
 /**
@@ -17,18 +18,25 @@ export interface PaymentReference {
 }
 
 export type FulfilResult =
-  | { success: true; bookingId: string; bookingNumber: string }
+  | {
+      success: true
+      /** Set by the two booking flows; a subscription sets the pair below instead. */
+      bookingId?: string
+      bookingNumber?: string
+      subscriptionId?: string
+      planName?: string
+    }
   | { success: false; error: string; refundRequired: boolean }
 
 /** Dispatches a stored quote to the right fulfilment routine. */
 export async function fulfilQuote(
-  purpose: 'device_booking' | 'food_order',
+  purpose: 'device_booking' | 'food_order' | 'subscription',
   quote: unknown,
   payment: PaymentReference
 ): Promise<FulfilResult> {
-  return purpose === 'device_booking'
-    ? fulfilDeviceBooking(quote as DeviceBookingQuote, payment)
-    : fulfilFoodOrder(quote as FoodOrderQuote, payment)
+  if (purpose === 'device_booking') return fulfilDeviceBooking(quote as DeviceBookingQuote, payment)
+  if (purpose === 'subscription') return fulfilSubscription(quote as SubscriptionQuote, payment)
+  return fulfilFoodOrder(quote as FoodOrderQuote, payment)
 }
 
 /** Payment columns shared by both flows - online money lands in `online_amount`. */
@@ -546,6 +554,137 @@ export async function fulfilFoodOrder(
     return {
       success: false,
       error: 'We could not place your order. Your payment is being refunded.',
+      refundRequired: true,
+    }
+  }
+}
+
+/**
+ * Turns a paid order into a membership.
+ *
+ * Runs only after the Razorpay signature has been verified, which is the whole
+ * point of it existing: the purchase page used to call `activateSubscriptionPlan`
+ * itself with an invented payment id, so a membership appeared whether or not
+ * anybody paid.
+ *
+ * `refundRequired` is true on every failure after this point. The money has
+ * already moved by the time this runs, so a membership that cannot be created
+ * owes the customer their money back rather than leaving them out of pocket.
+ */
+async function fulfilSubscription(
+  quote: SubscriptionQuote,
+  payment: PaymentReference
+): Promise<FulfilResult> {
+  try {
+    const phone = quote.customer.phone
+
+    // The customer row is upserted rather than assumed: somebody can buy a
+    // membership as their first interaction with the arena, having never booked.
+    const { data: existing } = await supabaseAdmin
+      .from('customers')
+      .select('id')
+      .eq('phone', phone)
+      .maybeSingle()
+
+    let customerId = existing?.id as string | undefined
+
+    if (customerId) {
+      await supabaseAdmin
+        .from('customers')
+        .update({
+          name: quote.customer.name,
+          email: quote.customer.email || null,
+          date_of_birth: quote.customer.dateOfBirth || null,
+        })
+        .eq('id', customerId)
+    } else {
+      const { data: created, error: createError } = await supabaseAdmin
+        .from('customers')
+        .insert([
+          {
+            name: quote.customer.name,
+            phone,
+            email: quote.customer.email || null,
+            date_of_birth: quote.customer.dateOfBirth || null,
+          },
+        ])
+        .select('id')
+        .single()
+
+      if (createError || !created) {
+        console.error('Could not create customer for subscription:', createError)
+        return {
+          success: false,
+          error: 'We could not set up your membership. Your payment is being refunded.',
+          refundRequired: true,
+        }
+      }
+      customerId = created.id
+    }
+
+    // Arena clock, not the server's: a membership bought at half past midnight
+    // must start on the day the customer is having, not the day UTC is having.
+    const startDate = arenaToday()
+    const endDate = addMonthsToDateString(startDate, quote.durationMonths || 1)
+
+    const { data: subscription, error: insertError } = await supabaseAdmin
+      .from('subscriptions')
+      .insert([
+        {
+          customer_id: customerId,
+          subscription_plan_id: quote.planId,
+          start_date: startDate,
+          end_date: endDate,
+          payment_id: payment.razorpayPaymentId,
+          amount_paid: quote.totalAmount,
+          status: 'active',
+        },
+      ])
+      .select('id')
+      .single()
+
+    if (insertError || !subscription) {
+      console.error('Could not create subscription:', insertError)
+      return {
+        success: false,
+        error: 'We could not activate your membership. Your payment is being refunded.',
+        refundRequired: true,
+      }
+    }
+
+    /**
+     * The pointer is what every discount actually follows - see
+     * `resolveActiveMembership`, which reads `active_subscription_id` rather than
+     * looking for any active row. Moving it here is what makes the new membership
+     * the one that counts, and what supersedes an older one still inside its term.
+     *
+     * A failure here leaves a paid membership the customer cannot use, so it is
+     * reported rather than swallowed. No refund is asked for: the membership does
+     * exist and an operator can repoint it, which is a better outcome than
+     * reversing a payment for a plan that was genuinely bought.
+     */
+    const { error: pointerError } = await supabaseAdmin
+      .from('customers')
+      .update({ active_subscription_id: subscription.id })
+      .eq('id', customerId)
+
+    if (pointerError) {
+      console.error(
+        `Membership ${subscription.id} created but active_subscription_id not set for customer ${customerId}:`,
+        pointerError
+      )
+    }
+
+    return {
+      success: true,
+      subscriptionId: subscription.id,
+      planName: quote.planName,
+    }
+  } catch (err: any) {
+    console.error('fulfilSubscription error:', err)
+    return {
+      success: false,
+      error: 'We could not activate your membership. Your payment is being refunded.',
       refundRequired: true,
     }
   }

@@ -29,8 +29,16 @@ export interface CheckoutResponse {
 export type SettleResult =
   | {
       success: true
-      bookingId: string
-      bookingNumber: string
+      /**
+       * What the payment produced. A device booking and a food order both make a
+       * booking row; a subscription makes a membership instead, so it fills
+       * `subscriptionId` and leaves the booking fields empty. Callers switch on
+       * `purpose` rather than guessing from which field is set.
+       */
+      bookingId?: string
+      bookingNumber?: string
+      subscriptionId?: string
+      planName?: string
       amountPaid: number
       purpose: PaymentPurpose
     }
@@ -236,12 +244,17 @@ async function settlePayment(
     return { success: false, error: result.error }
   }
 
-  await markOrderFulfilled(razorpayOrderId, result.bookingId)
+  await markOrderFulfilled(razorpayOrderId, {
+    bookingId: result.bookingId,
+    subscriptionId: result.subscriptionId,
+  })
 
   return {
     success: true,
     bookingId: result.bookingId,
     bookingNumber: result.bookingNumber,
+    subscriptionId: result.subscriptionId,
+    planName: result.planName,
     amountPaid: Number(order.amount),
     purpose: order.purpose,
   }
@@ -277,7 +290,7 @@ async function alreadyHandled(
   const byPayment = await getBookingByPaymentId(razorpayPaymentId)
 
   if (byPayment) {
-    await markOrderFulfilled(order.razorpay_order_id, byPayment.id)
+    await markOrderFulfilled(order.razorpay_order_id, { bookingId: byPayment.id })
     return settled(byPayment)
   }
 
