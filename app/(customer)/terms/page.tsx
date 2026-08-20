@@ -147,6 +147,18 @@ export default function TermsPage() {
           {ARENA.email ?? <ToBeConfirmed what="Contact email" />}
           {ARENA.phone ? ` or call ${ARENA.phone}` : ''}.
         </p>
+        {/*
+          Named here as well as in the Privacy Policy: a customer with a
+          complaint about a booking reads these terms, not that policy, and the
+          IT Rules 2021 ask for the officer to be findable rather than filed
+          under data protection.
+        */}
+        <p>
+          If a complaint is not resolved to your satisfaction, you can escalate it
+          to our Grievance Officer,{' '}
+          {ARENA.grievanceOfficerName ?? <ToBeConfirmed what="Officer name" />}, at{' '}
+          {ARENA.grievanceOfficerEmail ?? <ToBeConfirmed what="Officer email" />}.
+        </p>
         <p>
           These terms are governed by Indian law, and the courts of{' '}
           {ARENA.jurisdiction ?? <ToBeConfirmed what="Jurisdiction" />} will have jurisdiction over

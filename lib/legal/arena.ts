@@ -20,6 +20,15 @@ export interface ArenaDetails {
   phone: string | null
   /** City whose courts govern disputes, e.g. "Chennai, Tamil Nadu". */
   jurisdiction: string | null
+  /**
+   * Named Grievance Officer, and where to reach them.
+   *
+   * Not optional in India: Rule 3(2) of the IT Rules 2021 requires the name and
+   * contact details of a Grievance Officer to be published on the site itself.
+   * A support address is not a substitute - the rule asks for a person.
+   */
+  grievanceOfficerName: string | null
+  grievanceOfficerEmail: string | null
   /** How long after a booking starts a refund can still be requested. */
   cancellationWindow: string | null
 }
@@ -30,6 +39,8 @@ export const ARENA: ArenaDetails = {
   email: null,
   phone: null,
   jurisdiction: null,
+  grievanceOfficerName: null,
+  grievanceOfficerEmail: null,
   cancellationWindow: null,
 }
 

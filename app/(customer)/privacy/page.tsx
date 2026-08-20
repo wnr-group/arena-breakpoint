@@ -140,6 +140,26 @@ export default function PrivacyPage() {
           {ARENA.address ? `, or visit us at ${ARENA.address}` : ''}.
         </p>
       </LegalSection>
+
+      {/*
+        Required by name, not just by inbox: Rule 3(2) of the IT Rules 2021 asks
+        for a named Grievance Officer and their contact details to be published
+        on the site. A general support address does not satisfy it, which is why
+        this sits apart from "Contact us" above rather than inside it.
+      */}
+      <LegalSection heading="13. Grievance Officer">
+        <p>
+          If you are unhappy with how your personal information has been handled,
+          you can raise it with our Grievance Officer,{' '}
+          {ARENA.grievanceOfficerName ?? <ToBeConfirmed what="Officer name" />}, at{' '}
+          {ARENA.grievanceOfficerEmail ?? <ToBeConfirmed what="Officer email" />}.
+        </p>
+        <p>
+          We will acknowledge your complaint within 48 hours and aim to resolve it
+          within 30 days. You may also complain to the Data Protection Board of
+          India.
+        </p>
+      </LegalSection>
     </LegalPage>
   )
 }
