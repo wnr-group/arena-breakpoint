@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { liveSessionEndMinutes } from '@/lib/bookings/walkInSession'
 
 /**
  * Overlap-aware slot availability for flexible-duration bookings.
@@ -58,7 +59,13 @@ interface BookedSlotRow {
   slot_date: string
   slot_start_time: string
   slot_end_time: string
-  bookings: { status: string; lock_expires_at: string | null }
+  bookings: {
+    status: string
+    lock_expires_at: string | null
+    /** True for a walk-in session, whose slot end is a placeholder. */
+    billed_on_actual_time: boolean | null
+    checked_in_at: string | null
+  }
 }
 
 /**
@@ -86,7 +93,7 @@ async function fetchOccupiedRanges(
       slot_date,
       slot_start_time,
       slot_end_time,
-      bookings!inner(status, lock_expires_at)
+      bookings!inner(status, lock_expires_at, billed_on_actual_time, checked_in_at)
     `
     )
     .in('device_id', deviceIds)
@@ -137,6 +144,26 @@ async function fetchOccupiedRanges(
       start += MINUTES_PER_DAY
       end += MINUTES_PER_DAY
     }
+
+    /**
+     * A walk-in that is still checked in holds its station until checkout, not
+     * until the placeholder window claimed at check-in runs out. Applied after
+     * the rebase above so both numbers are on the same timeline, and taken as
+     * the later of the two so this can only lengthen an occupancy.
+     *
+     * `assign_device_slot` repeats this under its advisory lock and is the one
+     * that actually decides; keeping the two in step is what stops this check
+     * telling the desk a station is free that the claim will then refuse.
+     */
+    const liveEnd = liveSessionEndMinutes(
+      {
+        billedOnActualTime: booking.billed_on_actual_time,
+        status: booking.status,
+        checkedInAt: booking.checked_in_at,
+      },
+      slotDate
+    )
+    if (liveEnd !== null && liveEnd > end) end = liveEnd
 
     const existing = byDevice.get(row.device_id)
     if (existing) {

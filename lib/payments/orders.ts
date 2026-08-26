@@ -20,6 +20,8 @@ export interface PaymentOrderRow {
   customer_phone: string
   status: 'created' | 'paid' | 'fulfilled' | 'failed' | 'refunding' | 'refunded'
   booking_id: string | null
+  /** The membership a subscription order produced. Null on the booking flows. */
+  subscription_id: string | null
   razorpay_payment_id: string | null
   paid_at: string | null
   fulfilling_at: string | null
@@ -272,4 +274,58 @@ export async function getBookingByPaymentId(
     .maybeSingle()
 
   return (data as { id: string; booking_number: string } | null) || null
+}
+
+export interface SettledMembership {
+  id: string
+  planName: string
+}
+
+/** Shared by the two membership lookups below - one row, one plan name. */
+const toMembership = (row: any): SettledMembership | null =>
+  row ? { id: row.id, planName: row.subscription_plan?.name || 'Membership' } : null
+
+/**
+ * The membership an order produced.
+ *
+ * The counterpart of `getBookingForOrder`, and the reason both exist: a
+ * subscription order never carries a `booking_id`, so asking the booking
+ * lookups about one always came back empty. That is not "no membership was
+ * created" - it is the wrong table - and reading it as the former told customers
+ * their paid membership had failed to activate.
+ */
+export async function getSubscriptionForOrder(
+  subscriptionId: string
+): Promise<SettledMembership | null> {
+  if (!subscriptionId) return null
+
+  const { data } = await supabaseAdmin
+    .from('subscriptions')
+    .select('id, subscription_plan:subscription_plans(name)')
+    .eq('id', subscriptionId)
+    .maybeSingle()
+
+  return toMembership(data)
+}
+
+/**
+ * The membership a payment funded, when the order never got its id written back.
+ *
+ * `subscriptions.payment_id` holds the Razorpay payment id, written in the same
+ * insert that creates the membership - so it is the source of truth for "did
+ * this payment already produce one", exactly as the booking row is on that side.
+ */
+export async function getSubscriptionByPaymentId(
+  razorpayPaymentId: string
+): Promise<SettledMembership | null> {
+  if (!razorpayPaymentId) return null
+
+  const { data } = await supabaseAdmin
+    .from('subscriptions')
+    .select('id, subscription_plan:subscription_plans(name)')
+    .eq('payment_id', razorpayPaymentId)
+    .limit(1)
+    .maybeSingle()
+
+  return toMembership(data)
 }

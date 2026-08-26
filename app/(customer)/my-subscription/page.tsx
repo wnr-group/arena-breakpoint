@@ -5,7 +5,14 @@ import { Percent, Gamepad2, Ticket, Wallet, Monitor, AlertTriangle, History, Ale
 import { BreakpointLoader } from '@/components/shared/BreakpointLoader'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { useRouter } from 'next/navigation'
-import { getMySubscription } from './action'
+import {
+  getMembershipBookingSummary,
+  getMySubscription,
+  type MembershipBookingSummary,
+} from './action'
+import { arenaToday, daysBetweenDates, parseLocalDate } from '@/lib/utils/dates'
+import { formatDbTime } from '@/lib/utils/timeSlots'
+import { formatPlayedDuration } from '@/lib/bookings/walkInSession'
 import { CustomerAuthGate } from '@/components/auth/CustomerAuthGate'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -21,11 +28,14 @@ function MySubscriptionPageContent({ phone }: { phone: string }) {
   const router = useRouter()
 
   const [subscription, setSubscription] = useState<any>(null)
+  /** Null while loading, and also when the read failed - the card just hides. */
+  const [summary, setSummary] = useState<MembershipBookingSummary | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isRenewing, setIsRenewing] = useState(false)
   const [isBooking, setIsBooking] = useState(false)
   const [isBrowsingPlans, setIsBrowsingPlans] = useState(false)
   const [isBrowsingFood, setIsBrowsingFood] = useState(false)
+  const [isViewingBookings, setIsViewingBookings] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -33,13 +43,22 @@ function MySubscriptionPageContent({ phone }: { phone: string }) {
     const fetchSubscription = async () => {
       try {
         setIsLoading(true)
-        // No argument: the server resolves the customer from the session.
-        const response = await getMySubscription()
+        // Neither takes an argument: the server resolves the customer from the
+        // session. Requested together so the card and its summary arrive in one
+        // render rather than the page reflowing under the reader.
+        const [response, bookingSummary] = await Promise.all([
+          getMySubscription(),
+          getMembershipBookingSummary(),
+        ])
         if (cancelled) return
         setSubscription(response.success && response.data ? response.data : null)
+        setSummary(bookingSummary)
       } catch (error) {
         console.error('Error fetching subscription:', error)
-        if (!cancelled) setSubscription(null)
+        if (!cancelled) {
+          setSubscription(null)
+          setSummary(null)
+        }
       } finally {
         if (!cancelled) setIsLoading(false)
       }
@@ -51,14 +70,33 @@ function MySubscriptionPageContent({ phone }: { phone: string }) {
     }
   }, [])
 
-  // Helper to format dates like "June 07"
+  /**
+   * "June 07" from a `YYYY-MM-DD`.
+   *
+   * Built from the date's own parts rather than `new Date(dateString)`, which
+   * reads a bare date as *UTC* midnight and then renders it in the viewer's
+   * zone - so a membership ending on the 17th showed as the 16th to anybody
+   * west of Greenwich. `end_date` is a calendar date, not an instant; no zone
+   * should get a say in which day it names.
+   */
   const formatDate = (dateString: string) => {
-    if (!dateString) return ''
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'long',
-      day: '2-digit',
-    })
+    const date = parseLocalDate(dateString)
+    if (!date) return ''
+    return date.toLocaleDateString('en-US', { month: 'long', day: '2-digit' })
   }
+
+  /** Whole rupees, grouped the Indian way: 1,20,000 rather than 120,000. */
+  const rupees = (value: number) => `₹${Math.round(Number(value) || 0).toLocaleString('en-IN')}`
+
+  /**
+   * "3h 30m" from a fractional hour count.
+   *
+   * Reuses the session formatter rather than printing "3.5 hrs": the same
+   * durations are shown as hours and minutes everywhere else the arena counts
+   * play, and two spellings of one number invite the reader to check them.
+   */
+  const formatHours = (hours: number) =>
+    formatPlayedDuration(Math.round((Number(hours) || 0) * 60))
 
   // Loading State
   if (isLoading) {
@@ -74,15 +112,21 @@ function MySubscriptionPageContent({ phone }: { phone: string }) {
   let progressPercentage = 0
 
   if (subscription) {
-    const today = new Date()
-    const endDate = new Date(subscription.end_date)
-    const startDate = new Date(subscription.start_date)
+    /**
+     * Whole days between calendar dates, on the arena's calendar.
+     *
+     * This used to subtract two `Date` objects: `end_date` parsed as UTC midnight
+     * against `new Date()`, an instant on the viewer's clock. Mixing the two
+     * makes the answer depend on what time of day the page is opened and where
+     * from - the same membership reading 22 days to one customer and 21 to
+     * another, and ticking over at midnight UTC rather than at the arena's.
+     * Both sides are plain dates here, so the zone cancels out entirely.
+     */
+    const today = arenaToday()
+    daysRemaining = Math.max(0, daysBetweenDates(today, subscription.end_date) ?? 0)
+    const totalDays = daysBetweenDates(subscription.start_date, subscription.end_date) ?? 0
 
-    // Calculate days
-    daysRemaining = Math.max(0, Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 3600 * 24)))
-    const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24))
-
-    // Calculate progress (how much time has elapsed)
+    // How much of the term has elapsed.
     if (totalDays > 0) {
       progressPercentage = Math.min(100, Math.max(0, Math.round(((totalDays - daysRemaining) / totalDays) * 100)))
     }
@@ -247,6 +291,143 @@ function MySubscriptionPageContent({ phone }: { phone: string }) {
                 </div>
               </div>
             </div>
+
+            {/* What the membership has actually done.
+                The card above says which plan and until when, which answers
+                nothing about whether it is paying for itself. Everything here is
+                measured from the start of the current term, so a renewal starts
+                the count again against the membership being shown. */}
+            {summary && (
+              <div className="mt-6 bg-gradient-to-br from-zinc-900 via-[#131313] to-zinc-900 border border-zinc-800 rounded-2xl p-6 md:p-10 relative overflow-hidden hover:border-primary/40 transition-all duration-300 shadow-[0_4px_30px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-2 mb-8">
+                  <div>
+                    <h3 className="text-primary text-xs font-black tracking-[0.2em] uppercase mb-2 drop-shadow-[0_0_10px_rgba(255,193,7,0.3)]">
+                      Booking Summary
+                    </h3>
+                    <h2 className="text-xl md:text-2xl font-black text-transparent bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text">
+                      Since {formatDate(summary.since)}
+                    </h2>
+                  </div>
+                  {summary.bookings > 0 && (
+                    <button
+                      onClick={() => {
+                        setIsViewingBookings(true)
+                        router.push('/retrieve')
+                      }}
+                      disabled={isViewingBookings}
+                      className="text-primary hover:text-amber-300 text-xs font-black uppercase tracking-wider transition-colors flex items-center gap-2 self-start sm:self-auto"
+                    >
+                      {isViewingBookings ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                      View all bookings
+                    </button>
+                  )}
+                </div>
+
+                {summary.bookings === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="w-14 h-14 bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Ticket className="w-7 h-7 text-zinc-600" />
+                    </div>
+                    <p className="text-white font-bold mb-1">No bookings on this membership yet</p>
+                    <p className="text-zinc-500 text-sm">
+                      Your {subscription.plan?.discount_percentage || 0}% discount is applied
+                      automatically at checkout.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Four figures, the third being the point of the card: what
+                        the membership took off the bill, against what was paid. */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                      {[
+                        { label: 'Bookings', value: String(summary.bookings), icon: Ticket, accent: false },
+                        { label: 'Hours Played', value: formatHours(summary.hoursPlayed), icon: History, accent: false },
+                        { label: 'Saved With Membership', value: rupees(summary.saved), icon: Percent, accent: true },
+                        { label: 'Paid', value: rupees(summary.spent), icon: Wallet, accent: false },
+                      ].map((stat) => (
+                        <div
+                          key={stat.label}
+                          className={`bg-gradient-to-br from-zinc-950 to-zinc-900 border rounded-xl p-4 transition-all duration-300 ${stat.accent
+                            ? 'border-primary/30 hover:border-primary/50 hover:shadow-[0_0_20px_rgba(255,193,7,0.1)]'
+                            : 'border-zinc-800 hover:border-zinc-700'
+                            }`}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <stat.icon className={`w-4 h-4 ${stat.accent ? 'text-primary' : 'text-zinc-500'}`} />
+                            <span className="text-zinc-400 text-[11px] font-bold uppercase tracking-wider">
+                              {stat.label}
+                            </span>
+                          </div>
+                          <div
+                            className={`font-black text-xl ${stat.accent
+                              ? 'text-transparent bg-gradient-to-r from-primary via-amber-300 to-primary bg-clip-text drop-shadow-[0_0_10px_rgba(255,193,7,0.3)]'
+                              : 'text-white'
+                              }`}
+                          >
+                            {stat.value}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Anything still owed is stated rather than folded into the
+                        Paid tile, which would make a part-paid booking look
+                        settled. */}
+                    {summary.outstanding > 0 && (
+                      <div className="flex items-center gap-3 bg-amber-950/20 border border-amber-900/40 rounded-xl p-4 mb-8">
+                        <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                        <p className="text-amber-200/80 text-xs leading-relaxed">
+                          <span className="font-black text-amber-300">{rupees(summary.outstanding)}</span>
+                          {' '}is still outstanding across these bookings. Settle it at the counter on
+                          your next visit.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <div className="text-zinc-400 text-xs font-black uppercase tracking-wider mb-3">
+                        Recent Bookings
+                      </div>
+                      {summary.recent.map((booking) => (
+                        <div
+                          key={booking.id}
+                          className="bg-gradient-to-br from-zinc-950 to-zinc-900 border border-zinc-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 hover:border-zinc-700 transition-all duration-300"
+                        >
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Monitor className="w-4 h-4 text-primary shrink-0" />
+                              <span className="text-white font-black text-sm truncate">
+                                {booking.deviceType || 'Booking'}
+                              </span>
+                              <span className="text-zinc-600 text-xs font-mono">
+                                #{booking.bookingNumber}
+                              </span>
+                            </div>
+                            <div className="text-zinc-500 text-xs mt-1">
+                              {formatDate(booking.date)}
+                              {booking.startTime ? ` · ${formatDbTime(booking.startTime)}` : ''}
+                              {booking.durationHours > 0 ? ` · ${formatHours(booking.durationHours)}` : ''}
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <div className="text-white font-black text-sm">{rupees(booking.charged)}</div>
+                            {booking.saved > 0 ? (
+                              <div className="text-primary text-[11px] font-bold">
+                                saved {rupees(booking.saved)}
+                              </div>
+                            ) : booking.outstanding > 0 ? (
+                              <div className="text-amber-500 text-[11px] font-bold">
+                                {rupees(booking.outstanding)} due
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

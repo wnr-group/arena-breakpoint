@@ -36,17 +36,23 @@ import {
   lookupWalkInCustomer,
   type WalkInDeviceAvailability
 } from "../actions";
+import { TimeOfDayField } from "@/components/ui/time-of-day-field";
 import {
   formatDateForDB,
   formatDateForDisplay,
   handleDobInput,
   isValidDob,
   DOB_ERROR,
+  arenaClockTime,
   formatClockTime12h,
   formatLocalDate,
   isDateWithinBookingWindow,
   BOOKING_WINDOW_ERROR
 } from "@/lib/utils/dates";
+import {
+  formatPlayedDuration,
+  resolveBackdatedStart
+} from "@/lib/bookings/walkInSession";
 import { allFilled, isPlausibleEmail } from "@/lib/utils/forms";
 import {
   generateStartTimes,
@@ -55,6 +61,7 @@ import {
   calculateEndTime,
   getMaxDurationForStartTime,
   calculatePrice,
+  formatDbTime,
   isTimeSlotWithinRange
 } from "@/lib/utils/timeSlots";
 import { useHappyHours } from "@/lib/hooks/useHappyHours";
@@ -103,6 +110,23 @@ export default function WalkInBookingPage() {
   /** The "everything is in use" prompt, held open until staff decide. */
   const [busyPrompt, setBusyPrompt] = useState<WalkInDeviceAvailability | null>(null);
 
+  /**
+   * Where the session's clock starts.
+   *
+   * "now" is the flow as it was: the booking is created with no time at all and
+   * check-in, whenever it happens, is what starts the bill. "manual" is for the
+   * customer who has been on a machine for twenty minutes before the desk got
+   * round to typing them in - the time entered is where billing starts, and the
+   * booking is checked in on the spot rather than left waiting for a station it
+   * is already sitting at.
+   *
+   * Only offered on a session. An advance booking has a start time already, and
+   * it is the one on its slot.
+   */
+  const [startMode, setStartMode] = useState<"now" | "manual">("now");
+  /** 24-hour `HH:MM`, as `TimeOfDayField` hands it over. */
+  const [manualStart, setManualStart] = useState("");
+
   // Player count
   const [playerCount, setPlayerCount] = useState(1);
 
@@ -148,6 +172,54 @@ export default function WalkInBookingPage() {
     if (!selectedStartTime) return allDurations;
     return allDurations.filter(d => d.value <= maxDurationForSelectedStartTime);
   }, [allDurations, maxDurationForSelectedStartTime, selectedStartTime]);
+
+  /**
+   * Now on the arena clock, dropped to the five-minute step the field offers.
+   *
+   * Used to seed the field when staff switch to manual entry, so the common
+   * correction is a few clicks backwards from the right hour rather than
+   * building the time from "--:-- --". Read off the arena's zone and not the
+   * host's, which on this screen is the desk's own browser but on Vercel is UTC.
+   */
+  const arenaNowOnStep = () => {
+    const [hour, minute] = arenaClockTime(new Date()).split(":").map(Number);
+    return `${String(hour).padStart(2, "0")}:${String(minute - (minute % 5)).padStart(2, "0")}`;
+  };
+
+  /**
+   * A clock for the panel below, because what it says stops being true on its own.
+   *
+   * "20m of play so far" is only right for a minute, and the ceiling is worse
+   * than cosmetic: a confirm step opened at 7:15 PM and left until one in the
+   * morning still reads as twenty minutes, while the server - correctly - takes
+   * a time later in the day than now as last night and would bill from 7:15 PM
+   * yesterday. Nothing on the screen would have suggested it. Re-read every
+   * half minute so the elapsed figure moves and the ceiling closes on its own.
+   */
+  const [startClockTick, setStartClockTick] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (mode !== "session" || startMode !== "manual") return;
+
+    setStartClockTick(Date.now());
+    const tick = setInterval(() => setStartClockTick(Date.now()), 30_000);
+    return () => clearInterval(tick);
+  }, [mode, startMode]);
+
+  /**
+   * The entered start, read the way the server will read it.
+   *
+   * Same function the action calls, so the sentence shown under the field and
+   * the reason a save is refused cannot drift apart - including the part staff
+   * are most likely to be surprised by, that a time later in the day than now is
+   * taken as last night.
+   */
+  const manualStartCheck = useMemo(
+    () => (mode === "session" && startMode === "manual"
+      ? resolveBackdatedStart(manualStart, new Date(startClockTick))
+      : null),
+    [mode, startMode, manualStart, startClockTick]
+  );
 
   useEffect(() => {
     loadDeviceTypes();
@@ -313,6 +385,17 @@ export default function WalkInBookingPage() {
       return;
     }
 
+    // Refused here as well as on the server. The server's copy is the one that
+    // decides, but a desk with a customer in front of them should not have to
+    // post a filled-in form to find out the time cannot be read.
+    if (startMode === "manual" && !manualStartCheck?.ok) {
+      toast.error("Check the start time", { description: manualStartCheck?.error });
+      return;
+    }
+
+    const startedClock =
+      startMode === "manual" && manualStartCheck?.ok ? manualStartCheck.start.clock : null;
+
     setSubmitting(true);
 
     /**
@@ -344,7 +427,8 @@ export default function WalkInBookingPage() {
       customerDob: customerDob ? formatDateForDB(customerDob) : "",
       deviceTypeId: selectedDeviceType.id,
       deviceTypeName: selectedDeviceType.display_name,
-      playerCount
+      playerCount,
+      startedClock
     });
 
     if (result.success) {
@@ -353,15 +437,32 @@ export default function WalkInBookingPage() {
       // said the same thing twice to the desk that typed it. The id matches the
       // poller's, so its own sweep of the same booking lands on this entry
       // rather than adding a second one.
-      // A session is billed on actual time, so there is no total to quote yet.
+      // A session is billed on actual time, so there is no total to quote yet -
+      // only whether the customer is on a machine or still waiting for one.
       addNotification({
         id: bookingNotificationId(result.bookingId || ""),
         type: "booking",
         title: "New Walk-In Booking",
-        message: `${customerName.trim()} • #${result.bookingNumber} • ${selectedDeviceType.display_name} • awaiting check-in`,
+        message:
+          `${customerName.trim()} • #${result.bookingNumber} • ${selectedDeviceType.display_name} • ` +
+          (result.checkedIn && result.checkedInAt
+            ? `playing since ${formatClockTime12h(result.checkedInAt)}`
+            : "awaiting check-in"),
         bookingId: result.bookingId || "",
         bookingNumber: result.bookingNumber || ""
       });
+
+      /**
+       * The one thing the notification above cannot say for itself: a start time
+       * was entered and the session could not be started anyway, almost always
+       * because no station of that type was free. The booking is real and is
+       * waiting, which is not what the desk asked for, so it is said out loud
+       * rather than left to be noticed on the list.
+       */
+      if (result.checkInError) {
+        toast.warning("Booked, but not started", { description: result.checkInError });
+      }
+
       router.push("/admin/bookings");
     } else {
       toast.error("Could not create the walk-in", { description: result.error });
@@ -1064,10 +1165,91 @@ export default function WalkInBookingPage() {
                 </div>
               </div>
 
+              {/* Where the bill starts counting from. Sits on the confirm step
+                  rather than a step of its own: for most walk-ins the answer is
+                  the default, and the desk should not have to pass a screen to
+                  agree with it. */}
+              {mode === "session" && (
+                <div className="space-y-3 rounded-xl border border-zinc-900 bg-[var(--background)]/40 p-4">
+                  <Label className="block text-xs font-black uppercase tracking-wider text-muted-content">
+                    Session Start
+                  </Label>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {([
+                      {
+                        value: "now" as const,
+                        title: "On check-in",
+                        detail: "The clock starts when the customer sits down."
+                      },
+                      {
+                        value: "manual" as const,
+                        title: "Set start time",
+                        detail: "They started before this was typed in. Bill from that time."
+                      }
+                    ]).map((option) => {
+                      const isSelected = startMode === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => {
+                            setStartMode(option.value);
+                            // Seeded once, on the way in. Re-seeding on every
+                            // press would throw away a time already dialled in
+                            // by somebody who tapped the wrong option and back.
+                            if (option.value === "manual" && !manualStart) {
+                              setManualStart(arenaNowOnStep());
+                            }
+                          }}
+                          className={`text-left p-3 rounded-xl border-2 transition-all ${isSelected
+                            ? "border-primary bg-primary/5"
+                            : "border-zinc-900 bg-[var(--surface)] hover:border-zinc-700"
+                            }`}
+                        >
+                          <p className={`text-xs font-black uppercase tracking-wide ${isSelected ? "text-primary" : "text-white"}`}>
+                            {option.title}
+                          </p>
+                          <p className="mt-1 text-[11px] leading-relaxed text-muted-content">
+                            {option.detail}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {startMode === "manual" && (
+                    <div className="space-y-2 pt-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <Label className="block text-xs font-black uppercase tracking-wider text-secondary-content">
+                        Started At
+                      </Label>
+                      <TimeOfDayField
+                        name="walkInStartedAt"
+                        label="Session start"
+                        defaultValue={manualStart}
+                        onChange={setManualStart}
+                      />
+                      {manualStartCheck?.ok ? (
+                        <p className="text-[11px] font-bold text-emerald-400">
+                          Billing from {formatDbTime(manualStartCheck.start.clock)} ·{" "}
+                          {manualStartCheck.start.minutesAgo === 0
+                            ? "just now"
+                            : `${formatPlayedDuration(manualStartCheck.start.minutesAgo)} of play so far`}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] font-bold text-amber-500">
+                          {manualStartCheck?.error}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* What creating this booking does, and just as importantly what it
                   does not do. Staff have to know the customer is not on a machine
                   yet and that no station is being held for them. */}
-              {mode === "session" && (
+              {mode === "session" && startMode === "now" && (
                 <div className="bg-blue-950/30 border border-blue-900/40 rounded-xl p-4 space-y-2">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-blue-400" />
@@ -1079,6 +1261,30 @@ export default function WalkInBookingPage() {
                     <li>The clock starts at <span className="font-bold">check-in</span>, not now.</li>
                     <li>A station is assigned when the customer checks in, so this booking does not reserve one.</li>
                     <li>The bill is calculated at checkout from the time actually played.</li>
+                  </ul>
+                </div>
+              )}
+
+              {/* The same three facts, for a session that is already running.
+                  Every one of them reads differently once a start time has been
+                  typed in, and leaving the panel above in place would tell the
+                  desk the clock has not started when it has. */}
+              {mode === "session" && startMode === "manual" && manualStartCheck?.ok && (
+                <div className="bg-emerald-950/25 border border-emerald-900/40 rounded-xl p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-emerald-400" />
+                    <p className="text-xs font-black uppercase tracking-wider text-emerald-300">
+                      Starts checked in
+                    </p>
+                  </div>
+                  <ul className="text-xs text-emerald-200/80 space-y-1 leading-relaxed list-disc pl-4">
+                    <li>
+                      The clock starts at{" "}
+                      <span className="font-bold">{formatDbTime(manualStartCheck.start.clock)}</span>,
+                      not now.
+                    </li>
+                    <li>A station is claimed as this booking is created, so one has to be free.</li>
+                    <li>The bill is calculated at checkout from that time to when they leave.</li>
                   </ul>
                 </div>
               )}
@@ -1232,7 +1438,13 @@ export default function WalkInBookingPage() {
                 </Button>
                 <Button
                   onClick={handleSubmit}
-                  disabled={submitting}
+                  // A start time that cannot be read has no sensible fallback -
+                  // billing from now would quietly charge the customer less than
+                  // they played - so the button waits rather than guessing.
+                  disabled={
+                    submitting ||
+                    (mode === "session" && startMode === "manual" && !manualStartCheck?.ok)
+                  }
                   className="flex-1 bg-gradient-primary hover:bg-gradient-primary-hover text-[var(--button-text)] font-black uppercase h-12 rounded-xl text-xs shadow-xl transition-all active:scale-[0.99]"
                 >
                   {submitting ? (
@@ -1271,9 +1483,20 @@ export default function WalkInBookingPage() {
                   Every {selectedDeviceType?.display_name} is in use
                 </h3>
                 <p className="mt-1 text-xs leading-relaxed text-zinc-400">
-                  All {busyPrompt.total} stations are occupied right now. This booking does not
-                  hold a station, so {customerName.trim() || "the customer"} will have to wait
-                  until one frees up before they can check in.
+                  All {busyPrompt.total} stations are occupied right now.{" "}
+                  {startMode === "manual" ? (
+                    <>
+                      A start time was entered, but the session can only begin on a station -
+                      so {customerName.trim() || "the customer"} will be booked in waiting and
+                      the time typed in will not be used.
+                    </>
+                  ) : (
+                    <>
+                      This booking does not hold a station, so{" "}
+                      {customerName.trim() || "the customer"} will have to wait until one frees
+                      up before they can check in.
+                    </>
+                  )}
                 </p>
               </div>
             </div>

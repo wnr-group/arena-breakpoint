@@ -18,6 +18,11 @@ import { BreakpointLoader } from '@/components/shared/BreakpointLoader'
 
 // Import your existing server action
 import { getPublicSubscriptionPlan } from '@/app/(customer)/subscription/actions'
+import {
+  getMyActivePlanSummary,
+  type ActivePlanSummary,
+} from '@/app/(customer)/my-subscription/action'
+import { parseLocalDate } from '@/lib/utils/dates'
 import Link from 'next/link'
 
 export default function SubscriptionActivatedPage() {
@@ -25,24 +30,38 @@ export default function SubscriptionActivatedPage() {
   const params = useParams()
 
   const [plan, setPlan] = useState<any>(null)
+  /**
+   * The membership that was actually created, read back from the session.
+   *
+   * Everything on this page used to come from the *plan* row, which knows the
+   * price and the discount but nothing about this customer's purchase - so the
+   * "Valid Until" line read `plan.validity`, a column that does not exist, and
+   * rendered blank. Fetched rather than passed through the URL because a
+   * membership id in a query string is a claim; this one comes from the
+   * verified session and is the same rule the discount is resolved by.
+   */
+  const [membership, setMembership] = useState<ActivePlanSummary | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isBookingSlot, setIsBookingSlot] = useState(false)
   const [isViewingDetails, setIsViewingDetails] = useState(false)
   const [isBrowsingFood, setIsBrowsingFood] = useState(false)
 
-  // Fetch the plan data on mount
+  // The plan being celebrated, and the membership it produced.
   useEffect(() => {
     const fetchPlan = async () => {
       try {
         setIsLoading(true)
         const planId = Array.isArray(params.planId) ? params.planId[0] : params.planId
 
-        if (planId) {
-          const response = await getPublicSubscriptionPlan(planId)
-          if (response.success && response.data) {
-            setPlan(response.data)
-          }
+        const [response, active] = await Promise.all([
+          planId ? getPublicSubscriptionPlan(planId) : Promise.resolve(null),
+          getMyActivePlanSummary(),
+        ])
+
+        if (response?.success && response.data) {
+          setPlan(response.data)
         }
+        setMembership(active)
       } catch (error) {
         console.error('Error fetching plan:', error)
       } finally {
@@ -53,10 +72,16 @@ export default function SubscriptionActivatedPage() {
     fetchPlan()
   }, [params.planId])
 
-  // Format the ISO date to a readable format (e.g., "June 07, 2026")
-  const formatDate = (isoString: string) => {
-    if (!isoString) return ''
-    const date = new Date(isoString)
+  /**
+   * "June 07, 2026" from a `YYYY-MM-DD`.
+   *
+   * Built from the date's own parts. `new Date('2026-09-17')` is UTC midnight,
+   * which renders as the 16th to any viewer behind Greenwich - and an end date
+   * is a calendar date, not an instant.
+   */
+  const formatDate = (dateString: string) => {
+    const date = parseLocalDate(dateString)
+    if (!date) return ''
     return date.toLocaleDateString('en-US', {
       month: 'long',
       day: '2-digit',
@@ -64,8 +89,18 @@ export default function SubscriptionActivatedPage() {
     })
   }
 
-  // Generate a display ID for the UI (In a full production app, you might pass the real ID via URL query params)
-  const displaySubId = `SUB-${Math.floor(Math.random() * 90000) + 10000}`
+  /**
+   * The membership's own id, shortened for reading aloud at the counter.
+   *
+   * This line used to be `SUB-${Math.floor(Math.random() * 90000) + 10000}` - a
+   * fresh number on every render, under a heading that says "Subscription ID".
+   * It is the first block of the real UUID, so it still finds the row: staff can
+   * match it with `where id::text like '<prefix>%'`. Blank rather than invented
+   * when the membership has not been read back.
+   */
+  const displaySubId = membership?.subscriptionId
+    ? `SUB-${membership.subscriptionId.split('-')[0].toUpperCase()}`
+    : '—'
 
   if (isLoading) {
     return (
@@ -135,14 +170,18 @@ export default function SubscriptionActivatedPage() {
                 <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">
                   Current Plan
                 </p>
-                <p className="text-[var(--primary)] font-bold text-lg">{plan.name}</p>
+                <p className="text-[var(--primary)] font-bold text-lg">
+                  {membership?.planName || plan.name}
+                </p>
               </div>
 
               <div>
                 <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">
                   Valid Until
                 </p>
-                <p className="text-white font-bold text-[17px]">{formatDate(plan.validity)}</p>
+                <p className="text-white font-bold text-[17px]">
+                  {membership ? formatDate(membership.endDate) : '—'}
+                </p>
               </div>
               <div>
                 <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">
@@ -158,7 +197,8 @@ export default function SubscriptionActivatedPage() {
             <div className="bg-[var(--surface-hover)] border border-[var(--primary)]/20 rounded-md p-4 flex items-center glow-box-hover">
               <CheckCircle className="w-5 h-5 text-[var(--primary)] mr-3 shrink-0" />
               <p className="text-neutral-300 text-sm font-medium">
-                Your {plan.discount_percentage}% elite discount has been applied to your membership
+                Your {membership?.discountPercentage ?? plan.discount_percentage}% elite discount
+                has been applied to your membership
                 summary.
               </p>
             </div>

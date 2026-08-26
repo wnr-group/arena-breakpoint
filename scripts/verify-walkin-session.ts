@@ -14,7 +14,9 @@
 
 import assert from 'node:assert/strict'
 import {
+  MAX_LIVE_SESSION_HOURS,
   formatPlayedDuration,
+  liveSessionEndMinutes,
   playedMinutes,
   priceSession,
   sessionTimes,
@@ -239,6 +241,86 @@ check('under an hour drops the hours', () => {
 
 check('exactly on the hour', () => {
   assert.equal(formatPlayedDuration(120), '2h 0m')
+})
+
+/**
+ * How long a live session keeps its station.
+ *
+ * The slot row carries the five-hour placeholder claimed at check-in, so reading
+ * that as the end let the booking flow sell a station out from under somebody
+ * still sitting at it - while the floor plan, which goes by booking status for
+ * twelve hours, showed them there. These pin the rule that closed the gap.
+ *
+ * `checked_in_at` values are built from UTC and the arena is UTC+5:30, so
+ * 08:30 UTC is 14:00 at the counter.
+ */
+console.log('\nHow long a live session holds its station')
+
+/** An instant whose arena clock reads hh:mm on 2026-08-26. */
+const arenaAt = (hour: number, minute: number, day = 26) =>
+  new Date(Date.UTC(2026, 7, day, 0, hour * 60 + minute - (5 * 60 + 30))).toISOString()
+
+const live = (checkedInAt: string) => ({
+  billedOnActualTime: true,
+  status: 'checked_in',
+  checkedInAt,
+})
+
+check('a session checked in at 14:00 holds its station until 02:00 tomorrow', () => {
+  // 14:00 + 12h = 02:00 the next day, which is 1440 + 120 on this timeline.
+  assert.equal(liveSessionEndMinutes(live(arenaAt(14, 0)), '2026-08-26'), 1440 + 120)
+})
+
+check('which is later than the five-hour placeholder it would have had', () => {
+  const placeholderEnd = 14 * 60 + 5 * 60 // 19:00
+  const held = liveSessionEndMinutes(live(arenaAt(14, 0)), '2026-08-26')
+  assert.ok(held !== null && held > placeholderEnd, `${held} should exceed ${placeholderEnd}`)
+})
+
+check('the cap is exactly MAX_LIVE_SESSION_HOURS from check-in', () => {
+  const startMinutes = 9 * 60
+  const held = liveSessionEndMinutes(live(arenaAt(9, 0)), '2026-08-26')
+  assert.equal(held, startMinutes + MAX_LIVE_SESSION_HOURS * 60)
+})
+
+check('a session that started yesterday is rebased onto this date', () => {
+  // Checked in 22:00 on the 25th; the cap falls at 10:00 on the 26th.
+  assert.equal(liveSessionEndMinutes(live(arenaAt(22, 0, 25)), '2026-08-26'), 600)
+})
+
+check('a fixed booking keeps the end on its own row', () => {
+  assert.equal(
+    liveSessionEndMinutes(
+      { billedOnActualTime: false, status: 'checked_in', checkedInAt: arenaAt(14, 0) },
+      '2026-08-26'
+    ),
+    null,
+    'a fixed slot must not be stretched to checkout, or back-to-back bookings break'
+  )
+})
+
+check('a session waiting for check-in holds nothing', () => {
+  assert.equal(
+    liveSessionEndMinutes(
+      { billedOnActualTime: true, status: 'confirmed', checkedInAt: null },
+      '2026-08-26'
+    ),
+    null
+  )
+})
+
+check('a session already checked out holds nothing', () => {
+  assert.equal(
+    liveSessionEndMinutes(
+      { billedOnActualTime: true, status: 'completed', checkedInAt: arenaAt(14, 0) },
+      '2026-08-26'
+    ),
+    null
+  )
+})
+
+check('an unreadable check-in time is not treated as a hold', () => {
+  assert.equal(liveSessionEndMinutes(live('not a date'), '2026-08-26'), null)
 })
 
 console.log(

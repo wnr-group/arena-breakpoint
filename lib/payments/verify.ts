@@ -13,10 +13,13 @@ import {
   getBookingByPaymentId,
   getBookingForOrder,
   getPaymentOrder,
+  getSubscriptionByPaymentId,
+  getSubscriptionForOrder,
   markOrderFulfilled,
   markOrderRefunded,
   type PaymentOrderRow,
   type PaymentPurpose,
+  type SettledMembership,
 } from './orders'
 import { fulfilQuote } from './fulfil'
 
@@ -52,6 +55,23 @@ export type SettleResult =
        */
       retryable?: boolean
     }
+
+/**
+ * What to call the thing an order produces, and where to send the customer.
+ *
+ * Both messages named "booking" and pointed at "Retrieve Booking" whatever the
+ * purpose, so somebody who had just bought a membership was told their booking
+ * was unavailable and sent to a page that only lists bookings.
+ */
+const inFlightMessage = (purpose: PaymentPurpose): string =>
+  purpose === 'subscription'
+    ? 'This payment is already being processed. Please check "My Subscription" shortly.'
+    : 'This payment is already being processed. Please check "Retrieve Booking" shortly.'
+
+const goneMessage = (purpose: PaymentPurpose): string =>
+  purpose === 'subscription'
+    ? 'This membership is no longer available. Please contact support.'
+    : 'This booking is no longer available. Please contact support.'
 
 /**
  * Turns a confirmed payment into a booking.
@@ -109,7 +129,7 @@ async function settlePayment(
     if (existing.status !== 'paid') {
       return {
         success: false,
-        error: 'This booking is no longer available. Please contact support.',
+        error: goneMessage(existing.purpose),
       }
     }
 
@@ -134,7 +154,7 @@ async function settlePayment(
       // Another caller took the lease between our read and our claim.
       return {
         success: false,
-        error: 'This payment is already being processed. Please check "Retrieve Booking" shortly.',
+        error: inFlightMessage(existing.purpose),
         retryable: true,
       }
     }
@@ -181,7 +201,7 @@ async function settlePayment(
       return (
         settled || {
           success: false,
-          error: 'This payment is already being processed. Please check "Retrieve Booking" shortly.',
+          error: inFlightMessage(claim.order.purpose),
           retryable: true,
         }
       )
@@ -263,10 +283,18 @@ async function settlePayment(
 /**
  * Resolves an order a previous call already claimed.
  *
- * Returns the booking that payment produced, or `null` when the claim looks
- * stranded - no booking exists and the fulfilment lease has expired - which tells
- * the caller it is worth trying to resume. The caller still has to win the lease
- * before acting on that; this check only avoids the attempt in the common case.
+ * Returns whatever that payment produced - a booking, or a membership - or
+ * `null` when the claim looks stranded, meaning nothing exists and the
+ * fulfilment lease has expired, which tells the caller it is worth trying to
+ * resume. The caller still has to win the lease before acting on that; this
+ * check only avoids the attempt in the common case.
+ *
+ * The two halves are kept apart because they live in different tables. This used
+ * to ask the booking lookups regardless of purpose, and a subscription order
+ * carries no `booking_id` and leaves no row in `bookings` - so a membership that
+ * had activated perfectly well came back as "nothing here". Within the lease
+ * that surfaced to the customer as "already being processed", and after it as
+ * "no longer available", both on a membership they had paid for and now held.
  */
 async function alreadyHandled(
   order: PaymentOrderRow,
@@ -280,18 +308,42 @@ async function alreadyHandled(
     purpose: order.purpose,
   })
 
-  if (order.booking_id) {
-    const booking = await getBookingForOrder(order.booking_id)
-    if (booking) return settled(booking)
-  }
+  const settledMembership = (membership: SettledMembership): SettleResult => ({
+    success: true,
+    subscriptionId: membership.id,
+    planName: membership.planName,
+    amountPaid: Number(order.amount),
+    purpose: order.purpose,
+  })
 
-  // No `booking_id` on the order, but fulfilment may have succeeded and died
-  // before writing it back. The booking itself is the source of truth.
-  const byPayment = await getBookingByPaymentId(razorpayPaymentId)
+  if (order.purpose === 'subscription') {
+    if (order.subscription_id) {
+      const membership = await getSubscriptionForOrder(order.subscription_id)
+      if (membership) return settledMembership(membership)
+    }
 
-  if (byPayment) {
-    await markOrderFulfilled(order.razorpay_order_id, { bookingId: byPayment.id })
-    return settled(byPayment)
+    // Same reasoning as the booking side below: fulfilment may have created the
+    // membership and died before writing its id back onto the order.
+    const byPayment = await getSubscriptionByPaymentId(razorpayPaymentId)
+
+    if (byPayment) {
+      await markOrderFulfilled(order.razorpay_order_id, { subscriptionId: byPayment.id })
+      return settledMembership(byPayment)
+    }
+  } else {
+    if (order.booking_id) {
+      const booking = await getBookingForOrder(order.booking_id)
+      if (booking) return settled(booking)
+    }
+
+    // No `booking_id` on the order, but fulfilment may have succeeded and died
+    // before writing it back. The booking itself is the source of truth.
+    const byPayment = await getBookingByPaymentId(razorpayPaymentId)
+
+    if (byPayment) {
+      await markOrderFulfilled(order.razorpay_order_id, { bookingId: byPayment.id })
+      return settled(byPayment)
+    }
   }
 
   // Fall back to paid_at for rows claimed before the lease column existed.
@@ -302,7 +354,7 @@ async function alreadyHandled(
   if (inFlight) {
     return {
       success: false,
-      error: 'This payment is already being processed. Please check "Retrieve Booking" shortly.',
+      error: inFlightMessage(order.purpose),
       retryable: true,
     }
   }

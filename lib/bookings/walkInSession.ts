@@ -4,7 +4,12 @@ import {
   perExtraPlayerCharge,
   round2,
 } from '@/lib/payments/money'
-import { arenaClockTime, arenaDate, formatClockTime12h } from '@/lib/utils/dates'
+import {
+  arenaClockTime,
+  arenaDate,
+  daysBetweenDates,
+  formatClockTime12h,
+} from '@/lib/utils/dates'
 
 /**
  * Pricing for a walk-in session, from the time actually played.
@@ -173,4 +178,146 @@ export function toClockTime(value: Date): string {
 /** The arena calendar date of a `Date`, as Postgres stores it in `slot_date`. */
 export function toSlotDate(value: Date): string {
   return arenaDate(value)
+}
+
+/**
+ * How far back a session's start may be moved by hand.
+ *
+ * Manual entry exists for the customer who has already been playing for twenty
+ * minutes before anybody typed them in, not for reconstructing yesterday. The
+ * ceiling matters more than it looks: the clock face has no AM/PM of its own, so
+ * a slip on that one select moves the start by twelve hours and the bill with
+ * it. Anything further back than this is refused rather than billed.
+ *
+ * Half of `MAX_LIVE_SESSION_HOURS`, and tied to it rather than picked: a session
+ * older than that window is one the dashboard, `lib/devices/occupancy.ts` and the
+ * attention list have all stopped counting as live. Allowing a backdate right up
+ * to it would let the desk create a session that is stale the moment it exists -
+ * a customer sitting at a station the floor plan says is free. Halving leaves any
+ * session started at the ceiling another six hours of ordinary life ahead of it,
+ * which is far more than the few minutes this feature is really for.
+ */
+export const MAX_BACKDATED_START_HOURS = MAX_LIVE_SESSION_HOURS / 2
+
+export interface BackdatedStart {
+  /** 24-hour `HH:MM`, which is what the database resolves against its own day. */
+  clock: string
+  /** How long before now that reading was, on the arena clock. */
+  minutesAgo: number
+}
+
+export type BackdatedStartResult =
+  | { ok: true; start: BackdatedStart }
+  | { ok: false; error: string }
+
+/**
+ * A hand-entered start time, read against the arena clock.
+ *
+ * Only a time of day is entered - there is no date on the field, because staff
+ * are recording something that happened during this shift, not picking a day.
+ * That leaves one genuine ambiguity, and it is the one that matters at a venue
+ * open past midnight: at 00:30, "11:45 PM" is forty-five minutes ago, not
+ * twenty-three hours away. So a reading later in the day than right now is taken
+ * as last night rather than as the future, which is the only interpretation
+ * under which it can already have happened.
+ *
+ * The same rule turns a fat-fingered future time into something roughly a day
+ * old, which the ceiling then refuses - so "not in the past" needs no separate
+ * test, and midnight keeps working.
+ *
+ * Compared minute-of-day against `arenaClockTime` rather than by building a
+ * `Date`: the host is IST on a laptop here and UTC on Vercel, and the arena is
+ * neither by accident. This asks the clock the arena actually runs on.
+ */
+export function resolveBackdatedStart(
+  clock24: string,
+  now: Date = new Date()
+): BackdatedStartResult {
+  const match = /^(\d{1,2}):([0-5]\d)$/.exec((clock24 ?? '').trim())
+  if (!match) {
+    return { ok: false, error: 'Enter the time the customer started playing.' }
+  }
+
+  const hour = Number(match[1])
+  const minute = Number(match[2])
+  if (hour > 23) {
+    return { ok: false, error: 'Enter the time the customer started playing.' }
+  }
+
+  const entered = hour * 60 + minute
+
+  const [nowHour, nowMinute] = arenaClockTime(now).split(':').map(Number)
+  const current = nowHour * 60 + nowMinute
+
+  // Later in the day than now means it has not happened yet today, so it was
+  // last night. Same arithmetic wraps a mistyped future time to ~24h old.
+  const minutesAgo = entered <= current ? current - entered : current - entered + 1440
+
+  if (minutesAgo > MAX_BACKDATED_START_HOURS * 60) {
+    return {
+      ok: false,
+      error:
+        `A start time has to be within the last ${MAX_BACKDATED_START_HOURS} hours. ` +
+        `Check the AM/PM.`,
+    }
+  }
+
+  return {
+    ok: true,
+    start: {
+      clock: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
+      minutesAgo,
+    },
+  }
+}
+
+/** Minutes in a day, for expressing a window against a slot date's timeline. */
+const MINUTES_PER_DAY = 24 * 60
+
+/**
+ * When a live walk-in stops holding its station, on a slot date's timeline.
+ *
+ * A session has no end until somebody checks it out, but the slot row carries
+ * the `PROVISIONAL_SESSION_HOURS` placeholder claimed at check-in. Reading that
+ * as the end is what let a station be sold out from under a customer still
+ * sitting at it: `lib/devices/occupancy.ts` calls the session live for
+ * `MAX_LIVE_SESSION_HOURS`, while the overlap test called it finished after five,
+ * so between those two hours the floor plan and the booking flow disagreed.
+ *
+ * Returns minutes from midnight of `slotDate`, the same timeline
+ * `fetchOccupiedRanges` normalises every other window onto - so a session
+ * running past midnight comes back above 1440, and one that started yesterday
+ * can come back low or negative. Callers take the later of this and the row's
+ * own end, so this can only ever lengthen an occupancy.
+ *
+ * Null for anything that is not a session in progress: a fixed booking has a
+ * real end on its row and must keep it, or a customer overrunning their hour
+ * would block the booking sold for the hour after it.
+ */
+export function liveSessionEndMinutes(
+  session: {
+    billedOnActualTime?: boolean | null
+    status?: string | null
+    checkedInAt?: string | null
+  },
+  slotDate: string
+): number | null {
+  if (!session.billedOnActualTime) return null
+  if (session.status !== 'checked_in') return null
+  if (!session.checkedInAt) return null
+
+  const startedAt = new Date(session.checkedInAt)
+  if (Number.isNaN(startedAt.getTime())) return null
+
+  const liveUntil = new Date(startedAt.getTime() + MAX_LIVE_SESSION_HOURS * 60 * 60 * 1000)
+
+  // Which day the cap lands on, counted between two arena calendar dates so no
+  // host offset can move it - the same reason `arenaDate` exists at all.
+  const dayOffset = daysBetweenDates(slotDate, arenaDate(liveUntil))
+  if (dayOffset === null) return null
+
+  const [hours, minutes] = arenaClockTime(liveUntil).split(':').map(Number)
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null
+
+  return dayOffset * MINUTES_PER_DAY + hours * 60 + minutes
 }
