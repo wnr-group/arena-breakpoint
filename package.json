@@ -43,7 +43,8 @@
     "otp:reset": "tsx scripts/reset-otp-limit.ts",
     "check:env": "tsx scripts/check-env.ts",
     "test:phone": "tsx scripts/verify-phone-normalisation.ts",
-    "test:subscription": "tsx scripts/verify-subscription-payment.ts"
+    "test:subscription": "tsx scripts/verify-subscription-payment.ts",
+    "test:availability": "tsx scripts/verify-slot-availability.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "3.3.4",

@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { setSlot, setPricing, setSlotHold, setPlayerCount, setDuration, setHappyHour } from "@/lib/redux/slices/bookingSlice";
-import { checkFlexibleAvailability, initializeSoftLockReservation as createSoftLockTransaction } from "../actions";
+import { getSlotOccupancy, initializeSoftLockReservation as createSoftLockTransaction } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DateSelector } from "@/components/booking/DateSelector";
@@ -17,6 +17,7 @@ import {
   BOOKING_WINDOW_ERROR
 } from "@/lib/utils/dates";
 import {
+  formatMinutesTo12Hour,
   generateStartTimes,
   filterPastTimeSlots,
   generateDurationOptions,
@@ -28,6 +29,7 @@ import {
   crossesMidnight,
   bookingEndDate
 } from "@/lib/utils/timeSlots";
+import { availableStartMinutes, type DeviceTypeOccupancy } from "@/lib/bookings/slotAvailability";
 import { useHappyHours } from "@/lib/hooks/useHappyHours";
 import { formatCurrency } from "@/lib/currency";
 import { extraPlayersCharge, perExtraPlayerCharge } from "@/lib/payments/money";
@@ -41,7 +43,14 @@ export default function FlexibleSlotBookingPage() {
   const confirmButtonRef = useRef<HTMLDivElement>(null);
   const [selectedStartTime, setSelectedStartTime] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<number>(60); // Default 1 hour in minutes
-  const [availableStartTimes, setAvailableStartTimes] = useState<Set<string>>(new Set());
+  /**
+   * What is already booked on the chosen date - not what is free at the chosen
+   * duration. Occupancy does not depend on how long the customer wants to stay,
+   * so one fetch per date answers every duration they try; see
+   * `availableStartTimes` below. `null` means "not fetched yet", which is also
+   * the state the prerendered HTML is in.
+   */
+  const [occupancy, setOccupancy] = useState<DeviceTypeOccupancy | null>(null);
   const [queryingDb, setQueryingDb] = useState(false);
   const [submittingLock, setSubmittingLock] = useState(false);
 
@@ -50,7 +59,7 @@ export default function FlexibleSlotBookingPage() {
   const [mounted, setMounted] = useState(false);
 
   // Happy Hours integration
-  const { checkHappyHour, calculateDiscount, hasActiveRules } = useHappyHours();
+  const { checkHappyHour, calculateDiscount, rules: happyHourRules } = useHappyHours();
 
   const allStartTimes = useMemo(() => generateStartTimes(), []);
   const allDurations = useMemo(() => generateDurationOptions(), []);
@@ -60,6 +69,18 @@ export default function FlexibleSlotBookingPage() {
     if (!calendarDay) return allStartTimes;
     return filterPastTimeSlots(allStartTimes, calendarDay);
   }, [allStartTimes, calendarDay]);
+
+  /**
+   * Which of those start times can actually take a booking of the chosen
+   * length. Computed here rather than asked for, which is the whole point of
+   * fetching occupancy instead of an answer: changing the duration used to cost
+   * a round trip to the server and a blanked grid, and now costs one pass over
+   * at most a handful of booked ranges.
+   */
+  const availableStartTimes = useMemo(() => {
+    if (!occupancy) return new Set<string>();
+    return new Set(availableStartMinutes(occupancy, selectedDuration).map(formatMinutesTo12Hour));
+  }, [occupancy, selectedDuration]);
 
   useEffect(() => {
     setMounted(true);
@@ -80,30 +101,56 @@ export default function FlexibleSlotBookingPage() {
     router.push('/booking');
   }, [hydrated, deviceTypeId, router]);
 
-  // Disable body scroll when mobile drawers are open
+  /**
+   * Hold the page still behind the mobile drawers.
+   *
+   * `overflow: hidden` on its own does not stop iOS Safari scrolling, and pinning
+   * <html> and <body> to `100dvh` to make it stick cost more than it bought.
+   * Collapsing the document to a single viewport throws the scroll offset away,
+   * so closing a sheet dropped the customer back at the top of the page - the
+   * duration they had just chosen scrolled out of sight, which reads as the
+   * screen having ignored the tap. And `dvh` is re-resolved every time Safari
+   * animates its URL bar, so the whole page relaid out mid-gesture.
+   *
+   * Pinning the body at its current offset keeps the position and restores the
+   * scroll on close. The effect only runs while a drawer is open, so nothing
+   * touches the document in the common case.
+   */
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (!mobileDurationOpen && !mobileStartTimeOpen) return;
+
+    const body = document.body;
     const mainEl = document.querySelector('main');
-    const htmlEl = document.documentElement;
-    if (mobileDurationOpen || mobileStartTimeOpen) {
-      document.body.style.overflow = 'hidden';
-      document.body.style.height = '100dvh';
-      htmlEl.style.overflow = 'hidden';
-      htmlEl.style.height = '100dvh';
-      if (mainEl) mainEl.style.zIndex = '9999';
-    } else {
-      document.body.style.overflow = '';
-      document.body.style.height = '';
-      htmlEl.style.overflow = '';
-      htmlEl.style.height = '';
-      if (mainEl) mainEl.style.zIndex = '';
-    }
+    const scrollY = window.scrollY;
+    const previous = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow
+    };
+
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.width = '100%';
+    body.style.overflow = 'hidden';
+    // The drawers render inside <main>, which the customer layout stacks below
+    // the navbar (z-100); without this they would open underneath it.
+    if (mainEl) mainEl.style.zIndex = '9999';
+
     return () => {
-      document.body.style.overflow = '';
-      document.body.style.height = '';
-      htmlEl.style.overflow = '';
-      htmlEl.style.height = '';
+      body.style.position = previous.position;
+      body.style.top = previous.top;
+      body.style.left = previous.left;
+      body.style.right = previous.right;
+      body.style.width = previous.width;
+      body.style.overflow = previous.overflow;
       if (mainEl) mainEl.style.zIndex = '';
+      window.scrollTo(0, scrollY);
     };
   }, [mobileDurationOpen, mobileStartTimeOpen]);
 
@@ -115,8 +162,14 @@ export default function FlexibleSlotBookingPage() {
   }, [selectedDuration, mounted, dispatch]);
 
   /**
-   * Changing the date or the duration invalidates the chosen start time - a
-   * 10:00 start for one hour says nothing about whether 10:00 is free for three.
+   * A new date invalidates the chosen start time.
+   *
+   * Duration is deliberately not a dependency any more. It used to be, because
+   * changing it refetched the grid and the old answer had to be thrown away with
+   * it - but the grid is now recomputed from occupancy already in hand, so a
+   * start time that survives the change can simply stay selected. One that does
+   * not is cleared by the effect further down, which is the one that actually
+   * knows.
    *
    * Deliberately separate from the fetch below, and deliberately not keyed on
    * `bookingId`. Taking a hold changes the booking id, and while those were one
@@ -127,86 +180,77 @@ export default function FlexibleSlotBookingPage() {
   useEffect(() => {
     if (!mounted || !calendarDay || !deviceTypeId) return;
     setSelectedStartTime(null);
-    setAvailableStartTimes(new Set());
-  }, [calendarDay, selectedDuration, mounted, deviceTypeId]);
+  }, [calendarDay, mounted, deviceTypeId]);
 
+  /**
+   * One fetch per date, not per duration.
+   *
+   * This used to ask the server for a finished list of free start times, which
+   * meant every duration the customer tried cost a round trip and blanked the
+   * grid while it was in flight - to recompute something that depends on no data
+   * the first call had not already returned. It now fetches the day's occupancy
+   * once and `availableStartTimes` derives the rest in the browser.
+   *
+   * Keyed on `hydrated`, never on `bookingId`.
+   *
+   * A hold restored after a refresh still has to be excluded from the grid, and
+   * it arrives a tick after this first runs - but hydration is what delivers it,
+   * so hydration is the thing to wait for.
+   *
+   * `bookingId` looks like the natural dependency and is a trap: taking a hold
+   * changes it, so this effect would fire as part of the same state update that
+   * starts the navigation to checkout. `getSlotOccupancy` is a server action,
+   * and Next applies a server action's revalidation to the route the caller is
+   * still on - which cancelled the pending push. The navigation silently did
+   * nothing perhaps two times in three, leaving the customer on the picker with
+   * a hold already taken in their name, and their next attempt refused because
+   * their own hold now occupied the station.
+   */
   useEffect(() => {
-    if (!mounted || !calendarDay || !deviceTypeId) {
-      console.log('[Frontend] Skipping availability check:', { mounted, calendarDay: !!calendarDay, deviceTypeId: !!deviceTypeId });
-      return;
-    }
+    if (!mounted || !calendarDay || !deviceTypeId) return;
 
-    checkAvailability();
-    /**
-     * Keyed on `hydrated`, never on `bookingId`.
-     *
-     * A hold restored after a refresh still has to be excluded from the grid, and
-     * it arrives a tick after this first runs - but hydration is what delivers it,
-     * so hydration is the thing to wait for.
-     *
-     * `bookingId` looks like the natural dependency and is a trap: taking a hold
-     * changes it, so this effect fired as part of the same state update that
-     * starts the navigation to checkout. `checkFlexibleAvailability` is a server
-     * action, and Next applies a server action's revalidation to the route the
-     * caller is still on - which cancelled the pending push. The navigation
-     * silently did nothing perhaps two times in three, leaving the customer on the
-     * picker with a hold already taken in their name, and their next attempt
-     * refused because their own hold now occupied the station.
-     */
-  }, [calendarDay, selectedDuration, mounted, deviceTypeId, hydrated]);
-
-  const checkAvailability = async () => {
-    if (!calendarDay || !deviceTypeId) {
-      console.log('[Frontend] Skipping availability check - missing date or deviceTypeId');
-      return;
-    }
-
-    // Never query slots for a date outside the booking window
+    // Never query slots for a date outside the booking window. The querying flag
+    // is cleared as well as set: a stale request from the previous date may have
+    // left it raised, and nothing below would lower it.
     if (!isDateWithinBookingWindow(calendarDay)) {
-      console.log('[Frontend] Skipping availability check - date outside booking window');
-      setAvailableStartTimes(new Set());
+      setOccupancy({ totalDevices: 0, occupied: [] });
+      setQueryingDb(false);
       return;
     }
 
-    setQueryingDb(true);
-    setAvailableStartTimes(new Set()); // Clear immediately when starting new check
-
+    // Tapping through dates faster than the server answers would otherwise let
+    // an older response land last and paint the wrong day's availability.
+    let current = true;
     const dateStr = formatLocalDate(calendarDay);
 
-    console.log(`[Frontend] ========================================`);
-    console.log(`[Frontend] Checking availability for:`);
-    console.log(`[Frontend] - Date: ${dateStr}`);
-    console.log(`[Frontend] - Device Type: ${deviceTypeId}`);
-    console.log(`[Frontend] - Duration: ${selectedDuration} minutes`);
+    setQueryingDb(true);
+    setOccupancy(null);
 
-    try {
-      // A hold this browser already owns must not make its own slot look taken -
-      // a customer who navigates back here still has ten minutes on it.
-      const res = await checkFlexibleAvailability(dateStr, deviceTypeId, selectedDuration, bookingId);
-
-      console.log(`[Frontend] Response received:`, {
-        success: res.success,
-        slotsCount: res.availableStartTimes?.length || 0,
-        error: res.error
+    // A hold this browser already owns must not make its own slot look taken -
+    // a customer who navigates back here still has ten minutes on it.
+    getSlotOccupancy(dateStr, deviceTypeId, bookingId)
+      .then((res) => {
+        if (!current) return;
+        if (res.success) {
+          setOccupancy(res.occupancy);
+        } else {
+          console.warn(`[Frontend] No availability for ${dateStr}:`, res.error);
+          setOccupancy({ totalDevices: 0, occupied: [] });
+        }
+        setQueryingDb(false);
+      })
+      .catch((error) => {
+        if (!current) return;
+        console.error('[Frontend] Availability check failed:', error);
+        setOccupancy({ totalDevices: 0, occupied: [] });
+        setQueryingDb(false);
       });
 
-      if (res.success && res.availableStartTimes) {
-        const newAvailableSlots = new Set(res.availableStartTimes);
-        setAvailableStartTimes(newAvailableSlots);
-        console.log(`[Frontend] ✅ Set ${res.availableStartTimes.length} available slots for ${dateStr}`);
-        console.log(`[Frontend] Sample available times:`, res.availableStartTimes.slice(0, 5));
-      } else {
-        setAvailableStartTimes(new Set());
-        console.warn(`[Frontend] ❌ No available slots for ${dateStr}:`, res.error);
-      }
-    } catch (error) {
-      console.error('[Frontend] ❌ Error checking availability:', error);
-      setAvailableStartTimes(new Set());
-    } finally {
-      setQueryingDb(false);
-      console.log(`[Frontend] ========================================\n`);
-    }
-  };
+    return () => {
+      current = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [calendarDay, deviceTypeId, mounted, hydrated]);
 
   const endTime = useMemo(() => {
     if (!selectedStartTime) return null;
@@ -274,18 +318,56 @@ export default function FlexibleSlotBookingPage() {
 
   const aggregatedPayableTotal = baselineSubtotal + extraPlayersTotal + additivesCostAggregated - happyHourInfo.discountAmount;
 
+  /**
+   * Happy hour for every start time on offer, in one pass.
+   *
+   * Both the desktop list and the mobile drawer render all 48 half hours, and
+   * the desktop list stays mounted behind `hidden md:block` on a phone - so
+   * asking per slot, per render, meant close to a hundred rule matches every
+   * time any piece of state moved, player count included. Rebuilt only when the
+   * date, duration, device or the rules themselves change.
+   */
+  const happyHourBySlot = useMemo(() => {
+    const bySlot = new Map<string, { discount: number }>();
+    if (!calendarDay || !deviceTypeName || happyHourRules.length === 0) return bySlot;
+
+    for (const time of availableStartTimesForDate) {
+      const { rule, discount } = checkHappyHour(
+        deviceTypeName,
+        calendarDay,
+        time,
+        calculateEndTime(time, selectedDuration)
+      );
+      if (rule) bySlot.set(time, { discount });
+    }
+    return bySlot;
+  }, [availableStartTimesForDate, calendarDay, deviceTypeName, selectedDuration, checkHappyHour, happyHourRules]);
+
   const selectedDurationLabel = useMemo(() => {
     const duration = allDurations.find(d => d.value === selectedDuration);
     return duration?.label || "";
   }, [selectedDuration, allDurations]);
 
-  // Clear selected start time if it's no longer available after date/duration change
+  /**
+   * Drop a start time the new date or duration has invalidated.
+   *
+   * This carries more weight than it used to. Changing the duration once cleared
+   * the selection outright, because it refetched the grid and the old answer went
+   * with it; now the grid is recomputed in place, so a selection that is still
+   * free simply stays - and this is the only thing that removes one that is not.
+   *
+   * Gated on `occupancy` rather than on the set being non-empty. Both are empty
+   * while a date is loading, and clearing then would wipe the customer's choice
+   * on every fetch - but "no slots at all at this duration" is a real answer, and
+   * the old guard could not tell it apart from "not known yet", so it left a
+   * stale time sitting in the summary. Having the occupancy is what distinguishes
+   * them.
+   */
   useEffect(() => {
-    if (selectedStartTime && availableStartTimes.size > 0 && !availableStartTimes.has(selectedStartTime)) {
-      console.log(`[Frontend] Selected time ${selectedStartTime} is no longer available, resetting`);
+    if (selectedStartTime && occupancy && !availableStartTimes.has(selectedStartTime)) {
       setSelectedStartTime(null);
     }
-  }, [availableStartTimes, selectedStartTime]);
+  }, [availableStartTimes, selectedStartTime, occupancy]);
 
   const handleRegisterTransactionLock = async () => {
     if (!calendarDay) {
@@ -372,31 +454,42 @@ export default function FlexibleSlotBookingPage() {
     setSubmittingLock(false);
   };
 
-  if (!mounted) return null;
+  /**
+   * No `if (!mounted) return null` here.
+   *
+   * Returning null until the mount effect had run meant the prerendered HTML for
+   * this route carried nothing at all inside <main> - 17 bytes of Suspense
+   * marker - so a customer on a phone watched an empty page while roughly a
+   * megabyte of JavaScript downloaded, parsed and hydrated before the date row
+   * so much as appeared.
+   *
+   * Nothing here needs the guard. Every value that differs between the server
+   * and the customer's browser is already effect-driven and starts out empty on
+   * both sides: `calendarDay` is undefined until the mount effect sets it,
+   * `DateSelector` renders its own skeleton until it has the week, the booking
+   * slice is empty until `StoreProvider` restores it, and `occupancy` is null
+   * until the fetch lands. So the first client render matches the HTML it is
+   * hydrating, and the shell - progress steps, device card, date row, summary -
+   * paints from the prerender while the bundle is still arriving.
+   */
+
+  /**
+   * The booking slice is empty until `StoreProvider` restores it from
+   * sessionStorage, and that happens after hydration - so the prerendered HTML
+   * knows neither the device nor its rate. Printing them anyway would put
+   * "Gaming Device" at "₹0 / hour" and a "Total Payable ₹0.00" in front of the
+   * customer for as long as the bundle takes to arrive, which is exactly the
+   * window the prerender exists to fill. Everything sourced from the store waits
+   * behind a placeholder of its own width instead, so the layout is final and
+   * only the figures arrive late.
+   */
+  const pending = (width: string) => (
+    <span className={`inline-block ${width} h-3 align-middle rounded bg-zinc-800`} />
+  );
+  const rupees = (value: number) => `₹${Math.round(value)}.00`;
 
   const isTimeAvailable = (time: string) => availableStartTimes.has(time);
   const canProceed = calendarDay && selectedStartTime && endTime && isTimeAvailable(selectedStartTime);
-
-  // Check if a time slot qualifies for happy hour
-  const checkSlotHasHappyHour = (startTime: string): { hasHappyHour: boolean; discount: number; ruleName: string | null } => {
-    if (!calendarDay || !deviceTypeName) {
-      return { hasHappyHour: false, discount: 0, ruleName: null };
-    }
-
-    const endTime = calculateEndTime(startTime, selectedDuration);
-    const { rule, discount } = checkHappyHour(
-      deviceTypeName,
-      calendarDay,
-      startTime,
-      endTime
-    );
-
-    return {
-      hasHappyHour: !!rule,
-      discount: discount,
-      ruleName: rule?.name || null
-    };
-  };
 
   return (
     <div className="max-w-md md:max-w-7xl mx-auto py-2 px-1 pb-28 md:pb-12">
@@ -442,8 +535,8 @@ export default function FlexibleSlotBookingPage() {
                 <Clock className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <h4 className="font-black text-xs sm:text-sm min-w-0 text-white uppercase break-words leading-tight">{deviceTypeName || "Gaming Device"}</h4>
-                <p className="text-zinc-400 text-xs font-bold mt-0.5"><span className="text-primary font-black">₹{hourlyRate || 0}</span> / hour</p>
+                <h4 className="font-black text-xs sm:text-sm min-w-0 text-white uppercase break-words leading-tight">{hydrated ? (deviceTypeName || "Gaming Device") : pending("w-28")}</h4>
+                <p className="text-zinc-400 text-xs font-bold mt-0.5"><span className="text-primary font-black">{hydrated ? `₹${hourlyRate || 0}` : pending("w-10")}</span> / hour</p>
               </div>
             </div>
             <Button variant="gradient" onClick={() => router.push("/booking")} className="text-black font-black text-xs uppercase h-7 px-3 flex-shrink-0">
@@ -481,7 +574,9 @@ export default function FlexibleSlotBookingPage() {
             <div onClick={() => setMobileStartTimeOpen(true)} className="bg-[#111] border border-zinc-900 p-4 rounded-xl flex justify-between items-center cursor-pointer glow-box-hover">
               <div className="space-y-1">
                 <span className="text-label-enhanced block">Start Time</span>
-                <span className="text-sm font-black text-primary">{selectedStartTime || "Choose Start Time"}</span>
+                <span className="text-sm font-black text-primary">
+                  {selectedStartTime || (queryingDb || !occupancy ? "Checking availability…" : "Choose Start Time")}
+                </span>
               </div>
               <ChevronRight className="h-4 w-4 text-zinc-600" />
             </div>
@@ -498,14 +593,14 @@ export default function FlexibleSlotBookingPage() {
                 <div className="flex justify-between"><span>Duration:</span><strong className="text-white font-bold">{selectedDurationLabel}</strong></div>
                 <div className="flex justify-between"><span>Start Time:</span><strong className="text-primary font-black">{selectedStartTime || "Not Selected"}</strong></div>
                 <div className="flex justify-between"><span>End Time:</span><strong className="text-primary font-black">{endTime || "--"}{endsNextDay && <span className="text-amber-400 font-bold ml-1">(next day)</span>}</strong></div>
-                <div className="flex justify-between"><span>Device:</span><strong className="text-xs text-white uppercase truncate max-w-[200px]">{deviceTypeName || "N/A"}</strong></div>
+                <div className="flex justify-between"><span>Device:</span><strong className="text-xs text-white uppercase truncate max-w-[200px]">{hydrated ? (deviceTypeName || "N/A") : pending("w-20")}</strong></div>
               </div>
 
               {/* Player Multiplier Controller */}
               <div className="space-y-2">
                 <h4 className="text-xs font-black text-zinc-400 uppercase tracking-wider">Number of Players</h4>
                 <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-lg p-2.5">
-                  <p className="text-xs text-zinc-300 font-bold">{includedPlayers} included • Max {maxPlayers}</p>
+                  <p className="text-xs text-zinc-300 font-bold">{hydrated ? `${includedPlayers} included • Max ${maxPlayers}` : pending("w-32")}</p>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -515,7 +610,7 @@ export default function FlexibleSlotBookingPage() {
                     >
                       <Minus className="h-3 w-3" />
                     </button>
-                    <span className="text-base font-black text-white w-6 text-center">{playerCount}</span>
+                    <span className="text-base font-black text-white w-6 text-center">{hydrated ? playerCount : "–"}</span>
                     <button
                       type="button"
                       onClick={() => {
@@ -536,7 +631,7 @@ export default function FlexibleSlotBookingPage() {
 
               {/* Mobile Price Calculations */}
               <div className="space-y-2 text-sm text-zinc-300 pt-1">
-                <div className="flex justify-between"><span>Base Rate ({selectedDurationLabel})</span><span className="text-white font-bold">₹{Math.round(baselineSubtotal)}.00</span></div>
+                <div className="flex justify-between"><span>Base Rate ({selectedDurationLabel})</span><span className="text-white font-bold">{hydrated ? rupees(baselineSubtotal) : pending("w-14")}</span></div>
                 {extraPlayersCount > 0 && (
                   <div className="flex justify-between"><span>Extra Players ({extraPlayersCount} × ₹{perPlayerCharge})</span><span className="text-primary font-bold">₹{extraPlayersTotal}.00</span></div>
                 )}
@@ -551,7 +646,7 @@ export default function FlexibleSlotBookingPage() {
                 )}
                 <div className="flex justify-between items-baseline pt-2.5 border-t border-zinc-900 text-white font-black">
                   <span className="text-sm uppercase">Total Payable</span>
-                  <span className="text-xl text-primary">₹{Math.round(aggregatedPayableTotal)}.00</span>
+                  <span className="text-xl text-primary">{hydrated ? rupees(aggregatedPayableTotal) : pending("w-20")}</span>
                 </div>
               </div>
             </Card>
@@ -598,7 +693,7 @@ export default function FlexibleSlotBookingPage() {
                         setSelectedDuration(duration.value);
                         dispatch(setDuration(duration.value))
                       }}
-                      className={`w-full p-3 border text-left rounded-xl transition-all duration-300 ${isSelected
+                      className={`w-full p-3 border text-left rounded-xl transition-colors duration-200 ${isSelected
                         ? "bg-gradient-to-r from-primary via-yellow-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
                         : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
                         }`}
@@ -618,7 +713,7 @@ export default function FlexibleSlotBookingPage() {
             {/* Start Time Selection */}
             <div className="space-y-3">
               <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest pl-1">🕒 Start Time</h3>
-              {queryingDb ? (
+              {queryingDb || !occupancy ? (
                 <div className="h-96 flex flex-col items-center justify-center">
                   <BreakpointLoader size="md" text="Checking availability..." />
                 </div>
@@ -633,27 +728,27 @@ export default function FlexibleSlotBookingPage() {
                   {availableStartTimesForDate.map((time) => {
                     const isAvailable = isTimeAvailable(time);
                     const isSelected = selectedStartTime ? isTimeSlotWithinRange(time, selectedStartTime, selectedDuration) : false;
-                    const happyHourCheck = checkSlotHasHappyHour(time);
+                    const happyHour = happyHourBySlot.get(time);
                     return (
                       <button
                         key={time}
                         disabled={!isAvailable}
                         onClick={() => setSelectedStartTime(time)}
-                        className={`w-full p-3 border text-left rounded-xl transition-all duration-300 text-sm font-bold relative ${!isAvailable
+                        className={`w-full p-3 border text-left rounded-xl transition-colors duration-200 text-sm font-bold relative ${!isAvailable
                           ? "bg-zinc-950/20 border-zinc-950 text-zinc-800 cursor-not-allowed"
                           : isSelected
                             ? "bg-gradient-to-r from-primary via-yellow-400 to-primary border-transparent text-black shadow-[0_4px_20px_rgba(255,193,7,0.4)]"
-                            : happyHourCheck.hasHappyHour
+                            : happyHour
                               ? "bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/30 text-yellow-200 hover:border-yellow-500/50 hover:bg-gradient-to-r hover:from-yellow-500/20 hover:to-orange-500/20 hover:shadow-[0_0_15px_rgba(255,193,7,0.3)]"
                               : "bg-[#111] border-zinc-900 text-zinc-300 hover:border-primary/50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-yellow-400/10 hover:shadow-[0_0_15px_rgba(255,193,7,0.2)]"
                           }`}
                       >
                         <div className="flex items-center justify-between">
                           <span>{time} - {calculateEndTime(time, 30)}</span>
-                          {happyHourCheck.hasHappyHour && !isSelected && (
+                          {happyHour && !isSelected && (
                             <span className="flex items-center gap-1 text-xs font-black text-yellow-400">
                               <Sparkles className="w-3 h-3" />
-                              {happyHourCheck.discount}% OFF
+                              {happyHour.discount}% OFF
                             </span>
                           )}
                         </div>
@@ -691,7 +786,7 @@ export default function FlexibleSlotBookingPage() {
               </div>
               <div className="flex justify-between">
                 <span>Device:</span>
-                <strong className="text-xs text-white uppercase text-right max-w-[200px] break-words leading-tight max-w-[160px]">{deviceTypeName || "N/A"}</strong>
+                <strong className="text-xs text-white uppercase text-right max-w-[200px] break-words leading-tight max-w-[160px]">{hydrated ? (deviceTypeName || "N/A") : pending("w-20")}</strong>
               </div>
             </div>
 
@@ -701,7 +796,7 @@ export default function FlexibleSlotBookingPage() {
               <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-lg p-3">
                 <div className="flex-1">
                   <p className="text-sm text-zinc-300 font-bold">
-                    {includedPlayers} included • Max {maxPlayers}
+                    {hydrated ? `${includedPlayers} included • Max ${maxPlayers}` : pending("w-32")}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -712,7 +807,7 @@ export default function FlexibleSlotBookingPage() {
                   >
                     <Minus className="h-3 w-3" />
                   </button>
-                  <span className="text-xl font-black text-white w-8 text-center">{playerCount}</span>
+                  <span className="text-xl font-black text-white w-8 text-center">{hydrated ? playerCount : "–"}</span>
                   <button
                     onClick={() => {
                       if (playerCount >= maxPlayers) {
@@ -733,7 +828,7 @@ export default function FlexibleSlotBookingPage() {
             <div className="space-y-2.5 text-sm text-zinc-300">
               <div className="flex justify-between">
                 <span>Base Rate ({selectedDurationLabel})</span>
-                <span className="text-white font-bold">₹{Math.round(baselineSubtotal)}.00</span>
+                <span className="text-white font-bold">{hydrated ? rupees(baselineSubtotal) : pending("w-14")}</span>
               </div>
               {extraPlayersCount > 0 && (
                 <div className="flex justify-between">
@@ -752,7 +847,7 @@ export default function FlexibleSlotBookingPage() {
               )}
               <div className="flex justify-between items-baseline pt-3 border-t border-zinc-900 text-white font-black">
                 <span className="text-xs uppercase">Total Payable</span>
-                <span className="text-2xl text-primary">₹{Math.round(aggregatedPayableTotal)}.00</span>
+                <span className="text-2xl text-primary">{hydrated ? rupees(aggregatedPayableTotal) : pending("w-20")}</span>
               </div>
             </div>
 
@@ -780,8 +875,15 @@ export default function FlexibleSlotBookingPage() {
       </div>
 
       {/* Mobile Drawers */}
+      {/*
+        * No `backdrop-blur` on either backdrop. At 85% black there is almost
+        * nothing left to see through it, but the filter still made Safari
+        * re-blur the entire viewport - the animated background blobs included -
+        * on every frame the sheet was open, which is what froze the phone while
+        * the list underneath was being scrolled.
+        */}
       {mobileDurationOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end md:hidden">
+        <div className="fixed inset-0 bg-black/85 z-50 flex items-end md:hidden">
           <div className="bg-[#121212] border-t border-zinc-800 rounded-t-2xl w-full p-5 space-y-4 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
               <span className="text-xs font-black uppercase text-zinc-400">Select Duration</span>
@@ -819,7 +921,7 @@ export default function FlexibleSlotBookingPage() {
       )}
 
       {mobileStartTimeOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end md:hidden">
+        <div className="fixed inset-0 bg-black/85 z-50 flex items-end md:hidden">
           <div className="bg-[#121212] border-t border-zinc-800 rounded-t-2xl w-full p-5 space-y-4 max-h-[75vh] flex flex-col overflow-hidden">
             <div className="flex justify-between items-center border-b border-zinc-900 pb-2 flex-shrink-0">
               <span className="text-xs font-black uppercase text-zinc-400">Select Start Time</span>
@@ -828,12 +930,22 @@ export default function FlexibleSlotBookingPage() {
               </button>
             </div>
 
-            {/* Optimized High Contrast 2-Column Grid Layout for Mobile Time Windows */}
+            {/*
+              * The shell now paints before availability has landed, so this
+              * sheet can be opened while `occupancy` is still null. Without
+              * this it would show all 48 half hours struck through, which reads
+              * as a fully booked day rather than a page still loading.
+              */}
+            {queryingDb || !occupancy ? (
+              <div className="flex-1 flex items-center justify-center py-12">
+                <BreakpointLoader size="md" text="Checking availability..." />
+              </div>
+            ) : (
             <div className="grid grid-cols-2 gap-2 overflow-y-auto pr-1 pb-4 scrollbar-thin">
               {availableStartTimesForDate.map((time) => {
                 const isAvailable = isTimeAvailable(time);
                 const isSelected = selectedStartTime ? isTimeSlotWithinRange(time, selectedStartTime, selectedDuration) : false;
-                const happyHourCheck = checkSlotHasHappyHour(time);
+                const happyHour = happyHourBySlot.get(time);
                 return (
                   <button
                     key={time}
@@ -849,21 +961,21 @@ export default function FlexibleSlotBookingPage() {
                         });
                       }, 300);
                     }}
-                    className={`p-3 text-center rounded-xl text-xs font-black uppercase transition-all tracking-wider border relative ${!isAvailable
+                    className={`p-3 text-center rounded-xl text-xs font-black uppercase transition-colors duration-200 tracking-wider border relative ${!isAvailable
                       ? "bg-zinc-950/40 border-zinc-900/40 text-zinc-800 cursor-not-allowed line-through"
                       : isSelected
                         ? "bg-primary border-transparent text-black shadow-[0_0_15px_rgba(255,193,7,0.25)]"
-                        : happyHourCheck.hasHappyHour
+                        : happyHour
                           ? "bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/30 text-yellow-200"
                           : "bg-zinc-900 border-zinc-800 text-zinc-300 active:border-zinc-700"
                       }`}
                   >
                     <div className="flex flex-col gap-1">
                       <span>{time} - {calculateEndTime(time, 30)}</span>
-                      {happyHourCheck.hasHappyHour && !isSelected && (
+                      {happyHour && !isSelected && (
                         <span className="flex items-center justify-center gap-0.5 text-[11px] font-black text-yellow-400">
                           <Sparkles className="w-2.5 h-2.5" />
-                          {happyHourCheck.discount}% OFF
+                          {happyHour.discount}% OFF
                         </span>
                       )}
                     </div>
@@ -871,12 +983,10 @@ export default function FlexibleSlotBookingPage() {
                 );
               })}
             </div>
+            )}
           </div>
         </div>
       )}
-
-
-
     </div>
   );
 }

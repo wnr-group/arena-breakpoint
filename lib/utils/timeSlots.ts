@@ -93,6 +93,20 @@ export function formatTo12Hour(time24: string): string {
   return `${hour12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${period}`;
 }
 
+/**
+ * Minutes since midnight -> "01:30 PM".
+ *
+ * Wraps, so the 1470 that a booking running past midnight produces reads back as
+ * 00:30 AM rather than a 24th hour. Availability is computed in minutes on both
+ * sides of the wire now, and this is where those numbers become labels.
+ */
+export function formatMinutesTo12Hour(minutes: number): string {
+  const wrapped = ((minutes % 1440) + 1440) % 1440;
+  const hours = Math.floor(wrapped / 60);
+  const mins = wrapped % 60;
+  return formatTo12Hour(`${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`);
+}
+
 export function formatDbTime(time24: string | null | undefined, fallback = 'N/A'): string {
   if (!time24) return fallback;
 
