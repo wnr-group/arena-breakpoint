@@ -18,9 +18,11 @@ import {
   resolveActiveMembership
 } from "@/lib/subscriptions/discount";
 import {
+  MAX_BACKDATED_START_HOURS,
   PROVISIONAL_SESSION_HOURS,
   formatPlayedDuration,
   priceSession,
+  resolveBackdatedStart,
   toClockTime,
   toSlotDate
 } from "@/lib/bookings/walkInSession";
@@ -1619,8 +1621,21 @@ export async function createWalkInSession(payload: {
   deviceTypeId: string;
   deviceTypeName: string;
   playerCount: number;
+  /**
+   * 24-hour `HH:MM` the customer started playing, for a walk-in that was already
+   * under way before the desk typed it in. Null - the ordinary case - creates the
+   * booking waiting for check-in, with no time and no station, as before.
+   */
+  startedClock?: string | null;
 }) {
   await requireStaff();
+
+  // Read before anything is written. A time the desk has to go back and correct
+  // should not leave an empty booking behind for somebody to cancel.
+  if (payload.startedClock) {
+    const resolved = resolveBackdatedStart(payload.startedClock);
+    if (!resolved.ok) return { success: false, error: resolved.error };
+  }
 
   try {
     const { data: customerId, error: customerError } = await supabaseAdmin
@@ -1670,7 +1685,42 @@ export async function createWalkInSession(payload: {
 
     if (bookingError) throw bookingError;
 
-    return { success: true, bookingId: booking.id, bookingNumber: booking.booking_number };
+    /**
+     * A start time was given, so this customer is already playing - check them in
+     * here rather than leaving a session that is running on the floor and waiting
+     * on the screen.
+     *
+     * A refused check-in is not a refused booking. The row that exists is exactly
+     * the waiting walk-in this form would have made anyway, so the desk is told
+     * what went wrong - almost always that no station of that type is free - and
+     * can press Check In from the list once one is. Throwing here would lose the
+     * customer's details over a full floor.
+     */
+    let checkedIn = false;
+    let checkInError: string | null = null;
+    let stationNumber: string | null = null;
+    let checkedInAt: string | null = null;
+
+    if (payload.startedClock) {
+      const checkIn = await checkInWalkInSession(booking.id, payload.startedClock);
+      if (checkIn.success) {
+        checkedIn = true;
+        stationNumber = checkIn.stationNumber ?? null;
+        checkedInAt = checkIn.checkedInAt ?? null;
+      } else {
+        checkInError = checkIn.error ?? null;
+      }
+    }
+
+    return {
+      success: true,
+      bookingId: booking.id,
+      bookingNumber: booking.booking_number,
+      checkedIn,
+      checkedInAt,
+      stationNumber,
+      checkInError
+    };
   } catch (err: any) {
     console.error("Create walk-in session error:", err);
     return { success: false, error: err.message };
@@ -1685,9 +1735,27 @@ export async function createWalkInSession(payload: {
  * and two people pressing the button at once cannot start two sessions. Zero rows
  * back means either the booking was not waiting or the floor is full; the two are
  * told apart afterwards so the message says which.
+ *
+ * `startedClock` is the exception to the database clock, and the only one: a
+ * customer who has been playing since before the desk got round to typing them
+ * in. Given, the session is billed from that reading instead of from now. The
+ * reading is still resolved to an instant down in SQL - what is checked here is
+ * only that it is a time of day within reach, so the desk gets a sentence back
+ * rather than a Postgres exception.
  */
-export async function checkInWalkInSession(bookingId: string) {
+export async function checkInWalkInSession(
+  bookingId: string,
+  /** 24-hour `HH:MM` play actually started at. Omitted or null means now. */
+  startedClock?: string | null
+) {
   await requireStaff();
+
+  let startedFrom: string | null = null;
+  if (startedClock) {
+    const resolved = resolveBackdatedStart(startedClock);
+    if (!resolved.ok) return { success: false, error: resolved.error };
+    startedFrom = resolved.start.clock;
+  }
 
   try {
     const { data: booking, error: readError } = await supabaseAdmin
@@ -1731,7 +1799,9 @@ export async function checkInWalkInSession(bookingId: string) {
       p_player_count: booking.walk_in_player_count || 1,
       p_included_players: Number(deviceType.included_players || 1),
       p_extra_player_charge: Number(deviceType.extra_player_charge || 0),
-      p_provisional_hours: PROVISIONAL_SESSION_HOURS
+      p_provisional_hours: PROVISIONAL_SESSION_HOURS,
+      p_started_clock: startedFrom,
+      p_max_backdate_hours: MAX_BACKDATED_START_HOURS
     });
 
     if (error) throw error;

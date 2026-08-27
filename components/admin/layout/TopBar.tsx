@@ -3,13 +3,12 @@
 import { useState, useEffect } from "react";
 import { Grid, Menu, LogOut, Shield, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { signOutAdmin } from "@/lib/auth/admin-signout";
 import { NotificationBell } from "./NotificationBell";
 import { SoundSettings } from "./SoundSettings";
-import { getUserRole, type UserRole } from "@/lib/auth/roles";
+import { getAuthUser, roleFromUser, type UserRole } from "@/lib/auth/roles";
 
 interface TopbarProps {
   onToggleSidebar?: () => void;
@@ -24,7 +23,15 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      /**
+       * One lookup, not two. This used to call `getUser()` for the name and then
+       * `getUserRole()` for the badge - and `getUserRole` reads the role off the
+       * very same user object, so the second call was a whole extra round trip to
+       * the auth server for something already in hand. Sequential, too, so the
+       * in-flight sharing in `roles.ts` could not collapse them.
+       */
+      const user = await getAuthUser();
+
       if (user) {
         setUserEmail(user.email || "");
         // Extract name from email (before @) or use full name from metadata
@@ -34,9 +41,7 @@ export function Topbar({ onToggleSidebar, onOpenSidebar }: TopbarProps) {
         setUserName(displayName);
       }
 
-      // Get user role
-      const role = await getUserRole();
-      setUserRole(role);
+      setUserRole(roleFromUser(user));
     };
     getUser();
   }, []);

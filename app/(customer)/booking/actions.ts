@@ -3,7 +3,10 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { requireVerifiedPhone } from "@/lib/auth/customer-session";
 import { BOOKING_WINDOW_ERROR, arenaToday, isBookingDateStringWithinWindow } from "@/lib/utils/dates";
-import { shiftDate, timeToMinutes } from "@/lib/payments/availability";
+import { timeToMinutes } from "@/lib/payments/availability";
+import { fetchDeviceTypeOccupancy } from "@/lib/bookings/deviceTypeOccupancy";
+import { availableStartMinutes, type DeviceTypeOccupancy } from "@/lib/bookings/slotAvailability";
+import { formatMinutesTo12Hour } from "@/lib/utils/timeSlots";
 import { createSlotHold, releaseSlotHoldRow } from "@/lib/bookings/slotHold";
 import { headers } from "next/headers";
 
@@ -12,13 +15,6 @@ export interface AddonSelection {
   name: string;
   price: number;
   quantity: number;
-}
-
-/** A held station window, in minutes from midnight of the date being checked. */
-interface OccupiedRange {
-  deviceId: string;
-  start: number;
-  end: number;
 }
 
 export interface DatabaseBookingRow {
@@ -494,8 +490,46 @@ export async function checkCustomerExists(phone: string) {
 // lib/payments/fulfil.ts, which only runs after a payment is verified.
 
 /**
- * NEW: Check flexible availability for a specific date, device type, and duration
- * Returns available start times in 30-minute intervals
+ * What is already booked for a device type on a date, for the slot picker to
+ * do its own arithmetic with.
+ *
+ * The picker used to ask `checkFlexibleAvailability` below for a finished list
+ * of free start times, and re-ask it every time the customer tried a different
+ * duration - a full round trip, and a blanked grid, to recompute something that
+ * depends on no data this does not already return. Occupancy is the same for
+ * every duration, so one call per date answers all ten.
+ */
+export async function getSlotOccupancy(
+  dateString: string,
+  deviceTypeId: string,
+  excludeBookingId?: string | null
+): Promise<
+  | { success: true; occupancy: DeviceTypeOccupancy }
+  | { success: false; error: string }
+> {
+  try {
+    // Slots are only offered inside the rolling booking window
+    if (!isBookingDateStringWithinWindow(dateString)) {
+      return { success: false, error: BOOKING_WINDOW_ERROR };
+    }
+
+    return {
+      success: true,
+      occupancy: await fetchDeviceTypeOccupancy(deviceTypeId, dateString, excludeBookingId)
+    };
+  } catch (err: any) {
+    console.error('[availability] occupancy lookup failed:', err?.message);
+    return { success: false, error: err?.message || 'Could not load availability' };
+  }
+}
+
+/**
+ * Free start times for a device type on a date, at one duration.
+ *
+ * Kept for the callers that want the answer rather than the raw data: the v1
+ * slot picker and the admin walk-in device screen. The customer picker at
+ * `/booking/slots-v2` calls `getSlotOccupancy` above and does this arithmetic in
+ * the browser, so that changing the duration costs nothing.
  */
 export async function checkFlexibleAvailability(
   dateString: string,
@@ -508,178 +542,24 @@ export async function checkFlexibleAvailability(
    */
   excludeBookingId?: string | null
 ) {
-  const requestId = Math.random().toString(36).substring(7);
-  console.log(`\n[Availability ${requestId}] ========================================`);
-  console.log(`[Availability ${requestId}] NEW REQUEST`);
-  console.log(`[Availability ${requestId}] Date: ${dateString}`);
-  console.log(`[Availability ${requestId}] Device Type: ${deviceTypeId}`);
-  console.log(`[Availability ${requestId}] Duration: ${durationMinutes} minutes`);
-
   try {
-    // Slots are only offered inside the rolling booking window
     if (!isBookingDateStringWithinWindow(dateString)) {
-      console.log(`[Availability ${requestId}] ❌ Date outside booking window - returning empty`);
-      return { success: false, error: BOOKING_WINDOW_ERROR, availableStartTimes: [] };
+      return { success: false, error: BOOKING_WINDOW_ERROR, availableStartTimes: [] as string[] };
     }
 
-    const MINUTES_PER_DAY = 24 * 60;
-
-    // Helper: Convert minutes to 12h format
-    const minutesTo12h = (mins: number): string => {
-      const hours = Math.floor(mins / 60);
-      const minutes = mins % 60;
-      const period = hours >= 12 ? 'PM' : 'AM';
-      const hour12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-      return `${hour12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${period}`;
-    };
-
-    // Step 1: Get total available devices of this type
-    const { count: totalDevices, error: devicesError } = await supabaseAdmin
-      .from("devices")
-      .select("id", { count: "exact", head: true })
-      .eq("device_type_id", deviceTypeId)
-      .eq("status", "available");
-
-    if (devicesError) throw devicesError;
-
-    const totalAvailable = totalDevices || 0;
-
-    console.log(`[Availability ${requestId}] Total devices of this type: ${totalAvailable}`);
-
-    if (totalAvailable === 0) {
-      console.log(`[Availability ${requestId}] ❌ No devices available - returning empty`);
-      console.log(`[Availability ${requestId}] ========================================\n`);
-      return {
-        success: true,
-        availableStartTimes: []
-      };
-    }
-
-    // Step 2: Get every booking for this device type that could touch this date.
-    // The neighbouring days are in range because bookings cross midnight: an
-    // overnight booking made yesterday still holds the early hours of
-    // `dateString`, and a request starting late lands on tomorrow. This is the
-    // same window `assign_device_slot` checks when it claims the station.
-    const dayBefore = shiftDate(dateString, -1);
-    const dayAfter = shiftDate(dateString, 1);
-
-    const { data: bookings, error: bookingsError } = await supabaseAdmin
-      .from("booking_device_slots")
-      .select(`
-        booking_id,
-        device_id,
-        slot_start_time,
-        slot_end_time,
-        slot_date,
-        device:devices!inner(device_type_id, status),
-        bookings!inner(status, lock_expires_at)
-      `)
-      .eq("device.device_type_id", deviceTypeId)
-      // Stations out of service are not in `totalAvailable`, so their bookings
-      // must not count against it either.
-      .eq("device.status", "available")
-      .in("slot_date", [dayBefore, dateString, dayAfter])
-      .in("bookings.status", ["locked", "confirmed", "checked_in"]);
-
-    if (bookingsError) {
-      console.error(`[Availability ${requestId}] ❌ Database error:`, bookingsError);
-      console.log(`[Availability ${requestId}] ========================================\n`);
-      throw bookingsError;
-    }
-
-    const rightNow = new Date().toISOString();
-
-    console.log(`[Availability ${requestId}] Found ${bookings?.length || 0} bookings for this device type across ${dayBefore}..${dayAfter}`);
-    if (bookings && bookings.length > 0) {
-      console.log(`[Availability ${requestId}] Sample bookings:`, bookings.slice(0, 3).map((b: any) =>
-        `${b.slot_start_time}-${b.slot_end_time} (date: ${b.slot_date}, status: ${b.bookings.status})`
-      ));
-    }
-
-    // Step 3: Normalise every booking to minutes from midnight of `dateString`.
-    // An end at or before its start has wrapped past midnight, so it is
-    // unwrapped to keep the range contiguous; the neighbouring days are then
-    // rebased onto this date's timeline, which puts yesterday's rows in
-    // negative minutes and tomorrow's beyond 1440. Overlap is then a plain
-    // comparison, with no midnight special cases left to get wrong.
-    const activeBookings = (bookings || [])
-      .filter((booking: any) => {
-        // The browser's own hold is not competition for the browser.
-        if (excludeBookingId && booking.booking_id === excludeBookingId) return false;
-
-        const bookingRecord = booking.bookings;
-        // Skip expired locks
-        if (bookingRecord.status === "locked" && bookingRecord.lock_expires_at) {
-          return new Date(bookingRecord.lock_expires_at) > new Date(rightNow);
-        }
-        return true;
-      })
-      .map((booking: any) => {
-        let start = timeToMinutes(booking.slot_start_time);
-        let end = timeToMinutes(booking.slot_end_time);
-
-        if (end <= start) end += MINUTES_PER_DAY;
-
-        if (booking.slot_date === dayBefore) {
-          start -= MINUTES_PER_DAY;
-          end -= MINUTES_PER_DAY;
-        } else if (booking.slot_date === dayAfter) {
-          start += MINUTES_PER_DAY;
-          end += MINUTES_PER_DAY;
-        }
-
-        return { deviceId: booking.device_id as string, start, end };
-      })
-      // Yesterday's bookings that finished before midnight cannot touch today
-      .filter((range: OccupiedRange) => range.end > 0);
-
-    // Step 4: Generate all possible start times (24-hour operation: 12:00 AM to 11:30 PM in 30-min intervals)
-    const availableStartTimes: string[] = [];
-
-    // 24-hour operation: check all 30-minute intervals in a day
-    for (let startMins = 0; startMins < MINUTES_PER_DAY; startMins += 30) {
-      // A request running past midnight simply extends beyond 1440 on this
-      // timeline, which is where tomorrow's rebased bookings sit.
-      const requestStart = startMins;
-      const requestEnd = startMins + durationMinutes;
-
-      // Count how many *stations* are busy during this time range. Counting
-      // rows would double-count a station holding back-to-back bookings and
-      // hide a slot that still has a free station.
-      const busyDevices = new Set<string>();
-      for (const booking of activeBookings as OccupiedRange[]) {
-        if (booking.start < requestEnd && requestStart < booking.end) {
-          busyDevices.add(booking.deviceId);
-        }
-      }
-
-      // If fewer than totalAvailable devices are busy, this slot is available
-      const isAvailable = busyDevices.size < totalAvailable;
-
-      if (isAvailable) {
-        availableStartTimes.push(minutesTo12h(startMins));
-      }
-    }
-
-    console.log(`[Availability ${requestId}] Active bookings after filtering expired: ${activeBookings.length}`);
-    console.log(`[Availability ${requestId}] ✅ RESULT: ${availableStartTimes.length} out of 48 slots available`);
-    if (availableStartTimes.length > 0) {
-      console.log(`[Availability ${requestId}] Sample available times:`, availableStartTimes.slice(0, 5));
-    }
-    console.log(`[Availability ${requestId}] ========================================\n`);
+    const occupancy = await fetchDeviceTypeOccupancy(deviceTypeId, dateString, excludeBookingId);
 
     return {
       success: true,
-      availableStartTimes,
-      totalDevices: totalAvailable
+      availableStartTimes: availableStartMinutes(occupancy, durationMinutes).map(formatMinutesTo12Hour),
+      totalDevices: occupancy.totalDevices
     };
   } catch (err: any) {
-    console.error(`[Availability ${requestId}] ❌ ERROR:`, err.message);
-    console.log(`[Availability ${requestId}] ========================================\n`);
+    console.error('[availability] lookup failed:', err?.message);
     return {
       success: false,
-      error: err.message,
-      availableStartTimes: []
+      error: err?.message || 'Could not load availability',
+      availableStartTimes: [] as string[]
     };
   }
 }

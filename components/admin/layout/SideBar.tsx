@@ -164,6 +164,24 @@ export function Sidebar({ isOpen, onToggle, onClose }: SidebarProps) {
               <Link
                 key={item.name}
                 href={item.href}
+                /**
+                 * No prefetching. All ten of these are in the viewport the
+                 * moment the shell paints, and a prefetch is a real request to
+                 * /admin/* - which the middleware matches, so each one costs a
+                 * `supabase.auth.getUser()` round trip to the auth server before
+                 * Next has even decided whether the operator will click it. Ten
+                 * of those land together on every full load of the panel, at
+                 * 270ms-1.4s each against production, competing with the
+                 * dashboard's own auth check and queries for the same
+                 * connection.
+                 *
+                 * The cost of turning it off is small here: these routes are
+                 * statically rendered, so a click fetches a cheap payload, and
+                 * the auth round trip it pays is one the real navigation owed
+                 * anyway. Persistent nav is not content the operator is about to
+                 * scroll into - it is ten guesses, of which at most one is right.
+                 */
+                prefetch={false}
                 onClick={handleNavigationClick}
                 title={!isOpen ? item.name : undefined}
               >

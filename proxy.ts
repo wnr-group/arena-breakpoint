@@ -79,8 +79,12 @@ export async function proxy(request: NextRequest) {
   }
 
   // Already signed in as staff and heading to the login page - go to the panel.
+  // Straight to the dashboard: /admin is not a page, only a server redirect to
+  // it, so sending them there would cost a second navigation and a second run of
+  // this same auth check. The login form's own success redirect targets the
+  // dashboard directly for the same reason.
   if (isLoginPage && isStaff) {
-    return NextResponse.redirect(new URL('/admin', request.url))
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url))
   }
 
   return response
