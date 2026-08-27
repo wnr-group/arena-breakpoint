@@ -27,6 +27,7 @@
     "test:midnight": "tsx scripts/verify-midnight-booking.ts",
     "test:notifications": "tsx scripts/verify-notifications.ts",
     "check:guards": "tsx scripts/check-admin-guards.ts",
+    "test:admin-auth": "tsx scripts/verify-admin-auth-calls.ts",
     "check:clock": "tsx scripts/check-arena-clock.ts",
     "test:dashboard": "tsx scripts/verify-dashboard-derivations.ts",
     "test:time-limits": "tsx scripts/verify-session-time-limits.ts",

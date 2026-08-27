@@ -15,7 +15,16 @@ import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo') || '/admin'
+  /**
+   * Straight to the dashboard, not to /admin.
+   *
+   * `/admin` is not a page - it is a server `redirect()` to this same place - so
+   * defaulting to it made every sign-in navigate twice, and both hops run the
+   * middleware's auth check. The middleware's own redirect already puts a real
+   * destination in `redirectTo` when it bounces someone, so this default is only
+   * ever used by someone arriving at the login page directly.
+   */
+  const redirectTo = searchParams.get('redirectTo') || '/admin/dashboard'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
