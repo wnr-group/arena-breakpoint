@@ -82,9 +82,25 @@ export default function HeroCarousel() {
     setPage([page + newDirection, newDirection]);
   };
 
-  // Auto-play functionality
+  /**
+   * Auto-play, but only for a tab somebody is actually looking at.
+   *
+   * Every rotation mounts a fresh <video> and hands the outgoing one to
+   * AnimatePresence to animate away. Exit animations are driven by
+   * requestAnimationFrame, which browsers freeze in a background tab - so the
+   * exit never completed, the node was never removed, and a landing page left
+   * open in another tab accumulated one video element every ten seconds with no
+   * upper bound. Measured against a production build: 10 elements growing to 14
+   * over 36 seconds and still climbing, each one holding a multi-megabyte clip.
+   *
+   * Skipping while hidden fixes that at the source, and not rotating a carousel
+   * nobody can see is right anyway - the same rule the admin notification
+   * poller follows. Returning to the tab resumes it, and any half-finished exit
+   * completes as soon as frames are being produced again.
+   */
   useEffect(() => {
     const timer = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
       paginate(1);
     }, 10000);
 

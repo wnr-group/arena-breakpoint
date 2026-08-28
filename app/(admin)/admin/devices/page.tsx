@@ -49,13 +49,22 @@ export default function DevicesPage() {
     }
   };
 
+  /**
+   * Both reads at once.
+   *
+   * The device types were awaited before the devices were even asked for, which
+   * read as a dependency and never was one - the inventory query does not use
+   * the type list, it is only wanted for the filter tabs beside it. So opening
+   * this page paid two round trips end to end, and on a database any distance
+   * away that is the whole of the wait.
+   */
   useEffect(() => {
     async function loadData() {
-      const types = await getDeviceTypes();
+      const [types] = await Promise.all([getDeviceTypes(), fetchFreshDevices()]);
       setDeviceTypes(types);
-      await fetchFreshDevices();
     }
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // --- DATA FILTER MATRIX ---

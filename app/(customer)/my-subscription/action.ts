@@ -105,12 +105,14 @@ export interface ActivePlanSummary {
  * status `active`, and an end date that has not passed on the arena's calendar.
  * If those ever disagreed, the plan a customer is shown would not be the plan
  * their bookings are discounted by.
+ *
+ * Takes the number rather than reading the session, so a caller that has just
+ * resolved it does not pay for a second lookup. Not exported for that reason:
+ * the phone is trusted here, and a Server Function taking one would let anyone
+ * POST somebody else's. `getMyActivePlanSummary` below is the public way in.
  */
-export async function getMyActivePlanSummary(): Promise<ActivePlanSummary | null> {
+async function activePlanForPhone(phone: string): Promise<ActivePlanSummary | null> {
   try {
-    const phone = await getVerifiedCustomerPhone()
-    if (!phone) return null
-
     const { data: customer } = await supabaseAdmin
       .from('customers')
       .select('active_subscription_id')
@@ -146,8 +148,61 @@ export async function getMyActivePlanSummary(): Promise<ActivePlanSummary | null
     }
   } catch (err) {
     // A banner is not worth failing the plans page over.
+    console.error('activePlanForPhone error:', err)
+    return null
+  }
+}
+
+/**
+ * The membership the caller already holds, resolved from their own session.
+ *
+ * The session lookup is inside the try as well as the query. This is awaited
+ * during the render of the subscription page, so a throwing cookie read here
+ * would take the whole page down rather than just dropping the banner it
+ * feeds - which is the opposite of what a decorative banner should do.
+ */
+export async function getMyActivePlanSummary(): Promise<ActivePlanSummary | null> {
+  try {
+    const phone = await getVerifiedCustomerPhone()
+    if (!phone) return null
+    return await activePlanForPhone(phone)
+  } catch (err) {
     console.error('getMyActivePlanSummary error:', err)
     return null
+  }
+}
+
+/** Everything the header control needs to draw itself. */
+export interface CustomerHeaderState {
+  /** The verified number, or null when this browser holds no session. */
+  phone: string | null
+  /** Their membership, or null for none - and always null without a session. */
+  plan: ActivePlanSummary | null
+}
+
+/**
+ * Session and membership in one request.
+ *
+ * The header used to ask for these as two Server Functions side by side, and it
+ * asks on every route change - so every navigation in the customer app, down to
+ * a page of static legal text, cost two round trips. Worse, each one resolved
+ * the session cookie independently, so the same validation ran twice to answer
+ * one question.
+ *
+ * One call, one session lookup. The plan is only read once the session has
+ * produced a number, which is also what stops a membership being shown to a
+ * browser whose session has since lapsed.
+ */
+export async function getCustomerHeaderState(): Promise<CustomerHeaderState> {
+  try {
+    const phone = await getVerifiedCustomerPhone()
+    if (!phone) return { phone: null, plan: null }
+
+    return { phone, plan: await activePlanForPhone(phone) }
+  } catch (err) {
+    // The header is decoration; it must never take the page down with it.
+    console.error('getCustomerHeaderState error:', err)
+    return { phone: null, plan: null }
   }
 }
 

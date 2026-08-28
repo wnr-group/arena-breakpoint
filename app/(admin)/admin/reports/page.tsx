@@ -125,11 +125,20 @@ export default function AdminReportsPage() {
     });
   }, [router]);
 
+  /**
+   * One effect for every input the report query actually depends on.
+   *
+   * The date range used to drive a second effect of its own, so opening this
+   * page ran the whole report twice - once because the tab resolved and once
+   * because the range did. That second effect also had no access check, so a
+   * staff account without reports access issued a query it was never allowed
+   * to read on its way to being redirected.
+   */
   useEffect(() => {
-    if (hasAccess) {
-      loadData();
-    }
-  }, [activeTab, hasAccess]);
+    if (!hasAccess) return;
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, hasAccess, dateFrom, dateTo]);
 
   const loadData = async () => {
     // Never query on a range the user has been told is invalid
@@ -245,10 +254,6 @@ export default function AdminReportsPage() {
     }
   };
 
-  // Auto-load when quick filter changes
-  useEffect(() => {
-    loadData();
-  }, [dateFrom, dateTo]);
 
   const tabs = [
     { id: "overview", label: "Overview", icon: BarChart3 },

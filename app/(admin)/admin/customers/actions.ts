@@ -28,11 +28,34 @@ interface DBSubscriptionPlan {
 export async function getLiveCustomerRegistryAction() {
   await requireStaff();
 
-  const { data: customersData, error: customerError } = await supabaseAdmin
-    .from("customers")
-    .select("id, name, phone, email, date_of_birth,created_at")
-    .order("name", { ascending: true });
+  /**
+   * Three reads, together rather than one after the other.
+   *
+   * They ran in series, which read as a dependency chain but never was one:
+   * neither the subscriptions query nor the plans query is filtered by anything
+   * the customers query returns - they fetch the whole table and are joined in
+   * JS below. So the page was paying three round trips end to end for three
+   * questions that could all have been asked at once.
+   */
+  const [
+    { data: customersData, error: customerError },
+    { data: subscriptionsData, error: subscriptionsError },
+    { data: plansData, error: plansError },
+  ] = await Promise.all([
+    supabaseAdmin
+      .from("customers")
+      .select("id, name, phone, email, date_of_birth,created_at")
+      .order("name", { ascending: true }),
 
+    supabaseAdmin
+      .from("subscriptions")
+      .select("id, customer_id, subscription_plan_id, status, end_date"),
+
+    supabaseAdmin.from("subscription_plans").select("id, name"),
+  ]);
+
+  // Reported in the same order as before, so the message a failure produces is
+  // unchanged.
   if (customerError) {
     return { data: [], error: customerError.message };
   }
@@ -41,19 +64,9 @@ export async function getLiveCustomerRegistryAction() {
     return { data: [], error: null };
   }
 
-  // 2. Fetch records from subscriptions table
-  const { data: subscriptionsData, error: subscriptionsError } = await supabaseAdmin
-    .from("subscriptions")
-    .select("id, customer_id, subscription_plan_id, status, end_date");
-
   if (subscriptionsError) {
     return { data: [], error: subscriptionsError.message };
   }
-
-  // 3. Fetch descriptions from the subscription_plans table
-  const { data: plansData, error: plansError } = await supabaseAdmin
-    .from("subscription_plans")
-    .select("id, name");
 
   if (plansError) {
     return { data: [], error: plansError.message };

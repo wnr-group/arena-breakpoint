@@ -99,7 +99,17 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - static media, fonts and the manifest
+     *
+     * The media and font extensions are excluded because this middleware ends
+     * in an unconditional getUser(), which is a round trip to the auth server.
+     * A <video> is fetched as a run of range requests, so every one of them was
+     * paying for an auth lookup that decides nothing: the redirect below only
+     * ever fires for /admin, and that is matched by its own entry above
+     * whatever the extension. On the dev server the same requests were also
+     * coming back 503 and being retried, which is what put a burst of failed
+     * video requests on the landing page.
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|mp4|webm|mp3|wav|woff|woff2|ttf|otf)$).*)',
   ],
 }

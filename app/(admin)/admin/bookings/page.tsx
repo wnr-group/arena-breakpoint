@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition, Fragment } from "react";
+import { useState, useEffect, useRef, useTransition, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,18 @@ export default function AdminBookingsPage() {
   const debouncedSearch = useDebounce(searchQuery, 300); // Debounce search by 300ms
   const [activeStatusFilter, setActiveStatusFilter] = useState("all");
   const [attentionCount, setAttentionCount] = useState(0);
+
+  /**
+   * When the last tab-return resync ran.
+   *
+   * Returning to this screen fires both listeners below: "focus" catches an
+   * alt-tab back into the browser, "visibilitychange" catches a switch between
+   * tabs. They are complementary - neither alone covers both - but a plain
+   * tab switch raises the two together, which re-read the whole screen twice.
+   * Ignoring a second resync that lands in the same instant keeps both
+   * triggers and pays for the reads once.
+   */
+  const lastResyncRef = useRef(0);
 
   /** The attention tab is a cross-status view, not one of the status filters. */
   const isAttentionTab = activeStatusFilter === "attention";
@@ -209,13 +221,19 @@ export default function AdminBookingsPage() {
     loadBookings();
   }, [debouncedSearch, activeStatusFilter, dateFrom, dateTo]);
 
-  // Kept in step with the tabs so the badge is right even while another tab is
-  // open - a count that only appears once you click it is no use as a warning.
+  /**
+   * Kept in step with the tabs so the badge is right even while another tab is
+   * open - a count that only appears once you click it is no use as a warning.
+   *
+   * Deliberately not keyed on the bookings array. Every list load replaces it
+   * with a fresh reference, so keying on it re-ran this after *every* fetch -
+   * including a status-tab switch, which cannot change a cross-status count.
+   * Mount seeds it; refreshAll() re-reads it after anything that can move it.
+   */
   useEffect(() => {
-    getAttentionBookings().then((result) => {
-      if (result.success) setAttentionCount(result.bookings.length);
-    });
-  }, [bookings]);
+    loadAttention();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * The status counts are scoped to the date range, not to the status tab.
@@ -230,7 +248,7 @@ export default function AdminBookingsPage() {
    */
   useEffect(() => {
     loadStats();
-  }, [dateFrom, dateTo, bookings]);
+  }, [dateFrom, dateTo]);
 
   /**
    * Re-sync when the tab comes back to the front.
@@ -243,8 +261,10 @@ export default function AdminBookingsPage() {
   useEffect(() => {
     const resync = () => {
       if (document.visibilityState !== "visible") return;
-      loadBookings();
-      loadStats();
+      const now = Date.now();
+      if (now - lastResyncRef.current < 1000) return;
+      lastResyncRef.current = now;
+      refreshAll();
     };
 
     window.addEventListener("focus", resync);
@@ -294,13 +314,32 @@ export default function AdminBookingsPage() {
     }
   };
 
+  const loadAttention = async () => {
+    const result = await getAttentionBookings();
+    if (result.success) setAttentionCount(result.bookings.length);
+  };
+
+  /**
+   * Everything this screen shows, re-read once and in parallel.
+   *
+   * The list, the status tiles and the attention badge are three independent
+   * reads that every mutation invalidates together. They used to be fired as
+   * a pair of calls plus a cascade off the bookings array, which re-requested
+   * the tiles twice for one check-in. Naming the set makes the cost of a
+   * mutation one round of three parallel reads instead of four serial ones.
+   */
+  const refreshAll = () => {
+    void loadBookings();
+    void loadStats();
+    void loadAttention();
+  };
+
   const handleApplyFilters = () => {
     if (dateRangeError) {
       toast.error("Invalid date range", { description: dateRangeError });
       return;
     }
-    loadBookings();
-    loadStats();
+    refreshAll();
   };
 
   const handleFilterChange = (status: string) => {
@@ -309,8 +348,7 @@ export default function AdminBookingsPage() {
   };
 
   const handleRefresh = () => {
-    loadBookings();
-    loadStats();
+    refreshAll();
     toast.success("Refreshed", { description: "Bookings data reloaded" });
   };
 
@@ -318,8 +356,7 @@ export default function AdminBookingsPage() {
     setSelectedBooking(null);
     setOpenFoodModal(false);
     // Reload data when closing booking detail modal
-    loadBookings();
-    loadStats();
+    refreshAll();
   };
 
   /**
@@ -368,8 +405,7 @@ export default function AdminBookingsPage() {
 
         setCancelTarget(null);
         setCancelReason("");
-        loadBookings();
-        loadStats();
+        refreshAll();
       } else {
         toast.error("Cancellation failed", { description: result.error });
       }
@@ -407,8 +443,7 @@ export default function AdminBookingsPage() {
         toast.success(`Refund recorded for ${booking.booking_number}`, {
           description: `₹${formatCurrency(Number(result.refundedAmount || 0))} marked as returned.`
         });
-        loadBookings();
-        loadStats();
+        refreshAll();
       } else {
         toast.error("Could not record the refund", { description: result.error });
       }
@@ -427,8 +462,7 @@ export default function AdminBookingsPage() {
               `Station ${result.stationNumber} · billing starts ` +
               `${formatClockTime12h(result.checkedInAt!)}`
           });
-          loadBookings();
-          loadStats();
+          refreshAll();
         } else {
           toast.error("Check-in failed", { description: result.error });
         }
@@ -461,8 +495,7 @@ export default function AdminBookingsPage() {
         toast.success("Customer checked in successfully", {
           description: `Booking ${bookingNumber} is now active`
         });
-        loadBookings();
-        loadStats();
+        refreshAll();
       } else {
         toast.error("Check-in failed", { description: result.error });
       }
@@ -479,8 +512,7 @@ export default function AdminBookingsPage() {
           toast.success(`Checked out — ${result.durationLabel} played`, {
             description: `Billed ₹${Number(result.totalAmount).toFixed(2)}. Settle payment from Checkout & Billing.`
           });
-          loadBookings();
-          loadStats();
+          refreshAll();
         } else {
           toast.error("Check-out failed", { description: result.error });
         }
@@ -537,8 +569,7 @@ export default function AdminBookingsPage() {
         toast.success("Customer checked out successfully", {
           description: `Booking ${bookingNumber} is now completed`
         });
-        loadBookings();
-        loadStats();
+        refreshAll();
       } else {
         toast.error("Check-out failed", { description: result.error });
       }
@@ -618,8 +649,7 @@ export default function AdminBookingsPage() {
           setOpenCheckoutModal(true);
         }
 
-        loadBookings();
-        loadStats();
+        refreshAll();
       } else {
         toast.error("Failed to mark as paid", { description: result.error });
       }
@@ -1509,8 +1539,7 @@ export default function AdminBookingsPage() {
         open={!!selectedBooking}
         onClose={handleBookingDetailClose}
         onUpdate={() => {
-          loadBookings();
-          loadStats();
+          refreshAll();
         }}
         openFoodModalDirectly={openFoodModal}
         onPendingPayment={(bookingId, balanceDue, bookingNumber) => {
@@ -1789,8 +1818,7 @@ export default function AdminBookingsPage() {
           setCheckoutBookingId(null);
         }}
         onSuccess={() => {
-          loadBookings();
-          loadStats();
+          refreshAll();
         }}
       />
     </div>

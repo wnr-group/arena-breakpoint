@@ -96,34 +96,6 @@ export default function CustomerDetailsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /**
-   * Resume an existing login instead of asking for the number again.
-   *
-   * The session check used to run only after the customer typed their number
-   * and pressed continue, so someone already signed in was still made to enter
-   * it - the session saved them the OTP but not the typing. Checking on mount
-   * means a signed-in customer goes straight to the booking summary.
-   */
-  useEffect(() => {
-    let cancelled = false;
-
-    checkActiveSessionAction().then(async (session) => {
-      if (cancelled || !session.isValid || !session.phone) {
-        if (!cancelled) setResumingSession(false);
-        return;
-      }
-
-      setMobileNumber(session.phone);
-      await proceedAfterPhoneVerification(session.phone);
-      if (!cancelled) setResumingSession(false);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-    // Runs once on mount; proceedAfterPhoneVerification is stable enough here.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Force scroll to top on mount and step changes to prevent landing at the bottom/footer
   useEffect(() => {
