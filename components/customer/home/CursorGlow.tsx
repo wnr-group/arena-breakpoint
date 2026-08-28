@@ -22,15 +22,42 @@ export function CursorGlow() {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const onMove = (event: MouseEvent) => {
+    let frame = 0
+    let x = 0
+    let y = 0
+
+    /**
+     * Coalesced to one write per frame.
+     *
+     * `mousemove` fires as fast as the pointer reports - 125Hz on an ordinary
+     * gaming mouse, more on a trackpad - while the screen can only show one
+     * position per frame. Writing on every event meant several style
+     * recalculations per painted frame, all but the last of them discarded
+     * before anybody saw them. Storing the position and writing it inside a
+     * frame gives the same glow for a fraction of the work.
+     */
+    const paint = () => {
+      frame = 0
       const el = ref.current
       if (!el) return
-      el.style.setProperty('--cursor-x', `${event.clientX}px`)
-      el.style.setProperty('--cursor-y', `${event.clientY}px`)
+      el.style.setProperty('--cursor-x', `${x}px`)
+      el.style.setProperty('--cursor-y', `${y}px`)
+    }
+
+    const onMove = (event: MouseEvent) => {
+      x = event.clientX
+      y = event.clientY
+      // Only schedule when no frame is already pending, so a burst of events
+      // between two paints costs one callback rather than one each.
+      if (!frame) frame = requestAnimationFrame(paint)
     }
 
     window.addEventListener('mousemove', onMove, { passive: true })
-    return () => window.removeEventListener('mousemove', onMove)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      // A frame still queued after unmount would run against a detached ref.
+      if (frame) cancelAnimationFrame(frame)
+    }
   }, [])
 
   return (
