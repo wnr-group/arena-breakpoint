@@ -44,10 +44,25 @@ function describeAvailability(status: string): string {
   }
 }
 
-export default function DevicePage() {
-  const [devicesArray, setDevicesArray] = useState<any[]>([]);
-  const [isLoadingData, setIsLoadingData] = useState(true);
+/**
+ * Seeded by the landing page, which reads the stations on the server so the
+ * grid arrives in the markup instead of after a round trip that could not even
+ * begin until the bundle had hydrated.
+ *
+ * Optional because this file is also a route of its own (/home/device). Opened
+ * directly there are no props, and it fetches for itself exactly as it did
+ * before.
+ */
+interface DevicePageProps {
+  initialDevices?: any[];
+}
+
+export default function DevicePage({ initialDevices }: DevicePageProps = {}) {
+  const [devicesArray, setDevicesArray] = useState<any[]>(initialDevices ?? []);
+  // Nothing is loading when the server already sent the answer.
+  const [isLoadingData, setIsLoadingData] = useState(!initialDevices);
   const videoRef = React.useRef<HTMLVideoElement>(null);
+  const sectionRef = React.useRef<HTMLElement>(null);
 
   const fetchFreshDevices = async () => {
     setIsLoadingData(true);
@@ -62,25 +77,76 @@ export default function DevicePage() {
   };
 
   useEffect(() => {
+    // Already seeded from the server - re-reading it here would be exactly the
+    // round trip this page was changed to avoid.
+    if (initialDevices) return;
     fetchFreshDevices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /**
+   * The background clip: two seconds of it, and not a byte before it is seen.
+   *
+   * It plays a moment and freezes, so it is really an animated still - which is
+   * why it was safe to stop the browser preloading it. `preload="none"` means
+   * nothing is requested until `load()`, and that only happens once this
+   * section is near the viewport.
+   *
+   * `play()` is allowed without a gesture because the element is muted; if a
+   * browser refuses anyway the catch leaves a still first frame, which is what
+   * this is for in the first place.
+   */
   useEffect(() => {
     const video = videoRef.current;
-    if (video) {
-      const handleTimeUpdate = () => {
-        if (video.currentTime >= 2) {
-          video.pause();
-        }
-      };
+    const target = sectionRef.current;
+    // Both guards up here: bailing out after the listener below was attached
+    // would leave it attached with no cleanup to remove it.
+    if (!video || !target) return;
 
-      video.addEventListener('timeupdate', handleTimeUpdate);
-      return () => video.removeEventListener('timeupdate', handleTimeUpdate);
-    }
+    const handleTimeUpdate = () => {
+      if (video.currentTime >= 2) {
+        video.pause();
+      }
+    };
+    video.addEventListener('timeupdate', handleTimeUpdate);
+
+    /**
+     * The section is what gets watched, not the video.
+     *
+     * On desktop the CSS above pins the video with `position: fixed`, so its
+     * own rect is always the viewport - observing it would report "visible"
+     * immediately and load the file at once, which is the behaviour this is
+     * meant to remove. The section is in normal flow and is the honest
+     * question: has the reader reached this part of the page.
+     *
+     * The negative bottom margin pulls the root's lower edge up, so the
+     * section has to be genuinely scrolled into rather than merely touching
+     * the fold - it begins directly under a full-height hero, so a zero or
+     * positive margin would match at the top of the page and defer nothing.
+     * Expressed in pixels rather than a threshold so it does not depend on
+     * how tall the section happens to be.
+     */
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        observer.disconnect();
+        video.load();
+        video.play().catch(() => {
+          /* A still frame is an acceptable outcome; see above. */
+        });
+      },
+      { rootMargin: '0px 0px -200px 0px' }
+    );
+    observer.observe(target);
+
+    return () => {
+      observer.disconnect();
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+    };
   }, []);
 
   return (
-    <section id="features" className="relative min-h-screen py-24 overflow-hidden">
+    <section ref={sectionRef} id="features" className="relative min-h-screen py-24 overflow-hidden">
       <style jsx>{`
         @media (min-width: 769px) {
           .video-container video {
@@ -95,13 +161,22 @@ export default function DevicePage() {
 
       {/* BG video — PS5 hero with parallax effect on desktop */}
       <div className="video-container absolute inset-0" style={{ zIndex: 0 }}>
+        {/*
+          * No `autoPlay` and `preload="none"`: this section sits below the fold,
+          * and the browser was fetching 3.9MB of video for it before the customer
+          * had seen anything at all. The effect below starts it when it actually
+          * scrolls into view - it still plays, and still freezes after two
+          * seconds, exactly as before.
+          *
+          * `poster` is deliberately absent: public/ps5_hero_poster.jpg is a
+          * zero-byte file, so the attribute only bought a request that resolved
+          * to a broken image. Drop a real frame in and put it back.
+          */}
         <video
           ref={videoRef}
-          autoPlay
           muted
           playsInline
-          preload="metadata"
-          poster="/ps5_hero_poster.jpg"
+          preload="none"
           className="absolute inset-0 w-full h-full object-cover"
         >
           <source src="/ps5_hero.mp4" type="video/mp4" />

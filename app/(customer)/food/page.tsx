@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { getMenuItems, getMenuCategories } from "./actions";
+import { getMenuItems } from "./actions";
 import {
   Search,
   ShoppingCart,
@@ -88,15 +88,34 @@ function FoodMenuPageContent() {
     loadMenuData();
   }, []);
 
+  /**
+   * One read, not two.
+   *
+   * The categories used to come from `getMenuCategories`, which queries the
+   * same table with the same `status = available` filter and returns the
+   * `category` column - a column already present on every row the menu request
+   * beside it just fetched with `select("*")`. Two round trips, and the second
+   * could only ever agree with the first.
+   *
+   * Derived here instead, sorted the same way the action sorted it so the
+   * filter bar keeps its order.
+   */
   const loadMenuData = async () => {
     setLoading(true);
-    const [menuResult, categoriesResult] = await Promise.all([
-      getMenuItems({ availableOnly: true }),
-      getMenuCategories(),
-    ]);
+    const menuResult = await getMenuItems({ availableOnly: true });
 
-    if (menuResult.success) setMenuItems(menuResult.menuItems);
-    if (categoriesResult.success) setCategories(categoriesResult.categories);
+    if (menuResult.success) {
+      setMenuItems(menuResult.menuItems);
+      setCategories(
+        Array.from(
+          new Set(
+            (menuResult.menuItems as any[])
+              .map((item) => item.category)
+              .filter(Boolean)
+          )
+        ).sort() as string[]
+      );
+    }
     setLoading(false);
   };
 

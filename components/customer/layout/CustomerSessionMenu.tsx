@@ -4,14 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Award, ChevronDown, LogOut, UserCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  checkActiveSessionAction,
-  signOutCustomerAction,
-} from "@/app/(customer)/booking/otp-actions";
-import {
-  getMyActivePlanSummary,
-  type ActivePlanSummary,
-} from "@/app/(customer)/my-subscription/action";
+import { signOutCustomerAction } from "@/app/(customer)/booking/otp-actions";
+import { getCustomerHeaderStateShared } from "@/lib/auth/customer-session-client";
+import type { ActivePlanSummary } from "@/app/(customer)/my-subscription/action";
 
 /**
  * Who is signed in, what they are a member of, and the way out.
@@ -57,18 +52,19 @@ export function CustomerSessionMenu({ compact = false }: { compact?: boolean }) 
   useEffect(() => {
     let cancelled = false;
 
-    // Asked together rather than one after the other. This runs on every route
-    // change, and `getMyActivePlanSummary` resolves the caller from the session
-    // itself - it does not need the answer from the first call - so chaining
-    // them would put two sequential round trips in front of every navigation.
-    Promise.all([checkActiveSessionAction(), getMyActivePlanSummary()])
-      .then(([session, active]) => {
+    // One request, not two. This runs on every route change - a static legal
+    // page included - and it used to ask for the session and the membership as
+    // two Server Functions side by side. Each resolved the session cookie
+    // separately, so one question cost two round trips and two validations.
+    // `getCustomerHeaderState` answers both from a single session lookup.
+    getCustomerHeaderStateShared()
+      .then((state) => {
         if (cancelled) return;
-        const signedIn = session.isValid && session.phone ? session.phone : null;
-        setPhone(signedIn);
-        // A membership without a live session is not shown; the control itself
-        // renders nothing in that case anyway.
-        setPlan(signedIn ? active : null);
+        setPhone(state.phone);
+        // A membership without a live session is not shown; the server already
+        // returns null for the plan in that case, and the control itself
+        // renders nothing without a number.
+        setPlan(state.phone ? state.plan : null);
       })
       .catch(() => {
         if (!cancelled) {

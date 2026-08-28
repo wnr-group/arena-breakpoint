@@ -10,6 +10,11 @@ import {
   getOccupancyByDevice,
   getOccupiedDeviceIds,
 } from "@/lib/devices/occupancy";
+import {
+  effectivePaidAt,
+  mergeBookingRows,
+  revenueWindowStart,
+} from "@/lib/reports/revenueWindow";
 
 /**
  * Everything the dashboard needs on load, in one call.
@@ -54,9 +59,19 @@ export async function getDashboardData() {
     const currentTime = arenaClockTime(now);
     const twoHoursTime = arenaClockTime(twoHoursLater);
 
+    /**
+     * How far back the two reads below ask for rows.
+     *
+     * Deliberately wider than the seven days the figures report on - see
+     * REVENUE_WINDOW_SLACK_DAYS. The loop further down is still what decides
+     * what counts, so the extra days can only be filtered out, never added.
+     */
+    const revenueWindow = revenueWindowStart(sevenDaysAgo);
+
     const [
       { data: todaySlots, error: slotsError },
-      { data: paidBookings, error: paymentsError },
+      { data: touchedInWindow, error: paymentsError },
+      { data: settledInWindow, error: settledError },
       { data: devices, error: devicesError },
       occupancy,
       { data: recentBookings, error: recentError },
@@ -99,11 +114,29 @@ export async function getDashboardData() {
 
 
 
-      // Everything settled or part-settled. Filtered to today and to the week
-      // below - the same rows answer both, so they are fetched once.
+      /**
+       * Everything settled or part-settled inside the window, in two reads.
+       *
+       * This was one unbounded query: every settled booking the arena has ever
+       * taken, fetched on every dashboard load so the loop below could discard
+       * all but the last seven days of it.
+       *
+       * It cannot be bounded on `created_at`, because a booking is not always
+       * settled on the day it is made - one raised last month and paid this
+       * morning belongs in this week's figure. The date that decides is
+       * `effectivePaidAt`, and for a booking paid through a payment group that
+       * date is on `payment_groups`, not on the booking at all. No single
+       * PostgREST filter spans both tables, so each route in is read on its own
+       * and the two are merged.
+       *
+       * (a) touched inside the window - covers every booking with no payment
+       *     group, which today is all of them, and any whose group is still
+       *     pending.
+       */
       supabaseAdmin
         .from("bookings")
         .select(`
+          id,
           amount_paid,
           payment_status,
           created_at,
@@ -111,7 +144,28 @@ export async function getDashboardData() {
           payment_groups(paid_at)
         `)
         .in("payment_status", ["paid", "partial"])
-        .neq("status", "cancelled"),
+        .neq("status", "cancelled")
+        .gte("updated_at", revenueWindow),
+
+      /**
+       * (b) settled inside the window by a payment group, however long ago the
+       *     booking row itself was last touched. `!inner` is what lets the
+       *     filter reach the joined table; without it the condition is ignored
+       *     and this would read the whole table back.
+       */
+      supabaseAdmin
+        .from("bookings")
+        .select(`
+          id,
+          amount_paid,
+          payment_status,
+          created_at,
+          updated_at,
+          payment_groups!inner(paid_at)
+        `)
+        .in("payment_status", ["paid", "partial"])
+        .neq("status", "cancelled")
+        .gte("payment_groups.paid_at", revenueWindow),
 
       // Device availability. Every device, not just the ones stored as
       // "available" - a station in use still has that stored value, so the
@@ -174,15 +228,31 @@ export async function getDashboardData() {
       .filter((slot) => ["confirmed", "checked_in"].includes(slot.bookings?.status))
       .sort((a, b) => String(a.slot_start_time).localeCompare(String(b.slot_start_time)));
 
+    /**
+     * The two reads folded into one set.
+     *
+     * Merged on the row id rather than concatenated: a booking that was both
+     * settled and touched inside the window comes back from both queries, and
+     * counting it twice would inflate the takings.
+     */
+    const paidBookings = mergeBookingRows(
+      touchedInWindow as { id: string }[] | null,
+      settledInWindow as { id: string }[] | null
+    );
+
     // One pass over the paid set for both windows; `paid_at` falls back the same
     // way it always has, so a booking with no payment group still counts.
     let todaysRevenue = 0;
     let thisWeekRevenue = 0;
 
-    if (!paymentsError && paidBookings) {
+    /**
+     * Either read failing zeroes both figures, which is what a single failing
+     * query did before. Reporting the half that succeeded would be worse than
+     * reporting nothing: an understated takings figure reads as real.
+     */
+    if (!paymentsError && !settledError) {
       for (const booking of paidBookings as any[]) {
-        const paidAt =
-          booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
+        const paidAt = effectivePaidAt(booking);
         if (!paidAt) continue;
 
         const day = paidAt.split("T")[0];
@@ -335,9 +405,16 @@ export async function getTodaysRevenueDetails() {
   try {
     const today = arenaToday();
 
-    const { data, error } = await supabaseAdmin
-      .from("bookings")
-      .select(`
+    /**
+     * Same two-read shape as the dashboard tile this list sits behind, and for
+     * the same reason: unbounded, it read every settled booking the arena has
+     * ever taken so that the filter below could keep one day of it.
+     *
+     * The column list is built once and shared, so the two reads cannot drift
+     * apart - they must return the same shape to be merged.
+     */
+    const revenueWindow = revenueWindowStart(today);
+    const columns = (paymentGroups: string) => `
         id,
         booking_number,
         customer_name,
@@ -364,16 +441,44 @@ export async function getTodaysRevenueDetails() {
           device_type,
           device_station_number
         ),
-        payment_groups(paid_at)
-      `)
-      .in("payment_status", ["paid", "partial"])
-      .neq("status", "cancelled");
+        ${paymentGroups}(paid_at)
+      `;
 
-    if (error) throw error;
+    const [
+      { data: touchedInWindow, error: touchedError },
+      { data: settledInWindow, error: settledError },
+    ] = await Promise.all([
+      // Touched inside the window - every booking with no payment group.
+      supabaseAdmin
+        .from("bookings")
+        .select(columns("payment_groups"))
+        .in("payment_status", ["paid", "partial"])
+        .neq("status", "cancelled")
+        .gte("updated_at", revenueWindow),
+
+      // Settled inside the window by a payment group, whenever the booking row
+      // itself was last touched. `!inner` is what lets the filter reach it.
+      supabaseAdmin
+        .from("bookings")
+        .select(columns("payment_groups!inner"))
+        .in("payment_status", ["paid", "partial"])
+        .neq("status", "cancelled")
+        .gte("payment_groups.paid_at", revenueWindow),
+    ]);
+
+    if (touchedError) throw touchedError;
+    if (settledError) throw settledError;
+
+    // Merged on the row id: a booking both settled and touched inside the
+    // window comes back from both reads, and this list must not show it twice.
+    const data = mergeBookingRows(
+      touchedInWindow as { id: string }[] | null,
+      settledInWindow as { id: string }[] | null
+    );
 
     // Filter by payment date being today (using paid_at, updated_at, or created_at)
     const filteredBookings = (data || []).filter((booking: any) => {
-      const paidAt = booking.payment_groups?.paid_at || booking.updated_at || booking.created_at;
+      const paidAt = effectivePaidAt(booking);
       if (!paidAt) return false;
       return paidAt.split('T')[0] === today;
     });

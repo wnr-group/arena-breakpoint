@@ -526,10 +526,14 @@ export async function getSlotOccupancy(
 /**
  * Free start times for a device type on a date, at one duration.
  *
- * Kept for the callers that want the answer rather than the raw data: the v1
- * slot picker and the admin walk-in device screen. The customer picker at
- * `/booking/slots-v2` calls `getSlotOccupancy` above and does this arithmetic in
- * the browser, so that changing the duration costs nothing.
+ * Currently unused, and kept only as the server-side equivalent of what the
+ * pickers now do in the browser.
+ *
+ * Both former callers - the customer picker at `/booking/slots-v2` and the
+ * admin walk-in device screen - moved to `getSlotOccupancy` above and run
+ * `availableStartMinutes` themselves, so that changing the duration costs no
+ * round trip at all. Anything reaching for this should ask whether it wants
+ * the occupancy instead.
  */
 export async function checkFlexibleAvailability(
   dateString: string,

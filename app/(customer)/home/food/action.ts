@@ -1,32 +1,15 @@
 "use server"
 
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { fetchMenu } from "@/lib/home/menu"
 
+/**
+ * The browser's way in to the customer menu.
+ *
+ * See `getDevices` in ../device/action.ts - the query lives in `lib/home/menu.ts`
+ * so the landing page can await it while rendering on the server, and this
+ * wrapper stays for the standalone /home/food route, which fetches it from the
+ * client.
+ */
 export async function getMenuItems() {
-  try {
-    const { data, error } = await supabaseAdmin
-      .from("menu_items")
-      .select("*")
-      .eq("status", "available")
-      // Stock as well as status. The trigger on menu_items keeps the two in step,
-      // so this is saying the same thing twice - deliberately, because it is the
-      // count that decides whether the kitchen can actually serve it, and this
-      // query should not start offering sold-out food on a database where that
-      // trigger has not been applied yet.
-      .gt("quantity", 0)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    return {
-      success: true,
-      menuItems: data || []
-    };
-  } catch (err: any) {
-    return {
-      success: false,
-      error: err.message,
-      menuItems: []
-    };
-  }
+  return fetchMenu()
 }

@@ -14,15 +14,22 @@ import { ActivePlanBanner } from '@/components/customer/subscription/ActivePlanB
 export const dynamic = 'force-dynamic'
 
 export default async function SubscriptionPage() {
-  const response = await getPublicSubscriptionPlans()
-  const plansData = response.success && response.data ? response.data : []
-
   /**
-   * Resolved from the session on the server, so a signed-in customer is told
-   * what they already hold before being sold anything else. Null covers both
-   * "no membership" and "not signed in", and the banner does not render.
+   * Two independent reads, so they go out together.
+   *
+   * Awaited one after the other this page paid two auth round trips end to end
+   * before it could render a single plan; neither call feeds the other.
+   *
+   * activePlan is resolved from the session on the server, so a signed-in
+   * customer is told what they already hold before being sold anything else.
+   * Null covers both "no membership" and "not signed in", and the banner does
+   * not render.
    */
-  const activePlan = await getMyActivePlanSummary()
+  const [response, activePlan] = await Promise.all([
+    getPublicSubscriptionPlans(),
+    getMyActivePlanSummary(),
+  ])
+  const plansData = response.success && response.data ? response.data : []
 
   return (
     <main className="min-h-screen bg-[#0d0a14] text-white font-sans pt-12 pb-8 px-0 sm:px-6 lg:px-8 mt-5 relative overflow-hidden">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, useInView, AnimatePresence, Variants } from 'framer-motion';
 import { Loader2 } from "lucide-react";
 import { FoodCard } from '@/components/customer/home/food/FoodCard';
@@ -32,52 +32,93 @@ const skewInVariants: Variants = {
   visible: { opacity: 1, skewY: 0, y: 0, transition: { duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] } },
 };
 
+/** What `getMenuItems` hands back. */
+type MenuResult = { success: boolean; menuItems?: any[]; error?: string };
+
+interface FoodCollectionProps {
+  /**
+   * Seeded by the landing page, which reads the menu on the server so the
+   * cards arrive in the markup rather than after a round trip that could not
+   * start until the bundle had hydrated.
+   *
+   * Optional because this file is also a route of its own (/home/food), where
+   * there are no props and it fetches for itself exactly as it did before.
+   */
+  initialMenu?: MenuResult;
+}
+
+/**
+ * Menu rows as this section renders them, with the category filters that fall
+ * out of them.
+ *
+ * Pulled out of the effect so the server-seeded path and the client fetch
+ * cannot drift apart - both now derive the cards and the filter list the same
+ * way, from the same shape.
+ */
+function mapMenu(res: MenuResult | undefined): { items: Food[]; filters: FilterOption[] } | null {
+  if (!res?.success || !res.menuItems) return null;
+
+  const items: Food[] = res.menuItems.map((item: any) => ({
+    id: item.id,
+    title: item.name,
+    price: `₹${item.price}`,
+    description: item.description || "A delicious choice from our menu.",
+    image: item.image_url || "https://images.unsplash.com/photo-1561758033-d89a9ad46330?q=80&w=600&auto=format&fit=crop",
+    categories: [item.category?.toLowerCase() || 'other', 'all'],
+  }));
+
+  const uniqueCategories = new Set(
+    res.menuItems
+      .map((item: any) => item.category?.toLowerCase())
+      .filter((cat: any) => cat)
+  );
+
+  const filters: FilterOption[] = [{ label: "All Menu", value: "all" }];
+  uniqueCategories.forEach((cat) => {
+    if (typeof cat === 'string') {
+      filters.push({
+        label: cat.charAt(0).toUpperCase() + cat.slice(1),
+        value: cat
+      });
+    }
+  });
+
+  return { items, filters };
+}
+
 // --- Main ---
-export default function FoodCollection() {
+export default function FoodCollection({ initialMenu }: FoodCollectionProps = {}) {
+  const seeded = useMemo(() => mapMenu(initialMenu), [initialMenu]);
+
   const [activeFilter, setActiveFilter] = useState('all');
   const [isFiltering, setIsFiltering] = useState(false);
-  const [foodItems, setFoodItems] = useState<Food[]>([]);
-  const [filters, setFilters] = useState<FilterOption[]>([{ label: "All Menu", value: "all" }]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [foodItems, setFoodItems] = useState<Food[]>(seeded?.items ?? []);
+  const [filters, setFilters] = useState<FilterOption[]>(
+    seeded?.filters ?? [{ label: "All Menu", value: "all" }]
+  );
+  // Nothing is loading when the server already sent the answer.
+  const [isLoading, setIsLoading] = useState(!initialMenu);
 
   const headingRef = useRef(null);
   const headingInView = useInView(headingRef, { once: true, margin: "-50px" });
 
-  // Fetch dynamic data and extract dynamic categories
+  /**
+   * Only when the server did not already provide it.
+   *
+   * Opened as its own route there are no props and this is the only way the
+   * menu arrives; reached through the landing page it is already in hand, and
+   * fetching again here would be the round trip this change removed.
+   */
   useEffect(() => {
+    if (initialMenu) return;
+
     async function loadData() {
       setIsLoading(true);
       try {
-        const res = await getMenuItems();
-        if (res.success && res.menuItems) {
-          const mappedData: Food[] = res.menuItems.map((item: any) => ({
-            id: item.id,
-            title: item.name,
-            price: `₹${item.price}`,
-            description: item.description || "A delicious choice from our menu.",
-            image: item.image_url || "https://images.unsplash.com/photo-1561758033-d89a9ad46330?q=80&w=600&auto=format&fit=crop",
-            categories: [item.category?.toLowerCase() || 'other', 'all'],
-          }));
-          setFoodItems(mappedData);
-
-          const uniqueCategories = new Set(
-            res.menuItems
-              .map((item: any) => item.category?.toLowerCase())
-              .filter((cat: any) => cat)
-          );
-
-          const dynamicFilters: FilterOption[] = [{ label: "All Menu", value: "all" }];
-          
-          uniqueCategories.forEach((cat) => {
-            if (typeof cat === 'string') {
-              dynamicFilters.push({
-                label: cat.charAt(0).toUpperCase() + cat.slice(1),
-                value: cat
-              });
-            }
-          });
-          
-          setFilters(dynamicFilters);
+        const mapped = mapMenu(await getMenuItems());
+        if (mapped) {
+          setFoodItems(mapped.items);
+          setFilters(mapped.filters);
         }
       } catch (error) {
         console.error("Failed to fetch menu items", error);
@@ -86,6 +127,7 @@ export default function FoodCollection() {
       }
     }
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleFilter = (value: string) => {

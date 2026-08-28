@@ -8,11 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Phone, ShieldCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import OTPVerification from "@/components/auth/OTPVerification";
+import { getCustomerHeaderStateShared } from "@/lib/auth/customer-session-client";
 import {
   sendOTPAction,
   verifyOTPAction,
   resendOTPAction,
-  checkActiveSessionAction,
 } from "@/app/(customer)/booking/otp-actions";
 
 /**
@@ -49,10 +49,16 @@ export function CustomerAuthGate({
   useEffect(() => {
     let cancelled = false;
 
-    checkActiveSessionAction()
+    /**
+     * Shared with the navbar's account control, which asks the very same
+     * question in the very same tick. Both used to send their own request and
+     * validate the same cookie separately; the helper collapses simultaneous
+     * callers onto one in-flight lookup without caching the answer.
+     */
+    getCustomerHeaderStateShared()
       .then((session) => {
         if (cancelled) return;
-        if (session.isValid && session.phone) {
+        if (session.phone) {
           setVerifiedPhone(session.phone);
           setPhone(session.phone);
         }

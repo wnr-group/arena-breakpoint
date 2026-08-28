@@ -27,8 +27,10 @@ import {
 import { toast } from "sonner";
 import {
   getDeviceTypesWithAvailability,
-  checkFlexibleAvailability
+  getSlotOccupancy
 } from "@/app/(customer)/booking/actions";
+import { availableStartMinutes, type DeviceTypeOccupancy } from "@/lib/bookings/slotAvailability";
+import { formatMinutesTo12Hour } from "@/lib/utils/timeSlots";
 import {
   createWalkInBooking,
   createWalkInSession,
@@ -94,7 +96,17 @@ export default function WalkInBookingPage() {
    * it is taken.
    */
   const [mode, setMode] = useState<"session" | "advance">("session");
-  const [availableStartTimes, setAvailableStartTimes] = useState<Set<string>>(new Set());
+  /**
+   * The day's occupancy for the chosen device type, not a finished answer.
+   *
+   * This screen used to ask the server which start times fitted the chosen
+   * duration, so every duration the desk tried cost a round trip and blanked
+   * the grid while it was in flight - to recompute something that depends on no
+   * data the first call had not already returned. The customer picker at
+   * /booking/slots-v2 was changed to fetch occupancy once per date and do the
+   * arithmetic in the browser; this is the same change for the desk.
+   */
+  const [occupancy, setOccupancy] = useState<DeviceTypeOccupancy | null>(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
   /**
@@ -150,6 +162,18 @@ export default function WalkInBookingPage() {
   const { addNotification } = useNotifications();
 
   const allStartTimes = useMemo(() => generateStartTimes(), []);
+
+  /**
+   * Which start times can take a session of the chosen length.
+   *
+   * Exactly what `checkFlexibleAvailability` used to return - it ran these two
+   * helpers on the server and sent the strings back - so the grid is comparing
+   * the same values it always did.
+   */
+  const availableStartTimes = useMemo(() => {
+    if (!occupancy) return new Set<string>();
+    return new Set(availableStartMinutes(occupancy, selectedDuration).map(formatMinutesTo12Hour));
+  }, [occupancy, selectedDuration]);
   const allDurations = useMemo(() => generateDurationOptions(), []);
 
   // Filter out past time slots for today
@@ -225,11 +249,16 @@ export default function WalkInBookingPage() {
     loadDeviceTypes();
   }, []);
 
+  /**
+   * One fetch per date and device type. Deliberately not keyed on the duration:
+   * `availableStartTimes` below derives that from occupancy already in hand.
+   */
   useEffect(() => {
     if (selectedDeviceType && selectedDate) {
       loadAvailability();
     }
-  }, [selectedDeviceType, selectedDate, selectedDuration]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDeviceType, selectedDate]);
 
   // Reset start time if it is no longer available when date/duration changes
   useEffect(() => {
@@ -281,22 +310,18 @@ export default function WalkInBookingPage() {
     if (!selectedDeviceType || !selectedDate) return;
     // Never query slots for a date outside the booking window
     if (!isDateWithinBookingWindow(selectedDate)) {
-      setAvailableStartTimes(new Set());
+      setOccupancy(null);
       return;
     }
     setLoadingSlots(true);
     const dateString = formatLocalDate(selectedDate);
 
     try {
-      const result = await checkFlexibleAvailability(dateString, selectedDeviceType.id, selectedDuration);
-      if (result.success && result.availableStartTimes) {
-        setAvailableStartTimes(new Set(result.availableStartTimes));
-      } else {
-        setAvailableStartTimes(new Set());
-      }
+      const result = await getSlotOccupancy(dateString, selectedDeviceType.id);
+      setOccupancy(result.success ? result.occupancy : null);
     } catch (err) {
       console.error("Error loading availability:", err);
-      setAvailableStartTimes(new Set());
+      setOccupancy(null);
     } finally {
       setLoadingSlots(false);
     }
