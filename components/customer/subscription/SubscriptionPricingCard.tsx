@@ -6,7 +6,10 @@ import { CheckCircle2, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
-import { checkCustomerExists } from '@/app/(customer)/booking/actions'
+import {
+  getCustomerHeaderStateShared,
+  subscribeToCustomerSession,
+} from '@/lib/auth/customer-session-client'
 
 // The DB Interface
 interface SubscriptionPlanDB {
@@ -38,21 +41,41 @@ const SubscriptionPricingCard: React.FC<SubscriptionPricingCardProps> = ({ initi
   const x = useMotionValue(0)
   const [activePlanId, setActivePlanId] = useState<string | null>(null)
 
+  /**
+   * Which plan this customer already holds, from their session.
+   *
+   * This used to read a `customerPhone` left in localStorage and ask
+   * checkCustomerExists about it, which was wrong in both directions. That key
+   * is only ever written after somebody completes a purchase on this device and
+   * is never cleared on sign-out, so a customer who had a plan but bought it
+   * elsewhere saw none of their plans marked, while the next person to use a
+   * shared device was shown the previous customer's membership. The session
+   * cookie already knows who is here.
+   *
+   * Re-read when the session changes, so verifying marks the held plan straight
+   * away instead of on the next reload.
+   */
   useEffect(() => {
-    const checkActiveSubscription = async () => {
-      const savedPhone = typeof window !== 'undefined' ? localStorage.getItem('customerPhone') : null
-      if (savedPhone) {
-        try {
-          const result = await checkCustomerExists(savedPhone)
-          if (result.success && result.subscription) {
-            setActivePlanId(result.subscription.plan_id ? String(result.subscription.plan_id) : null)
-          }
-        } catch (e) {
+    let cancelled = false
+
+    const readActivePlan = () => {
+      getCustomerHeaderStateShared()
+        .then(state => {
+          if (!cancelled) setActivePlanId(state.plan?.planId ?? null)
+        })
+        .catch(e => {
           console.error('Failed to check active subscription:', e)
-        }
-      }
+          if (!cancelled) setActivePlanId(null)
+        })
     }
-    checkActiveSubscription()
+
+    readActivePlan()
+    const unsubscribe = subscribeToCustomerSession(readActivePlan)
+
+    return () => {
+      cancelled = true
+      unsubscribe()
+    }
   }, [])
 
   const plans = useMemo(() => {

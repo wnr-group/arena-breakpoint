@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Loader2, ShieldCheck, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { notifyCustomerSessionChanged } from "@/lib/auth/customer-session-client";
 
 interface OTPVerificationProps {
   phone: string;
@@ -34,10 +35,21 @@ export default function OTPVerification({
   const [otpSent, setOtpSent] = useState(false);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  /**
+   * Whether the automatic send has already been fired for this mount.
+   *
+   * The guard used to be `!otpSent`, read from a closure the effect never
+   * refreshed, so it could not see a send that was still in flight. Two codes
+   * then went out for one arrival: two paid credits, and the second retired the
+   * first, so a customer typing the code that reached them first was told it was
+   * invalid. A ref settles synchronously, before any state has committed.
+   */
+  const autoSendFired = useRef(false);
 
   // Auto-send OTP on mount
   useEffect(() => {
-    if (autoSendOnMount && !otpSent) {
+    if (autoSendOnMount && !autoSendFired.current) {
+      autoSendFired.current = true;
       handleSendOTP();
     }
   }, [autoSendOnMount]);
@@ -52,39 +64,66 @@ export default function OTPVerification({
     }
   }, [resendTimer, otpSent]);
 
+  /**
+   * Every handler below wraps its server call.
+   *
+   * They used to await the action bare. A server function that rejects rather
+   * than returns - a dropped connection, a 500, a deployment id that has moved
+   * on - skipped the `setIsSending(false)` that followed it, so the button sat
+   * on "Sending OTP..." for ever with no error shown and nothing to click. The
+   * reset belongs in a `finally` for exactly that reason.
+   */
   const handleSendOTP = async () => {
+    if (isSending) return;
     setIsSending(true);
-    const result = await onSendOTP(phone);
 
-    if (result.success) {
-      setOtpSent(true);
-      setCanResend(false);
-      setResendTimer(60);
-      toast.success("OTP Sent", { description: result.message });
-      // Focus first input
-      setTimeout(() => inputRefs.current[0]?.focus(), 100);
-    } else {
-      toast.error("Failed to Send OTP", { description: result.message });
+    try {
+      const result = await onSendOTP(phone);
+
+      if (result.success) {
+        setOtpSent(true);
+        setCanResend(false);
+        setResendTimer(60);
+        toast.success("OTP Sent", { description: result.message });
+        // Focus first input
+        setTimeout(() => inputRefs.current[0]?.focus(), 100);
+      } else {
+        toast.error("Failed to Send OTP", { description: result.message });
+      }
+    } catch (error) {
+      console.error("[OTP] send request did not complete:", error);
+      toast.error("Failed to Send OTP", {
+        description: "We could not reach the server. Please check your connection and try again.",
+      });
+    } finally {
+      setIsSending(false);
     }
-
-    setIsSending(false);
   };
 
   const handleResendOTP = async () => {
+    if (isSending) return;
     setIsSending(true);
     setOtp(["", "", "", "", "", ""]);
-    const result = await onResendOTP(phone);
 
-    if (result.success) {
-      setCanResend(false);
-      setResendTimer(60);
-      toast.success("OTP Resent", { description: result.message });
-      inputRefs.current[0]?.focus();
-    } else {
-      toast.error("Failed to Resend", { description: result.message });
+    try {
+      const result = await onResendOTP(phone);
+
+      if (result.success) {
+        setCanResend(false);
+        setResendTimer(60);
+        toast.success("OTP Resent", { description: result.message });
+        inputRefs.current[0]?.focus();
+      } else {
+        toast.error("Failed to Resend", { description: result.message });
+      }
+    } catch (error) {
+      console.error("[OTP] resend request did not complete:", error);
+      toast.error("Failed to Resend", {
+        description: "We could not reach the server. Please check your connection and try again.",
+      });
+    } finally {
+      setIsSending(false);
     }
-
-    setIsSending(false);
   };
 
   const handleOTPChange = (index: number, value: string) => {
@@ -139,20 +178,47 @@ export default function OTPVerification({
     }
 
     setIsVerifying(true);
-    const result = await onVerifyOTP(phone, code);
 
-    // No token here by design - it is set server-side as an httpOnly cookie, so
-    // this component never handles a credential.
-    if (result.success) {
-      toast.success("Verified!", { description: "Phone number verified successfully" });
-      onVerified(phone);
-    } else {
-      toast.error("Verification Failed", { description: result.message });
+    try {
+      const result = await onVerifyOTP(phone, code);
+
+      // No token here by design - it is set server-side as an httpOnly cookie, so
+      // this component never handles a credential.
+      if (result.success) {
+        /**
+         * Announced here rather than in each caller.
+         *
+         * This is the one component every customer login goes through - the
+         * booking form, the food checkout, the subscription page and the gate in
+         * front of /retrieve and /my-subscription all mount it - and none of
+         * them navigates on success. Telling the rest of the app from this one
+         * place means the navbar shows the customer's membership the moment they
+         * verify, and a login surface added later cannot forget to do it.
+         *
+         * Before `onVerified`, so anything that re-reads the session in response
+         * to that callback is already looking at the new one.
+         */
+        notifyCustomerSessionChanged();
+
+        toast.success("Verified!", { description: "Phone number verified successfully" });
+        onVerified(phone);
+      } else {
+        toast.error("Verification Failed", { description: result.message });
+        setOtp(["", "", "", "", "", ""]);
+        inputRefs.current[0]?.focus();
+      }
+    } catch (error) {
+      // Same reason as the send handlers: a rejected server call must not leave
+      // the boxes disabled behind a spinner that never stops.
+      console.error("[OTP] verify request did not complete:", error);
+      toast.error("Verification Failed", {
+        description: "We could not reach the server. Please check your connection and try again.",
+      });
       setOtp(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
+    } finally {
+      setIsVerifying(false);
     }
-
-    setIsVerifying(false);
   };
 
   const formatPhone = (phone: string) => {
