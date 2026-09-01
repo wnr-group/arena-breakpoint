@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Phone, ShieldCheck, Loader2 } from "lucide-react";
+import { Phone, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import OTPVerification from "@/components/auth/OTPVerification";
+import { BreakpointLoader } from "@/components/shared/BreakpointLoader";
 import { getCustomerHeaderStateShared } from "@/lib/auth/customer-session-client";
 import {
   sendOTPAction,
@@ -88,11 +89,8 @@ export function CustomerAuthGate({
 
   if (checking) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="text-sm font-bold text-zinc-400 uppercase tracking-wider">
-          Checking your session...
-        </p>
+      <div className="flex flex-col items-center justify-center py-20">
+        <BreakpointLoader size="lg" text="Checking your session..." />
       </div>
     );
   }
