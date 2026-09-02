@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Award, ChevronDown, LogOut, UserCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { signOutCustomerAction } from "@/app/(customer)/booking/otp-actions";
-import { getCustomerHeaderStateShared } from "@/lib/auth/customer-session-client";
+import {
+  getCustomerHeaderStateShared,
+  notifyCustomerSessionChanged,
+  subscribeToCustomerSession,
+} from "@/lib/auth/customer-session-client";
 import type { ActivePlanSummary } from "@/app/(customer)/my-subscription/action";
 
 /**
@@ -45,12 +49,17 @@ export function CustomerSessionMenu({ compact = false }: { compact?: boolean }) 
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Re-checked on navigation so the control appears as soon as a customer
-  // verifies, and disappears once the session lapses, without a reload. The
-  // membership rides along for the same reason: buying one has to be reflected
-  // in the header by the time the success page renders.
-  useEffect(() => {
-    let cancelled = false;
+  /**
+   * Newest lookup wins.
+   *
+   * Two of these can now be in flight at once - a route change and a customer
+   * verifying land close together - and the slower one must not paint its older
+   * answer over the newer one.
+   */
+  const latestRequest = useRef(0);
+
+  const refreshSession = useCallback(() => {
+    const request = ++latestRequest.current;
 
     // One request, not two. This runs on every route change - a static legal
     // page included - and it used to ask for the session and the membership as
@@ -59,7 +68,7 @@ export function CustomerSessionMenu({ compact = false }: { compact?: boolean }) 
     // `getCustomerHeaderState` answers both from a single session lookup.
     getCustomerHeaderStateShared()
       .then((state) => {
-        if (cancelled) return;
+        if (request !== latestRequest.current) return;
         setPhone(state.phone);
         // A membership without a live session is not shown; the server already
         // returns null for the plan in that case, and the control itself
@@ -67,16 +76,28 @@ export function CustomerSessionMenu({ compact = false }: { compact?: boolean }) 
         setPlan(state.phone ? state.plan : null);
       })
       .catch(() => {
-        if (!cancelled) {
-          setPhone(null);
-          setPlan(null);
-        }
+        if (request !== latestRequest.current) return;
+        setPhone(null);
+        setPlan(null);
       });
+  }, []);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [pathname]);
+  // Re-checked on navigation, so the control disappears once the session lapses
+  // and picks up a membership bought in another tab, without a reload. Buying
+  // one here is covered too: the success page is a route change.
+  useEffect(() => {
+    refreshSession();
+  }, [pathname, refreshSession]);
+
+  /**
+   * And on the session itself changing, which navigation cannot stand in for.
+   *
+   * Verifying a number never changes the route - every login surface swaps a
+   * step in local state on the page the customer is already on - so this control
+   * kept rendering nothing, and a customer with a membership saw no plan in the
+   * header until something else happened to make them navigate or reload.
+   */
+  useEffect(() => subscribeToCustomerSession(refreshSession), [refreshSession]);
 
   // The panel is a menu, so it closes the way menus do: click anywhere else, or
   // press Escape. Without the first, navigating from inside it leaves it hanging
@@ -116,6 +137,10 @@ export function CustomerSessionMenu({ compact = false }: { compact?: boolean }) 
       setPhone(null);
       setPlan(null);
       setOpen(false);
+      // The other direction of the same problem: anything else on screen that
+      // is showing this customer's membership has to drop it now, not on their
+      // next navigation.
+      notifyCustomerSessionChanged();
       toast.success("Signed Out", {
         description: "You'll need to verify your number again next time.",
       });

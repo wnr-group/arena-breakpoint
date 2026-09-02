@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { CheckCircle2, ShieldCheck, Phone, User, Mail, Cake, ChevronRight , Loader2 } from 'lucide-react'
+import { CheckCircle2, ShieldCheck, Phone, User, Mail, Cake, ChevronRight , Loader2, BadgeCheck } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { BreakpointLoader } from '@/components/shared/BreakpointLoader'
 import { toast } from 'sonner'
-import { formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY, isValidDob, DOB_ERROR } from '@/lib/utils/dates'
+import { arenaToday, daysBetweenDates, formatDateForDB, formatDateForDisplay, handleDobInput, isValidDateDDMMYYYY, isValidDob, DOB_ERROR } from '@/lib/utils/dates'
 import { allFilled, isPlausibleEmail } from '@/lib/utils/forms'
 
 // Import server actions
@@ -33,7 +33,15 @@ import {
 } from '@/app/(customer)/booking/otp-actions'
 import OTPVerification from '@/components/auth/OTPVerification'
 
-type Step = 'phone' | 'otp' | 'details' | 'summary' | 'processing'
+type Step = 'phone' | 'otp' | 'details' | 'summary' | 'processing' | 'already-member'
+
+/** The membership a customer turns out to already hold, as checkCustomerExists returns it. */
+interface ExistingMembership {
+  plan_id: string
+  plan_name: string
+  discount_percentage: number
+  end_date: string
+}
 
 export default function PlanDetailsPage() {
   const router = useRouter()
@@ -49,6 +57,13 @@ export default function PlanDetailsPage() {
   const [customerDob, setCustomerDob] = useState('')
   const [customerId, setCustomerId] = useState<string | null>(null)
   const [customerExists, setCustomerExists] = useState(false)
+  /**
+   * Set the moment we discover this customer is already a member, which is the
+   * moment the purchase stops being possible. Held in state because the screen
+   * that says so needs the plan name and end date, and re-asking the server for
+   * something we have just been told would be a round trip for nothing.
+   */
+  const [existingMembership, setExistingMembership] = useState<ExistingMembership | null>(null)
 
   // Loading states
   const [isLoading, setIsLoading] = useState(true)
@@ -56,6 +71,28 @@ export default function PlanDetailsPage() {
   const [isActivating, setIsActivating] = useState(false)
   /** True only between Razorpay returning and the membership being written. */
   const [isConfirming, setIsConfirming] = useState(false)
+
+  /**
+   * Keep the membership the customer turns out to hold, for the screen that
+   * tells them about it.
+   *
+   * Shared by the three places that can discover one - resuming a session,
+   * verifying a number, and the server refusing the order - so the same fields
+   * are read the same way each time.
+   */
+  const rememberMembership = (subscription: {
+    plan_id?: string | number | null
+    plan_name?: string | null
+    discount_percentage?: number | null
+    end_date?: string | null
+  }) => {
+    setExistingMembership({
+      plan_id: String(subscription.plan_id ?? ''),
+      plan_name: subscription.plan_name || 'Membership',
+      discount_percentage: Number(subscription.discount_percentage || 0),
+      end_date: String(subscription.end_date || ''),
+    })
+  }
 
   // Fetch the plan data on mount
   useEffect(() => {
@@ -115,6 +152,17 @@ export default function PlanDetailsPage() {
         )
         setCustomerId(result.customer.id)
         setCustomerExists(true)
+
+        // A member who is already signed in has to be stopped here too. This
+        // path skipped the subscription entirely and went straight to review, so
+        // somebody still inside their term could fill in a whole purchase before
+        // the payment refused it.
+        if (result.subscription) {
+          rememberMembership(result.subscription)
+          setStep('already-member')
+          return
+        }
+
         // Straight to review: everything the summary needs is already known.
         setStep('summary')
       } else {
@@ -163,19 +211,28 @@ export default function PlanDetailsPage() {
     const result = await checkCustomerExists(mobileNumber)
 
     if (result.exists && result.customer) {
-      // Check if already subscribed to this plan
+      /**
+       * Already a member: stop here, on a screen that says so.
+       *
+       * Both halves of this used to be dead ends. Holding *this* plan raised a
+       * toast and returned, leaving the customer on the OTP step - a screen
+       * whose only remaining action was to re-enter a code that could no longer
+       * work, because verifying had already consumed that OTP session. Holding a
+       * *different* plan merely warned and carried on to the summary, so they
+       * filled in a purchase that `createSubscriptionPaymentOrder` was always
+       * going to refuse, and found out at the payment.
+       *
+       * One active membership at a time is the server's rule
+       * (payment-actions.ts, `activeMembershipFor`), and it exists because a new
+       * term starts today rather than extending the old one - so a second
+       * purchase would cost the customer the days they have left. Neither case
+       * can proceed, so neither pretends to.
+       */
       if (result.subscription) {
-        if (String(result.subscription.plan_id) === String(plan.id)) {
-          toast.error('Already Subscribed', {
-            description: `You already have an active subscription to ${plan.name} (valid until ${new Date(result.subscription.end_date).toLocaleDateString()}).`
-          })
-          setIsSubmitting(false)
-          return
-        } else {
-          toast.warning('Active Subscription Found', {
-            description: `You already have an active subscription to ${result.subscription.plan_name} (valid until ${new Date(result.subscription.end_date).toLocaleDateString()}).`
-          })
-        }
+        rememberMembership(result.subscription)
+        setStep('already-member')
+        setIsSubmitting(false)
+        return
       }
 
       // Customer exists
@@ -244,11 +301,30 @@ export default function PlanDetailsPage() {
         if (order.verificationRequired) {
           toast.error('Please verify your number', { description: order.error })
           setStep('otp')
-        } else {
-          toast.error(order.alreadySubscribed ? 'Already a member' : 'Could not start payment', {
-            description: order.error,
-          })
+          setIsActivating(false)
+          return
         }
+
+        /**
+         * The server refusing a membership that began somewhere else - another
+         * tab, or a purchase made between resuming this page and paying. The
+         * checks before this one make it rare rather than impossible, so it ends
+         * on the same screen rather than a toast over a summary the customer can
+         * no longer act on. The toast below still covers a failed re-read.
+         */
+        if (order.alreadySubscribed) {
+          const current = await checkCustomerExists(mobileNumber)
+          if (current.success && current.subscription) {
+            rememberMembership(current.subscription)
+            setStep('already-member')
+            setIsActivating(false)
+            return
+          }
+        }
+
+        toast.error(order.alreadySubscribed ? 'Already a member' : 'Could not start payment', {
+          description: order.error,
+        })
         setIsActivating(false)
         return
       }
@@ -323,6 +399,116 @@ export default function PlanDetailsPage() {
 
   if (!plan) {
     return null
+  }
+
+  /**
+   * Already a member - the end of this journey, and deliberately a screen.
+   *
+   * A toast was the wrong shape for this. It fades, it leaves nothing behind,
+   * and it was raised on the OTP step, so the customer was left looking at a
+   * verification form seconds after their verification had succeeded. Nothing on
+   * that screen could take them anywhere.
+   *
+   * The framing is deliberate too. Verifying did not fail and neither did
+   * anything else - they came here to get a member's discount and they already
+   * have one, so this is confirmation rather than an error, and the first thing
+   * offered is the thing the discount is for.
+   */
+  if (step === 'already-member' && existingMembership) {
+    const daysLeft = Math.max(
+      0,
+      daysBetweenDates(arenaToday(), existingMembership.end_date) ?? 0
+    )
+    const remaining = daysLeft === 0 ? 'Last day' : `${daysLeft} day${daysLeft === 1 ? '' : 's'} left`
+    const isSamePlan = existingMembership.plan_id === String(plan.id)
+
+    return (
+      <div className="min-h-screen bg-[#0d0a14] text-white py-12 px-4">
+        <div className="max-w-xl mx-auto">
+          <Card className="bg-[#111] border border-zinc-900 p-6 shadow-2xl rounded-2xl space-y-6 glow-box-hover">
+            <div className="text-center space-y-3">
+              <div className="flex justify-center">
+                <div className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center">
+                  <BadgeCheck className="h-8 w-8 text-primary" />
+                </div>
+              </div>
+              <h3 className="text-xl font-black uppercase text-white tracking-tight">
+                You&apos;re already a member
+              </h3>
+              <p className="text-sm text-zinc-400">
+                {isSamePlan
+                  ? `${existingMembership.plan_name} is already on your account.`
+                  : `You're on ${existingMembership.plan_name}, so ${plan.name} can't be added on top.`}
+              </p>
+            </div>
+
+            {/* The same facts the plans page and the header show, in the same order. */}
+            <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 space-y-2 glow-box-strong">
+              <div className="flex justify-between text-sm">
+                <span className="text-zinc-400">Plan:</span>
+                <span className="text-white font-bold">{existingMembership.plan_name}</span>
+              </div>
+              {existingMembership.discount_percentage > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-zinc-400">Benefit:</span>
+                  <span className="text-primary font-bold">
+                    {existingMembership.discount_percentage}% off bookings
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm border-t border-zinc-800 pt-2">
+                <span className="text-zinc-400">Valid until:</span>
+                <span className="text-white font-black">
+                  {formatDateForDisplay(existingMembership.end_date)} · {remaining}
+                </span>
+              </div>
+            </div>
+
+            {/* Why they cannot buy, said as what it would cost them rather than as
+                a rule. A term starts the day it is bought, so a second membership
+                replaces the first instead of extending it. */}
+            <p className="text-xs text-zinc-500 leading-relaxed text-center">
+              {daysLeft > 0
+                ? `Buying another plan now would replace this one, and the ${remaining.toLowerCase()} on it would be lost. You can buy again once it ends.`
+                : 'This plan is on its last day. You can buy your next one from tomorrow.'}
+            </p>
+
+            <div className="space-y-2">
+              {/* The discount is already live, so using it comes first. */}
+              <Button
+                variant="gradient"
+                onClick={() => router.push('/booking')}
+                className="w-full text-black font-black uppercase text-sm h-12 rounded-xl flex items-center justify-center gap-1.5"
+              >
+                BOOK A SLOT <ChevronRight className="h-4 w-4 stroke-[3]" />
+              </Button>
+              <p className="text-[11px] text-zinc-600 text-center">
+                Your {existingMembership.discount_percentage > 0
+                  ? `${existingMembership.discount_percentage}% discount`
+                  : 'member price'} is applied automatically at checkout.
+              </p>
+
+              <Button
+                type="button"
+                onClick={() => router.push('/my-subscription')}
+                variant="ghost"
+                className="w-full border border-primary/40 text-primary hover:bg-primary/10 font-black uppercase text-sm h-11 rounded-xl"
+              >
+                VIEW MY PLAN
+              </Button>
+              <Button
+                type="button"
+                onClick={() => router.push('/subscription')}
+                variant="ghost"
+                className="w-full border border-zinc-900 text-zinc-400 hover:text-zinc-300 font-bold uppercase text-sm h-11 rounded-xl"
+              >
+                ← BACK TO PLANS
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   // OTP Step - proves the number before any profile is fetched or plan activated

@@ -634,11 +634,8 @@ export default function CustomerDetailsPage() {
   // never sees the phone form flash up before being moved past it.
   if (resumingSession) {
     return (
-      <div className="w-full max-w-md mx-auto flex flex-col items-center justify-center py-24 space-y-4">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="text-sm font-bold text-zinc-400 uppercase tracking-wider">
-          Checking your session...
-        </p>
+      <div className="w-full max-w-md mx-auto flex flex-col items-center justify-center py-24">
+        <BreakpointLoader size="lg" text="Checking your session..." />
       </div>
     );
   }

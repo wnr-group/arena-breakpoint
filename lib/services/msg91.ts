@@ -14,16 +14,116 @@ const MSG91_TEMPLATE_ID = process.env.MSG91_TEMPLATE_ID_OTP;
 const MSG91_BASE_URL = 'https://control.msg91.com/api/v5';
 const USE_SENDOTP_API = process.env.MSG91_USE_SENDOTP_API === 'true'; // Toggle between Flow API and SendOTP API
 
+/**
+ * How long to wait on MSG91 before giving up.
+ *
+ * There was no limit at all, and `fetch` does not impose one. A hung MSG91
+ * connection held the server action open until the platform killed it, which
+ * showed the customer a failure for a message MSG91 had very likely already
+ * queued - the "it said failed but the OTP arrived" report. Ten seconds is well
+ * past MSG91's normal response and short enough that the retry is still the
+ * customer's own idea.
+ */
+const MSG91_TIMEOUT_MS = Number(process.env.MSG91_TIMEOUT_MS) || 10_000;
+
+/**
+ * Why a send failed, in a form the caller can branch on.
+ *
+ * Every failure used to arrive at the caller as prose, so the OTP service could
+ * only ever repeat one generic sentence and no log said which of four unrelated
+ * problems had occurred.
+ */
+export type SendFailureCode =
+  | 'not_configured'
+  | 'invalid_recipient'
+  | 'provider_rejected'
+  | 'provider_unreachable';
+
 interface SendOTPResponse {
   success: boolean;
   message: string;
+  code?: SendFailureCode;
   type?: string;
   request_id?: string;
 }
 
-interface MSG91ErrorResponse {
-  message: string;
-  type: string;
+/**
+ * A phone number, reduced for logging.
+ *
+ * Logs travel further than the database does, so they carry enough of the
+ * number to recognise it and not enough to dial it. The full number is on the
+ * otp_sessions row that every failure now writes.
+ */
+function maskPhone(phone: string): string {
+  const digits = (phone || '').replace(/\D/g, '');
+  if (digits.length < 4) return '***';
+  return `${digits.slice(0, 2)}****${digits.slice(-4)}`;
+}
+
+/**
+ * POST to MSG91 and normalise whatever comes back.
+ *
+ * The three send branches below each had their own copy of this, which is how
+ * they ended up logging different things - one recorded the response body, none
+ * recorded the HTTP status, and the branch that rejected a number outright
+ * logged nothing whatsoever.
+ */
+async function postToMsg91(
+  url: string,
+  body: Record<string, unknown>,
+  context: { label: string; phone: string }
+): Promise<SendOTPResponse> {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      authkey: MSG91_AUTH_KEY as string,
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(MSG91_TIMEOUT_MS),
+  });
+
+  // MSG91 answers a gateway error with HTML, and response.json() throws on it.
+  // Reading the text first keeps the status and the body in the log either way.
+  const raw = await response.text();
+  let data: { type?: string; message?: string; request_id?: string } = {};
+  try {
+    data = raw ? JSON.parse(raw) : {};
+  } catch {
+    console.error(
+      `[MSG91] ${context.label}: non-JSON response for ${context.phone}`,
+      { status: response.status, body: raw.slice(0, 500) }
+    );
+    return {
+      success: false,
+      message: 'Failed to send OTP',
+      code: 'provider_rejected',
+    };
+  }
+
+  if (response.ok && data.type === 'success') {
+    console.log(
+      `[MSG91] ${context.label}: sent to ${context.phone}`,
+      { request_id: data.request_id }
+    );
+    return {
+      success: true,
+      message: 'OTP sent successfully',
+      request_id: data.request_id,
+      type: data.type,
+    };
+  }
+
+  console.error(
+    `[MSG91] ${context.label}: rejected for ${context.phone}`,
+    { status: response.status, type: data.type, message: data.message }
+  );
+  return {
+    success: false,
+    message: data.message || 'Failed to send OTP',
+    code: 'provider_rejected',
+    type: data.type,
+  };
 }
 
 /**
@@ -56,18 +156,37 @@ export async function sendOTPViaSMS(
       return {
         success: false,
         message: 'MSG91 configuration missing. Please contact support.',
+        code: 'not_configured',
       };
     }
 
-    // Remove +91 if present, MSG91 expects 10-digit number
-    const cleanPhone = phone.replace(/^\+?91/, '').trim();
+    /**
+     * Normalise through the shared validator, NOT through a second regex.
+     *
+     * This line used to be `phone.replace(/^\+?91/, '')`, the same naive strip
+     * that validatePhoneNumber was fixed to stop doing. The two then disagreed:
+     * the validator correctly kept 9123456789 whole, this took the leading 91
+     * off it, and the eight digits left over failed the length check that used
+     * to sit here - so a customer on a 91xxxxxxxx number was told "Failed to
+     * send OTP" by a
+     * function that had not yet spoken to MSG91 at all. That is a live Indian
+     * mobile prefix, so those customers could never log in, and nothing on the
+     * MSG91 side recorded a thing because nothing was ever sent.
+     */
+    const validation = validatePhoneNumber(phone);
 
-    if (cleanPhone.length !== 10) {
+    if (!validation.isValid) {
+      console.error(
+        `[MSG91] Refusing to send to ${maskPhone(phone)}: ${validation.error}`
+      );
       return {
         success: false,
-        message: 'Invalid phone number format. Must be 10 digits.',
+        message: validation.error || 'Invalid phone number format.',
+        code: 'invalid_recipient',
       };
     }
+
+    const cleanPhone = validation.cleanPhone;
 
     // Allowlist check sits after validation and before the paid API call, so a
     // development run can exercise the whole flow while spending credits on one
@@ -76,22 +195,18 @@ export async function sendOTPViaSMS(
       return await sendOTPViaTestMode(cleanPhone, otp, 'not-allowlisted');
     }
 
-    console.log(`[MSG91] Sending OTP to ${cleanPhone}`);
+    const masked = maskPhone(cleanPhone);
 
-    // Choose API based on configuration
-    if (USE_SENDOTP_API) {
-      // Use SendOTP API (simpler, no template needed)
-      const response = await fetch(`https://control.msg91.com/api/v5/otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'authkey': MSG91_AUTH_KEY,
-        },
-        body: JSON.stringify({
+    // Choose API based on configuration. Without a template id the Flow API has
+    // nothing to render, so SendOTP is the only option left.
+    if (USE_SENDOTP_API || !MSG91_TEMPLATE_ID) {
+      return await postToMsg91(
+        `${MSG91_BASE_URL}/otp`,
+        {
           mobile: `91${cleanPhone}`,
           otp: otp,
-          otp_expiry: 5, // 5 minutes
-          template_id: MSG91_TEMPLATE_ID, // Optional
+          otp_expiry: 5, // minutes
+          template_id: MSG91_TEMPLATE_ID || undefined,
           /**
            * Only the OTP is passed. The MSG91 template briefly carried a second
            * variable, "##var1##", tacked on after the website URL that DLT had
@@ -103,102 +218,41 @@ export async function sendOTPViaSMS(
            * The template has since been corrected to end at the URL. Nothing here
            * should supply a variable the approved content does not define.
            */
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.type === 'success') {
-        console.log('[MSG91] OTP sent successfully via SendOTP API:', data);
-        return {
-          success: true,
-          message: 'OTP sent successfully',
-          request_id: data.request_id,
-          type: data.type,
-        };
-      } else {
-        console.error('[MSG91] Failed to send OTP via SendOTP API:', data);
-        return {
-          success: false,
-          message: data.message || 'Failed to send OTP',
-          type: data.type,
-        };
-      }
-    } else if (MSG91_TEMPLATE_ID) {
-      // Use MSG91 Flow API (Template-based SMS)
-      const response = await fetch(`${MSG91_BASE_URL}/flow`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'authkey': MSG91_AUTH_KEY,
         },
-        body: JSON.stringify({
-          template_id: MSG91_TEMPLATE_ID,
-          sender: MSG91_SENDER_ID,
-          short_url: '0',
-          mobiles: `91${cleanPhone}`, // MSG91 expects country code + number
-          OTP: otp, // Variable that will be replaced in template
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.type === 'success') {
-        console.log('[MSG91] OTP sent successfully:', data);
-        return {
-          success: true,
-          message: 'OTP sent successfully',
-          request_id: data.request_id,
-          type: data.type,
-        };
-      } else {
-        console.error('[MSG91] Failed to send OTP:', data);
-        return {
-          success: false,
-          message: data.message || 'Failed to send OTP',
-          type: data.type,
-        };
-      }
-    } else {
-      // Fallback: Use SendOTP API (simpler but requires SendOTP product)
-      const response = await fetch(`https://control.msg91.com/api/v5/otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'authkey': MSG91_AUTH_KEY,
-        },
-        body: JSON.stringify({
-          template_id: MSG91_TEMPLATE_ID || undefined,
-          mobile: `91${cleanPhone}`,
-          otp: otp,
-          otp_expiry: 5, // 5 minutes
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.type === 'success') {
-        console.log('[MSG91] OTP sent successfully via SendOTP API:', data);
-        return {
-          success: true,
-          message: 'OTP sent successfully',
-          request_id: data.request_id,
-          type: data.type,
-        };
-      } else {
-        console.error('[MSG91] Failed to send OTP via SendOTP API:', data);
-        return {
-          success: false,
-          message: data.message || 'Failed to send OTP',
-          type: data.type,
-        };
-      }
+        { label: 'SendOTP', phone: masked }
+      );
     }
+
+    // Flow API (template-based SMS).
+    return await postToMsg91(
+      `${MSG91_BASE_URL}/flow`,
+      {
+        template_id: MSG91_TEMPLATE_ID,
+        sender: MSG91_SENDER_ID,
+        short_url: '0',
+        mobiles: `91${cleanPhone}`, // MSG91 expects country code + number
+        OTP: otp, // Variable that will be replaced in template
+      },
+      { label: 'Flow', phone: masked }
+    );
   } catch (error) {
-    console.error('[MSG91] Exception while sending OTP:', error);
+    // A timeout is called out separately because it is the one failure where
+    // MSG91 may well have accepted the message anyway - the customer can be
+    // holding the SMS while we report a failure, so the log has to say which
+    // case this was.
+    const timedOut = error instanceof Error && error.name === 'TimeoutError';
+
+    console.error(
+      `[MSG91] ${timedOut ? `Timed out after ${MSG91_TIMEOUT_MS}ms` : 'Exception'} sending OTP to ${maskPhone(phone)}`,
+      error
+    );
+
     return {
       success: false,
-      message: 'Failed to send OTP. Please try again.',
+      message: timedOut
+        ? 'The SMS provider did not respond in time.'
+        : 'Failed to send OTP. Please try again.',
+      code: 'provider_unreachable',
     };
   }
 }
@@ -218,10 +272,27 @@ export async function sendSMS(
       return {
         success: false,
         message: 'MSG91 configuration missing',
+        code: 'not_configured',
       };
     }
 
-    const cleanPhone = phone.replace(/^\+?91/, '').trim();
+    // Same shared validator as the OTP path, for the same reason: the old
+    // `replace(/^\+?91/, '')` here silently mangled every 91xxxxxxxx number, so
+    // booking and subscription confirmations went to an eight-digit address.
+    const validation = validatePhoneNumber(phone);
+
+    if (!validation.isValid) {
+      console.error(
+        `[MSG91] Refusing to send SMS to ${maskPhone(phone)}: ${validation.error}`
+      );
+      return {
+        success: false,
+        message: validation.error || 'Invalid phone number format.',
+        code: 'invalid_recipient',
+      };
+    }
+
+    const cleanPhone = validation.cleanPhone;
 
     const response = await fetch(`${MSG91_BASE_URL}/flow`, {
       method: 'POST',
@@ -236,29 +307,51 @@ export async function sendSMS(
         mobiles: `91${cleanPhone}`,
         message: message,
       }),
+      signal: AbortSignal.timeout(MSG91_TIMEOUT_MS),
     });
 
-    const data = await response.json();
+    const raw = await response.text();
+    let data: { message?: string; request_id?: string } = {};
+    try {
+      data = raw ? JSON.parse(raw) : {};
+    } catch {
+      console.error(`[MSG91] Non-JSON SMS response for ${maskPhone(cleanPhone)}`, {
+        status: response.status,
+        body: raw.slice(0, 500),
+      });
+      return { success: false, message: 'Failed to send SMS', code: 'provider_rejected' };
+    }
 
     if (response.ok) {
-      console.log('[MSG91] SMS sent successfully');
+      console.log(`[MSG91] SMS sent to ${maskPhone(cleanPhone)}`, {
+        request_id: data.request_id,
+      });
       return {
         success: true,
         message: 'SMS sent successfully',
         request_id: data.request_id,
       };
     } else {
-      console.error('[MSG91] Failed to send SMS:', data);
+      console.error(`[MSG91] Failed to send SMS to ${maskPhone(cleanPhone)}`, {
+        status: response.status,
+        message: data.message,
+      });
       return {
         success: false,
         message: data.message || 'Failed to send SMS',
+        code: 'provider_rejected',
       };
     }
   } catch (error) {
-    console.error('[MSG91] Exception while sending SMS:', error);
+    const timedOut = error instanceof Error && error.name === 'TimeoutError';
+    console.error(
+      `[MSG91] ${timedOut ? `Timed out after ${MSG91_TIMEOUT_MS}ms` : 'Exception'} sending SMS to ${maskPhone(phone)}`,
+      error
+    );
     return {
       success: false,
       message: 'Failed to send SMS',
+      code: 'provider_unreachable',
     };
   }
 }

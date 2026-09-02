@@ -17,10 +17,47 @@
 import 'server-only';
 
 import { supabaseAdmin } from '@/lib/supabase/server';
-import { generateOTP, sendOTPViaSMS, validatePhoneNumber } from './msg91';
+import {
+  generateOTP,
+  sendOTPViaSMS,
+  validatePhoneNumber,
+  type SendFailureCode,
+} from './msg91';
+import { formatClockTime12h } from '@/lib/utils/dates';
 import crypto from 'crypto';
 
-const OTP_EXPIRY_MINUTES = parseInt(process.env.OTP_EXPIRY_MINUTES || '5');
+/**
+ * A positive whole number from the environment, or the fallback.
+ *
+ * `parseInt` alone is not safe for any of these. Every one of them is now passed
+ * into SQL as a parameter, and `parseInt('')`, `parseInt('off')` or a stray
+ * comma all yield NaN - which `JSON.stringify` sends to PostgREST as `null`, and
+ * `x >= NULL` in plpgsql is NULL, so the comparison is simply skipped. A
+ * mistyped variable therefore did not fall back to the default; it removed the
+ * ceiling altogether. That is the wrong direction to fail for a limit whose job
+ * is to cap spending on SMS and to cap guesses against a six-digit code.
+ *
+ * Zero and negatives are rejected for the same reason: a ceiling of 0 or -1
+ * would either lock every customer out or, once it reaches SQL, behave as no
+ * ceiling at all.
+ */
+function positiveIntFromEnv(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === '') return fallback;
+
+  const parsed = Number(raw);
+
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    console.error(
+      `[OTP] ${name}="${raw}" is not a positive whole number. Using ${fallback}.`
+    );
+    return fallback;
+  }
+
+  return parsed;
+}
+
+const OTP_EXPIRY_MINUTES = positiveIntFromEnv('OTP_EXPIRY_MINUTES', 5);
 /**
  * How long a customer stays signed in after verifying.
  *
@@ -29,9 +66,17 @@ const OTP_EXPIRY_MINUTES = parseInt(process.env.OTP_EXPIRY_MINUTES || '5');
  * another SMS. The trade is that a session on a shared or public device stays
  * usable for the rest of the day - which is what the sign-out button is for.
  */
-const SESSION_EXPIRY_MINUTES = Number(process.env.CUSTOMER_SESSION_MINUTES) || 12 * 60;
-const MAX_OTP_ATTEMPTS = parseInt(process.env.OTP_MAX_ATTEMPTS || '3');
-const MAX_RESEND_COUNT = parseInt(process.env.OTP_MAX_REQUESTS_PER_PHONE || '3');
+const SESSION_EXPIRY_MINUTES = positiveIntFromEnv('CUSTOMER_SESSION_MINUTES', 12 * 60);
+const MAX_OTP_ATTEMPTS = positiveIntFromEnv('OTP_MAX_ATTEMPTS', 3);
+/**
+ * Both ceilings come from the same setting, as they did before.
+ *
+ * The hourly limit used to be hardcoded to 3 inside check_otp_rate_limit while
+ * the resend ceiling read this variable, so the two could silently disagree.
+ * They are now passed together into begin_otp_session, which applies them.
+ */
+const MAX_REQUESTS_PER_HOUR = positiveIntFromEnv('OTP_MAX_REQUESTS_PER_PHONE', 3);
+const MAX_RESEND_COUNT = MAX_REQUESTS_PER_HOUR;
 const RESEND_COOLDOWN_SECONDS = 60;
 
 export interface OTPSessionResult {
@@ -40,6 +85,15 @@ export interface OTPSessionResult {
   expiresAt?: string;
   canResend?: boolean;
   nextResendAt?: string;
+  /**
+   * Short handle for the attempt, shown to the customer when a send fails and
+   * written on the otp_sessions row.
+   *
+   * A failed send used to leave nothing behind but one console line with no
+   * phone number on it, so "the site said failed to send" could not be traced to
+   * anything. Quoting this reference now finds the exact row.
+   */
+  reference?: string;
 }
 
 export interface VerifyOTPResult {
@@ -94,11 +148,55 @@ function generateSessionToken(): string {
   return crypto.randomBytes(32).toString('hex');
 }
 
+/** A phone number reduced for logging. The full number is on the row. */
+function maskPhone(phone: string): string {
+  const digits = (phone || '').replace(/\D/g, '');
+  if (digits.length < 4) return '***';
+  return `${digits.slice(0, 2)}****${digits.slice(-4)}`;
+}
+
 /**
- * Create an OTP session and send the code by SMS.
+ * What to tell the customer when the SMS does not go out.
+ *
+ * Every one of these used to be the single sentence "Failed to send OTP. Please
+ * try again." - a misconfigured auth key, a number the provider will not accept,
+ * a rejection and a timeout were indistinguishable to the person reading the
+ * toast and to whoever they then called. The reference makes any of them
+ * traceable to a row.
  */
-export async function createOTPSession(
+function messageForSendFailure(
+  code: SendFailureCode | undefined,
+  reference: string
+): string {
+  switch (code) {
+    case 'invalid_recipient':
+      return 'That mobile number cannot receive SMS. Please check the number and try again.';
+    case 'not_configured':
+      return `OTP delivery is not configured. Please contact support and quote reference ${reference}.`;
+    case 'provider_unreachable':
+      return `Our SMS provider is not responding. Please try again in a moment (reference ${reference}).`;
+    case 'provider_rejected':
+    default:
+      return `We could not send the OTP. Please try again, or quote reference ${reference} to support.`;
+  }
+}
+
+/**
+ * Issue a code: reserve the session, then send it.
+ *
+ * The order matters and it used to be the other way round. The SMS went out
+ * first, then every earlier session was retired, then the row was inserted - so
+ * a failed insert left the customer holding a live code that no row backed,
+ * with their previous session already cancelled.
+ *
+ * begin_otp_session now settles the rate limit, the cooldown, the retirement of
+ * the old code and the insert of the new one in a single transaction behind a
+ * per-phone lock. Only once that row exists is the SMS attempted, and the row is
+ * marked with what happened either way.
+ */
+async function issueOTP(
   phone: string,
+  isResend: boolean,
   ipAddress?: string,
   userAgent?: string
 ): Promise<OTPSessionResult> {
@@ -109,105 +207,146 @@ export async function createOTPSession(
     }
 
     const cleanPhone = validation.cleanPhone;
+    const masked = maskPhone(cleanPhone);
+    const otp = generateOTP();
+    const otpExpiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
-    // Rate limit: max 3 requests per phone per hour.
-    const { data: rateLimitData, error: rateLimitError } = await supabaseAdmin.rpc(
-      'check_otp_rate_limit',
-      { p_phone: cleanPhone }
-    );
+    const { data, error } = await supabaseAdmin.rpc('begin_otp_session', {
+      p_phone: cleanPhone,
+      p_otp_hash: hashOTP(otp),
+      p_otp_expires_at: otpExpiresAt.toISOString(),
+      p_max_per_hour: MAX_REQUESTS_PER_HOUR,
+      p_cooldown_seconds: RESEND_COOLDOWN_SECONDS,
+      p_max_resends: MAX_RESEND_COUNT,
+      p_is_resend: isResend,
+      p_ip_address: ipAddress ?? null,
+      p_user_agent: userAgent ?? null,
+    });
 
-    if (rateLimitError) {
+    if (error || !data?.length) {
       // Fail closed. A rate limiter that opens up when the database hiccups is
       // an invitation to pump SMS charges.
-      console.error('[OTP] Rate limit check failed:', rateLimitError);
+      console.error(`[OTP] begin_otp_session failed for ${masked}:`, error);
       return { success: false, message: 'Could not send OTP right now. Please try again.' };
     }
 
-    if (rateLimitData?.length > 0 && !rateLimitData[0].is_allowed) {
+    const reservation = data[0];
+
+    if (reservation.outcome === 'rate_limited') {
+      /**
+       * The arena's clock, not the host's.
+       *
+       * This read `new Date(...).toLocaleTimeString()`, which formats in
+       * whatever zone the process happens to be in. It runs inside a server
+       * action, so that is UTC on a deployed host - the customer was told to
+       * come back at a time five and a half hours off, in a message whose only
+       * purpose is to name a time they can act on. `formatClockTime12h` is the
+       * helper the rest of the app already uses for exactly this.
+       */
+      const retryAt = formatClockTime12h(reservation.next_allowed_at);
+
       return {
         success: false,
-        message: `Too many OTP requests. Please try again after ${new Date(
-          rateLimitData[0].next_allowed_at
-        ).toLocaleTimeString()}`,
+        message: retryAt
+          ? `Too many OTP requests. Please try again after ${retryAt}.`
+          : 'Too many OTP requests. Please try again later.',
         canResend: false,
-        nextResendAt: rateLimitData[0].next_allowed_at,
+        nextResendAt: reservation.next_allowed_at,
       };
     }
 
-    // Resend cooldown.
-    const { data: recentSession } = await supabaseAdmin
-      .from('otp_sessions')
-      .select('otp_sent_at')
-      .eq('phone', cleanPhone)
-      .eq('is_active', true)
-      .gte('created_at', new Date(Date.now() - RESEND_COOLDOWN_SECONDS * 1000).toISOString())
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    if (recentSession?.length > 0) {
-      const elapsed = Math.floor(
-        (Date.now() - new Date(recentSession[0].otp_sent_at).getTime()) / 1000
-      );
-      if (elapsed < RESEND_COOLDOWN_SECONDS) {
-        return {
-          success: false,
-          message: `Please wait ${RESEND_COOLDOWN_SECONDS - elapsed} seconds before requesting a new OTP`,
-          canResend: false,
-        };
-      }
+    if (reservation.outcome === 'cooldown') {
+      return {
+        success: false,
+        message: `Please wait ${reservation.seconds_remaining} seconds before requesting a new OTP`,
+        canResend: false,
+        nextResendAt: reservation.next_allowed_at,
+      };
     }
 
-    const otp = generateOTP();
-    const otpHash = hashOTP(otp);
-    const now = new Date();
-    const otpExpiresAt = new Date(now.getTime() + OTP_EXPIRY_MINUTES * 60 * 1000);
+    if (reservation.outcome === 'resend_limit') {
+      return {
+        success: false,
+        message: 'Maximum resend limit reached. Please try again later.',
+        canResend: false,
+      };
+    }
+
+    const sessionId: string = reservation.session_id;
+    const reference = sessionId.slice(0, 8);
 
     const smsResult = await sendOTPViaSMS(cleanPhone, otp);
 
     if (!smsResult.success) {
-      console.error('[OTP] SMS send failed:', smsResult.message);
-      return { success: false, message: 'Failed to send OTP. Please try again.' };
+      // Retire the reservation. A failed row is not redeemable and does not
+      // count against the hourly ceiling, so one provider outage cannot lock a
+      // customer out for an hour.
+      const { error: markError } = await supabaseAdmin
+        .from('otp_sessions')
+        .update({
+          is_active: false,
+          send_status: 'failed',
+          send_error: smsResult.code ?? 'unknown',
+        })
+        .eq('id', sessionId);
+
+      if (markError) {
+        console.error(`[OTP] ref=${reference} could not mark send failed:`, markError);
+      }
+
+      console.error(
+        `[OTP] ref=${reference} send failed for ${masked}`,
+        { code: smsResult.code ?? 'unknown', detail: smsResult.message, isResend }
+      );
+
+      return {
+        success: false,
+        message: messageForSendFailure(smsResult.code, reference),
+        reference,
+      };
     }
 
-    // Retire any earlier session so only the newest code can be redeemed.
-    await supabaseAdmin
+    // Bookkeeping only. Verification accepts a row that is still 'pending', so
+    // losing this write cannot strand a customer holding a code that did arrive.
+    const { error: confirmError } = await supabaseAdmin
       .from('otp_sessions')
-      .update({ is_active: false })
-      .eq('phone', cleanPhone)
-      .eq('is_active', true);
-
-    const { data: session, error: sessionError } = await supabaseAdmin
-      .from('otp_sessions')
-      .insert({
-        phone: cleanPhone,
-        otp_hash: otpHash,
-        otp_sent_at: now.toISOString(),
-        otp_expires_at: otpExpiresAt.toISOString(),
-        otp_attempts: 0,
-        is_active: true,
-        is_verified: false,
-        resend_count: 0,
-        ip_address: ipAddress,
-        user_agent: userAgent,
+      .update({
+        send_status: 'sent',
+        msg91_request_id: smsResult.request_id ?? null,
       })
-      .select('otp_expires_at')
-      .single();
+      .eq('id', sessionId);
 
-    if (sessionError || !session) {
-      console.error('[OTP] Failed to create session:', sessionError);
-      return { success: false, message: 'Failed to create OTP session. Please try again.' };
+    if (confirmError) {
+      console.error(`[OTP] ref=${reference} could not mark send confirmed:`, confirmError);
     }
+
+    console.log(
+      `[OTP] ref=${reference} OTP sent to ${masked}`,
+      { request_id: smsResult.request_id ?? null, isResend }
+    );
 
     return {
       success: true,
       message: 'OTP sent successfully to your mobile number',
-      expiresAt: session.otp_expires_at,
+      expiresAt: reservation.expires_at,
       canResend: true,
+      reference,
     };
   } catch (error) {
-    console.error('[OTP] createOTPSession failed:', error);
+    console.error('[OTP] issueOTP failed:', error);
     return { success: false, message: 'An error occurred. Please try again.' };
   }
+}
+
+/**
+ * Create an OTP session and send the code by SMS.
+ */
+export async function createOTPSession(
+  phone: string,
+  ipAddress?: string,
+  userAgent?: string
+): Promise<OTPSessionResult> {
+  return issueOTP(phone, false, ipAddress, userAgent);
 }
 
 /**
@@ -334,52 +473,20 @@ export async function validateSession(
 
 /**
  * Resend the OTP for a phone number.
+ *
+ * The ceiling, the counter and the increment all live in begin_otp_session now.
+ * They had to: this function used to read the newest session, call
+ * createOTPSession (which retired that session and inserted a replacement
+ * starting at resend_count 0), and then write the incremented count back to the
+ * row it had just retired - so the counter never advanced on any row anyone
+ * would go on to read, and the resend ceiling never actually bit.
  */
 export async function resendOTP(
   phone: string,
   ipAddress?: string,
   userAgent?: string
 ): Promise<OTPSessionResult> {
-  try {
-    const validation = validatePhoneNumber(phone);
-    if (!validation.isValid) {
-      return { success: false, message: validation.error || 'Invalid phone number' };
-    }
-
-    const { data: sessions } = await supabaseAdmin
-      .from('otp_sessions')
-      .select('id, resend_count')
-      .eq('phone', validation.cleanPhone)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    if (sessions?.length > 0 && sessions[0].resend_count >= MAX_RESEND_COUNT) {
-      return {
-        success: false,
-        message: 'Maximum resend limit reached. Please try again later.',
-        canResend: false,
-      };
-    }
-
-    // createOTPSession enforces the hourly rate limit and the 60s cooldown.
-    const result = await createOTPSession(phone, ipAddress, userAgent);
-
-    if (result.success && sessions?.length > 0) {
-      await supabaseAdmin
-        .from('otp_sessions')
-        .update({
-          resend_count: sessions[0].resend_count + 1,
-          last_resend_at: new Date().toISOString(),
-        })
-        .eq('id', sessions[0].id);
-    }
-
-    return result;
-  } catch (error) {
-    console.error('[OTP] resendOTP failed:', error);
-    return { success: false, message: 'An error occurred. Please try again.' };
-  }
+  return issueOTP(phone, true, ipAddress, userAgent);
 }
 
 export async function cleanupExpiredSessions(): Promise<number> {
