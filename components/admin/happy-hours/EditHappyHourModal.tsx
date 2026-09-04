@@ -11,7 +11,7 @@ import { useRequiredFields } from '@/lib/hooks/useRequiredFields'
 import { formatDbTimeRange, formatTo24Hour } from '@/lib/utils/timeSlots'
 
 // Update this path to match your actual actions file
-import { getDevices, updateHappyHour } from './action'
+import { getDeviceTypes, updateHappyHour } from './action'
 
 interface EditModalProps {
   rule: any
@@ -26,28 +26,28 @@ const DAYS_FULL = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditModalProps) {
   const [selectedDays, setSelectedDays] = useState<number[]>([])
-  const [devices, setDevices] = useState<any[]>([])
+  const [deviceTypes, setDeviceTypes] = useState<any[]>([])
   const [isLoadingDevices, setIsLoadingDevices] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { formRef, isComplete, recheck } = useRequiredFields()
 
-  // Fetch devices and parse existing rule data
+  // Fetch device types and parse existing rule data
   useEffect(() => {
     if (open && rule) {
-      // 1. Fetch the dynamic device list
-      const loadDevices = async () => {
+      // 1. Fetch the dynamic device type list
+      const loadDeviceTypes = async () => {
         setIsLoadingDevices(true)
         try {
-          const data = await getDevices()
-          setDevices(data)
+          const data = await getDeviceTypes()
+          setDeviceTypes(data)
         } catch (error) {
-          console.error('Failed to load devices:', error)
-          toast.error("Failed to fetch available devices.")
+          console.error('Failed to load device types:', error)
+          toast.error("Failed to fetch device types.")
         } finally {
           setIsLoadingDevices(false)
         }
       }
-      loadDevices()
+      loadDeviceTypes()
 
       // 2. Parse the saved 'schedule' string back into numeric indices
       if (rule.schedule) {
@@ -79,7 +79,7 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
       const discount = Number(formData.get('discount'))
       const startTime = formData.get('startTime') as string
       const endTime = formData.get('endTime') as string
-      const deviceId = formData.get('device') as string
+      const deviceTypeId = formData.get('device') as string
       const status = formData.get('status') as 'LIVE' | 'PAUSED' | 'SCHEDULED' // Extract Status
 
       // 2. Format specific fields for the database
@@ -93,11 +93,12 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
       // always did, so only the entry has changed.
       const timeRangeString = formatDbTimeRange(startTime, endTime)
 
-      // Get the selected device name/label
-      const selectedDeviceObj = devices.find(d => d.id === deviceId)
-      const deviceLabel = selectedDeviceObj
-        ? `Station ${selectedDeviceObj.station_number} ${selectedDeviceObj.device_type?.name ? `(${selectedDeviceObj.device_type.name})` : ''}`
-        : 'All PC Stations'
+      // Stored as the plain device type name, because that is the only
+      // granularity `isDeviceEligible` actually checks against.
+      const selectedType = deviceTypes.find(t => t.id === deviceTypeId)
+      const deviceLabel = selectedType
+        ? (selectedType.display_name || selectedType.name)
+        : 'All Devices'
 
       // 3. Construct the payload
       const payload = {
@@ -142,14 +143,14 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
     defaultEnd = formatTo24Hour(parts[1].trim())
   }
 
-  // Find the matching device ID based on the saved string label to set the dropdown default value
+  // Find the matching device type based on the saved label to set the dropdown
+  // default value. "All PC Stations" is the legacy label older rules were saved
+  // with before this only ever selected a device type; treated the same as
+  // "All Devices" so those rules still default the dropdown correctly.
   let defaultDeviceId = 'all'
-  if (rule?.devices !== 'All PC Stations') {
-    const matchedDevice = devices.find(d => {
-      const label = `Station ${d.station_number} ${d.device_type?.name ? `(${d.device_type.name})` : ''}`
-      return label === rule.devices
-    })
-    if (matchedDevice) defaultDeviceId = matchedDevice.id
+  if (rule?.devices && rule.devices !== 'All PC Stations' && rule.devices !== 'All Devices') {
+    const matchedType = deviceTypes.find(t => (t.display_name || t.name) === rule.devices)
+    if (matchedType) defaultDeviceId = matchedType.id
   }
 
   return (
@@ -264,13 +265,13 @@ export function EditHappyHourModal({ rule, open, setOpen, onFormSuccess }: EditM
                   defaultValue={defaultDeviceId}
                   key={defaultDeviceId} // Adding key forces React to re-render the select default value once devices load
                 >
-                  <option value="all">All PC Stations</option>
+                  <option value="all">All Devices</option>
                   {isLoadingDevices ? (
-                    <option value="loading" disabled>Loading devices...</option>
+                    <option value="loading" disabled>Loading device types...</option>
                   ) : (
-                    devices.map((device) => (
-                      <option key={device.id} value={device.id}>
-                        Station {device.station_number} {device.device_type?.name ? `(${device.device_type.name})` : ''}
+                    deviceTypes.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.display_name || type.name}
                       </option>
                     ))
                   )}
