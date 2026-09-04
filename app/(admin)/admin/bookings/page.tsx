@@ -1560,7 +1560,7 @@ export default function AdminBookingsPage() {
           setPendingPaymentModal({ open: false, bookingId: null, balanceDue: 0, bookingNumber: "", isCheckout: false });
         }
       }}>
-        <DialogContent className="bg-[var(--background)] border-2 border-amber-500/50 text-white max-w-md">
+        <DialogContent className="bg-[var(--background)] border-2 border-amber-500/50 text-white max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-2 text-amber-400">
               <AlertCircle className="h-5 w-5" />
