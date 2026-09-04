@@ -8,6 +8,7 @@ import { fetchDeviceTypeOccupancy } from "@/lib/bookings/deviceTypeOccupancy";
 import { availableStartMinutes, type DeviceTypeOccupancy } from "@/lib/bookings/slotAvailability";
 import { formatMinutesTo12Hour } from "@/lib/utils/timeSlots";
 import { createSlotHold, releaseSlotHoldRow } from "@/lib/bookings/slotHold";
+import { getOccupiedDeviceIds } from "@/lib/devices/occupancy";
 import { headers } from "next/headers";
 
 export interface AddonSelection {
@@ -49,6 +50,12 @@ export async function getDeviceTypesWithAvailability() {
 
     if (typesError) throw typesError;
 
+    // `devices.status` is only ever what an admin last typed into the device
+    // form - nothing in the booking flow writes to it, so counting it alone
+    // reported every station free while people were playing on them. A device
+    // is only really available if it is also not currently occupied.
+    const occupied = await getOccupiedDeviceIds();
+
     // For each device type, count available devices
     const typesWithCounts = await Promise.all(
       (deviceTypes || []).map(async (type: any) => {
@@ -58,9 +65,11 @@ export async function getDeviceTypesWithAvailability() {
           .eq("device_type_id", type.id)
           .eq("status", "available");
 
+        const freeDevices = (devices || []).filter((device: any) => !occupied.has(device.id));
+
         return {
           ...type,
-          available_devices_count: devError ? 0 : (devices || []).length,
+          available_devices_count: devError ? 0 : freeDevices.length,
           image_url: (devices && devices.length > 0) ? devices[0].image_url : null
         };
       })
