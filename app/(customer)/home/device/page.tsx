@@ -224,13 +224,27 @@ export default function DevicePage({ initialDevices }: DevicePageProps = {}) {
             </div>
           ) : (
             <div className="grid gap-4 grid-cols-1 min-[581px]:grid-cols-2 min-[787px]:grid-cols-3 min-[932px]:grid-cols-4">
-              {devicesArray.map((device, index) => {
-                const sameTypeDevices = devicesArray.filter(d => d.device_type_id === device.device_type_id || (d.device_type && device.device_type && d.device_type.id === device.device_type.id));
+              {/*
+                * One card per device type, not per physical unit - three PS5s
+                * used to render as three identical cards, each claiming to be
+                * "Available 3/3". Grouped here so the count badge on a single
+                * card says what it means: how many of that type are free.
+                */}
+              {Object.values(
+                devicesArray.reduce((groups: Record<string, any[]>, device) => {
+                  const typeId = device.device_type?.id || device.device_type_id || 'unknown';
+                  (groups[typeId] ||= []).push(device);
+                  return groups;
+                }, {})
+              ).map((sameTypeDevices: any[], index) => {
                 const totalCount = sameTypeDevices.length;
                 const availableCount = sameTypeDevices.filter(d => d.effective_status === 'available').length;
+                // Prefer a free unit's photo/specs for the card; falls back to
+                // whichever unit is first when every station of this type is busy.
+                const device = sameTypeDevices.find(d => d.effective_status === 'available') || sameTypeDevices[0];
 
                 const stationData: Station = {
-                  id: device.id,
+                  id: device.device_type?.id || device.device_type_id || device.id,
                   device_type_id: device.device_type?.id || '',
                   name: device.device_type?.display_name || 'Unknown Station',
                   station_num: device.station_number,
@@ -238,8 +252,8 @@ export default function DevicePage({ initialDevices }: DevicePageProps = {}) {
                   included_players: device.device_type?.included_players || 1,
                   max_players: device.device_type?.max_players || 1,
                   extra_player_charge: device.device_type?.extra_player_charge || 0,
-                  isAvailable: device.effective_status === 'available',
-                  availability: describeAvailability(device.effective_status),
+                  isAvailable: availableCount > 0,
+                  availability: describeAvailability(availableCount > 0 ? 'available' : device.effective_status),
                   description: device.specs || device.device_type?.description || '',
                   image: device.image_url || "",
                   available_count: availableCount,
