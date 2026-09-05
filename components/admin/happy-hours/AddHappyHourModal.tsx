@@ -10,7 +10,7 @@ import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRequiredFields } from '@/lib/hooks/useRequiredFields'
 
-import { getDevices, addHappyHour } from './action'
+import { getDeviceTypes, addHappyHour } from './action'
 
 interface AddModalProps {
   open: boolean
@@ -24,27 +24,27 @@ const DAYS_FULL = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 export function AddHappyHourModal({ open, setOpen, onFormSuccess }: AddModalProps) {
   const [selectedDays, setSelectedDays] = useState<number[]>([4]) // Default to Friday
 
-  const [devices, setDevices] = useState<any[]>([])
+  const [deviceTypes, setDeviceTypes] = useState<any[]>([])
   const [isLoadingDevices, setIsLoadingDevices] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { formRef, isComplete, recheck } = useRequiredFields()
 
   useEffect(() => {
     if (open) {
-      const loadDevices = async () => {
+      const loadDeviceTypes = async () => {
         setIsLoadingDevices(true)
         try {
-          const data = await getDevices()
-          setDevices(data)
+          const data = await getDeviceTypes()
+          setDeviceTypes(data)
         } catch (error) {
-          console.error('Failed to load devices:', error)
-          toast.error("Failed to fetch available devices.")
+          console.error('Failed to load device types:', error)
+          toast.error("Failed to fetch device types.")
         } finally {
           setIsLoadingDevices(false)
         }
       }
 
-      loadDevices()
+      loadDeviceTypes()
       setSelectedDays([4])
     }
   }, [open])
@@ -69,7 +69,7 @@ export function AddHappyHourModal({ open, setOpen, onFormSuccess }: AddModalProp
       const discount = Number(formData.get('discount'))
       const startTime = formData.get('startTime') as string
       const endTime = formData.get('endTime') as string
-      const deviceId = formData.get('device') as string
+      const deviceTypeId = formData.get('device') as string
       const status = formData.get('status') as 'LIVE' | 'PAUSED' | 'SCHEDULED'
 
       const scheduleString = selectedDays
@@ -83,10 +83,12 @@ export function AddHappyHourModal({ open, setOpen, onFormSuccess }: AddModalProp
       // unambiguously AM/PM.
       const timeRangeString = formatDbTimeRange(startTime, endTime)
 
-      const selectedDeviceObj = devices.find(d => d.id === deviceId)
-      const deviceLabel = selectedDeviceObj
-        ? `Station ${selectedDeviceObj.station_number} ${selectedDeviceObj.device_type?.name ? `(${selectedDeviceObj.device_type.name})` : ''}`
-        : 'All PC Stations'
+      // Stored as the plain device type name, because that is the only
+      // granularity `isDeviceEligible` actually checks against.
+      const selectedType = deviceTypes.find(t => t.id === deviceTypeId)
+      const deviceLabel = selectedType
+        ? (selectedType.display_name || selectedType.name)
+        : 'All Devices'
 
       const payload = {
         name: promotionName,
@@ -216,14 +218,14 @@ export function AddHappyHourModal({ open, setOpen, onFormSuccess }: AddModalProp
                   required
                   defaultValue=""
                 >
-                  <option value="" disabled>Select a device/station</option>
-                  <option value="all">All PC Stations</option>
+                  <option value="" disabled>Select a device type</option>
+                  <option value="all">All Devices</option>
                   {isLoadingDevices ? (
-                    <option value="" disabled>Loading devices...</option>
+                    <option value="" disabled>Loading device types...</option>
                   ) : (
-                    devices.map((device) => (
-                      <option key={device.id} value={device.id}>
-                        Station {device.station_number} {device.device_type?.name ? `(${device.device_type.name})` : ''}
+                    deviceTypes.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.display_name || type.name}
                       </option>
                     ))
                   )}

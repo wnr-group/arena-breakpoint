@@ -93,6 +93,48 @@ export default function Navbar() {
     return () => clearTimeout(timer);
   }, [pathname]);
 
+  /**
+   * Hold the page still behind the mobile menu.
+   *
+   * The overlay is `fixed` and covers the viewport, but a fixed element does not
+   * stop the document underneath it from scrolling on touch - so the homepage
+   * kept scrolling behind the nav links. Pinning the body at its current offset
+   * blocks that, and restoring the scroll position on close is what stops the
+   * page jumping back to the top when the menu shuts.
+   */
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!isMobileMenuOpen) return;
+
+    const body = document.body;
+    const scrollY = window.scrollY;
+    const previous = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow
+    };
+
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.width = '100%';
+    body.style.overflow = 'hidden';
+
+    return () => {
+      body.style.position = previous.position;
+      body.style.top = previous.top;
+      body.style.left = previous.left;
+      body.style.right = previous.right;
+      body.style.width = previous.width;
+      body.style.overflow = previous.overflow;
+      window.scrollTo(0, scrollY);
+    };
+  }, [isMobileMenuOpen]);
+
   // Track if slot hold is active
   useEffect(() => {
     if (!slotLockExpiry) {

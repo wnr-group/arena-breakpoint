@@ -12,17 +12,28 @@ export interface HappyHourInput {
   status: 'LIVE' | 'PAUSED' | 'SCHEDULED'
 }
 
-export async function getDevices() {
+/**
+ * Device types, not individual stations.
+ *
+ * Happy hour eligibility (`isDeviceEligible` in `lib/happy-hours.ts`) only ever
+ * matches a booking's device *type* name against this rule's `devices` string -
+ * there is no station-level check anywhere in the pricing pipeline, because a
+ * customer's physical station is not assigned until they take a hold, well
+ * after any happy hour discount has already been shown and applied. Offering a
+ * single-station option here previously stored a label like "Station 5 (PS5)",
+ * which the type-only matcher still matched against every PS5 by substring -
+ * so picking one station silently discounted the whole fleet instead of just
+ * that unit.
+ */
+export async function getDeviceTypes() {
   const { data, error } = await supabaseAdmin
-    .from('devices')
-    .select(`
-      *,
-      device_type:device_types(*)
-    `)
-    .order('station_number', { ascending: true })
+    .from('device_types')
+    .select('id, name, display_name')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true })
 
   if (error) {
-    console.error('Error fetching devices:', error.message)
+    console.error('Error fetching device types:', error.message)
     return []
   }
 
