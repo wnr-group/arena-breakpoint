@@ -77,6 +77,16 @@ export async function getDeviceTypesWithAvailability() {
         return {
           ...type,
           available_devices_count: devError ? 0 : freeDevices.length,
+          /**
+           * Stations of this type in service, busy or not.
+           *
+           * The count above answers "can somebody sit down now", which is the
+           * wrong question on any screen that is choosing a window later on -
+           * there it reads as a refusal ("0 AVAILABLE") for a booking the floor
+           * has all evening to honour. Those screens show this instead and let
+           * the slot picker say which hours are free.
+           */
+          total_devices_count: devError ? 0 : (devices || []).length,
           image_url: (devices && devices.length > 0) ? devices[0].image_url : null
         };
       })

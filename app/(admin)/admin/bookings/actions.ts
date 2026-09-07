@@ -1954,6 +1954,69 @@ export async function checkInWalkInSession(
 }
 
 /**
+ * Change when a live walk-in is expected to finish, or take the plan off.
+ *
+ * Customers change their minds - they order food, they win a frame, they stay
+ * another hour - and until this existed the only way to alter the hold was to
+ * check them out. It matters because of what the planned end now does: the
+ * station goes back on sale the moment the stated finish passes, so a customer
+ * who said "nine" and meant "ten" would spend an hour looking free while sitting
+ * at it.
+ *
+ * The check that makes this safe is in SQL, not here. Between the plan being set
+ * and being extended, the hours it freed may already have been sold, so
+ * `set_walkin_planned_end` re-tests the new window against the station under the
+ * same advisory lock `assign_device_slot` takes. What is checked up here is only
+ * the shape of the reading, so the desk gets a sentence rather than a Postgres
+ * exception.
+ */
+export async function setWalkInPlannedEnd(
+  bookingId: string,
+  /** 24-hour `HH:MM` the customer now expects to finish, or null to remove it. */
+  plannedEndClock: string | null
+) {
+  await requireStaff();
+
+  if (plannedEndClock) {
+    // Read against now rather than against the session's start, which this has
+    // not loaded: a changed finish can only ever point forwards, so "now" is the
+    // right floor for it. SQL applies the stricter test - within
+    // MAX_PLANNED_SESSION_HOURS of the *start* - once it has the row.
+    const planned = resolvePlannedSession(null, plannedEndClock);
+    if (!planned.ok) return { success: false, error: planned.error };
+  }
+
+  try {
+    const { data, error } = await supabaseAdmin.rpc("set_walkin_planned_end", {
+      p_booking_id: bookingId,
+      p_planned_end: plannedEndClock,
+      p_max_session_hours: MAX_PLANNED_SESSION_HOURS,
+      p_provisional_hours: PROVISIONAL_SESSION_HOURS
+    });
+
+    if (error) throw error;
+
+    const changed = (data as Array<{ held_until: string; station_number: string }>) || [];
+
+    if (changed.length === 0) {
+      return {
+        success: false,
+        error: "That booking is not a session in progress, so it has nothing to hold."
+      };
+    }
+
+    return {
+      success: true,
+      heldUntil: changed[0].held_until,
+      stationNumber: changed[0].station_number
+    };
+  } catch (err: any) {
+    console.error("Set walk-in planned end error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
  * The customer is leaving: stop the clock and work out what they owe.
  *
  * The two timestamps come back from `checkout_walkin_session`, which is also what

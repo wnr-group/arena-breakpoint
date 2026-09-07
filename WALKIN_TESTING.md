@@ -319,6 +319,36 @@ A walk-in is a thing that is happening today. It can say which of *today's*
 hours are taken, and it has nothing whatever to say about tomorrow - so no card
 is closed on account of one.
 
+### Setting it at check-in, and changing it afterwards
+
+The New Walk-In form is not the only place a customer says when they are
+leaving. **Check In** on the bookings list opens a dialog with the same optional
+field, so a walk-in taken earlier in the evening can be given a finish at the
+moment the customer actually sits down - which is when they say it.
+
+Once the session is running, the booking detail panel has an **Expected finish**
+card: set, change, or remove. It goes through `set_walkin_planned_end`, not an
+UPDATE, because by then the hours the plan freed may already have been sold:
+
+| Change | What happens |
+| --- | --- |
+| Extend into free time | Allowed; the slot row and the booking both move |
+| Extend over another booking on that station | **Refused** — *"that station is booked before the new finish time"*, and nothing moves |
+| Shorten | Always allowed |
+| Remove the plan | Back to the `PROVISIONAL_SESSION_HOURS` placeholder, **clamped to the next booking on that station** |
+
+That last row is the one worth reading twice. Removing a plan is the desk saying
+nobody knows when this customer is leaving, which is true whether or not somebody
+holds a booking at nine - so it must not be refusable, or a mistaken finish could
+never be taken off. Clamping keeps it honest instead: the hold runs to the
+placeholder or to the next booking, whichever comes first, and never behind the
+time already played. If the customer then overruns, that is the same exposure a
+fixed slot has always carried.
+
+The whole thing runs under the advisory lock `assign_device_slot` takes for that
+device type and date, so an extension and a booking of the hours being extended
+into cannot both decide they are fine.
+
 ### Where the planned end shows up
 
 | Screen | While it runs | After checkout |

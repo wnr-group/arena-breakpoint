@@ -357,6 +357,18 @@ check('a window running past midnight comes back above the day, not wrapped', ()
   assert.equal(claim.end, 24 * 60 + 45)
 })
 
+check('an unreadable planned end no longer takes the start down with it', () => {
+  // The pre-flight has to describe the window the claim will make. Written as a
+  // chain, a planned end that could not be read discarded a perfectly good start
+  // and asked about five hours from *now* instead.
+  const claim = sessionClaimWindow(
+    { startedClock: '19:00', plannedEndClock: 'half nine' },
+    arenaAt(19, 20)
+  )
+  assert.equal(claim.start, 19 * 60, 'the start still counts')
+  assert.equal(claim.end, 19 * 60 + PROVISIONAL_SESSION_HOURS * 60)
+})
+
 check('an unreadable time falls back rather than refusing', () => {
   // This is the warning, not the guard: the field has already said what is wrong
   // with it, and the claim in SQL is what decides.

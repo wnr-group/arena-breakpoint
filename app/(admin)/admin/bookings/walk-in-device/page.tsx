@@ -328,6 +328,10 @@ export default function WalkInBookingPage() {
     let cancelled = false;
     setCheckingAvailability(true);
 
+    // A short wait before asking. The times are three selects, so changing one
+    // is really three changes in a second or so, and each of them costs the
+    // floor three round trips.
+    const timer = setTimeout(() => {
     getWalkInDeviceAvailability(selectedDeviceType.id, {
       startedClock: startMode === "manual" && manualStartCheck?.ok
         ? manualStartCheck.start.clock
@@ -343,9 +347,11 @@ export default function WalkInBookingPage() {
       .finally(() => {
         if (!cancelled) setCheckingAvailability(false);
       });
+    }, 300);
 
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
     // Keyed on the resolved clocks rather than the check objects, which are new
     // on every tick of the minute clock and would re-read the floor twice a
@@ -949,15 +955,25 @@ export default function WalkInBookingPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {deviceTypes.map((deviceType) => {
-                  const isAvailable = (deviceType.available_devices_count || 0) > 0;
+                  const bookingNow = mode === "session";
                   /**
-                   * An Advance Counter Booking is for a window later on, and a
-                   * station in use this minute has nothing to say about it - so
-                   * only the walk-in-now path, which needs somewhere to seat the
-                   * customer immediately, is closed off when the floor is full.
-                   * Even then the confirm step offers "book to wait".
+                   * How many of these the customer can actually have, which is a
+                   * different question in each mode.
+                   *
+                   * Seating somebody now needs a station free now. An Advance
+                   * Counter Booking is for a window later on, where a station in
+                   * use this minute is as available as any other - so counting
+                   * the busy one out showed "0 AVAILABLE" in red for a device
+                   * type the floor has all evening to honour, and the desk read
+                   * it as "this cannot be booked". Which station is free at the
+                   * hour they choose is the slot picker's question on the next
+                   * step.
                    */
-                  const canPick = isAvailable || mode !== "session";
+                  const availableCount = bookingNow
+                    ? deviceType.available_devices_count || 0
+                    : deviceType.total_devices_count ?? deviceType.available_devices_count ?? 0;
+                  const isAvailable = availableCount > 0;
+                  const canPick = isAvailable || !bookingNow;
                   return (
                     <Card
                       key={deviceType.id}
@@ -978,7 +994,7 @@ export default function WalkInBookingPage() {
                           </div>
                           <span className={`text-xs font-black px-2 py-1 rounded ${isAvailable ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
                             }`}>
-                            {deviceType.available_devices_count} AVAILABLE
+                            {availableCount} AVAILABLE
                           </span>
                         </div>
                         <div className="flex justify-between items-center">

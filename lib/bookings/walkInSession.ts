@@ -441,15 +441,27 @@ export function sessionClaimWindow(
   let minutesAgo = 0
   let heldMinutes = PROVISIONAL_SESSION_HOURS * 60
 
+  /**
+   * The start stands on its own and the planned end refines it, rather than the
+   * two being alternatives.
+   *
+   * Written as a chain, a planned end that could not be read took the start down
+   * with it and this described a five-hour block from *now* - a different window
+   * from the one the claim would make, which is the exact failure this function
+   * exists to prevent. The form only ever sends a resolved pair, so it was not
+   * reachable from the screen; it was still the wrong shape.
+   */
+  if (input.startedClock) {
+    const started = resolveBackdatedStart(input.startedClock, now)
+    if (started.ok) minutesAgo = started.start.minutesAgo
+  }
+
   if (input.plannedEndClock) {
     const planned = resolvePlannedSession(input.startedClock ?? null, input.plannedEndClock, now)
     if (planned.ok) {
       minutesAgo = planned.session.start.minutesAgo
       heldMinutes = planned.session.plannedMinutes
     }
-  } else if (input.startedClock) {
-    const started = resolveBackdatedStart(input.startedClock, now)
-    if (started.ok) minutesAgo = started.start.minutesAgo
   }
 
   const startedAt = new Date(now.getTime() - minutesAgo * 60_000)
