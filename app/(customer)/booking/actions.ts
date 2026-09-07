@@ -65,6 +65,13 @@ export async function getDeviceTypesWithAvailability() {
           .eq("device_type_id", type.id)
           .eq("status", "available");
 
+        /**
+         * Free *right now*, which is all this number ever meant - a description
+         * of the floor, not a gate on the page. What can be booked for a given
+         * hour on a given date is the slot picker's question, and a walk-in
+         * running this evening says nothing about tomorrow, so the card opens
+         * whatever this comes to.
+         */
         const freeDevices = (devices || []).filter((device: any) => !occupied.has(device.id));
 
         return {

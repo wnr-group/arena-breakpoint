@@ -794,6 +794,7 @@ export function BookingDetailModal({ bookingId, open, onClose, onUpdate, openFoo
                   createdAt={booking.created_at}
                   checkedInAt={booking.checked_in_at}
                   completedAt={booking.completed_at}
+                  plannedEndAt={booking.walk_in_planned_end}
                   totalAmount={booking.total_amount}
                 />
               )}
